@@ -32,8 +32,7 @@ class ChunkingProcessor:
             self.experimentalConfig.chunk_overlap
         )
 
-    def chunk(self, text: str) -> List[str]:
-        """Chunk the input text."""
-        chunks = self.chunker.chunk(text)
-        logger.info(f"Generated {len(chunks)} chunks.")
-        return chunks
+    def chunk(self, texts: List[str]) -> List[str]:
+        """Chunk the input list of text into a single flat list"""
+        all_chunks = [chunk for text in texts for chunk in self.chunker.chunk(text)]
+        return all_chunks
