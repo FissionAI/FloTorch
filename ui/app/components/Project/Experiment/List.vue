@@ -127,6 +127,14 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
     cell: ({ row }) => {
       return row.original.total_time && (row.original.experiment_status === 'succeeded' || row.original.experiment_status === 'failed') ? useHumanDuration(row.original.total_time) : "-"
     }
+  },
+  {
+    header: "Estimated Cost",
+    accessorKey: "experiment_cost",
+    enableHiding: true,
+    cell: ({ row }) => {
+      return row.original.cost? useHumanCurrencyAmount(row.original.cost) : "-"
+    }
   }
 ])
 
