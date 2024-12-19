@@ -1,4 +1,8 @@
 import pandas as pd
+import logging
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 def estimate_embedding_model_bedrock_price(file_path, configuration, num_tokens_kb_data):
     try:
@@ -18,6 +22,7 @@ def estimate_embedding_model_bedrock_price(file_path, configuration, num_tokens_
     num_tokens_with_overlap = num_chunks * float(eff_chunk_size)
     embed_model_price = df[(df['model'] == embed_model) & (df['Region'] == region)]['input_price']
     if embed_model_price.empty:
+        logger.warning("Returning price as Zero, as model is not present in Sheet")
         return 0
     else:
         embed_model_price = float(embed_model_price.values[0])  # this price is in 1000s of tokens not millions
@@ -40,17 +45,21 @@ def estimate_retrieval_model_bedrock_price(file_path, configuration, avg_prompt_
     k = configuration["knn_num"]
 
     gen_model_price = df[(df['model'] == gen_model) & (df['Region'] == region)]['input_price']
-    gen_model_price = float(gen_model_price.values[0])  # this price is in millions of tokens
-    gen_model_out_price = df[(df['model'] == gen_model) & (df['Region'] == region)]['output_price']
-    gen_model_out_price = float(gen_model_out_price.values[0])  # this price is in millions of tokens
-    context_len = k * chunk_size
-    prompt_len = (n_shot_prompts + 1) * avg_prompt_length
-    total_input_tokens = (context_len + prompt_len) * num_prompts
-    retrieval_input_price = gen_model_price * float(total_input_tokens) / 1000000
-    total_output_tokens = avg_prompt_length
-    retrieval_output_price = gen_model_out_price * float(total_output_tokens) / 1000000
-    retrieval_price = retrieval_input_price + retrieval_output_price
-    return retrieval_price
+    if gen_model_price.empty:
+        logger.warning("Returning price as Zero, as model is not present in Sheet")
+        return 0
+    else:
+        gen_model_price = float(gen_model_price.values[0])  # this price is in millions of tokens
+        gen_model_out_price = df[(df['model'] == gen_model) & (df['Region'] == region)]['output_price']
+        gen_model_out_price = float(gen_model_out_price.values[0])  # this price is in millions of tokens
+        context_len = k * chunk_size
+        prompt_len = (n_shot_prompts + 1) * avg_prompt_length
+        total_input_tokens = (context_len + prompt_len) * num_prompts
+        retrieval_input_price = gen_model_price * float(total_input_tokens) / 1000000
+        total_output_tokens = avg_prompt_length
+        retrieval_output_price = gen_model_out_price * float(total_output_tokens) / 1000000
+        retrieval_price = retrieval_input_price + retrieval_output_price
+        return retrieval_price
 
 
 
