@@ -43,13 +43,32 @@ export const useProjectCreateExperiments = (
   });
 };
 
-export const usePresignedUploadUrl = () => {
+// export const usePresignedUploadUrl = () => {
+//   return useApi<{
+//     kb_data: { path: string; presignedurl: string };
+//     gt_data: { path: string; presignedurl: string };
+//     uuid: string;
+//   }>("presignedurl");
+// };
+
+export const usePresignedUploadUrl = (uuid: string) => {
   return useApi<{
-    kb_data: { path: string; presignedurl: string };
     gt_data: { path: string; presignedurl: string };
-    uuid: string;
-  }>("presignedurl");
+  }>("presignedurl", {
+    method: "POST",
+    body: { unique_id: uuid }
+  });
 };
+
+export const usePresignedUploadUrlKb = (id: string, files: string[]) => {
+  return useApi("presigned_url_kb", {
+    method: "POST",
+    body: {
+      unique_id: id,
+      files: files
+    }
+  });
+}
 
 export const useProjectExperimentQuestionMetrics = (
   id: string,

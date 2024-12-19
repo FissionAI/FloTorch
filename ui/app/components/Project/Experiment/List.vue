@@ -127,9 +127,20 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
     cell: ({ row }) => {
       return row.original.total_time && (row.original.experiment_status === 'succeeded' || row.original.experiment_status === 'failed') ? useHumanDuration(row.original.total_time) : "-"
     }
+  },
+  {
+    header: "Estimated Cost",
+    accessorKey: "experiment_cost",
+    enableHiding: true,
+    cell: ({ row }) => {
+      return row.original.cost? useHumanCurrencyAmount(row.original.cost) : "-"
+    }
   }
 ])
 
+const navigateToExperiment = (experimentId: string) => {
+  window.location.href = `/projects/${props.projectId}/experiments/${experimentId}`
+}
 
 const getModelName = (type: "indexing" | "retrieval", model: string) => {
   return useGetModelData(type, model)?.label
@@ -166,9 +177,13 @@ const hasAllExperimentsCompleted = computed(() => {
     </div>
     <UTable ref="table" :columns="columns" :data="experiments">
       <template #id-cell="{ row }">
-        <NuxtLink :to="`/projects/${projectId}/experiments/${row.original.id}`" class="text-blue-500 hover:underline">
+        <a 
+          href="#"
+          class="text-blue-500 hover:underline"
+          @click.prevent="navigateToExperiment(row.original.id)"
+        >
           {{ row.original.id }}
-        </NuxtLink>
+        </a>
       </template>
       <template #experiment_status-cell="{ row }">
         <UBadge variant="subtle" :color="useExperimentStatusColor(row.original.experiment_status)">

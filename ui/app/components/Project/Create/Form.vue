@@ -5,6 +5,10 @@ const props = defineProps<{
   config?: Record<string, any>
 }>()
 
+import { v4 as uuidv4 } from 'uuid';
+
+const uuid = uuidv4()
+
 const currentStep = ref(1)
 const totalSteps = 3
 
@@ -15,6 +19,7 @@ const state = reactive<Partial<ProjectCreate>>({
 })
 
 const isLastStep = computed(() => currentStep.value === totalSteps)
+
 
 const queryClient = useQueryClient()
 
@@ -80,6 +85,7 @@ const previousStep = () => {
   currentStep.value--
 }
 
+const kbFilesUploadedData = ref();
 
 
 // Add labels for steps
@@ -119,7 +125,7 @@ const steps = [
       </div>
     </div>
     <div v-if="currentStep === 1">
-      <ProjectCreateDataStrategyStep v-model="state.prestep" :show-back-button="false" @next="nextStep" />
+      <ProjectCreateDataStrategyStep @kbFilesUpload="(files) => kbFilesUploadedData = files" :kbFilesUploadedData="kbFilesUploadedData" :file-upload-id="uuid" v-model="state.prestep" :show-back-button="false" @next="nextStep" />
     </div>
     <div v-if="currentStep === 2">
       <ProjectCreateIndexingStrategyStep v-model="state.indexing" @previous="previousStep" @next="nextStep" />
