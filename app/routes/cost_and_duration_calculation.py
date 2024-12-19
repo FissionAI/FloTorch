@@ -6,7 +6,8 @@ configs = get_config()
 
 S3_BUCKET = configs.s3_bucket
 bedrock_price_df = S3Util().read_csv_from_s3(configs.bedrock_limit_csv_path, S3_BUCKET, as_dataframe=True)
-from app.configuration_validation import estimate_opensearch_price, estimate_sagemaker_price, estimate_embedding_model_bedrock_price, estimate_retrieval_model_bedrock_price, read_gt_data, count_characters_in_file
+from app.price_calculator import estimate_opensearch_price, estimate_sagemaker_price, estimate_embedding_model_bedrock_price, estimate_retrieval_model_bedrock_price
+from app.configuration_validation import read_gt_data, count_characters_in_file
 
 
 def calculate_experiment_duration(experiment):

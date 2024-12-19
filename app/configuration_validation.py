@@ -1,11 +1,11 @@
 import itertools
 import os
-import PyPDF2
-import json
+import shutil
 from util.s3util import S3Util
 from config.config import get_config
 from decimal import Decimal
-
+from util.pdf_utils import extract_text_from_pdf
+from app.price_calculator import estimate_embedding_model_bedrock_price,estimate_retrieval_model_bedrock_price,estimate_opensearch_price,estimate_sagemaker_price
 configs = get_config()
 
 S3_BUCKET = configs.s3_bucket
@@ -118,101 +118,32 @@ def restructure_combination(combination):
 
     return result
 
-
-def estimate_embedding_model_bedrock_price(file_path, configuration, num_tokens_kb_data):
-    try:
-        df = file_path.copy()
-        # return df
-    except Exception as e:
-        print(f"Error reading the CSV file: {e}")
-        return None
-    region = configuration["region"]
-    chunk_size = configuration["chunk_size"]
-    chunk_overlap = configuration["chunk_overlap"]
-    embed_model = configuration["embedding_model"]
-
-    eff_chunk_size = chunk_size * (1 - chunk_overlap / 100)
-
-    num_chunks = num_tokens_kb_data / float(eff_chunk_size)
-    num_tokens_with_overlap = num_chunks * float(eff_chunk_size)
-    embed_model_price = df[(df['model'] == embed_model) & (df['Region'] == region)]['input_price']
-    if embed_model_price.empty:
-        return 0
-    else:
-        embed_model_price = float(embed_model_price.values[0])  # this price is in 1000s of tokens not millions
-        embed_price = embed_model_price * num_tokens_with_overlap / 1000000
-        return embed_price
-
-
-def estimate_retrieval_model_bedrock_price(file_path, configuration, avg_prompt_length,
-                                           num_prompts):
-    try:
-        df = file_path.copy()
-        # return df
-    except Exception as e:
-        print(f"Error reading the CSV file: {e}")
-        return None
-    region = configuration["region"]
-    chunk_size = configuration["chunk_size"]
-    gen_model = configuration["retrieval_model"]
-    n_shot_prompts = configuration["n_shot_prompts"]
-    k = configuration["knn_num"]
-
-    gen_model_price = df[(df['model'] == gen_model) & (df['Region'] == region)]['input_price']
-    gen_model_price = float(gen_model_price.values[0])  # this price is in millions of tokens
-    gen_model_out_price = df[(df['model'] == gen_model) & (df['Region'] == region)]['output_price']
-    gen_model_out_price = float(gen_model_out_price.values[0])  # this price is in millions of tokens
-    context_len = k * chunk_size
-    prompt_len = (n_shot_prompts + 1) * avg_prompt_length
-    total_input_tokens = (context_len + prompt_len) * num_prompts
-    retrieval_input_price = gen_model_price * float(total_input_tokens) / 1000000
-    total_output_tokens = avg_prompt_length
-    retrieval_output_price = gen_model_out_price * float(total_output_tokens) / 1000000
-    retrieval_price = retrieval_input_price + retrieval_output_price
-    return retrieval_price
-
-
-
-
-def estimate_opensearch_price():
-    instance_price = .711 #per hour
-    number_of_instances = 3
-    number_of_hrs = 3
-    overall_cost = instance_price * number_of_instances * number_of_hrs
-    
-
-    return overall_cost
-
-
-def estimate_sagemaker_price():
-    sagemaker_price = 1.515 #per hour g5.2xlarge per model
-    number_of_instances = 1
-    number_of_hrs = 3
-    num_models=1
-    overall_cost = sagemaker_price * number_of_instances * number_of_hrs*num_models
-    
-    return overall_cost
-
-
-
 def count_characters_in_file(file_path):
-    file_path = S3Util().download_file_from_s3(file_path)
+    file_path = S3Util().download_directory_from_s3(file_path)
+    character_counts = 0
     try:
-        if file_path.endswith('.txt'):
-            with open(file_path, 'r') as file:
-                content = file.read()
-                return len(content)
-        elif file_path.endswith('.pdf'):
-            with open(file_path, 'rb') as file:
-                reader = PyPDF2.PdfReader(file)
-                content = ""
-                for page in reader.pages:
-                    content += page.extract_text()
-                return len(content)
-        else:
-            return "Unsupported file format."
+        for file in os.listdir(file_path):
+            full_file = os.path.join(file_path, file)
+            if file.endswith('.txt'):
+                with open(full_file, 'r') as file:
+                    content = file.read()
+                    character_counts+= len(content)
+            elif file.endswith('.pdf'):
+                with open(full_file, 'rb') as file:
+                    text_data = extract_text_from_pdf(file)
+                    character_counts += len(text_data)
+            else:
+                character_counts+= 1
+        return character_counts
     except FileNotFoundError:
         return "File not found."
+    finally:
+        # Clean up the downloaded files and directory
+        if os.path.exists(file_path):
+            if os.path.isdir(file_path):
+                shutil.rmtree(file_path)
+            else:
+                os.remove(file_path)
 
 
 def read_gt_data(file_path):
@@ -235,6 +166,7 @@ def read_gt_data(file_path):
         return None, None
 
 
+
 def generate_all_combinations(data):
     # Parse the DynamoDB-style JSON
     parsed_data = {k: parse_dynamodb(v) for k, v in data.items()}
@@ -251,16 +183,17 @@ def generate_all_combinations(data):
     gt_data = parameters_all["gt_data"][0]
     [num_prompts, num_chars] = read_gt_data(gt_data)
 
-    avg_promopt_length = round(num_chars / num_prompts / 4)
-
+    avg_prompt_length = round(num_chars / num_prompts / 4)
     num_tokens_kb_data = count_characters_in_file(parameters_all["kb_data"][0]) / 4
 
     configurations = []
     valid_configurations = []
-    os_price = estimate_opensearch_price()
-    print("Total possible combinations:", len(combinations))
+    max_rpm = 4
+    num_chunks = 0
+
     for combination in combinations:
         # Generate a unique GUID
+       
         configuration = {
             **combination
         }
@@ -283,17 +216,15 @@ def generate_all_combinations(data):
                 configuration["directional_pricing"] +=estimate_sagemaker_price()
 
             if configuration["retrieval_service"] == "bedrock":
-                retrical_price = estimate_retrieval_model_bedrock_price(bedrock_price_df, configuration, avg_promopt_length, num_prompts)
+                retrical_price = estimate_retrieval_model_bedrock_price(bedrock_price_df, configuration, avg_prompt_length, num_prompts)
                 configuration["directional_pricing"] += retrical_price
             else:
                 configuration["directional_pricing"] +=estimate_sagemaker_price()
 
-            configuration["directional_pricing"] += os_price
-            configuration["directional_pricing"] +=configuration["directional_pricing"]*0.2 #extra
-            configuration["directional_pricing"] = round(configuration["directional_pricing"],2)
-                    
-                    
-    print("valid_configurations: ",len(valid_configurations))
-    
+    os_price = estimate_opensearch_price(len(valid_configurations), num_prompts, num_chunks, max_rpm)
+    for configuration in valid_configurations:
+        configuration["directional_pricing"] += os_price
+        configuration["directional_pricing"] +=configuration["directional_pricing"]*0.05 #extra
+        configuration["directional_pricing"] = round(configuration["directional_pricing"],2)    
 
     return valid_configurations

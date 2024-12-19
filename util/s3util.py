@@ -1,3 +1,4 @@
+import os
 import json
 import logging
 import boto3
@@ -226,4 +227,47 @@ class S3Util:
         except Exception as e:
             self.logger.error(f"Failed to download file from S3: {e}")
             raise
+        
+        
+    def download_directory_from_s3(self, s3_path: str, local_path:str = '/tmp/downloaded_folder') -> str:
+        "Download all files using an s3 path to a folder and return the local path"
+        try:
+            parse_url = urlparse(s3_path)
+            bucket = parse_url.netloc
+            key = parse_url.path.lstrip('/')
 
+            self.logger.info(f"Downloading all files in the folder from S3: bucket: {bucket}, key={key}")
+            
+            # Check if the directory exists and create one if it doesn't
+            if os.path.exists(local_path):
+                self.logger.info(f"Directory {local_path} already exists. Skipping creation.")
+            os.makedirs(local_path, exist_ok=True)
+                
+            files = self.s3_client.list_objects_v2(Bucket=bucket, Prefix=key)
+            
+            # Check if there are any files in the folder
+            if 'Contents' not in files or all(file['Key'].endswith('/') for file in files['Contents']):
+                self.logger.info("No files found in the specified S3 folder.")
+                return local_path
+            
+            for file in files['Contents']:
+                s3_key = file['Key']
+                file_size = file['Size']
+                
+                # Skip the folder itself and any zero size folders
+                if s3_key.endswith('/') or file_size == 0:
+                    continue
+                
+                # Check if the file is a pdf
+                if s3_key.lower().endswith('.pdf'):
+                        
+                    local_file_path = os.path.join(local_path, s3_key)
+                    os.makedirs(os.path.dirname(local_file_path), exist_ok=True)
+                    self.logger.info(f"Downloading file {s3_key} to directory: {local_file_path}")
+                    self.s3_client.download_file(Bucket=bucket, Key=s3_key, Filename=local_file_path)
+            local_path = os.path.join(local_path, key)
+            return local_path
+        
+        except Exception as e:
+            self.logger.error(f"Failed to download file from S3: {e}")
+            raise
