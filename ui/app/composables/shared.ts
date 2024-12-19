@@ -246,6 +246,21 @@ export const useProjectCreateMeta = () => {
           service: "bedrock",
         },
         {
+          label: "Amazon Nova Lite V1",
+          value: "amazon.nova-lite-v1:0",
+          service: "bedrock",
+        },
+        {
+          label: "Amazon Nova Micro V1",
+          value: "amazon.nova-micro-v1:0",
+          service: "bedrock",
+        },
+        {
+          label: "Amazon Nova Pro V1",
+          value:"amazon.nova-pro-v1:0",
+          service: "bedrock",
+        },
+        {
           label: "Claude 3.5 Sonnet v2",
           value: "us.anthropic.claude-3-5-sonnet-20241022-v2:0",
           service: "bedrock",
