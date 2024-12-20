@@ -2,6 +2,7 @@ import os
 import boto3
 from utils import read_csv_from_s3
 from datetime import datetime
+import math
 
 import logging
 logger = logging.getLogger()
@@ -80,7 +81,7 @@ def calculate_experiment_duration(experiment):
             eval_difference = eval_difference.total_seconds()
 
         # Return the total duration in minutes, rounded
-        return round(total_duration / 60),round(indexing_difference / 60),round(retrieval_difference / 60),round(eval_difference / 60)
+        return math.ceil(total_duration / 60),math.ceil(indexing_difference / 60),math.ceil(retrieval_difference / 60),math.ceil(eval_difference / 60)
     except Exception as e:
         logger.error(f"Error occured during time computation : {e}")
         # Return 0 if any unexpected error occurs
