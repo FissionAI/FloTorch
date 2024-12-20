@@ -82,7 +82,7 @@ COPY . .
 RUN chmod +x /FloTorch/cdk/deploy.sh
 
 # Install required Python packages
-RUN pip3 install -r cdk/requirements.txt
+RUN pip3 install -r cdk/requirements.txt --upgrade
 
 # Create the entrypoint script
 RUN echo '#!/bin/bash' > /entrypoint.sh && \
