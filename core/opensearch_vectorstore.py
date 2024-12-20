@@ -108,15 +108,15 @@ class OpenSearchVectorDatabase(VectorDatabase):
             if field != vector_field:
                 index_body["mappings"]["properties"][field] = props
     
-        print(f"Creating index '{index_name}' with body:")
-        print(json.dumps(index_body, indent=2))
+        logger.info(f"Creating index '{index_name}' with body:")
+        logger.info(json.dumps(index_body, indent=2))
     
         try:
             self.client.indices.create(index=index_name, body=index_body)
-            print(f"Successfully created index '{index_name}'")
+            logger.info(f"Successfully created index '{index_name}'")
         except Exception as e:
-            print(f"Error creating index '{index_name}': {str(e)}")
-            print(f"Index body: {json.dumps(index_body, indent=2)}")
+            logger.error(f"Error creating index '{index_name}': {str(e)}")
+            logger.error(f"Index body: {json.dumps(index_body, indent=2)}")
             traceback.print_exc()
             raise
     
@@ -133,7 +133,7 @@ class OpenSearchVectorDatabase(VectorDatabase):
     def search(self, index_name: str, query_vector: List[float], k: int) -> List[Dict[str, Any]]:
         vector_field = next((field for field, props in 
                              self.client.indices.get_mapping(index=index_name)[index_name]['mappings']['properties'].items() 
-                             if props['type'] == 'knn_vector'), None)
+                             if 'type' in props and props['type'] == 'knn_vector'), None)
         if not vector_field:
             raise ValueError("Index does not contain a knn_vector field")
 
@@ -173,7 +173,7 @@ class OpenSearchVectorDatabase(VectorDatabase):
         try:
             self.insert_document(index_name, document)
         except Exception as e:
-            print(f"Error inserting chunk {chunk_id}: {str(e)}")
+            logger.error(f"Error inserting chunk {chunk_id}: {str(e)}")
 
     def batch_insert_chunks(self, index_name: str, chunks: List[str], chunk_embeddings: List[List[float]], 
                             metadata: Optional[List[Dict]] = None, batch_size: int = 100):
@@ -192,17 +192,17 @@ class OpenSearchVectorDatabase(VectorDatabase):
                 chunk_id = str(uuid.uuid4())  # Generate a unique ID for each chunk
                 self.insert_chunk(index_name, chunk, embedding, chunk_id, meta)
             
-            print(f"Inserted batch {i//batch_size + 1} ({i+1} to {min(i+batch_size, total_chunks)} of {total_chunks})")
+            logger.info(f"Inserted batch {i//batch_size + 1} ({i+1} to {min(i+batch_size, total_chunks)} of {total_chunks})")
     
 
     def print_opensearch_info(self):
         try:
             info = self.client.info()
-            print(f"OpenSearch Version: {info['version']['number']}")
-            print(f"Cluster Name: {info['cluster_name']}")
-            print(f"Cluster UUID: {info['cluster_uuid']}")
+            logger.info(f"OpenSearch Version: {info['version']['number']}")
+            logger.info(f"Cluster Name: {info['cluster_name']}")
+            logger.info(f"Cluster UUID: {info['cluster_uuid']}")
         except Exception as e:
-            print(f"Error getting OpenSearch info: {str(e)}")
+            logger.error(f"Error getting OpenSearch info: {str(e)}")
     
 
     def index_chunk_embeddings(self, chunks: List[str], chunk_embeddings: List[List[float]], 
@@ -225,7 +225,7 @@ class OpenSearchVectorDatabase(VectorDatabase):
             self.print_opensearch_info()  # Print OpenSearch version and cluster info
             self.create_index(index_name, mapping, indexing_algorithm)
         except Exception as e:
-            print(f"Error creating index: {str(e)}")
+            logger.error(f"Error creating index: {str(e)}")
             return
     
         self.batch_insert_chunks(index_name, chunks, chunk_embeddings, metadata)

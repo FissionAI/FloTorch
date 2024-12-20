@@ -77,6 +77,8 @@ class ExperimentQuestionMetrics(BaseModel):
     gt_answer: str = Field(..., description="The answer that was given")
     generated_answer: str = Field(default='', description="The answer that was generated")
     reference_contexts:  Optional[List[str]] = Field(..., description="The reference contexts retrieved from vectorstore") 
+    query_metadata: Optional[Dict[str, int]] = Field(..., description="The metadata during querying")
+    answer_metadata: Optional[Dict[str, int]] = Field(..., description="The metadata during answer generation")
 
     def to_dynamo_item(self) -> Dict[str, Dict[str, str]]:
         """Convert to DynamoDB item format."""
@@ -89,6 +91,12 @@ class ExperimentQuestionMetrics(BaseModel):
             'generated_answer': {'S': self.generated_answer},
             'reference_contexts': {
                 'L': [{'S': context} for context in self.reference_contexts]
+            },
+            'query_metadata': {
+                'M': {key: {'N': str(value)} for key, value in self.query_metadata.items()}
+            },
+            'answer_metadata': {
+                'M': {key: {'N': str(value)} for key, value in self.answer_metadata.items()}
             }
         } 
 

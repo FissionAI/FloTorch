@@ -48,5 +48,5 @@ def deserialize_dynamodb_json(dynamodb_json: Dict[str, Any]) -> Dict[str, Any]:
         return {k: _deserialize_value(v) for k, v in dynamodb_json.items()}
 
     except Exception as e:
-        print(f"Error deserializing DynamoDB JSON: {e}")
+        logger.error(f"Error deserializing DynamoDB JSON: {e}")
         raise

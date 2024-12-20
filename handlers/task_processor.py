@@ -2,6 +2,10 @@ import os
 import json
 import boto3
 from botocore.exceptions import ClientError
+import logging
+
+logger = logging.getLogger()
+logging.basicConfig(level=logging.INFO)
 
 class FargateTaskProcessor():
     def __init__(self):
@@ -12,7 +16,7 @@ class FargateTaskProcessor():
             self.input_data = json.loads(event_data)
         else:
             self.input_data = event_data
-        print(f"Input data: {self.input_data}")
+        logger.info(f"Input data: {self.input_data}")
 
     def process(self):
         raise NotImplementedError("Subclasses must implement the process method.")
@@ -24,7 +28,7 @@ class FargateTaskProcessor():
                 output=json.dumps(output)
             )
         except ClientError as e:
-            print(f"Error sending task success: {str(e)}")
+            logger.error(f"Error sending task success: {str(e)}")
             raise
 
     def send_task_failure(self, error):
@@ -35,5 +39,5 @@ class FargateTaskProcessor():
                 cause=error.get('errorMessage')
             )
         except ClientError as e:
-            print(f"Error sending task failure: {str(e)}")
+            logger.error(f"Error sending task failure: {str(e)}")
             raise

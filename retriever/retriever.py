@@ -15,7 +15,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 # Function to retrieve and process data using Vectorstore and inference models
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 from dataclasses import asdict
 
 def retrieve(config: Config, experimentalConfig: ExperimentalConfig) -> None:
@@ -39,11 +39,26 @@ def retrieve(config: Config, experimentalConfig: ExperimentalConfig) -> None:
         gt_data = load_ground_truth_data(experimentalConfig)
         
         # Process questions and store results
-        process_questions(
+        (
+            retrieval_query_embed_tokens,
+            retrieval_input_tokens,
+            retrieval_output_tokens,
+        ) = process_questions(
             gt_data=gt_data,
             components=components,
             config=config,
-            experimentalConfig=experimentalConfig
+            experimentalConfig=experimentalConfig,
+        )
+
+
+        components['experiment_dynamodb'].update_item(
+            key={"id": experimentalConfig.experiment_id},
+            update_expression="SET retrieval_query_embed_tokens = :rqembed, retrieval_input_tokens = :rinput, retrieval_output_tokens = :routput",
+            expression_values={
+                ":rqembed": retrieval_query_embed_tokens,
+                ":rinput": retrieval_input_tokens,
+                ":routput": retrieval_output_tokens,
+            },
         )
         
         logger.info("Retrieval process completed successfully")
@@ -79,12 +94,17 @@ def initialize_components(config: Config, experimentalConfig: ExperimentalConfig
             region=config.aws_region,
             table_name=config.experiment_question_metrics_table
         )
-        
+
+        experiment_dynamodb = DynamoDBOperations(
+            region=config.aws_region, table_name=config.experiment_table
+        )
+
         return {
-            'embed_processor': embed_processor,
-            'inference_processor': inference_processor,
-            'vector_database': vector_database,
-            'metrics_dynamodb': metrics_dynamodb
+            "embed_processor": embed_processor,
+            "inference_processor": inference_processor,
+            "vector_database": vector_database,
+            "metrics_dynamodb": metrics_dynamodb,
+            "experiment_dynamodb": experiment_dynamodb
         }
         
     except Exception as e:
@@ -100,76 +120,94 @@ def process_questions(
     gt_data: List[Dict],
     components: Dict[str, Any],
     config: Config,
-    experimentalConfig: ExperimentalConfig
-) -> None:
+    experimentalConfig: ExperimentalConfig,
+) -> Tuple[int, int, int]:
     """Process questions and store results in DynamoDB."""
     batch_items = []
     logger.info(f"Processing {len(gt_data)} questions from ground truth data")
-    
+
+    retrieval_query_embed_tokens = 0
+    retrieval_input_tokens = 0
+    retrieval_output_tokens = 0
+
     for idx, item in enumerate(gt_data):
         try:
-            question = item['question']
+            question = item["question"]
             logger.debug(f"Processing question {idx+1}: {question}")
-            
+
             # Generate embeddings
-            query_embedding = components['embed_processor'].embed_text(question)
+            query_metadata, query_embedding = components["embed_processor"].embed_text(
+                question
+            )
+            retrieval_query_embed_tokens += int(query_metadata["inputTokens"])
 
             # Search for relevant context
-            query_results = components['vector_database'].search(
-                experimentalConfig.index_id,
-                query_embedding,
-                experimentalConfig.knn_num
+            query_results = components["vector_database"].search(
+                experimentalConfig.index_id, query_embedding, experimentalConfig.knn_num
             )
-            
-            # Generate answer
-            answer = components['inference_processor'].generate_text(
-                user_query=question,
-                context = query_results,
-                default_prompt = config.inference_system_prompt
-            )
-            
-            reference_contexts = [record['text'] for record in query_results] if query_results else []
 
+            # Generate answer
+            answer_metadata, answer = components["inference_processor"].generate_text(
+                user_query=question,
+                context=query_results,
+                default_prompt=config.inference_system_prompt,
+            )
+            retrieval_input_tokens += int(answer_metadata["inputTokens"])
+            retrieval_output_tokens += int(answer_metadata["outputTokens"])
+
+            reference_contexts = (
+                [record["text"] for record in query_results] if query_results else []
+            )
+
+            #  Update the metrics here to store the DynamoDb Table
             metrics = _create_metrics(
                 experimental_config=experimentalConfig,
                 question=question,
                 answer=answer,
-                gt_answer=item['answer'],
-                reference_contexts=reference_contexts
+                gt_answer=item["answer"],
+                reference_contexts=reference_contexts,
+                query_metadata=query_metadata,
+                answer_metadata=answer_metadata,
             )
-            
+
             batch_items.append(metrics.to_dynamo_item())
 
-            #batch_items.append(metrics.__dict__)
-            
+            # batch_items.append(metrics.__dict__)
+
             # Write batch if size reaches threshold
             if len(batch_items) >= 25:
-                write_batch_to_dynamodb(batch_items, components['metrics_dynamodb'])
+                write_batch_to_dynamodb(batch_items, components["metrics_dynamodb"])
                 batch_items = []
-                
         except Exception as e:
             logger.error(f"Error processing question {idx+1}: {str(e)}")
             metrics = metrics = _create_metrics(
                 experimental_config=experimentalConfig,
                 question=question,
-                answer='',
-                gt_answer=item['answer'],
-                reference_contexts=[]
+                answer="",
+                gt_answer=item["answer"],
+                reference_contexts=[],
+                query_metadata={},
+                answer_metadata={},
             )
             batch_items.append(metrics.to_dynamo_item())
             continue
-    
+
     # Write remaining items
     if batch_items:
-        write_batch_to_dynamodb(batch_items, components['metrics_dynamodb'])
+        write_batch_to_dynamodb(batch_items, components["metrics_dynamodb"])
+    logger.info(f"Experiment {experimentalConfig.experiment_id} Retrieval Tokens : \n Query Embed Tokens : {retrieval_query_embed_tokens} \n Input Tokens : {retrieval_input_tokens} \n Output Tokens : {retrieval_output_tokens}")
+    return (retrieval_query_embed_tokens, retrieval_input_tokens, retrieval_output_tokens)
+
 
 def _create_metrics(
-        experimental_config: ExperimentalConfig,
-        question: str, 
-        answer: str, 
-        gt_answer: str, 
-        reference_contexts: List[str]
-    ) -> 'ExperimentQuestionMetrics':
+    experimental_config: ExperimentalConfig,
+    question: str,
+    answer: str,
+    gt_answer: str,
+    reference_contexts: List[str],
+    query_metadata: Dict[str, int],
+    answer_metadata: Dict[str, int],
+) -> "ExperimentQuestionMetrics":
     """Create metrics object with provided data."""
     return ExperimentQuestionMetrics(
         execution_id=experimental_config.execution_id,
@@ -177,7 +215,9 @@ def _create_metrics(
         question=question,
         gt_answer=gt_answer,
         generated_answer=answer,
-        reference_contexts=reference_contexts
+        reference_contexts=reference_contexts,
+        query_metadata=query_metadata,
+        answer_metadata=answer_metadata,
     )
 
 def write_batch_to_dynamodb(batch_items: List[Dict], dynamodb: DynamoDBOperations) -> None:

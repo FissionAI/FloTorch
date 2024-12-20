@@ -1,6 +1,6 @@
 from baseclasses.base_classes import BaseInferencer
 import boto3
-from typing import List, Dict, Any, Union
+from typing import List, Dict, Any, Union, Tuple
 import logging
 from config.experimental_config import ExperimentalConfig, NShotPromptGuide
 from core.inference.inference_factory import InferencerFactory
@@ -78,7 +78,7 @@ class BedrockInferencer(BaseInferencer):
         return prompt.strip()
      
     
-    def generate_text(self, user_query: str, context: List[Dict], default_prompt: str, **kwargs) -> str:
+    def generate_text(self, user_query: str, context: List[Dict], default_prompt: str, **kwargs) -> Tuple[Dict[Any, Any], str]:
         try:
             # Code to generate prompt considering the upload prompt config file
             converse_prompt = self.generate_prompt(self.experiment_config, default_prompt, user_query, context)
@@ -89,8 +89,14 @@ class BedrockInferencer(BaseInferencer):
                 messages=messages,
                 inferenceConfig=inference_config
             )
-            #response_body = json.loads(response.get('body').read())
-            return self._extract_response(response)
+            metadata = {}
+            if 'usage' in response:
+                for key, value in response['usage'].items():
+                    metadata[key] = value
+            if 'metrics' in response:
+                for key, value in response['metrics'].items():
+                    metadata[key] = value
+            return metadata, self._extract_response(response)
         except Exception as e:
             logger.error(f"Error generating text with Bedrock: {str(e)}")
             raise
