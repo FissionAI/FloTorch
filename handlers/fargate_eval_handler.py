@@ -41,7 +41,7 @@ def main():
         fargate_processor = EvaluationProcessor()
         fargate_processor.process()
     except Exception as e:
-        print(f"Error processing event: {str(e)}")
+        logger.error(f"Error processing event: {str(e)}")
         raise
 
 if __name__ == "__main__":

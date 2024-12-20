@@ -9,7 +9,7 @@ def estimate_embedding_model_bedrock_price(file_path, configuration, num_tokens_
         df = file_path.copy()
         # return df
     except Exception as e:
-        print(f"Error reading the CSV file: {e}")
+        logger.error(f"Error reading the CSV file: {e}")
         return None
     region = configuration["region"]
     chunk_size = configuration["chunk_size"]
@@ -36,7 +36,7 @@ def estimate_retrieval_model_bedrock_price(file_path, configuration, avg_prompt_
         df = file_path.copy()
         # return df
     except Exception as e:
-        print(f"Error reading the CSV file: {e}")
+        logger.error(f"Error reading the CSV file: {e}")
         return None
     region = configuration["region"]
     chunk_size = configuration["chunk_size"]
@@ -105,38 +105,3 @@ def estimate_sagemaker_price():
     overall_cost = sagemaker_price * number_of_instances * number_of_hrs*num_models
     
     return overall_cost
-
-
-
-
-def compute_actual_price(file_path, configuration, input_tokens, output_tokens, embed_tokens, os_time, ecs_time, num_exps):
-    try:
-        df = pd.read_csv(file_path, float_precision="round_trip")
-        # return df
-    except Exception as e:
-        print(f"Error reading the CSV file: {e}")
-        return None
-
-    region = configuration["region"]
-    embed_model = configuration["embedding"]["model"]
-    gen_model = configuration["retrieval"]["model"]
-    
-    embed_model_price = df[(df['model'] == embed_model) & (df['Region'] == region)]['input_price']
-    embed_model_price = float(embed_model_price.values[0]) #this price is in 1000s of tokens not millions
-
-    gen_model_price = df[(df['model'] == gen_model) & (df['Region'] == region)]['input_price']
-    gen_model_price = float(gen_model_price.values[0]) #this price is in millions of tokens
-
-    gen_model_out_price = df[(df['model'] == gen_model) & (df['Region'] == region)]['output_price']
-    gen_model_out_price = float(gen_model_out_price.values[0]) #this price is in millions of tokens
-
-    embed_actual_price = embed_model_price * embed_tokens / 1000
-    gen_in_actual_price = gen_model_price * input_tokens / 1000000
-    gen_out_actual_price = gen_model_out_price * output_tokens / 1000000
-
-    os_actual_price = (.711 * os_time + .122 * 2 * os_time + 13000 * .008 * os_time / 30 / 24) /3600 / num_exps
-    ecs_actual_price = (0.04048 * 3 * 8 * ecs_time + 0.004445 * 3 * 16 * ecs_time) / 3600 /num_exps
-    
-    total_actual_price = embed_actual_price + gen_in_actual_price + gen_out_actual_price + os_actual_price + ecs_actual_price
-
-    return total_actual_price

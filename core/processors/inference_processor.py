@@ -1,5 +1,5 @@
 from core.inference import InferencerFactory
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Any
 from config.experimental_config import ExperimentalConfig
 import logging
 
@@ -13,15 +13,15 @@ class InferenceProcessor:
         self.experimentalConfig = experimentalConfig
         self.inferencer = InferencerFactory.create_inferencer(experimentalConfig)
 
-    def generate_text(self, user_query: str, context: List[Dict], default_prompt: str, **kwargs) -> str:
+    def generate_text(self, user_query: str, context: List[Dict], default_prompt: str, **kwargs) -> Tuple[Dict[Any,Any], str]:
         try:
-            answer = self.inferencer.generate_text(
+            metadata, answer = self.inferencer.generate_text(
                 user_query=user_query,
                 context = context,
                 default_prompt = default_prompt,
                 experiment_config = self.experimentalConfig
             )
-            return answer
+            return metadata, answer
         except Exception as e:
             logger.error(f"Error generating text with Inferencer: {str(e)}")
             raise

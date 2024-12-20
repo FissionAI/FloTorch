@@ -1,12 +1,18 @@
 import itertools
 import os
 import shutil
+import logging
 from util.s3util import S3Util
 from config.config import get_config
 from decimal import Decimal
 from util.pdf_utils import extract_text_from_pdf
 from app.price_calculator import estimate_embedding_model_bedrock_price,estimate_retrieval_model_bedrock_price,estimate_opensearch_price,estimate_sagemaker_price
+
 configs = get_config()
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
 
 S3_BUCKET = configs.s3_bucket
 bedrock_price_df = S3Util().read_csv_from_s3(configs.bedrock_limit_csv_path, S3_BUCKET, as_dataframe=True)
@@ -162,7 +168,7 @@ def read_gt_data(file_path):
         total_characters = len(data)
         return num_entries, total_characters
     except Exception as e:
-        print(f"Error reading the GT-data file: {e}")
+        logger.error(f"Error reading the GT-data file: {e}")
         return None, None
 
 
