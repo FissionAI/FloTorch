@@ -57,7 +57,7 @@ def estimate_retrieval_model_bedrock_price(file_path, configuration, avg_prompt_
         total_input_tokens = (context_len + prompt_len) * num_prompts
         retrieval_input_price = gen_model_price * float(total_input_tokens) / 1000000
         total_output_tokens = avg_prompt_length
-        retrieval_output_price = gen_model_out_price * float(total_output_tokens) * 0.2 / 1000000
+        retrieval_output_price = gen_model_out_price * float(total_output_tokens) / 1000000
         retrieval_price = retrieval_input_price + retrieval_output_price
         return retrieval_price
 
@@ -87,7 +87,7 @@ def estimate_opensearch_price(num_exps, num_prompts, num_chunks=1, max_rpm=20):
 
     total_requests = num_exps * num_prompts
     total_time = float(total_requests) / rps
-    total_os_price = ((instance_price + ebs_price + iops_price) * total_time / 3600)/num_exps  #price per experiment
+    total_os_price = ((instance_price + ebs_price + iops_price) * total_time / 3600)  #price per experiment
 
     #Fargate pricing
     vpc=8 # 8vpc
