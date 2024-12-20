@@ -29,7 +29,7 @@ class AppStack(Stack):
         # Add S3 access to the specific data bucket
         instance_role.add_to_policy(iam.PolicyStatement(
             actions=["s3:*"],
-            resources=[f"{vpc_stack.data_bucket.bucket_arn}/*"]
+            resources=[f"{vpc_stack.data_bucket.bucket_arn}/*", f"{vpc_stack.data_bucket.bucket_arn}/"]
         ))
 
         # Add Step Functions full access

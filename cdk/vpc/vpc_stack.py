@@ -314,7 +314,7 @@ class VPCStack(Stack):
         self.opensearch_domain = opensearch.Domain(
             self,
             "FlotorchOpenSearch",
-            version=opensearch.EngineVersion.OPENSEARCH_2_15,
+            version=opensearch.EngineVersion.OPENSEARCH_2_17,
             domain_name=f"flotorch-{table_suffix}",
             vpc=self.vpc,
             vpc_subnets=[ec2.SubnetSelection(
@@ -845,6 +845,43 @@ class VPCStack(Stack):
                 self.vpc.vpc_default_security_group
             ]
         )
+
+        # Create Lambda layer for pandas
+        pandas_layer = lambda_.LayerVersion.from_layer_version_arn(
+            self,
+            f"AWSSDKPandasLayer-{table_suffix}",
+            "arn:aws:lambda:us-east-1:336392948345:layer:AWSSDKPandas-Python39:27"
+        )
+
+        # Create Cost Lambda function
+        cost_lambda_function = lambda_.Function(
+            self,
+            f"FlotorchCostComputeLambda-{table_suffix}",
+            function_name=f"FlotorchCostComputeLambda-{table_suffix}",
+            runtime=lambda_.Runtime.PYTHON_3_9,
+            code=lambda_.Code.from_asset("../lambda_handlers/cost_handler"),
+            handler="cost_compute_handler.lambda_handler",
+            vpc=self.vpc,
+            vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS),
+            security_groups=[self.lambda_sg],
+            timeout=Duration.seconds(300),
+            memory_size=1024,
+            layers=[pandas_layer],
+            environment={
+                "execution_table": self.execution_table.table_name,
+                "experiment_table": self.experiment_table.table_name,
+                "aws_region": self.region,
+                "s3_bucket": self.data_bucket.bucket_name,
+                "bedrock_limit_csv": "seed/bedrock_limits_small.csv"
+            }
+        )
+
+        # Grant DynamoDB read/write permissions to the Lambda function
+        self.execution_table.grant_read_write_data(cost_lambda_function)
+        self.experiment_table.grant_read_write_data(cost_lambda_function)
+
+        # Grant S3 read permissions to the Lambda function
+        self.data_bucket.grant_read(cost_lambda_function)
 
         # Outputs
         CfnOutput(self, "VPCId", value=self.vpc.vpc_id)

@@ -221,11 +221,11 @@ install_python_requirements() {
     # Install requirements based on OS
     echo "Installing Python requirements..."
     if [[ "$OS" == "MacOS" ]]; then
-        pip3 install -r requirements.txt --break-system-packages
+        pip3 install -r requirements.txt --break-system-packages --upgrade
     elif [[ "$OS" == "Ubuntu" ]]; then
-        pip3 install -r requirements.txt --break-system-packages
+        pip3 install -r requirements.txt --break-system-packages --upgrade
     elif [[ "$OS" == "Amazon Linux" ]]; then
-        pip3 install -r requirements.txt
+        pip3 install -r requirements.txt --upgrade
     else
         echo "Unsupported OS for requirements installation"
         exit 1
@@ -253,7 +253,7 @@ setup_prerequisites() {
     install_docker
     install_awscli
     install_python
-    sleep 10
+    # sleep 10
     install_node
     install_awscdk
     install_python_requirements
@@ -543,40 +543,6 @@ generate_password() {
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 cd "${SCRIPT_DIR}"
 
-# Check for destroy flag: --destroy
-if [ "$1" == "--destroy" ]; then
-    # Check if a suffix is passed as an argument (e.g., suffix=abdq2)
-    if [ ! -z "$2" ]; then
-        # Extract the suffix value from the second argument
-        SuffixArgument=$2
-        TABLE_SUFFIX=${SuffixArgument#*=}  # Extract the value after '='
-        echo "Using provided suffix: ${TABLE_SUFFIX}"
-    elif [ -f .stack_suffix ]; then
-        # If no suffix provided, use the suffix from .stack_suffix file
-        TABLE_SUFFIX=$(cat .stack_suffix)
-        echo "Using existing table suffix from .stack_suffix: ${TABLE_SUFFIX}"
-    else
-        # If neither a suffix nor the file exists, show an error
-        echo "Error: No suffix provided and .stack_suffix file not found. Cannot determine which resources to destroy."
-        exit 1
-    fi
-
-    # Now, call your destroy function with the TABLE_SUFFIX
-    list_resources_to_destroy "${TABLE_SUFFIX}"
-    destroy_resources
-fi
-
-# Check if .stack_suffix exists
-if [ -f .stack_suffix ]; then
-    TABLE_SUFFIX=$(cat .stack_suffix)
-    echo "Using existing table suffix from .stack_suffix: ${TABLE_SUFFIX}"
-else
-    # Generate new table suffix and save it
-    TABLE_SUFFIX=$(generate_suffix)
-    echo "${TABLE_SUFFIX}" > .stack_suffix
-    echo "Generated and saved new table suffix: ${TABLE_SUFFIX}"
-fi
-
 # Only prompt for AWS credentials if not in Docker
 if ! is_running_in_docker; then
     # Prompt user for AWS_ACCOUNT_ID
@@ -584,6 +550,35 @@ if ! is_running_in_docker; then
 
     # Prompt user for AWS_DEFAULT_REGION
     read -p "Enter AWS Region: " AWS_DEFAULT_REGION
+fi
+
+# Check for destroy flag: --destroy
+if [ "$1" == "--destroy" ]; then
+    # Attempt to read suffix from SSM Parameter Store
+    TABLE_SUFFIX=$(aws ssm get-parameter --region $AWS_DEFAULT_REGION --name "/flotorch/stack_suffix" --query 'Parameter.Value' --output text 2>/dev/null)
+    echo "Using existing table suffix from SSM Parameter Store: ${TABLE_SUFFIX}"
+
+    # Now, call your destroy function with the TABLE_SUFFIX
+    list_resources_to_destroy "${TABLE_SUFFIX}"
+    destroy_resources
+    # Delete SSM parameters
+    echo "Deleting SSM parameters..."
+    aws ssm delete-parameter --name "/flotorch/stack_suffix" --region $AWS_DEFAULT_REGION || true
+    aws ssm delete-parameter --name "/flotorch/username" --region $AWS_DEFAULT_REGION || true
+    aws ssm delete-parameter --name "/flotorch/password" --region $AWS_DEFAULT_REGION || true
+    echo "SSM parameters deleted."
+
+fi
+
+# Check if stack_suffix exists
+if TABLE_SUFFIX_SSM=$(aws ssm get-parameter --region $AWS_DEFAULT_REGION --name "/flotorch/stack_suffix" --query 'Parameter.Value' --output text 2>/dev/null); then
+    TABLE_SUFFIX="$TABLE_SUFFIX_SSM"
+    echo "Using existing table suffix from SSM Parameter Store: ${TABLE_SUFFIX}"
+else
+    # Generate new table suffix and save it to SSM Parameter Store
+    TABLE_SUFFIX=$(generate_suffix)
+    aws ssm put-parameter --region $AWS_DEFAULT_REGION --name "/flotorch/stack_suffix" --type String --value "$TABLE_SUFFIX" --overwrite
+    echo "Generated and saved new table suffix to SSM Parameter Store: ${TABLE_SUFFIX}"
 fi
 
 export TABLE_SUFFIX
@@ -602,25 +597,25 @@ aws ecr get-login-password \
     --username AWS \
     --password-stdin 709825985650.dkr.ecr.us-east-1.amazonaws.com
     
-CONTAINER_IMAGES="709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-indexing:1.2.1,709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-ai:1.2.1,709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-evaluation:1.2.1,709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-app:1.2.1,709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-runtime:1.2.1,709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-retriever:1.2.1"    
+CONTAINER_IMAGES="709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-indexing:1.3.0,709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-ai:1.3.0,709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-evaluation:1.3.0,709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-app:1.3.0,709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-runtime:1.3.0,709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-retriever:1.3.0"    
 
 for i in $(echo $CONTAINER_IMAGES | sed "s/,/ /g"); do docker pull $i; done
 
 aws ecr get-login-password --region ${AWS_DEFAULT_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com
 
-docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-indexing:1.2.1" ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/flotorch-indexing-${TABLE_SUFFIX}
+docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-indexing:1.3.0" ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/flotorch-indexing-${TABLE_SUFFIX}
 docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/flotorch-indexing-${TABLE_SUFFIX}
 
-docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-retriever:1.2.1" ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/flotorch-retriever-${TABLE_SUFFIX}
+docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-retriever:1.3.0" ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/flotorch-retriever-${TABLE_SUFFIX}
 docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/flotorch-retriever-${TABLE_SUFFIX}
 
-docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-evaluation:1.2.1" ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/flotorch-evaluation-${TABLE_SUFFIX}
+docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-evaluation:1.3.0" ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/flotorch-evaluation-${TABLE_SUFFIX}
 docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/flotorch-evaluation-${TABLE_SUFFIX}
 
-docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-runtime:1.2.1" ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/flotorch-runtime-${TABLE_SUFFIX}
+docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-runtime:1.3.0" ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/flotorch-runtime-${TABLE_SUFFIX}
 docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/flotorch-runtime-${TABLE_SUFFIX}
 
-docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-app:1.2.1" ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/flotorch-app-${TABLE_SUFFIX}
+docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-app:1.3.0" ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/flotorch-app-${TABLE_SUFFIX}
 docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/flotorch-app-${TABLE_SUFFIX}
 
 echo "All images pushed to ecr..."
@@ -705,8 +700,10 @@ echo "Username: $NGINX_USER"
 echo "Password: $NGINX_PASSWORD"
 
 # Deploy the CDK stack with the generated password
+cd cdk
 echo "Deploying App Stack..."
-cdk deploy "FlotorchAppStack-${TABLE_SUFFIX}" --app "python3 cdk/app.py" --require-approval never --context NGINX_AUTH_USER=$NGINX_USER --context NGINX_AUTH_PASSWORD=$NGINX_PASSWORD
+cdk deploy "FlotorchAppStack-${TABLE_SUFFIX}" --app "python3 app.py" --require-approval never --context NGINX_AUTH_USER=$NGINX_USER --context NGINX_AUTH_PASSWORD=$NGINX_PASSWORD
+cd ..
 
 echo "All resources deployed successfully!"
 
@@ -719,3 +716,6 @@ echo "Basic Authentication Credentials:"
 echo "Username: $NGINX_USER"
 echo "Password: $NGINX_PASSWORD"
 echo "==========================================\n"
+
+aws ssm put-parameter --region $AWS_DEFAULT_REGION --name "/flotorch/username" --type String --value "$NGINX_USER" --overwrite
+aws ssm put-parameter --region $AWS_DEFAULT_REGION --name "/flotorch/password" --type String --value "$NGINX_PASSWORD" --overwrite

@@ -1,3 +1,4 @@
+from math import cos
 from aws_cdk import (
     Stack,
     aws_stepfunctions as sfn,
@@ -239,6 +240,13 @@ class StateMachineStack(Stack):
             f"arn:aws:lambda:{Aws.REGION}:{Aws.ACCOUNT_ID}:function:OpenSearchLambda-{table_suffix}"
         )
 
+        # Import existing Cost Lambda function
+        cost_lambda_function = aws_lambda.Function.from_function_arn(
+            self,
+            "CostLambdaFunction",
+            f"arn:aws:lambda:{Aws.REGION}:{Aws.ACCOUNT_ID}:function:FlotorchCostComputeLambda-{table_suffix}"
+        )
+
         # Define the "InjectConfig" Pass state
         inject_config = sfn.Pass(
             self,
@@ -359,6 +367,32 @@ class StateMachineStack(Stack):
             input_path="$.Items"
         )
         create_opensearch_indices_task.add_retry(
+            errors=[
+                "Lambda.ServiceException",
+                "Lambda.AWSLambdaException",
+                "Lambda.SdkClientException",
+                "Lambda.TooManyRequestsException"
+            ],
+            interval=Duration.seconds(30),
+            max_attempts=3,
+            backoff_rate=2,
+            jitter_strategy=sfn.JitterType.FULL
+        )
+
+        # Define the "Run Cost Lambda function" task
+        run_cost_lambda_function_task = tasks.LambdaInvoke(
+            self,
+            "Run Cost Lambda function",
+            lambda_function=cost_lambda_function,
+            payload=sfn.TaskInput.from_object({
+                "experiment_id": sfn.JsonPath.string_at("$.parsedConfig.parsed_config.experiment_id"),
+                "aws_region": sfn.JsonPath.string_at("$.parsedConfig.parsed_config.aws_region"),
+                "embedding_model": sfn.JsonPath.string_at("$.parsedConfig.parsed_config.embedding_model"),
+                "retrieval_model": sfn.JsonPath.string_at("$.parsedConfig.parsed_config.retrieval_model")
+            }),
+            result_path="$.costEstimation",
+        )
+        run_cost_lambda_function_task.add_retry(
             errors=[
                 "Lambda.ServiceException",
                 "Lambda.AWSLambdaException",
@@ -837,7 +871,7 @@ class StateMachineStack(Stack):
             },
             iam_resources=[vpc_stack.experiment_table.table_arn],
             result_path=sfn.JsonPath.DISCARD
-        )
+        ).next(run_cost_lambda_function_task)
 
         # Create a chain for experiment failure handling
         experiment_failure_chain = experiment_status_update_to_failed.next(update_experiment_end_time)
