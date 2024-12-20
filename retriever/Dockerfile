@@ -16,7 +16,6 @@ COPY core/ core/
 COPY retriever/ retriever/
 COPY util/ util/
 COPY lambda_handlers/retriever_handler.py .
-#COPY .env .
 
 # Set environment variables
 ENV PYTHONPATH=/var/task

@@ -18,7 +18,6 @@ COPY indexing/ indexing/
 COPY util/ util/
 COPY handlers/task_processor.py .
 COPY handlers/fargate_indexing_handler.py .
-COPY .env .
 
 # Set environment variables
 ENV PYTHONPATH=/var/task
