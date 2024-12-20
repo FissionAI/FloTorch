@@ -9,7 +9,6 @@ COPY baseclasses/ baseclasses/
 COPY config/ config/
 COPY util/ util/
 COPY constants/ constants/
-COPY .env .
 ENV PYTHONPATH=/app
 ENV NGINX_AUTH_PASSWORD=Flotorch@123
 

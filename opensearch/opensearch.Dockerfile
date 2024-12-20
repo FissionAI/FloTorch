@@ -17,7 +17,6 @@ COPY core/ core/
 COPY util/ util/
 COPY opensearch/ opensearch/
 COPY lambda_handlers/opensearch_handler.py .
-#COPY .env .
 
 # Set environment variables
 ENV PYTHONPATH=/var/task

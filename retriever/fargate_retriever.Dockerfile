@@ -18,7 +18,6 @@ COPY retriever/ retriever/
 COPY util/ util/
 COPY handlers/task_processor.py .
 COPY handlers/fargate_retriever_handler.py .
-COPY .env .
 
 # Set environment variables
 ENV PYTHONPATH=/var/task

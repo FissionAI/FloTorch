@@ -18,7 +18,6 @@ COPY indexing/ indexing/
 COPY util/ util/
 COPY constants/ constants/
 COPY lambda_handlers/indexing_handler.py .
-#COPY .env .
 
 # Set environment variables
 ENV PYTHONPATH=/var/task

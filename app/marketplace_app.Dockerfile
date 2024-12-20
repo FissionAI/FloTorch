@@ -1,7 +1,6 @@
 FROM 709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-app:1.0.0
 
 WORKDIR /app
-COPY .env .
 COPY .env app/.env
 ENV PYTHONPATH=/app
 

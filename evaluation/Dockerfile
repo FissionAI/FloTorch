@@ -17,7 +17,6 @@ COPY core/ core/
 COPY evaluation/ evaluation/
 COPY util/ util/
 COPY lambda_handlers/evaluation_handler.py .
-#COPY .env .
 
 # Set environment variables
 ENV PYTHONPATH=/var/task
