@@ -29,8 +29,14 @@ export const useProjectExecute = (id: string) => {
   });
 };
 
-export const useProjectValidExperiments = (id: string) => {
-  return useApi<ValidExperiment[]>(`/execution/${id}/valid_experiment`);
+
+export const useProjectValidExperiments = (id: string)  => {
+  return useApi<{message: string}>(`/execution/${id}/valid_experiment`);
+};
+
+export const useProjectValidExperimentsByPoll = (id: string) => {
+  // required to access the response.code, so that i have used useApi.raw below
+  return useApi.raw(`/execution/${id}/valid_experiment/poll`);
 };
 
 export const useProjectCreateExperiments = (
