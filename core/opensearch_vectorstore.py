@@ -51,26 +51,40 @@ class OpenSearchVectorDatabase(VectorDatabase):
             )
 
     def _get_algorithm_settings(self, algorithm: str, dim: int) -> Dict[str, Any]:
+        
+        base_hnsw_params = {
+            "ef_construction": 512,
+            "m": 16
+        }
+
         if algorithm == "hnsw":
             return {
                 "name": "hnsw",
-                "engine": "nmslib",
-                "space_type": "l2",
+                "engine": "faiss",
+                "space_type": "innerproduct",
+                "parameters": base_hnsw_params
+            }   
+        elif algorithm == "hnsw_sq":
+            return {
+                "name": "hnsw",
+                "engine": "faiss",
+                "space_type": "innerproduct",
                 "parameters": {
-                    "ef_construction": 128,
-                    "m": 16
+                    **base_hnsw_params,
+                    "encoder": {
+                        "name": "sq",
+                        "parameters": {
+                            "type": "fp16"
+                        }
+                    }
                 }
             }
-        elif algorithm == "hnswpq":
+        elif algorithm == "hnsw_bq":
             return {
-                "name": "hnswpq",
+                "name": "hnsw",
                 "engine": "faiss",
-                "space_type": "l2",
-                "parameters": {
-                    "ef_construction": 128,
-                    "m": 16,
-                    "num_pq_chunks": min(dim // 2, 32)  # Example: adjust as needed
-                }
+                "space_type": "innerproduct",
+                "parameters": base_hnsw_params
             }
         else:
             raise ValueError(f"Unsupported algorithm: {algorithm}")
@@ -97,7 +111,8 @@ class OpenSearchVectorDatabase(VectorDatabase):
                     vector_field: {
                         "type": "knn_vector",
                         "dimension": dim,
-                        "method": algorithm_settings
+                        "method": algorithm_settings,
+                        **({"mode": "on_disk"} if algorithm == "hnsw_bq" else {})
                     }
                 }
             }

@@ -182,14 +182,12 @@ export const useProjectCreateMeta = () => {
           value: "hnsw",
         },
         {
-          label: "HNSW - BQ (Coming Soon)",
-          value: "hnsw_bq",
-          disabled: true,
+          label: "HNSW - BQ",
+          value: "hnsw_bq"
         },
         {
-          label: "HNSW - SQ (Coming Soon)",
-          value: "hnsw_sq",
-          disabled: true,
+          label: "HNSW - SQ",
+          value: "hnsw_sq"
         },
       ],
     },
