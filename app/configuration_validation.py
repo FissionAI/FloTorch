@@ -7,6 +7,8 @@ from config.config import get_config
 from decimal import Decimal
 from util.pdf_utils import extract_text_from_pdf
 from app.price_calculator import estimate_embedding_model_bedrock_price,estimate_retrieval_model_bedrock_price,estimate_opensearch_price,estimate_sagemaker_price
+from .dependencies.database import get_execution_db
+from constants.validation_status import ValidationStatus
 
 configs = get_config()
 
@@ -234,3 +236,42 @@ def generate_all_combinations(data):
         configuration["directional_pricing"] = round(configuration["directional_pricing"],2)    
 
     return valid_configurations
+
+def generate_all_combinations_in_background(execution_id: str, execution_config_data):
+    """       
+    Generate all possible valid experiment configurations for a given execution and stores result in S3.
+    Progress status and result s3 url is stored in execution db under valid execution_id
+    """
+
+    try:
+        # update status of execution_id to InProgress
+        get_execution_db().update_item(
+            key={"id": execution_id}, 
+            update_expression="SET validation_status = :status_value", 
+            expression_values={":status_value": ValidationStatus.INPROGRESS.value}
+        )
+
+        combinations = generate_all_combinations(execution_config_data)
+        deserialized_combinations_data = []
+        for combination in combinations:
+            updated_combination = {
+                k: float(v) if isinstance(v, Decimal) else v
+                for k, v in combination.items()
+            }
+            deserialized_combinations_data.append(updated_combination)
+
+        S3Util().write_json_to_s3(f"experiment_combination/{execution_id}.json", S3_BUCKET, deserialized_combinations_data)
+
+        # update status of execution id to Completed
+        get_execution_db().update_item(
+            key={"id": execution_id}, 
+            update_expression="SET validation_status = :status_value", 
+            expression_values={":status_value": ValidationStatus.COMPLETED.value}
+        ) 
+    except Exception as e:
+        # update status of execution id to failed
+        get_execution_db().update_item(
+            key={"id": execution_id}, 
+            update_expression="SET validation_status = :status_value", 
+            expression_values={":status_value": ValidationStatus.FAILED.value}
+        )

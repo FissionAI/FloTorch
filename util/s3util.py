@@ -271,3 +271,22 @@ class S3Util:
         except Exception as e:
             self.logger.error(f"Failed to download file from S3: {e}")
             raise
+
+    def write_json_to_s3(self, object_key:str, bucket: str, json_data):
+        """
+        Write JSON data to an S3 bucket.
+
+        Args:
+            object_key (str): The S3 key.
+            bucket: (str): The S3 Bucket name
+            json_data (dict): The JSON data to write to S3.
+        """
+        try:
+            json_string = json.dumps(json_data)
+            
+            self.s3_client.put_object(Bucket=bucket, Key=object_key, Body=json_string, ContentType='application/json')
+            
+            self.logger.info(f"Successfully wrote JSON data to {bucket}/{object_key}")
+        except Exception as e:
+            self.logger.error(f"Failed to write JSON to S3: {str(e)}")
+            raise
