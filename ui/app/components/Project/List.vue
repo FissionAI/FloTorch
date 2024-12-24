@@ -1,98 +1,146 @@
 <script setup lang="ts">
-import type { TableColumn } from '@nuxt/ui';
-const UButton = resolveComponent('UButton')
-
-
+import type { TableColumn } from "@nuxt/ui";
+const UButton = resolveComponent("UButton");
 
 defineProps<{
-  projects: ProjectListItem[]
-  isLoading: boolean
-}>()
+  projects: ProjectListItem[];
+  isLoading: boolean;
+}>();
 
 const columns = ref<TableColumn<ProjectListItem>[]>([
   {
-    header: "ID",
-    accessorKey: "id"
+    accessorKey: "id",
+    id: "id",
+    enableSorting: true,
+    header: ({ column }) => {
+      const isSorted = column.getIsSorted();
+
+      return h(UButton, {
+        color: "neutral",
+        variant: "ghost",
+        label: "Id",
+        icon: isSorted
+          ? isSorted === "asc"
+            ? "i-lucide-arrow-up-narrow-wide"
+            : "i-lucide-arrow-down-wide-narrow"
+          : "i-lucide-arrow-up-down",
+        class: "-mx-2.5",
+        onClick: () => column.toggleSorting(),
+      });
+    },
   },
   {
-    header: "Name",
-    accessorKey: "name"
+    accessorKey: "name",
+    id: "name",
+    enableSorting: true,
+    header: ({ column }) => {
+      const isSorted = column.getIsSorted();
+
+      return h(UButton, {
+        color: "neutral",
+        variant: "ghost",
+        label: "Name",
+        icon: isSorted
+          ? isSorted === "asc"
+            ? "i-lucide-arrow-up-narrow-wide"
+            : "i-lucide-arrow-down-wide-narrow"
+          : "i-lucide-arrow-up-down",
+        class: "-mx-2.5",
+        onClick: () => column.toggleSorting(),
+      });
+    },
   },
   {
-    header: "Region",
-    accessorKey: "region"
+    accessorKey: "region",
+    id: "region",
+    enableSorting: true,
+    header: ({ column }) => {
+      const isSorted = column.getIsSorted();
+
+      return h(UButton, {
+        color: "neutral",
+        variant: "ghost",
+        label: "Region",
+        icon: isSorted
+          ? isSorted === "asc"
+            ? "i-lucide-arrow-up-narrow-wide"
+            : "i-lucide-arrow-down-wide-narrow"
+          : "i-lucide-arrow-up-down",
+        class: "-mx-2.5",
+        onClick: () => column.toggleSorting(),
+      });
+    },
   },
   {
     accessorKey: "status",
     id: "status",
     enableSorting: true,
     header: ({ column }) => {
-      const isSorted = column.getIsSorted()
+      const isSorted = column.getIsSorted();
 
       return h(UButton, {
-        color: 'neutral',
-        variant: 'ghost',
-        label: 'Status',
+        color: "neutral",
+        variant: "ghost",
+        label: "Status",
         icon: isSorted
-          ? isSorted === 'asc'
-            ? 'i-lucide-arrow-up-narrow-wide'
-            : 'i-lucide-arrow-down-wide-narrow'
-          : 'i-lucide-arrow-up-down',
-        class: '-mx-2.5',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc')
-      })
-    }
+          ? isSorted === "asc"
+            ? "i-lucide-arrow-up-narrow-wide"
+            : "i-lucide-arrow-down-wide-narrow"
+          : "i-lucide-arrow-up-down",
+        class: "-mx-2.5",
+        onClick: () => column.toggleSorting(),
+      });
+    },
   },
   {
     accessorKey: "date",
     id: "date",
     enableSorting: true,
     header: ({ column }) => {
-      const isSorted = column.getIsSorted()
+      const isSorted = column.getIsSorted();
 
       return h(UButton, {
-        color: 'neutral',
-        variant: 'ghost',
-        label: 'Date',
+        color: "neutral",
+        variant: "ghost",
+        label: "Date",
         icon: isSorted
-          ? isSorted === 'asc'
-            ? 'i-lucide-arrow-up-narrow-wide'
-            : 'i-lucide-arrow-down-wide-narrow'
-          : 'i-lucide-arrow-up-down',
-        class: '-mx-2.5',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc')
-      })
-    }
-  }
-])
+          ? isSorted === "asc"
+            ? "i-lucide-arrow-up-narrow-wide"
+            : "i-lucide-arrow-down-wide-narrow"
+          : "i-lucide-arrow-up-down",
+        class: "-mx-2.5",
+        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+      });
+    },
+  },
+]);
 
 const sorting = ref([
   {
     id: "date",
-    desc: true
+    desc: true,
   },
-  {
-    id: "status",
-    desc: false
-  }
-])
-
+]);
 </script>
 
 <template>
   <UTable v-model:sorting="sorting" :columns="columns" :data="projects">
     <template #id-cell="{ row }">
-      <NuxtLink :to="{ name: 'projects-id', params: { id: row.original.id } }" class="text-blue-500 hover:underline">
+      <NuxtLink
+        :to="{ name: 'projects-id', params: { id: row.original.id } }"
+        class="text-blue-500 hover:underline"
+      >
         {{ row.original.id }}
       </NuxtLink>
     </template>
     <template #name-cell="{ row }">
-      <NuxtLink :to="{ name: 'projects-id', params: { id: row.original.id } }" class="text-blue-500 hover:underline">
-        {{ row.original.name || "Not available" }}
-      </NuxtLink>
+      {{ row.original.name || "Not available" }}
     </template>
     <template #status-cell="{ row }">
-      <UBadge variant="subtle" :color="useProjectStatusColor(row.original.status)">
+      <UBadge
+        variant="subtle"
+        :color="useProjectStatusColor(row.original.status)"
+      >
         <template #leading>
           <UIcon :name="useProjectStatusIcon(row.original.status)" />
         </template>
