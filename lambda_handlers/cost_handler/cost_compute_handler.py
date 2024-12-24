@@ -60,8 +60,8 @@ def lambda_handler(event, context):
         Key={
             'id': experiment_id
         },
-        UpdateExpression="SET cost = :new_cost",
-        ExpressionAttributeValues={":new_cost": str(total_cost)}
+        UpdateExpression="SET cost = :new_cost, indexing_time = :new_indexing_time, retrieval_time = :new_retrieval_time, eval_time = :new_eval_time",
+        ExpressionAttributeValues={":new_cost": str(total_cost), ":new_indexing_time": indexing_time, ":new_retrieval_time": retrieval_time, ":new_eval_time": eval_time}
     )
 
     return {
