@@ -6,9 +6,11 @@ import { useMax } from '@vueuse/math'
 withDefaults(defineProps<{
   showBackButton?: boolean,
   nextButtonLabel?: string,
+  region?: string,
 }>(), {
   showBackButton: true,
   nextButtonLabel: "Next",
+  region:'us-east-1',
 })
 
 const emits = defineEmits(['previous', 'next'])
@@ -26,6 +28,7 @@ const state = reactive<ProjectCreateRetrievalStrategy>({
   n_shot_prompts: modelValue.value.n_shot_prompts || undefined,
   n_shot_prompt_guide: modelValue.value.n_shot_prompt_guide || undefined,
   temp_retrieval_llm: modelValue.value.temp_retrieval_llm || undefined,
+  rerank_model_id: modelValue.value.rerank_model_id || undefined,
 })
 
 const onSubmit = (event: FormSubmitEvent<ProjectCreateRetrievalStrategy>) => {
@@ -100,6 +103,13 @@ const handlePromptGuideError = (error?: FormError) => {
         :items="meta.retrievalStrategy.temperature" class="w-full" />
       <template #hint>
         <FieldTooltip field-name="temp_retrieval_llm" />
+      </template>
+    </UFormField>
+    <UFormField name="rerank_model_id" label="Rerank Model" required>
+      <USelectMenu v-model="state.rerank_model_id" value-key="value" multiple
+        :items="useFilteredRerankModels(region)" class="w-full" />
+      <template #hint>
+        <FieldTooltip field-name="rerank_model_id" />
       </template>
     </UFormField>
     <div class="flex justify-between items-center w-full mt-6">

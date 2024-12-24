@@ -13,6 +13,7 @@ export interface ValidExperiment {
   retrieval_service: string;
   retrieval_model: string;
   directional_pricing: number;
+  rerank_model_id: string;
 }
 
 export interface ExperimentQuestionMetric {

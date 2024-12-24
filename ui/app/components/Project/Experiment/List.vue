@@ -114,7 +114,7 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
   },
   {
     header: "Directional Pricing",
-    accessorKey: "config.directional_pricing",
+    accessorKey: "directional_pricing",
     enableHiding: true,
     cell: ({ row }) => {
       return row.original.config?.directional_pricing ? useHumanCurrencyAmount(row.original.config?.directional_pricing) : "-"
@@ -151,6 +151,10 @@ const hasAllExperimentsCompleted = computed(() => {
     return experiment.experiment_status === "succeeded" || experiment.experiment_status === "failed"
   })
 })
+
+const columnVisibility = ref({
+  directional_pricing: false,
+})
 </script>
 
 <template>
@@ -175,7 +179,7 @@ const hasAllExperimentsCompleted = computed(() => {
         <UButton label="Columns" color="neutral" variant="outline" trailing-icon="i-lucide-chevron-down" />
       </UDropdownMenu>
     </div>
-    <UTable ref="table" :columns="columns" :data="experiments">
+    <UTable v-model:column-visibility="columnVisibility" ref="table" :columns="columns" :data="experiments">
       <template #id-cell="{ row }">
         <a 
           href="#"

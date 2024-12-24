@@ -116,6 +116,11 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
     header: "Region",
     enableHiding: true,
     accessorKey: "region"
+  },
+  {
+    header: "Rerank Model",
+    enableHiding: true,
+    accessorKey: "rerank_model_id"
   }
 ])
 

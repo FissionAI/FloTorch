@@ -22,7 +22,7 @@ const { data: experiment } = useQuery({
 
 <template>
   <UButton label="Details" icon="i-lucide-info" @click="isOpen = true" />
-  <UModal class="overflow-y-scroll" v-model:open="isOpen" title="Experiment Details" description="More details about the experiment">
+  <UModal class="overflow-y-scroll max-h-[50vh]" v-model:open="isOpen" title="Experiment Details" description="More details about the experiment">
     <template #body>
       <table class="w-full">
         <tbody>

@@ -71,7 +71,8 @@ const nextStep = () => {
             service: pc.service,
             label: pc.label
           }
-        })
+        }),
+        rerank_model_id: state.retrieval?.rerank_model_id,
       },
       n_shot_prompt_guide: state.retrieval?.n_shot_prompt_guide || {}
     }
@@ -131,7 +132,7 @@ const steps = [
       <ProjectCreateIndexingStrategyStep v-model="state.indexing" @previous="previousStep" @next="nextStep" />
     </div>
     <div v-if="currentStep === 3">
-      <ProjectCreateRetrievalStrategyStep v-model="state.retrieval" next-button-label="Submit" @previous="previousStep"
+      <ProjectCreateRetrievalStrategyStep :region="state.prestep?.region" v-model="state.retrieval" next-button-label="Submit" @previous="previousStep"
         @next="nextStep" />
     </div>
   </div>

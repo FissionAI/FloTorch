@@ -107,6 +107,11 @@ export type ProjectNShotPromptGuide = z.infer<
 
 export const ProjectCreateRetrievalStrategySchema = z
   .object({
+    rerank_model_id: z.string({
+      required_error: "At least one rerank model is required",
+    }).array().min(1, {
+      message: "At least one rerank model is required",
+    }),
     n_shot_prompts: z
       .number({
         required_error: "At least one shot prompt is required",

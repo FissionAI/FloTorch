@@ -357,8 +357,47 @@ export const useProjectCreateMeta = () => {
           value: 0.7,
         },
       ],
+      rerankModel: [
+        {
+          label:'None',
+          value:'none'
+        },
+        {
+          type: "label",
+          label: "Bedrock",
+          regions: ['us-east-1']
+        },
+        {
+          label: 'Amazon Rerank 1.0',
+          value: 'amazon.rerank-v1:0',
+          regions: ['us-east-1']
+        },
+        {
+          label: 'Cohere Rerank 3.5',
+          value: 'cohere.rerank-v3-5:0',
+          regions: ['us-east-1']
+        },
+        {
+          label: 'Amazon Rerank 1.0 (Not available in us-west-2)',
+          value: 'amazon.rerank-v1:0',
+          regions: ['us-west-2'],
+          disabled: true
+        },
+        {
+          label: 'Cohere Rerank 3.5 (Not available in us-west-2)',
+          value: 'cohere.rerank-v3-5:0',
+          regions: ['us-west-2'],
+          disabled: true
+        }
+      ]
     },
   };
+};
+
+export const useFilteredRerankModels = (region: string) => {
+  const meta = useProjectCreateMeta();
+  return meta.retrievalStrategy.rerankModel.filter(model => 
+    model.type === 'label' || model.value === 'none' || (model.regions && model.regions.includes(region)));
 };
 
 const generateId = () => {
