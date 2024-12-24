@@ -1,8 +1,9 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
 from typing import Optional
 
 from baseclasses.base_classes import Execution
-from ..configuration_validation import generate_all_combinations
+from constants.validation_status import ValidationStatus
+from ..configuration_validation import generate_all_combinations_in_background
 from ..dependencies.database import (
     get_execution_db,
     get_step_function_orchestrator
@@ -14,6 +15,8 @@ from config.config import get_config
 from util.error_handling import create_error_response
 from constants import ErrorTypes, StatusCodes
 import logging
+from fastapi.responses import JSONResponse
+from util.s3util import S3Util
 
 router = APIRouter(tags=["execution"])
 config = get_config()
@@ -294,6 +297,7 @@ async def execute_experiments(
 @router.get("/execution/{execution_id}/valid_experiment")
 async def generate_config(
         execution_id: str,
+        background_tasks: BackgroundTasks,
         execution_db=Depends(get_execution_db)
 ):
     """
@@ -309,9 +313,16 @@ async def generate_config(
                     "No project found for the provided ID",
                 ),
             )
+        
+        execution_db.update_item(
+            key={"id": execution_id}, 
+            update_expression="SET validation_status = :status_value", 
+            expression_values={":status_value": ValidationStatus.QUEUED.value}
+        )
+            
         parameter_options = execution.get('config')
-        combinations = await asyncio.to_thread(generate_all_combinations, parameter_options)
-        return combinations
+        background_tasks.add_task(generate_all_combinations_in_background, execution_id, parameter_options)
+        return JSONResponse(status_code=StatusCodes.SUCCESS, content={"message": "Fetching valid experiments."})
     except HTTPException as http_exc:
         # Re-raise the HTTPException with the same status code and detail
         raise http_exc
@@ -322,5 +333,48 @@ async def generate_config(
             detail=create_error_response(
                 ErrorTypes.SERVER_ERROR,
                 "Failed to generate valid experiments. Please contact admin",
+            ),
+        )
+
+
+@router.get("/execution/{execution_id}/valid_experiment/poll")
+async def get_valid_experiment_result(
+    execution_id: str,
+    execution_db=Depends(get_execution_db)
+):
+    "Polling API to poll the result for the `/execution/{execution_id}/valid_experiment` API"
+    try:
+        execution = execution_db.get_item({"id": execution_id})
+        if "validation_status" not in execution:
+            raise HTTPException(
+                status_code=StatusCodes.BAD_REQUEST,
+                detail=create_error_response(
+                    ErrorTypes.NOT_FOUND_ERROR,
+                    "No submit request found for the ID. Please use the submit API to submit the request for fetching valid experiments.",
+                ),
+            )
+        
+        validation_status = execution["validation_status"]
+        if validation_status == ValidationStatus.COMPLETED.value:
+            # pull the json from s3 and return the json
+            json_data = S3Util().read_json_from_s3(f's3://{config.s3_bucket}/experiment_combination/{execution_id}.json')
+            return json_data
+        elif validation_status == ValidationStatus.FAILED.value:
+            raise HTTPException(
+                status_code=StatusCodes.INTERNAL_SERVER_ERROR,
+                detail=create_error_response(
+                    ErrorTypes.SERVER_ERROR,
+                    "Background process execution failed.",
+                ),
+            )
+
+        return JSONResponse(status_code=StatusCodes.ACCEPTED, content={"validation_status": validation_status})
+    except Exception as e:
+        logger.error(f"Failed to fetch valid experiments: {str(e)}")
+        raise HTTPException(
+            status_code=StatusCodes.INTERNAL_SERVER_ERROR,
+            detail=create_error_response(
+                ErrorTypes.SERVER_ERROR,
+                "Failed to fetch valid experiments. Please contact admin",
             ),
         )

@@ -182,14 +182,12 @@ export const useProjectCreateMeta = () => {
           value: "hnsw",
         },
         {
-          label: "HNSW - BQ (Coming Soon)",
-          value: "hnsw_bq",
-          disabled: true,
+          label: "HNSW - BQ",
+          value: "hnsw_bq"
         },
         {
-          label: "HNSW - SQ (Coming Soon)",
-          value: "hnsw_sq",
-          disabled: true,
+          label: "HNSW - SQ",
+          value: "hnsw_sq"
         },
       ],
     },
@@ -565,6 +563,8 @@ export const useHumanIndexingAlgorithm = (algorithm: string) => {
       return "HNSW - PQ";
     case "hnsw_sq":
       return "HNSW - SQ";
+    case "hnsw_bq":
+      return "HNSW - BQ";
   }
 };
 

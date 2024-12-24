@@ -520,7 +520,8 @@ class StateMachineStack(Stack):
                     "temp_retrieval_llm.$": "$.Item.Item.config.M.temp_retrieval_llm.N",
                     "aws_region.$": "$.Item.Item.config.M.region.S",
                     "eval_service": "bedrock",
-                    "eval_model": "amazon.titan-embed-text-v1"
+                    "eval_model": "amazon.titan-embed-text-v1",
+                    "rerank_model_id.$": "$.Item.Item.config.M.rerank_model_id.S"
                 }
             },
             result_path="$.parsedConfig"

@@ -6,6 +6,8 @@ from core.dynamodb import DynamoDBOperations
 from config.config import Config, get_config
 from core.processors import EmbedProcessor
 from core.processors import InferenceProcessor
+from core.rerank.rerank import DocumentReranker
+import time
 
 import boto3
 from core.inference.inference_factory import InferencerFactory
@@ -145,6 +147,16 @@ def process_questions(
             query_results = components["vector_database"].search(
                 experimentalConfig.index_id, query_embedding, experimentalConfig.knn_num
             )
+
+            if experimentalConfig.rerank_model_id and experimentalConfig.rerank_model_id.lower() != 'none':
+                #Rerank the query results
+                logger.info(f"Reranking for question {idx+1}")
+                start_time = time.time()
+                reranker = DocumentReranker()  
+                query_results = reranker.rerank_documents(question, query_results)
+                end_time = time.time()
+                logger.info(f"Reranking for question {idx+1} took {end_time - start_time:.2f} seconds")                
+            
 
             # Generate answer
             answer_metadata, answer = components["inference_processor"].generate_text(
