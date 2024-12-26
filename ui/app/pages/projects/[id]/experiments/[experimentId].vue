@@ -36,8 +36,8 @@ const columns = ref<TableColumn<ExperimentQuestionMetric>[]>([
 
 
 <template>
-  <UCard>
     <Breadcumb />
+  <UCard>
     <template #header>
       <div class="flex justify-between items-center">
         <h2 class="text-xl font-medium">Experiment Question Metrics</h2>
