@@ -9,9 +9,9 @@ from app.dependencies.database import (
 logger = logging.getLogger(__name__)
 
 MODELS = [
-    "bedrock_amazon.nova-lite-v1:0",
-    "bedrock_amazon.nova-micro-v1:0",
-    "bedrock_amazon.nova-pro-v1:0",
+    "bedrock_us.amazon.nova-lite-v1:0",
+    "bedrock_us.amazon.nova-micro-v1:0",
+    "bedrock_us.amazon.nova-pro-v1:0",
     "bedrock_amazon.titan-text-lite-v1",
     "bedrock_amazon.titan-text-express-v1",
     "bedrock_us.anthropic.claude-3-5-sonnet-20241022-v2:0",
