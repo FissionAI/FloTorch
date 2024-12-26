@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import Optional
 from pydantic import Field
 import uuid
+import time
 import logging
 from dataclasses import dataclass
 from config.config import Config
@@ -14,7 +15,7 @@ from core.dynamodb import DynamoDBOperations
 import random
 from dataclasses import dataclass, asdict
 from decimal import Decimal
-
+import botocore
 
 
 logger = logging.getLogger(__name__)
@@ -245,3 +246,53 @@ class EvaluationMetrics():
             'Context_Recall': {'S': str(self.context_recall) if self.context_recall is not None else '0.0'},
             'Rouge_Score': {'S': str(self.rouge_score) if self.rouge_score is not None else '0.0'}
         }
+
+
+class RetryParams(BaseModel):
+    max_retries: int
+    retry_delay: int
+    backoff_factor: int
+    
+class BotoRetryHandler(ABC):
+    """Abstract class for retry handler"""
+    
+    @property
+    @abstractmethod
+    def retry_params(self) -> RetryParams:
+        pass
+    
+    @property
+    @abstractmethod
+    def retryable_errors(self) -> set[str]:
+        pass
+        
+        
+    def __call__(self, func):
+        def wrapper(*args, **kwargs):
+            retries = 0
+            retry_params = self.retry_params
+            while retries < retry_params.max_retries:
+                try:
+                    return func(*args, **kwargs)
+                except botocore.exceptions.ClientError as e:
+                    error_code = e.response['Error']['Code']
+                    if error_code in self.retryable_errors:
+                        retries += 1
+                        logger.error(f"Rate limit error in Bedrock converse (Attempt {retries}/{retry_params.max_retries}): {str(e)}")
+                        
+                        if retries >= retry_params.max_retries:
+                            logger.error("Max retries reached. Could not complete Bedrock converse operation.")
+                            raise
+                        
+                        backoff_time = retry_params.retry_delay * (retry_params.backoff_factor ** (retries - 1))
+                        logger.info(f"Retrying in {backoff_time} seconds...")
+                        time.sleep(backoff_time)
+                    else:
+                        # If it's not a rate limit error, raise immediately
+                        raise
+                except Exception as e:
+                    # For any other exception, log and raise immediately
+                    logger.error(f"Unexpected error in Bedrock converse: {str(e)}")
+                    raise
+            
+        return wrapper
