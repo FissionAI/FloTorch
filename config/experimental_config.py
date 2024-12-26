@@ -34,8 +34,7 @@ class ExperimentalConfig(BaseModel):
     ragas_inference_llm: str = 'mistral.mixtral-8x7b-instruct-v0:1'
     ragas_inference_temperature: float = float(0.4)
     # Rerank model id
-    rerank_model_id: str = Field(alias="rerank_model_id")
-
+    rerank_model_id: str = Field(alias="rerank_model_id", default="none")
     class Config:
         alias_generator = lambda string: string.replace("-", "_")
         populate_by_name = True
