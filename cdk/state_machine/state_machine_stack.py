@@ -1191,7 +1191,9 @@ class StateMachineStack(Stack):
             parameters={
                 "TableName": model_invocations_table_name,
                 "Key": {
-                    "S.$": "States.Format('{}_{}', $.parsedConfig.parsed_config.retrieval_service, $.parsedConfig.parsed_config.retrieval_model)"
+                    "execution_model_id": {
+                        "S.$": "States.Format('{}_{}', $.parsedConfig.parsed_config.retrieval_service, $.parsedConfig.parsed_config.retrieval_model)"
+                    }
                 },
                 "UpdateExpression": "SET invocations = invocations - :val",
                 "ExpressionAttributeValues": {
