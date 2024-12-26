@@ -1,7 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue";
-import type { RouteLocationNormalizedLoaded } from "vue-router";
-
+import { pascalCase } from "scule";
 const route: RouteLocationNormalizedLoaded = useRoute();
 
 const props = withDefaults(
@@ -23,10 +21,7 @@ const formatPathSegment = (segment: string): string => {
   }
 
   // Remove hyphens and underscores, then capitalize
-  return segment
-    .split(/[-_]/)
-    .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
+  return pascalCase(segment);
 };
 
 // Computed property to generate breadcrumb items
