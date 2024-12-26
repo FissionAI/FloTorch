@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.ERROR)
 
 class DocumentReranker:
-    def __init__(self):
+    def __init__(self, region, rerank_model_id):
         """
         Initialize the DocumentReranker with the AWS region, model ID, and Bedrock agent runtime.
         
@@ -17,8 +17,8 @@ class DocumentReranker:
             model_id (str): The model ID to use for reranking.
             bedrock_agent_runtime (object): The Bedrock agent runtime instance to interact with the API.
         """
-        self.region = Config.aws_region
-        self.rerank_model_id = ExperimentalConfig.rerank_model_id
+        self.region = region
+        self.rerank_model_id = rerank_model_id
         self.bedrock_agent_runtime = boto3.client('bedrock-agent-runtime', region_name=self.region)
         
     def rerank_documents(self, input_prompt, retrieved_documents):

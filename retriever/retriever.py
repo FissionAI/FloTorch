@@ -132,6 +132,7 @@ def process_questions(
     retrieval_input_tokens = 0
     retrieval_output_tokens = 0
 
+    logger.info(f"Rerank model id for experiment {experimentalConfig.experiment_id}: {experimentalConfig.rerank_model_id}")
     for idx, item in enumerate(gt_data):
         try:
             question = item["question"]
@@ -150,9 +151,9 @@ def process_questions(
 
             if experimentalConfig.rerank_model_id and experimentalConfig.rerank_model_id.lower() != 'none':
                 #Rerank the query results
-                logger.info(f"Reranking for question {idx+1}")
+                logger.info(f"Into reranking for experiment {experimentalConfig.experiment_id} for question {idx+1}")
                 start_time = time.time()
-                reranker = DocumentReranker()  
+                reranker = DocumentReranker(region=experimentalConfig.aws_region, rerank_model_id=experimentalConfig.rerank_model_id)  
                 query_results = reranker.rerank_documents(question, query_results)
                 end_time = time.time()
                 logger.info(f"Reranking for question {idx+1} took {end_time - start_time:.2f} seconds")                

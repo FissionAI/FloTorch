@@ -363,28 +363,28 @@ export const useProjectCreateMeta = () => {
         {
           type: "label",
           label: "Bedrock",
-          regions: ['us-east-1']
+          regions: ['us-west-2']
         },
         {
           label: 'Amazon Rerank 1.0',
           value: 'amazon.rerank-v1:0',
-          regions: ['us-east-1']
+          regions: ['us-west-2']
         },
         {
           label: 'Cohere Rerank 3.5',
           value: 'cohere.rerank-v3-5:0',
-          regions: ['us-east-1']
+          regions: ['us-west-2']
         },
         {
-          label: 'Amazon Rerank 1.0 (Not available in us-west-2)',
+          label: 'Amazon Rerank 1.0 (Not available in us-east-1)',
           value: 'amazon.rerank-v1:0',
-          regions: ['us-west-2'],
+          regions: ['us-east-1'],
           disabled: true
         },
         {
-          label: 'Cohere Rerank 3.5 (Not available in us-west-2)',
+          label: 'Cohere Rerank 3.5 (Not available in us-east-1)',
           value: 'cohere.rerank-v3-5:0',
-          regions: ['us-west-2'],
+          regions: ['us-east-1'],
           disabled: true
         }
       ]
