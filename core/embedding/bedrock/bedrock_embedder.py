@@ -1,6 +1,7 @@
 import boto3
 from typing import Dict, List, Tuple, Any
 from baseclasses.base_classes import BaseEmbedder
+from util.boto3_utils import BedRockRetryHander
 import json
 
 import logging
@@ -17,6 +18,7 @@ class BedrockEmbedder(BaseEmbedder):
     def prepare_payload(self, text: str, dimensions: int, normalize: bool) -> Dict:
         raise NotImplementedError("Subclasses must implement `prepare_payload`")
 
+    @BedRockRetryHander()
     def embed(self, text: str, dimensions: int = 256, normalize: bool = True) -> Tuple[Dict[Any, Any], List[float]]:
         try:
             payload = self.prepare_payload(text, dimensions, normalize)

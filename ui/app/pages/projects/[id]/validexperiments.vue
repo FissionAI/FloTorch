@@ -100,6 +100,7 @@ useHead({
 
 <template>
   <div>
+    <Breadcumb />
     <div
       v-if="experimentLoading && !experimentError"
       class="flex justify-center items-center h-24"

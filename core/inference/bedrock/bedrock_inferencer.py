@@ -4,6 +4,7 @@ from typing import List, Dict, Any, Union, Tuple
 import logging
 from config.experimental_config import ExperimentalConfig, NShotPromptGuide
 from core.inference.inference_factory import InferencerFactory
+from util.boto3_utils import BedRockRetryHander
 import random
 
 logger = logging.getLogger()
@@ -77,7 +78,7 @@ class BedrockInferencer(BaseInferencer):
         
         return prompt.strip()
      
-    
+    @BedRockRetryHander()
     def generate_text(self, user_query: str, context: List[Dict], default_prompt: str, **kwargs) -> Tuple[Dict[Any, Any], str]:
         try:
             # Code to generate prompt considering the upload prompt config file

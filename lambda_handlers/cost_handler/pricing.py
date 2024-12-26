@@ -3,86 +3,163 @@ import boto3
 from utils import read_csv_from_s3
 from datetime import datetime
 import math
-
 import logging
+
 logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO)
 
-s3 = boto3.client('s3') 
-S3_BUCKET = os.getenv('s3_bucket')
-BEDROCK_CSV_PATH = os.getenv('bedrock_limit_csv')
+s3 = boto3.client("s3")
+S3_BUCKET = os.getenv("s3_bucket")
+BEDROCK_CSV_PATH = os.getenv("bedrock_limit_csv")
 
-def compute_actual_price(configuration, input_tokens, output_tokens, embed_tokens, os_time, ecs_time):
-    try:
-        df = read_csv_from_s3(BEDROCK_CSV_PATH, S3_BUCKET)
-        # return df
-    except Exception as e:
-        logger.error(f"Error reading the CSV file: {e}")
+# Constants
+MILLION = 1_000_000
+THOUSAND = 1_000
+SECONDS_IN_MINUTE = 60
+
+
+def compute_actual_price(
+    configuration, input_tokens, output_tokens, embed_tokens, os_time, ecs_time
+):
+    """Compute the actual price based on the given configuration and token/time inputs."""
+
+    is_input_valid, input_missing = validate_params(
+        configuration=configuration,
+        input_tokens=input_tokens,
+        output_tokens=output_tokens,
+        embed_tokens=embed_tokens,
+        os_time=os_time,
+        ecs_time=ecs_time,
+    )
+
+    if not is_input_valid:
+        logger.error(f"Missing required parameters: {', '.join(input_missing)}.")
         return None
 
-    region = configuration["aws_region"]
-    embed_model = configuration["embedding_model"]
-    gen_model = configuration["retrieval_model"]
+    try:
+        # Read pricing data from S3
+        df = read_csv_from_s3(BEDROCK_CSV_PATH, S3_BUCKET)
+    except Exception as e:
+        logger.error(f"Error reading the CSV file from S3: {e}")
+        return None
 
-    embed_model_price = df[(df['model'] == embed_model) & (df['Region'] == region)]['input_price']
-    embed_model_price = float(embed_model_price.values[0]) #this price is in 1000s of tokens not millions
+    try:
+        aws_region = configuration.get("aws_region")
+        embedding_model = configuration.get("embedding_model")
+        retrieval_model = configuration.get("retrieval_model")
 
-    gen_model_price = df[(df['model'] == gen_model) & (df['Region'] == region)]['input_price']
-    gen_model_price = float(gen_model_price.values[0]) #this price is in millions of tokens
+        is_config_valid, config_missing = validate_params(
+            aws_region=aws_region,
+            embedding_model=embedding_model,
+            retrieval_model=retrieval_model,
+        )
+        if not is_config_valid:
+            logger.error(
+                f"Configuration is missing required fields: {', '.join(config_missing)}."
+            )
+            return None
 
-    gen_model_out_price = df[(df['model'] == gen_model) & (df['Region'] == region)]['output_price']
-    gen_model_out_price = float(gen_model_out_price.values[0]) #this price is in millions of tokens
+        embedding_model_price = df[
+            (df["model"] == embedding_model) & (df["Region"] == aws_region)
+        ]["input_price"]
+        retrieval_model_input_price = df[
+            (df["model"] == retrieval_model) & (df["Region"] == aws_region)
+        ]["input_price"]
+        retrieval_model_output_price = df[
+            (df["model"] == retrieval_model) & (df["Region"] == aws_region)
+        ]["output_price"]
 
-    embed_actual_price = (embed_model_price * float(embed_tokens)) / 1000
-    gen_in_actual_price = (gen_model_price * float(input_tokens)) / 1000000
-    gen_out_actual_price = (gen_model_out_price * float(output_tokens)) / 1000000
+        is_prices_present, prices_missing = validate_params(
+            embedding_model_price=embedding_model_price,
+            retrieval_model_input_price=retrieval_model_input_price,
+            retrieval_model_output_price=retrieval_model_output_price,
+        )
 
-    os_actual_price = (.711 * 3 * os_time / 60) + ((.122 * 2 * os_time + 13000 * .008 * os_time) / 30 / 24) /60
-    ecs_actual_price = (0.04048 * 8 * ecs_time + 0.004445 * 16 * ecs_time) / 60
+        if not is_prices_present:
+            logger.error(
+                f"No matching price data found for the provided models : {', '.join(prices_missing)}."
+            )
+            return None
 
-    total_actual_price = embed_actual_price + gen_in_actual_price + gen_out_actual_price + os_actual_price + ecs_actual_price
+        embedding_model_price = float(
+            embedding_model_price.values[0]
+        )  # Price per 1000 tokens
+        retrieval_model_input_price = float(
+            retrieval_model_input_price.values[0]
+        )  # Price per million tokens
+        retrieval_model_output_price = float(
+            retrieval_model_output_price.values[0]
+        )  # Price per million tokens
 
-    return total_actual_price
+        # Calculate costs
+        embedding_actual_cost = (embedding_model_price * float(embed_tokens)) / THOUSAND
+        retrieval_model_input_actual_cost = (
+            retrieval_model_input_price * float(input_tokens)
+        ) / MILLION
+        retrieval_model_output_actual_cost = (
+            retrieval_model_output_price * float(output_tokens)
+        ) / MILLION
+
+        opensearch_actual_cost = (0.711 * 3 * os_time / SECONDS_IN_MINUTE) + (
+            (0.122 * 2 * os_time + 13000 * 0.008 * os_time) / (30 * 24)
+        ) / SECONDS_IN_MINUTE
+        ecs_actual_cost = (
+            0.04048 * 8 * ecs_time + 0.004445 * 16 * ecs_time
+        ) / SECONDS_IN_MINUTE
+
+        total_actual_cost = (
+            embedding_actual_cost
+            + retrieval_model_input_actual_cost
+            + retrieval_model_output_actual_cost
+            + opensearch_actual_cost
+            + ecs_actual_cost
+        )
+
+        return total_actual_cost
+    except Exception as e:
+        logger.error(f"Error during price computation: {e}")
+        return None
+
 
 def calculate_experiment_duration(experiment):
+    """Calculate various durations (total, indexing, retrieval, evaluation) from the experiment dictionary."""
     try:
-        # Initialize total duration
-        total_duration = 0
-        indexing_difference = 0
-        retrieval_difference = 0
-        eval_difference = 0
 
-        # Calculate total duration if fields are present
-        if experiment.get('start_datetime') and experiment.get('end_datetime'):
-            experiment_start = datetime.strptime(experiment.get('start_datetime'), '%Y-%m-%dT%H:%M:%S.%fZ')
-            experiment_end = datetime.strptime(experiment.get('end_datetime'), '%Y-%m-%dT%H:%M:%S.%fZ')
-            experiment_difference = experiment_end - experiment_start
-            total_duration = experiment_difference.total_seconds()
+        def parse_datetime(date_str):
+            return datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%S.%fZ")
 
-        # Calculate indexing duration if fields are present
-        if experiment.get('indexing_start') and experiment.get('indexing_end'):
-            indexing_start = datetime.strptime(experiment.get('indexing_start'), '%Y-%m-%dT%H:%M:%S.%fZ')
-            indexing_end = datetime.strptime(experiment.get('indexing_end'), '%Y-%m-%dT%H:%M:%S.%fZ')
-            indexing_difference = indexing_end - indexing_start
-            indexing_difference = indexing_difference.total_seconds()
+        def calculate_difference(start_key, end_key):
+            if experiment.get(start_key) and experiment.get(end_key):
+                start = parse_datetime(experiment[start_key])
+                end = parse_datetime(experiment[end_key])
+                return (end - start).total_seconds()
+            return 0
 
-        # Calculate retrieval duration if fields are present
-        if experiment.get('retrieval_start') and experiment.get('retrieval_end'):
-            retrieval_start = datetime.strptime(experiment.get('retrieval_start'), '%Y-%m-%dT%H:%M:%S.%fZ')
-            retrieval_end = datetime.strptime(experiment.get('retrieval_end'), '%Y-%m-%dT%H:%M:%S.%fZ')
-            retrieval_difference = retrieval_end - retrieval_start
-            retrieval_difference = retrieval_difference.total_seconds()
+        total_duration = calculate_difference("start_datetime", "end_datetime")
+        indexing_duration = calculate_difference("indexing_start", "indexing_end")
+        retrieval_duration = calculate_difference("retrieval_start", "retrieval_end")
+        eval_duration = calculate_difference("eval_start", "eval_end")
 
-        # Calculate eval duration if fields are present
-        if experiment.get('eval_start') and experiment.get('eval_end'):
-            eval_start = datetime.strptime(experiment.get('eval_start'), '%Y-%m-%dT%H:%M:%S.%fZ')
-            eval_end = datetime.strptime(experiment.get('eval_end'), '%Y-%m-%dT%H:%M:%S.%fZ')
-            eval_difference = eval_end - eval_start
-            eval_difference = eval_difference.total_seconds()
-
-        # Return the total duration in minutes, rounded
-        return math.ceil(total_duration / 60),math.ceil(indexing_difference / 60),math.ceil(retrieval_difference / 60),math.ceil(eval_difference / 60)
+        return (
+            math.ceil(total_duration / SECONDS_IN_MINUTE),
+            math.ceil(indexing_duration / SECONDS_IN_MINUTE),
+            math.ceil(retrieval_duration / SECONDS_IN_MINUTE),
+            math.ceil(eval_duration / SECONDS_IN_MINUTE),
+        )
     except Exception as e:
-        logger.error(f"Error occured during time computation : {e}")
-        # Return 0 if any unexpected error occurs
-        return 0
+        logger.error(f"Error occurred during duration computation: {e}")
+        return 0, 0, 0, 0
+
+
+def validate_params(**kwargs):
+    """
+    Validates the given parameters and identifies missing ones.
+
+    Args:
+        **kwargs: Key-value pairs of parameter names and their values.
+
+    Returns:
+        tuple: A boolean indicating if there are missing parameters and a list of missing parameter names.
+    """
+    missing_params = [param for param, value in kwargs.items() if not value]
+    return not missing_params, missing_params
