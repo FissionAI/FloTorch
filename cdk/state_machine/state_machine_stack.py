@@ -542,6 +542,10 @@ class StateMachineStack(Stack):
                 }
             },
             result_path="$.modelInvocations",
+            result_selector={
+                "invocations.$": "States.MathAdd(States.StringToJson($.Item.invocations.N), 0)",
+                "limit.$": "States.MathAdd(States.StringToJson($.Item.limit.N), 0)"
+            },
             iam_resources=[vpc_stack.model_invocations_table.table_arn]
         )
 
@@ -568,16 +572,19 @@ class StateMachineStack(Stack):
                         "S.$": "States.Format('{}_{}', $.parsedConfig.parsed_config.embedding_service, $.parsedConfig.parsed_config.embedding_model)"
                     }
                 },
-                "UpdateExpression": "SET invocations = :myValueRef",
+                "UpdateExpression": "SET invocations = invocations + :myValueRef",
                 "ExpressionAttributeValues": {
-                    ":myValueRef": {
-                        "N": "1"
+                     ":myValueRef": {
+                            "N": "1"
+                        },
+                        ":prevRef": {
+                            "N.$": "States.Format('{}', $.modelInvocations.invocations)"
+                        },
+                        ":limit": {
+                            "N.$": "States.Format('{}', $.modelInvocations.limit)"
+                        }
                     },
-                    ":prevRef": {
-                        "N": "0"
-                    }
-                },
-                "ConditionExpression": "invocations = :prevRef"
+                "ConditionExpression": "invocations = :prevRef AND invocations <> :limit"
             },
             iam_resources=[vpc_stack.model_invocations_table.table_arn],
             result_path=sfn.JsonPath.DISCARD
@@ -782,10 +789,10 @@ class StateMachineStack(Stack):
                         "S.$": "States.Format('{}_{}', $.parsedConfig.parsed_config.embedding_service, $.parsedConfig.parsed_config.embedding_model)"
                     }
                 },
-                "UpdateExpression": "SET invocations = :myValueRef",
+                "UpdateExpression": "SET invocations = invocations - :myValueRef",
                 "ExpressionAttributeValues": {
                     ":myValueRef": {
-                        "N": "0"
+                        "N": "1"
                     }
                 }
             },
@@ -977,10 +984,10 @@ class StateMachineStack(Stack):
                         "S.$": "States.Format('{}_{}', $.parsedConfig.parsed_config.embedding_service, $.parsedConfig.parsed_config.embedding_model)"
                     }
                 },
-                "UpdateExpression": "SET invocations = :myValueRef",
+                "UpdateExpression": "SET invocations = invocations - :myValueRef",
                 "ExpressionAttributeValues": {
                     ":myValueRef": {
-                        "N": "0"
+                        "N": "1"
                     }
                 }
             },
@@ -1009,6 +1016,10 @@ class StateMachineStack(Stack):
                 }
             },
             result_path="$.retrieval_invocations",
+            result_selector={
+                "invocations.$": "States.MathAdd(States.StringToJson($.Item.invocations.N), 0)",
+                "limit.$": "States.MathAdd(States.StringToJson($.Item.limit.N), 0)"
+            },
             iam_resources=[vpc_stack.model_invocations_table.table_arn]
         )
 
@@ -1035,16 +1046,19 @@ class StateMachineStack(Stack):
                         "S.$": "States.Format('{}_{}', $.parsedConfig.parsed_config.retrieval_service, $.parsedConfig.parsed_config.retrieval_model)"
                     }
                 },
-                "UpdateExpression": "SET invocations = :myValueRef",
+                "UpdateExpression": "SET invocations = invocations + :myValueRef",
                 "ExpressionAttributeValues": {
                     ":myValueRef": {
-                        "N": "1"
+                            "N": "1"
+                        },
+                        ":prevRef": {
+                            "N.$": "States.Format('{}', $.retrieval_invocations.invocations)"
+                        },
+                        ":limit": {
+                            "N.$": "States.Format('{}', $.retrieval_invocations.limit)"
+                        }
                     },
-                    ":prevRef": {
-                        "N": "0"
-                    }
-                },
-                "ConditionExpression": "invocations = :prevRef"
+              "ConditionExpression": "invocations = :prevRef AND invocations <> :limit"
             },
             iam_resources=[vpc_stack.model_invocations_table.table_arn],
             result_path=sfn.JsonPath.DISCARD
@@ -1177,11 +1191,11 @@ class StateMachineStack(Stack):
             parameters={
                 "TableName": model_invocations_table_name,
                 "Key": {
-                    "execution_model_id": {"S": sfn.JsonPath.string_at("$.retrieval_invocations.Item.execution_model_id.S")}
+                    "S.$": "States.Format('{}_{}', $.parsedConfig.parsed_config.retrieval_service, $.parsedConfig.parsed_config.retrieval_model)"
                 },
-                "UpdateExpression": "SET invocations = :val",
+                "UpdateExpression": "SET invocations = invocations - :val",
                 "ExpressionAttributeValues": {
-                    ":val": {"N": "0"}
+                    ":val": {"N": "1"}
                 }
             },
             iam_resources=[vpc_stack.model_invocations_table.table_arn],
@@ -1192,7 +1206,7 @@ class StateMachineStack(Stack):
         retrieval_model_check_chain = retrieval_model_check
 
         evaluate_retrieval_model_check_choice.when(
-            sfn.Condition.string_equals("$.retrieval_invocations.Item.invocations.N", "1"),
+            sfn.Condition.number_greater_than_equals_json_path("$.retrieval_invocations.invocations", "$.retrieval_invocations.limit"),
             wait_for_retrieval_model_update.next(retrieval_model_check)
         ).otherwise(
             retrieval_model_invocation_update.next(
@@ -1274,10 +1288,10 @@ class StateMachineStack(Stack):
                         "S.$": "States.Format('{}_{}', $.parsedConfig.parsed_config.retrieval_service, $.parsedConfig.parsed_config.retrieval_model)"
                     }
                 },
-                "UpdateExpression": "SET invocations = :myValueRef",
+                "UpdateExpression": "SET invocations = invocations - :myValueRef",
                 "ExpressionAttributeValues": {
                     ":myValueRef": {
-                        "N": "0"
+                        "N": "1"
                     }
                 }
             },
@@ -1303,7 +1317,11 @@ class StateMachineStack(Stack):
                 }
             },
             iam_resources=[vpc_stack.model_invocations_table.table_arn],
-            result_path="$.eval_invocations"
+            result_path="$.eval_invocations",
+            result_selector={
+                "invocations.$": "States.MathAdd(States.StringToJson($.Item.invocations.N), 0)",
+                "limit.$": "States.MathAdd(States.StringToJson($.Item.limit.N), 0)"
+            }
         )
 
         # "Evaluate Retrieval Model Task" Choice logic
@@ -1341,16 +1359,20 @@ class StateMachineStack(Stack):
                         "S.$": "States.Format('{}_{}', $.parsedConfig.parsed_config.eval_service, $.parsedConfig.parsed_config.eval_model)"
                     }
                 },
-                "UpdateExpression": "SET invocations = :myValueRef",
+                "UpdateExpression": "SET invocations = invocations + :myValueRef",
                 "ExpressionAttributeValues": {
                     ":myValueRef": {
                         "N": "1"
                     },
                     ":prevRef": {
-                        "N": "0"
+                        "N.$": "States.Format('{}', $.eval_invocations.invocations)"
+                    },
+                    ":limit": {
+                        "N.$": "States.Format('{}', $.eval_invocations.limit)"
                     }
+                    
                 },
-                "ConditionExpression": "invocations = :prevRef"
+                "ConditionExpression": "invocations = :prevRef AND invocations <> :limit"
             },
             iam_resources=[vpc_stack.model_invocations_table.table_arn],
             result_path=sfn.JsonPath.DISCARD
@@ -1485,7 +1507,7 @@ class StateMachineStack(Stack):
         retrieval_model_check.next(evaluate_retrieval_model_check_choice)
 
         evaluate_eval_model_check.when(
-            sfn.Condition.string_equals("$.eval_invocations.Item.invocations.N", "1"),
+            sfn.Condition.number_greater_than_equals_json_path("$.eval_invocations.invocations", "$.eval_invocations.limit"),
             wait_for_eval_model_update.next(eval_model_check)
         ).otherwise(
             eval_model_invocation_update.next(update_eval_status_in_progress).next(run_evaluation_task)
@@ -1537,10 +1559,10 @@ class StateMachineStack(Stack):
                         "S.$": "States.Format('{}_{}', $.parsedConfig.parsed_config.eval_service, $.parsedConfig.parsed_config.eval_model)"
                     }
                 },
-                "UpdateExpression": "SET invocations = :myValueRef",
+                "UpdateExpression": "SET invocations = invocations - :myValueRef",
                 "ExpressionAttributeValues": {
                     ":myValueRef": {
-                        "N": "0"
+                        "N": "1"
                     }
                 }
             },
@@ -1603,10 +1625,7 @@ class StateMachineStack(Stack):
 
         # Set up the choices for "Evaluate Indexing Model Check"
         evaluate_indexing_model_check_choice.when(
-            sfn.Condition.and_(
-                sfn.Condition.is_present("$.modelInvocations.Item"),
-                sfn.Condition.string_equals("$.modelInvocations.Item.invocations.N", "1")
-            ),
+            sfn.Condition.number_greater_than_equals_json_path("$.modelInvocations.invocations", "$.modelInvocations.limit"),
             wait_for_indexing_model_update.next(indexing_model_check)
         ).otherwise(
             indexing_model_invocation_update.next(get_latest_status)
