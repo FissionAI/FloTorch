@@ -65,7 +65,7 @@ async def post_experiment(
         expression_values = {":execution_id": execution_id}
         expression_attribute_names = {"#execution_id": "execution_id"}
 
-        existing_experiments = experiment_db.scan(
+        existing_experiments = experiment_db.scan_all(
             filter_expression=filter_expression,
             expression_values=expression_values,
             expression_attribute_names=expression_attribute_names,
@@ -162,7 +162,7 @@ async def get_experiments(
             expression_values[":experiment_status"] = status
             expression_attribute_names["#experiment_status"] = "experiment_status"
 
-        response = experiment_db.scan(
+        response = experiment_db.scan_all(
             filter_expression=filter_expression,
             expression_values=expression_values,
             expression_attribute_names=expression_attribute_names,

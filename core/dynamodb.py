@@ -59,6 +59,42 @@ class DynamoDBOperations:
             return obj.isoformat()  # Convert datetime to ISO 8601 string
         return obj
     
+    def scan_all(self, filter_expression: Optional[str] = None, expression_values: Optional[Dict[str, Any]] = None, expression_attribute_names: Optional[Dict[str, str]] = None) -> Dict:
+        """
+        Scan items from DynamoDB, optionally applying filter expressions.
+
+        Args:
+            filter_expression (Optional[str]): Filter expression for the scan.
+            expression_values (Optional[Dict[str, Any]]): Attribute values for the filter.
+            expression_attribute_names (Optional[Dict[str, str]]): Attribute names mapping for reserved keywords.
+
+        Returns:
+            Dict: Scan results.
+        """
+        result = []
+        try:
+            params = {}
+            if filter_expression:
+                params["FilterExpression"] = filter_expression
+            if expression_values:
+                params["ExpressionAttributeValues"] = self._handle_decimal_type(expression_values)
+            if expression_attribute_names:
+                params["ExpressionAttributeNames"] = expression_attribute_names
+
+            while True:
+                response = self.table.scan(**params)
+                result.extend(response.get('Items', []))
+                last_evaluated_key = response.get('LastEvaluatedKey')
+
+                if not last_evaluated_key:
+                    break
+
+            return response
+        except Exception as e:
+            self.logger.error(f"Error scanning items: {str(e)}")
+            raise
+
+
     def scan(self, filter_expression: Optional[str] = None, expression_values: Optional[Dict[str, Any]] = None, expression_attribute_names: Optional[Dict[str, str]] = None) -> Dict:
         """
         Scan items from DynamoDB, optionally applying filter expressions.
