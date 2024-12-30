@@ -54,6 +54,22 @@ const handlePromptGuideError = (error?: FormError) => {
     // retForm.value?.setErrors([])
   }
 }
+
+const validateForm = computed(()=>{
+  if(
+    (!state.knn_num || !state?.knn_num.length) || 
+    (!state.retrieval || !state?.retrieval.length) ||
+    (!state.n_shot_prompts || !state?.n_shot_prompts.length) ||
+    (!state.n_shot_prompt_guide) ||
+    (!state.temp_retrieval_llm || !state?.temp_retrieval_llm.length) ||
+    (!state.rerank_model_id || !state?.rerank_model_id.length) 
+    ){
+    return false;
+  }else{
+    return true;
+  }
+})
+
 </script>
 
 
@@ -118,7 +134,7 @@ const handlePromptGuideError = (error?: FormError) => {
           @click.prevent="emits('previous')" />
       </div>
       <div>
-        <UButton trailing-icon="i-lucide-arrow-right" :label="nextButtonLabel" type="submit" />
+        <UButton trailing-icon="i-lucide-arrow-right" :label="nextButtonLabel" type="submit" :disabled="!validateForm" />
       </div>
     </div>
   </UForm>

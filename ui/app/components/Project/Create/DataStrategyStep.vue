@@ -58,6 +58,18 @@ const onSubmit = (event: FormSubmitEvent<ProjectCreateDataStrategy>) => {
   modelValue.value = event.data
   emits("next")
 }
+
+const validateForm = computed(()=>{
+  if(!state.kb_data || !state.kb_data || !state.gt_data || !state.name || !state.region){
+    return false;
+  }
+  else if(!state?.kb_data.length || !state?.gt_data.length || !state?.name.length || !state?.region.length){
+    return false;
+  }
+  else {
+    return true;
+  }
+})
 </script>
 
 
@@ -96,7 +108,7 @@ const onSubmit = (event: FormSubmitEvent<ProjectCreateDataStrategy>) => {
           @click.prevent="emits('previous')" />
       </div>
       <div>
-        <UButton :disabled="!state.kb_data || !state.gt_data || !state.name || !state.region" trailing-icon="i-lucide-arrow-right" :label="nextButtonLabel" type="submit" />
+        <UButton :disabled="!validateForm" trailing-icon="i-lucide-arrow-right" :label="nextButtonLabel" type="submit" />
       </div>
     </div>
   </UForm>
