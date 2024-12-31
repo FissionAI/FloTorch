@@ -8,7 +8,7 @@ useHead({
 
 <template>
   <div class="flex flex-col min-h-screen bg-gray-100">
-    <header class="bg-gray-800 text-white p-2 sticky top-0 z-50">
+    <header class="bg-gray-800 text-white p-2">
       <div class="container max-w-7xl mx-auto flex justify-between items-center">
         <div>
           <NuxtLink :to="{ name: 'projects' }">

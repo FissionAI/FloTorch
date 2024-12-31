@@ -24,7 +24,7 @@
   const props = defineProps({
     presignedUploadUrlData: {
       type: Object,
-      // required: true
+      required: true
     },
     fileUploadId: {
       type: String,

@@ -96,7 +96,7 @@ const onSubmit = (event: FormSubmitEvent<ProjectCreateDataStrategy>) => {
           @click.prevent="emits('previous')" />
       </div>
       <div>
-        <UButton  trailing-icon="i-lucide-arrow-right" :label="nextButtonLabel" type="submit" />
+        <UButton trailing-icon="i-lucide-arrow-right" :label="nextButtonLabel" type="submit" />
       </div>
     </div>
   </UForm>

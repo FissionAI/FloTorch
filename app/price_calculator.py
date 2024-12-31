@@ -12,24 +12,14 @@ def estimate_embedding_model_bedrock_price(file_path, configuration, num_tokens_
         logger.error(f"Error reading the CSV file: {e}")
         return None
     region = configuration["region"]
-    chunking_strategy = configuration["chunking_strategy"].lower()
-    if chunking_strategy == 'fixed':
-        chunk_size = configuration["chunk_size"]
-        chunk_overlap = configuration["chunk_overlap"]
+    chunk_size = configuration["chunk_size"]
+    chunk_overlap = configuration["chunk_overlap"]
+    embed_model = configuration["embedding_model"]
 
-        eff_chunk_size = chunk_size * (1 - chunk_overlap / 100)
-
-    elif chunking_strategy == 'hierarchical':
-        child_chunk_size = configuration["hierarchical_child_chunk_size"]
-        child_chunk_overlap = configuration["hierarchical_chunk_overlap_percentage"]
-
-        eff_chunk_size = child_chunk_size * (1 - child_chunk_overlap / 100)
+    eff_chunk_size = chunk_size * (1 - chunk_overlap / 100)
 
     num_chunks = num_tokens_kb_data / float(eff_chunk_size)
     num_tokens_with_overlap = num_chunks * float(eff_chunk_size)
-
-    embed_model = configuration["embedding_model"]
-
     embed_model_price = df[(df['model'] == embed_model) & (df['Region'] == region)]['input_price']
     if embed_model_price.empty:
         logger.warning("Returning price as Zero, as model is not present in Sheet")
@@ -49,14 +39,7 @@ def estimate_retrieval_model_bedrock_price(file_path, configuration, avg_prompt_
         logger.error(f"Error reading the CSV file: {e}")
         return None
     region = configuration["region"]
-    
-    chunking_strategy = configuration["chunking_strategy"].lower()
-    if chunking_strategy == 'fixed':
-        chunk_size = configuration["chunk_size"]
-
-    elif chunking_strategy == 'hierarchical':
-        chunk_size = configuration["hierarchical_parent_chunk_size"]
-
+    chunk_size = configuration["chunk_size"]
     gen_model = configuration["retrieval_model"]
     n_shot_prompts = configuration["n_shot_prompts"]
     k = configuration["knn_num"]

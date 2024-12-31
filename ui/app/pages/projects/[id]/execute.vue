@@ -45,7 +45,6 @@ useHead({
 </script>
 
 <template>
-<Breadcumb />
   <UCard>
     <template #header>
       <h2 class="text-xl font-medium">Selected Experiments</h2>

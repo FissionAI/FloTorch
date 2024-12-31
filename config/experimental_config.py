@@ -13,9 +13,6 @@ class ExperimentalConfig(BaseModel):
     chunking_strategy: str = Field(alias="chunking_strategy")
     chunk_size: int = Field(alias="chunk_size")
     chunk_overlap: int = Field(alias="chunk_overlap")
-    hierarchical_parent_chunk_size: int = Field(alias="hierarchical_parent_chunk_size")
-    hierarchical_child_chunk_size: int = Field(alias="hierarchical_child_chunk_size")
-    hierarchical_chunk_overlap_percentage: int = Field(alias="hierarchical_chunk_overlap_percentage")
     embedding_service: str = Field(alias="embedding_service")
     embedding_model: str = Field(alias="embedding_model")
     embedding_model_endpoint: str = None 
@@ -36,8 +33,7 @@ class ExperimentalConfig(BaseModel):
     ragas_embedding_llm: str = 'amazon.titan-embed-text-v1'
     ragas_inference_llm: str = 'mistral.mixtral-8x7b-instruct-v0:1'
     ragas_inference_temperature: float = float(0.4)
-    # Rerank model id
-    rerank_model_id: str = Field(alias="rerank_model_id", default="none")
+
     class Config:
         alias_generator = lambda string: string.replace("-", "_")
         populate_by_name = True

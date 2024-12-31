@@ -80,8 +80,9 @@ export const useProjectCreateMeta = () => {
           value: "fixed",
         },
         {
-          label: "Hierarchical",
+          label: "Hierarchical (Coming Soon)",
           value: "hierarchical",
+          disabled: true,
         },
       ],
       chunkSize: [
@@ -99,56 +100,6 @@ export const useProjectCreateMeta = () => {
         },
       ],
       chunkOverlapPercentage: [
-        {
-          label: "5",
-          value: 5,
-        },
-        {
-          label: "10",
-          value: 10,
-        },
-        {
-          label: "15",
-          value: 15,
-        },
-        {
-          label: "20",
-          value: 20,
-        },
-      ],
-      hierarchical_parent_chunk_size: [
-        {
-          label: "512",
-          value: 512,
-        },
-        {
-          label: "1024",
-          value: 1024,
-        },
-        {
-          label: "2048",
-          value: 2048,
-        },
-        {
-          label: "4096",
-          value: 4096,
-        },
-      ],
-      hierarchical_child_chunk_size: [
-        {
-          label: "128",
-          value: 128,
-        },
-        {
-          label: "256",
-          value: 256,
-        },
-        {
-          label: "512",
-          value: 512,
-        },
-      ],
-      hierarchical_chunk_overlap_percentage: [
         {
           label: "5",
           value: 5,
@@ -231,12 +182,14 @@ export const useProjectCreateMeta = () => {
           value: "hnsw",
         },
         {
-          label: "HNSW - BQ",
-          value: "hnsw_bq"
+          label: "HNSW - BQ (Coming Soon)",
+          value: "hnsw_bq",
+          disabled: true,
         },
         {
-          label: "HNSW - SQ",
-          value: "hnsw_sq"
+          label: "HNSW - SQ (Coming Soon)",
+          value: "hnsw_sq",
+          disabled: true,
         },
       ],
     },
@@ -294,17 +247,17 @@ export const useProjectCreateMeta = () => {
         },
         {
           label: "Amazon Nova Lite V1",
-          value: "us.amazon.nova-lite-v1:0",
+          value: "amazon.nova-lite-v1:0",
           service: "bedrock",
         },
         {
           label: "Amazon Nova Micro V1",
-          value: "us.amazon.nova-micro-v1:0",
+          value: "amazon.nova-micro-v1:0",
           service: "bedrock",
         },
         {
           label: "Amazon Nova Pro V1",
-          value:"us.amazon.nova-pro-v1:0",
+          value:"amazon.nova-pro-v1:0",
           service: "bedrock",
         },
         {
@@ -404,47 +357,8 @@ export const useProjectCreateMeta = () => {
           value: 0.7,
         },
       ],
-      rerankModel: [
-        {
-          label:'None',
-          value:'none'
-        },
-        {
-          type: "label",
-          label: "Bedrock",
-          regions: ['us-west-2']
-        },
-        {
-          label: 'Amazon Rerank 1.0',
-          value: 'amazon.rerank-v1:0',
-          regions: ['us-west-2']
-        },
-        {
-          label: 'Cohere Rerank 3.5',
-          value: 'cohere.rerank-v3-5:0',
-          regions: ['us-west-2']
-        },
-        {
-          label: 'Amazon Rerank 1.0 (Not available in us-east-1)',
-          value: 'amazon.rerank-v1:0',
-          regions: ['us-east-1'],
-          disabled: true
-        },
-        {
-          label: 'Cohere Rerank 3.5 (Not available in us-east-1)',
-          value: 'cohere.rerank-v3-5:0',
-          regions: ['us-east-1'],
-          disabled: true
-        }
-      ]
     },
   };
-};
-
-export const useFilteredRerankModels = (region: string) => {
-  const meta = useProjectCreateMeta();
-  return meta.retrievalStrategy.rerankModel.filter(model => 
-    model.type === 'label' || model.value === 'none' || (model.regions && model.regions.includes(region)));
 };
 
 const generateId = () => {
@@ -497,18 +411,12 @@ export const useProjectUploadConfig = () => {
         embedding: config.indexing?.embedding?.map((pc: any) => {
           return useGetModelData("indexing", pc.model);
         }),
-        chunk_overlap: undefined,
-        chunk_size: undefined,
-        hierarchical_parent_chunk_size: undefined,
-        hierarchical_child_chunk_size: undefined,
-        hierarchical_chunk_overlap_percentage: undefined,
       },
       retrieval: {
         ...config.retrieval,
         retrieval: config.retrieval?.retrieval?.map((pc: any) => {
           return useGetModelData("retrieval", pc.model);
         }),
-        rerank_model_id: undefined,
       },
     };
     return id;
@@ -618,8 +526,6 @@ export const useHumanIndexingAlgorithm = (algorithm: string) => {
       return "HNSW - PQ";
     case "hnsw_sq":
       return "HNSW - SQ";
-    case "hnsw_bq":
-      return "HNSW - BQ";
   }
 };
 

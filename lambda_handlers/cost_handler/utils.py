@@ -5,7 +5,6 @@ import logging
 from botocore.exceptions import ClientError
 from typing import Optional
 import pandas as pd
-from datetime import datetime, timezone
 
 def read_csv_from_s3(object_key: str, bucket_name: str, as_dataframe: bool = True) -> Optional[object]:
     """
@@ -58,15 +57,3 @@ def read_csv_from_s3(object_key: str, bucket_name: str, as_dataframe: bool = Tru
     except Exception as e:
         logger.error(f"Unexpected error reading from S3: {str(e)}", exc_info=True)
         raise
-
-def parse_datetime(datetime_str):
-    if not datetime_str:
-        return None
-    try:
-        dt = datetime.strptime(datetime_str, '%Y-%m-%dT%H:%M:%S.%fZ')
-    except ValueError:
-        dt = datetime.strptime(datetime_str, '%Y-%m-%dT%H:%M:%S%z')
-
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
-    return dt

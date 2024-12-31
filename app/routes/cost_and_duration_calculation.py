@@ -1,7 +1,6 @@
 from datetime import datetime
 from util.s3util import S3Util
 from config.config import get_config
-from util.date_time_utils import DateTimeUtils
 
 configs = get_config()
 
@@ -18,22 +17,22 @@ def calculate_experiment_duration(experiment):
 
         # Calculate indexing duration if fields are present
         if experiment.get('indexing_start') and experiment.get('indexing_end'):
-            indexing_start = DateTimeUtils.parse_datetime(experiment.get('indexing_start'))
-            indexing_end = DateTimeUtils.parse_datetime(experiment.get('indexing_end'))
+            indexing_start = datetime.strptime(experiment.get('indexing_start'), '%Y-%m-%dT%H:%M:%S.%fZ')
+            indexing_end = datetime.strptime(experiment.get('indexing_end'), '%Y-%m-%dT%H:%M:%S.%fZ')
             indexing_difference = indexing_end - indexing_start
             total_duration += indexing_difference.total_seconds()
 
         # Calculate retrieval duration if fields are present
         if experiment.get('retrieval_start') and experiment.get('retrieval_end'):
-            retrieval_start = DateTimeUtils.parse_datetime(experiment.get('retrieval_start'))
-            retrieval_end = DateTimeUtils.parse_datetime(experiment.get('retrieval_end'))
+            retrieval_start = datetime.strptime(experiment.get('retrieval_start'), '%Y-%m-%dT%H:%M:%S.%fZ')
+            retrieval_end = datetime.strptime(experiment.get('retrieval_end'), '%Y-%m-%dT%H:%M:%S.%fZ')
             retrieval_difference = retrieval_end - retrieval_start
             total_duration += retrieval_difference.total_seconds()
 
         # Calculate eval duration if fields are present
         if experiment.get('eval_start') and experiment.get('eval_end'):
-            eval_start = DateTimeUtils.parse_datetime(experiment.get('eval_start'))
-            eval_end = DateTimeUtils.parse_datetime(experiment.get('eval_end'))
+            eval_start = datetime.strptime(experiment.get('eval_start'), '%Y-%m-%dT%H:%M:%S.%fZ')
+            eval_end = datetime.strptime(experiment.get('eval_end'), '%Y-%m-%dT%H:%M:%S.%fZ')
             eval_difference = eval_end - eval_start
             total_duration += eval_difference.total_seconds()
 
@@ -104,4 +103,3 @@ def calculate_cost(response):
             return response
     except Exception as e:
         return response
-    

@@ -288,7 +288,7 @@ validate_docker_env() {
 #     validate_docker_env
 # fi
 
-# setup_prerequisites
+setup_prerequisites
 
 # Set AWS variables from local environment if not in Docker
 if [ -z "${AWS_ACCOUNT_ID}" ]; then
@@ -597,25 +597,25 @@ aws ecr get-login-password \
     --username AWS \
     --password-stdin 709825985650.dkr.ecr.us-east-1.amazonaws.com
     
-CONTAINER_IMAGES="709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-indexing:1.6.0,709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-ai:1.6.0,709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-evaluation:1.6.0,709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-app:1.6.0,709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-runtime:1.6.0,709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-retriever:1.6.0"    
+CONTAINER_IMAGES="709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-indexing:1.4.0,709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-ai:1.4.2,709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-evaluation:1.4.0,709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-app:1.4.0,709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-runtime:1.4.0,709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-retriever:1.4.0"    
 
 for i in $(echo $CONTAINER_IMAGES | sed "s/,/ /g"); do docker pull $i; done
 
 aws ecr get-login-password --region ${AWS_DEFAULT_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com
 
-docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-indexing:1.6.0" ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/flotorch-indexing-${TABLE_SUFFIX}
+docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-indexing:1.4.0" ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/flotorch-indexing-${TABLE_SUFFIX}
 docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/flotorch-indexing-${TABLE_SUFFIX}
 
-docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-retriever:1.6.0" ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/flotorch-retriever-${TABLE_SUFFIX}
+docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-retriever:1.4.0" ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/flotorch-retriever-${TABLE_SUFFIX}
 docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/flotorch-retriever-${TABLE_SUFFIX}
 
-docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-evaluation:1.6.0" ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/flotorch-evaluation-${TABLE_SUFFIX}
+docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-evaluation:1.4.0" ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/flotorch-evaluation-${TABLE_SUFFIX}
 docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/flotorch-evaluation-${TABLE_SUFFIX}
 
-docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-runtime:1.6.0" ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/flotorch-runtime-${TABLE_SUFFIX}
+docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-runtime:1.4.0" ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/flotorch-runtime-${TABLE_SUFFIX}
 docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/flotorch-runtime-${TABLE_SUFFIX}
 
-docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-app:1.6.0" ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/flotorch-app-${TABLE_SUFFIX}
+docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-app:1.4.0" ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/flotorch-app-${TABLE_SUFFIX}
 docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/flotorch-app-${TABLE_SUFFIX}
 
 echo "All images pushed to ecr..."

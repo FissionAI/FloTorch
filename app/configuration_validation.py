@@ -7,8 +7,6 @@ from config.config import get_config
 from decimal import Decimal
 from util.pdf_utils import extract_text_from_pdf
 from app.price_calculator import estimate_embedding_model_bedrock_price,estimate_retrieval_model_bedrock_price,estimate_opensearch_price,estimate_sagemaker_price
-from .dependencies.database import get_execution_db
-from constants.validation_status import ValidationStatus
 
 configs = get_config()
 
@@ -49,9 +47,8 @@ def is_valid_combination(config, data):
         return False
     if config['knn_num'] != 3 and config['knn_num'] != 5 and config['knn_num'] != 10 and config['knn_num'] != 15:
         return False
-    if config.get('chunking_strategy', None) == "hierarchical":
-        # child chunk size should be less than parent chunk size
-        if config.get("hierarchical_child_chunk_size") > config.get("hierarchical_parent_chunk_size"):
+    if (config['embedding']["service"] == "bedrock" and config["embedding"]["model"] == "cohere.embed-english-v3"):
+        if config['chunk_size'] != 512 and config['chunk_size'] != 256:
             return False
     return True
 
@@ -174,27 +171,6 @@ def read_gt_data(file_path):
         logger.error(f"Error reading the GT-data file: {e}")
         return None, None
 
-def remove_invalid_combinations_keys(combinations):
-    """
-    Adjusts combinations to set irrelevant keys to None based on the value of 'chunking_strategy'.
-
-    Parameters:
-        combinations: List of combinations.
-
-    Returns:
-        list of dict: Updated combinations with irrelevant keys set to None.
-    """
-    for combination in combinations:
-        if combination.get("chunking_strategy", None) == "fixed":
-            combination["hierarchical_chunk_overlap_percentage"] = None
-            combination["hierarchical_parent_chunk_size"] = None
-            combination["hierarchical_child_chunk_size"] = None
-
-        elif combination.get("chunking_strategy", None) == "hierarchical":
-            combination["chunk_overlap"] = None
-            combination["chunk_size"] = None
-
-    return combinations
 
 
 def generate_all_combinations(data):
@@ -209,7 +185,6 @@ def generate_all_combinations(data):
 
     keys = parameters_all.keys()
     combinations = [dict(zip(keys, values)) for values in itertools.product(*parameters_all.values())]
-    combinations = remove_invalid_combinations_keys(combinations)
 
     gt_data = parameters_all["gt_data"][0]
     [num_prompts, num_chars] = read_gt_data(gt_data)
@@ -252,50 +227,10 @@ def generate_all_combinations(data):
             else:
                 configuration["directional_pricing"] +=estimate_sagemaker_price()
 
-    if len(valid_configurations) > 0:
-        os_price = estimate_opensearch_price(len(valid_configurations), num_prompts, num_chunks, max_rpm)
-        for configuration in valid_configurations:
-            configuration["directional_pricing"] += os_price
-            configuration["directional_pricing"] +=configuration["directional_pricing"]*0.05 #extra
-            configuration["directional_pricing"] = round(configuration["directional_pricing"],2)    
+    os_price = estimate_opensearch_price(len(valid_configurations), num_prompts, num_chunks, max_rpm)
+    for configuration in valid_configurations:
+        configuration["directional_pricing"] += os_price
+        configuration["directional_pricing"] +=configuration["directional_pricing"]*0.05 #extra
+        configuration["directional_pricing"] = round(configuration["directional_pricing"],2)    
 
     return valid_configurations
-
-def generate_all_combinations_in_background(execution_id: str, execution_config_data):
-    """       
-    Generate all possible valid experiment configurations for a given execution and stores result in S3.
-    Progress status and result s3 url is stored in execution db under valid execution_id
-    """
-
-    try:
-        # update status of execution_id to InProgress
-        get_execution_db().update_item(
-            key={"id": execution_id}, 
-            update_expression="SET validation_status = :status_value", 
-            expression_values={":status_value": ValidationStatus.INPROGRESS.value}
-        )
-
-        combinations = generate_all_combinations(execution_config_data)
-        deserialized_combinations_data = []
-        for combination in combinations:
-            updated_combination = {
-                k: float(v) if isinstance(v, Decimal) else v
-                for k, v in combination.items()
-            }
-            deserialized_combinations_data.append(updated_combination)
-
-        S3Util().write_json_to_s3(f"experiment_combination/{execution_id}.json", S3_BUCKET, deserialized_combinations_data)
-
-        # update status of execution id to Completed
-        get_execution_db().update_item(
-            key={"id": execution_id}, 
-            update_expression="SET validation_status = :status_value", 
-            expression_values={":status_value": ValidationStatus.COMPLETED.value}
-        ) 
-    except Exception as e:
-        # update status of execution id to failed
-        get_execution_db().update_item(
-            key={"id": execution_id}, 
-            update_expression="SET validation_status = :status_value", 
-            expression_values={":status_value": ValidationStatus.FAILED.value}
-        )

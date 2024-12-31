@@ -15,9 +15,9 @@ us-east-1,Llama 3.2 11B Instruct,us-east-1|Llama 3.2 11B Instruct,us.meta.llama3
 us-east-1,Llama 3.2 90B Instruct,us-east-1|Llama 3.2 90B Instruct,us.meta.llama3-2-90b-instruct-v1:0,2,2,400,"300,000"
 us-east-1,Mistral 7B Instruct,us-east-1|Mistral 7B Instruct,mistral.mistral-7b-instruct-v0:2,0.15,0.2,800,"300,000"
 us-east-1,Mistral Large,us-east-1|Mistral Large,mistral.mistral-large-2402-v1:0,4,12,400,"300,000"
-us-east-1,Amazon Nova Micro,us-east-1|Amazon Nova Micro,us.amazon.nova-micro-v1:0,0.035,0.14,2000,"4,000,000"
-us-east-1,Amazon Nova Lite,us-east-1|Amazon Nova Lite,us.amazon.nova-lite-v1:0,0.06,0.24,2000,"4,000,000"
-us-east-1,Amazon Nova Pro,us-east-1|Amazon Nova Pro,us.amazon.nova-pro-v1:0,0.8,3.2,200,"800,000"
+us-east-1,Amazon Nova Micro,us-east-1|Amazon Nova Micro,amazon.nova-micro-v1:0,0.035,0.14,2000,"4,000,000"
+us-east-1,Amazon Nova Lite,us-east-1|Amazon Nova Lite,amazon.nova-lite-v1:0,0.06,0.24,2000,"4,000,000"
+us-east-1,Amazon Nova Pro,us-east-1|Amazon Nova Pro,amazon.nova-pro-v1:0,0.8,3.2,200,"800,000"
 us-west-2,Claude 3.5 Sonnet,us-west-2|Claude 3.5 Sonnet,anthropic.claude-3-5-sonnet-20240620-v1:0,3,15,250,"2,000,000"
 us-west-2,Claude 3.5 Sonnet v2,us-west-2|Claude 3.5 Sonnet,us.anthropic.claude-3-5-sonnet-20241022-v2:0,3,15,250,"2,000,000"
 us-west-2,Titan Text Express,us-west-2|Titan Text Express,amazon.titan-text-express-v1,0.2,0.6,0.6,400
@@ -34,9 +34,9 @@ us-west-2,Llama 3.2 11B Instruct,us-west-2|Llama 3.2 11B Instruct,us.meta.llama3
 us-west-2,Llama 3.2 90B Instruct,us-west-2|Llama 3.2 90B Instruct,us.meta.llama3-2-90b-instruct-v1:0,2,2,2,400
 us-west-2,Mistral 7B Instruct,us-west-2|Mistral 7B Instruct,mistral.mistral-7b-instruct-v0:2,0.15,0.2,0.2,800
 us-west-2,Mistral Large,us-west-2|Mistral Large,mistral.mistral-large-2402-v1:0,8,24,12,400
-us-west-2,Amazon Nova Micro,us-west-2|Amazon Nova Micro,us.amazon.nova-micro-v1:0,0.035,0.14,2000,"4,000,000"
-us-west-2,Amazon Nova Lite,us-west-2|Amazon Nova Lite,us.amazon.nova-lite-v1:0,0.06,0.24,2000,"4,000,000"
-us-west-2,Amazon Nova Pro,us-west-2|Amazon Nova Pro,us.amazon.nova-pro-v1:0,0.8,3.2,200,"800,000"
+us-west-2,Amazon Nova Micro,us-west-2|Amazon Nova Micro,amazon.nova-micro-v1:0,0.035,0.14,2000,"4,000,000"
+us-west-2,Amazon Nova Lite,us-west-2|Amazon Nova Lite,amazon.nova-lite-v1:0,0.06,0.24,2000,"4,000,000"
+us-west-2,Amazon Nova Pro,us-west-2|Amazon Nova Pro,amazon.nova-pro-v1:0,0.8,3.2,200,"800,000"
 ,,,,,,,
 ,,,,,,,
 Embedding Models,,,,,,,

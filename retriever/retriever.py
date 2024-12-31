@@ -6,8 +6,6 @@ from core.dynamodb import DynamoDBOperations
 from config.config import Config, get_config
 from core.processors import EmbedProcessor
 from core.processors import InferenceProcessor
-from core.rerank.rerank import DocumentReranker
-import time
 
 import boto3
 from core.inference.inference_factory import InferencerFactory
@@ -132,7 +130,6 @@ def process_questions(
     retrieval_input_tokens = 0
     retrieval_output_tokens = 0
 
-    logger.info(f"Rerank model id for experiment {experimentalConfig.experiment_id}: {experimentalConfig.rerank_model_id}")
     for idx, item in enumerate(gt_data):
         try:
             question = item["question"]
@@ -148,27 +145,6 @@ def process_questions(
             query_results = components["vector_database"].search(
                 experimentalConfig.index_id, query_embedding, experimentalConfig.knn_num
             )
-
-            if experimentalConfig.chunking_strategy.lower() == 'hierarchical':
-                overall_documents = []
-                parent_dict = {}
-                for document in query_results:
-                    temp_document = document
-                    parent_id = document.get('parent_id')
-                    if parent_id not in parent_dict:
-                        overall_documents.append(temp_document)
-                        parent_dict[parent_id] = 1
-                query_results = overall_documents
-
-            if experimentalConfig.rerank_model_id and experimentalConfig.rerank_model_id.lower() != 'none':
-                #Rerank the query results
-                logger.info(f"Into reranking for experiment {experimentalConfig.experiment_id} for question {idx+1}")
-                start_time = time.time()
-                reranker = DocumentReranker(region=experimentalConfig.aws_region, rerank_model_id=experimentalConfig.rerank_model_id)  
-                query_results = reranker.rerank_documents(question, query_results)
-                end_time = time.time()
-                logger.info(f"Reranking for question {idx+1} took {end_time - start_time:.2f} seconds")                
-            
 
             # Generate answer
             answer_metadata, answer = components["inference_processor"].generate_text(

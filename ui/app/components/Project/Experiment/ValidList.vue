@@ -70,7 +70,7 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
   {
     header: "Chunk Size",
     enableHiding: true,
-    accessorKey: "chunk_size",
+    accessorKey: "chunk_size"
   },
   {
     header: "Chunk Overlap Percentage",
@@ -116,11 +116,6 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
     header: "Region",
     enableHiding: true,
     accessorKey: "region"
-  },
-  {
-    header: "Rerank Model",
-    enableHiding: true,
-    accessorKey: "rerank_model_id"
   }
 ])
 
@@ -151,27 +146,13 @@ const columnVisibility = ref({
         <UButton label="Columns" color="neutral" variant="outline" trailing-icon="i-lucide-chevron-down" />
       </UDropdownMenu>
     </div>
-    <UTable class="h-100" sticky ref="table" v-model:column-visibility="columnVisibility" :columns="columns" :data="experiments"
+    <UTable ref="table" v-model:column-visibility="columnVisibility" sticky :columns="columns" :data="experiments"
       :loading="isLoading">
       <template #directional_pricing-cell="{ row }">
         {{ useHumanCurrencyAmount(row.original.directional_pricing) }}
       </template>
       <template #chunking_strategy-cell="{ row }">
         {{ useHumanChunkingStrategy(row.original.chunking_strategy) }}
-      </template>
-      <template #chunk_size-header="{ column }">
-        <div class="flex items-center gap-2">
-          Chunk Size
-          <UTooltip arrow text="Chunk size refers to the amount of text or data that is retrieved from a knowledge source (measured in tokens). Fixed chunk size refers to a predefined, consistent length or amount of text that is retrieved from a knowledge source. For Hierarchical chunking strategy, organizes your data into a hierarchical structure ([child, parent]),for more granular and efficient retrieval.">
-            <UButton icon="i-lucide-info" size="md" color="neutral" variant="ghost" />
-          </UTooltip>
-        </div>
-      </template>
-      <template #chunk_size-cell="{ row }">
-        {{ useHumanChunkingStrategy(row.original.chunking_strategy) === 'Fixed' ? row.original.chunk_size : [row.original.hierarchical_child_chunk_size, row.original.hierarchical_parent_chunk_size] }}
-      </template>
-       <template #chunk_overlap-cell="{ row }">
-        {{ useHumanChunkingStrategy(row.original.chunking_strategy) === 'Fixed' ? row.original.chunk_overlap : row.original.hierarchical_chunk_overlap_percentage}}
       </template>
       <template #indexing_algorithm-cell="{ row }">
         {{ useHumanIndexingAlgorithm(row.original.indexing_algorithm) }}

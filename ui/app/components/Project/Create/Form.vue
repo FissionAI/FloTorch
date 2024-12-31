@@ -49,8 +49,8 @@ const nextStep = () => {
       },
       indexing: {
         chunking_strategy: state.indexing?.chunking_strategy,
-        ...(state.indexing?.chunking_strategy.includes('fixed') ? { chunk_size: state.indexing?.chunk_size, chunk_overlap: state.indexing?.chunk_overlap } : {}),
-        ...(state.indexing?.chunking_strategy.includes('hierarchical') ? { hierarchical_parent_chunk_size: state.indexing?.hierarchical_parent_chunk_size, hierarchical_child_chunk_size: state.indexing?.hierarchical_child_chunk_size, hierarchical_chunk_overlap_percentage: state.indexing?.hierarchical_chunk_overlap_percentage } : {}),
+        chunk_size: state.indexing?.chunk_size,
+        chunk_overlap: state.indexing?.chunk_overlap,
         vector_dimension: state.indexing?.vector_dimension,
         indexing_algorithm: state.indexing?.indexing_algorithm,
         embedding: state.indexing?.embedding?.map((pc) => {
@@ -71,8 +71,7 @@ const nextStep = () => {
             service: pc.service,
             label: pc.label
           }
-        }),
-        rerank_model_id: state.retrieval?.rerank_model_id,
+        })
       },
       n_shot_prompt_guide: state.retrieval?.n_shot_prompt_guide || {}
     }
@@ -132,7 +131,7 @@ const steps = [
       <ProjectCreateIndexingStrategyStep v-model="state.indexing" @previous="previousStep" @next="nextStep" />
     </div>
     <div v-if="currentStep === 3">
-      <ProjectCreateRetrievalStrategyStep :region="state.prestep?.region" v-model="state.retrieval" next-button-label="Submit" @previous="previousStep"
+      <ProjectCreateRetrievalStrategyStep v-model="state.retrieval" next-button-label="Submit" @previous="previousStep"
         @next="nextStep" />
     </div>
   </div>

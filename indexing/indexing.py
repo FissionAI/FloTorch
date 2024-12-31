@@ -53,51 +53,23 @@ def chunk_embed_store(config : Config, experimentalConfig : ExperimentalConfig)-
         # Step 1: Chunking
         chunks = ChunkingProcessor(experimentalConfig).chunk(process_pdf_from_folder(pdf_folder_path))
         
-        embed_chunks = chunks
-        if experimentalConfig.chunking_strategy.lower() == 'hierarchical':
-            embed_chunks = []
-            for chunk in chunks:
-                embed_chunks.append(chunk[2]) # Child Chunk only
-
         # Step 2: Embedding
-        embedding_results = EmbedProcessor(experimentalConfig).embed(embed_chunks)
+        embedding_results = EmbedProcessor(experimentalConfig).embed(chunks)
+        documents = [
+            {
+                "_index": experimentalConfig.index_id,
+                "execution_id":experimentalConfig.execution_id,
+                "chunk_id": str(uuid.uuid4()),  # Generate a unique UUID for each chunk
+                "text": clean_text_for_vector_db(chunk),
+                config.vector_field: embedding,
+                "metadata": metadata  # Optional metadata, defaulting to an empty dictionary
+            }
+            for embedding, chunk, metadata in embedding_results  # Enumerate is unnecessary since UUIDs are used
+        ]
 
         total_index_embed_tokens = 0
         for _, _, metadata in embedding_results:
             total_index_embed_tokens += int(metadata['inputTokens'])
-
-        if experimentalConfig.chunking_strategy.lower() == 'hierarchical':
-            temp_results = []
-            for i, chunk in enumerate(chunks):
-                temp_embedding = list(embedding_results[i])
-                temp_embedding.extend([chunk[0], chunk[1]])
-                temp_results.append(temp_embedding)
-            embedding_results = temp_results
-            documents = [
-                {
-                    "_index": experimentalConfig.index_id,
-                    "execution_id":experimentalConfig.execution_id,
-                    "chunk_id": str(uuid.uuid4()),  # Generate a unique UUID for each chunk
-                    "text": clean_text_for_vector_db(parent_chunk),
-                    "child_text": clean_text_for_vector_db(chunk),
-                    "parent_id": parent_id,
-                    config.vector_field: embedding,
-                    "metadata": metadata  # Optional metadata, defaulting to an empty dictionary
-                }
-                for embedding, chunk, metadata, parent_id, parent_chunk in embedding_results  # Enumerate is unnecessary since UUIDs are used
-            ]
-        else:
-            documents = [
-                {
-                    "_index": experimentalConfig.index_id,
-                    "execution_id":experimentalConfig.execution_id,
-                    "chunk_id": str(uuid.uuid4()),  # Generate a unique UUID for each chunk
-                    "text": clean_text_for_vector_db(chunk),
-                    config.vector_field: embedding,
-                    "metadata": metadata  # Optional metadata, defaulting to an empty dictionary
-                }
-                for embedding, chunk, metadata in embedding_results  # Enumerate is unnecessary since UUIDs are used
-            ]
 
         logger.info(f"Experiment {experimentalConfig.experiment_id} Indexing Embed Tokens : {total_index_embed_tokens}")
 

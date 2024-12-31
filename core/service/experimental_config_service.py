@@ -64,13 +64,9 @@ class ExperimentalConfigService:
             chunking_strategy=exp_config_data.get('chunking_strategy'),
             chunk_size=exp_config_data.get('chunk_size', 0),
             chunk_overlap=exp_config_data.get('chunk_overlap', 0),
-            hierarchical_parent_chunk_size=exp_config_data.get('hierarchical_parent_chunk_size', 0),
-            hierarchical_child_chunk_size=exp_config_data.get('hierarchical_child_chunk_size', 0),
-            hierarchical_chunk_overlap_percentage=exp_config_data.get('hierarchical_chunk_overlap_percentage', 0),
             kb_data=exp_config_data.get('kb_data', {}),
             n_shot_prompts=exp_config_data.get('n_shot_prompts', 0),
-            indexing_algorithm=exp_config_data.get('indexing_algorithm'),
-            rerank_model_id=exp_config_data.get('rerank_model_id', "none")
+            indexing_algorithm=exp_config_data.get('indexing_algorithm')
         )
         
         n_shot_prompt_guide = experiment.get('config').get('n_shot_prompt_guide')

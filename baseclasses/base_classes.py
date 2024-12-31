@@ -6,7 +6,6 @@ from datetime import datetime
 from typing import Optional
 from pydantic import Field
 import uuid
-import time
 import logging
 from dataclasses import dataclass
 from config.config import Config
@@ -15,7 +14,7 @@ from core.dynamodb import DynamoDBOperations
 import random
 from dataclasses import dataclass, asdict
 from decimal import Decimal
-import botocore
+
 
 
 logger = logging.getLogger(__name__)
@@ -112,19 +111,6 @@ class BaseChunker(ABC):
 
     @abstractmethod
     def chunk(self, text: str) -> List[str]:
-        """Abstract method for chunking text."""
-        pass
-
-class BaseHierarchicalChunker(ABC):
-    """Abstract base class for chunking strategies."""
-
-    def __init__(self, parent_chunk_size: int, child_chunk_size: int, chunk_overlap: int) -> None:
-        self.parent_chunk_size = parent_chunk_size
-        self.child_chunk_size = child_chunk_size
-        self.chunk_overlap = chunk_overlap
-
-    @abstractmethod
-    def chunk(self, text: str) -> List[List[str]]:
         """Abstract method for chunking text."""
         pass
 
@@ -225,13 +211,13 @@ class EvaluationMetrics():
 
     def to_dict(self) -> Dict[str, str]:
         return {
-            'faithfulness_score': str(self.faithfulness_score) if self.faithfulness_score is not None else '0.0',
-            'context_precision_score': str(self.context_precision_score) if self.context_precision_score is not None else '0.0',
-            'aspect_critic_score': str(self.aspect_critic_score) if self.aspect_critic_score is not None else '0.0',
-            'answers_relevancy_score': str(self.answers_relevancy_score) if self.answers_relevancy_score is not None else '0.0',
-            'string_similarity_score': str(self.string_similarity) if self.string_similarity is not None else '0.0',
-            'context_recall_score': str(self.context_recall) if self.context_recall is not None else '0.0',
-            'rouge_score': str(self.rouge_score) if self.rouge_score is not None else '0.0'
+            'faithfulness_score': str(self.faithfulness_score),
+            'context_precision_score': str(self.context_precision_score),
+            'aspect_critic_score': str(self.aspect_critic_score),
+            'answers_relevancy_score': str(self.answers_relevancy_score),
+            'string_similarity_score': str(self.string_similarity),
+            'context_recall_score': str(self.context_recall),
+            'rouge_score': str(self.rouge_score)
         }
     
     def to_dynamo_format(self) -> dict:
@@ -259,53 +245,3 @@ class EvaluationMetrics():
             'Context_Recall': {'S': str(self.context_recall) if self.context_recall is not None else '0.0'},
             'Rouge_Score': {'S': str(self.rouge_score) if self.rouge_score is not None else '0.0'}
         }
-
-
-class RetryParams(BaseModel):
-    max_retries: int
-    retry_delay: int
-    backoff_factor: int
-    
-class BotoRetryHandler(ABC):
-    """Abstract class for retry handler"""
-    
-    @property
-    @abstractmethod
-    def retry_params(self) -> RetryParams:
-        pass
-    
-    @property
-    @abstractmethod
-    def retryable_errors(self) -> set[str]:
-        pass
-        
-        
-    def __call__(self, func):
-        def wrapper(*args, **kwargs):
-            retries = 0
-            retry_params = self.retry_params
-            while retries < retry_params.max_retries:
-                try:
-                    return func(*args, **kwargs)
-                except botocore.exceptions.ClientError as e:
-                    error_code = e.response['Error']['Code']
-                    if error_code in self.retryable_errors:
-                        retries += 1
-                        logger.error(f"Rate limit error in Bedrock converse (Attempt {retries}/{retry_params.max_retries}): {str(e)}")
-                        
-                        if retries >= retry_params.max_retries:
-                            logger.error("Max retries reached. Could not complete Bedrock converse operation.")
-                            raise
-                        
-                        backoff_time = retry_params.retry_delay * (retry_params.backoff_factor ** (retries - 1))
-                        logger.info(f"Retrying in {backoff_time} seconds...")
-                        time.sleep(backoff_time)
-                    else:
-                        # If it's not a rate limit error, raise immediately
-                        raise
-                except Exception as e:
-                    # For any other exception, log and raise immediately
-                    logger.error(f"Unexpected error in Bedrock converse: {str(e)}")
-                    raise
-            
-        return wrapper

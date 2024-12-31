@@ -22,7 +22,7 @@ const { data: experiment } = useQuery({
 
 <template>
   <UButton label="Details" icon="i-lucide-info" @click="isOpen = true" />
-  <UModal class="overflow-y-scroll max-h-[50vh]" v-model:open="isOpen" title="Experiment Details" description="More details about the experiment">
+  <UModal class="overflow-y-scroll" v-model:open="isOpen" title="Experiment Details" description="More details about the experiment">
     <template #body>
       <table class="w-full">
         <tbody>
@@ -40,11 +40,11 @@ const { data: experiment } = useQuery({
           </tr>
           <tr>
             <td class="font-medium">Chunk Size</td>
-            <td>{{ useHumanChunkingStrategy(experiment?.config?.chunking_strategy) === 'Fixed' ? experiment?.config?.chunk_size : [experiment?.config?.hierarchical_child_chunk_size, experiment?.config?.hierarchical_parent_chunk_size]}}</td>
+            <td>{{ experiment?.config?.chunk_size }}</td>
           </tr>
           <tr>
             <td class="font-medium">Chunk Overlap Percentage</td>
-            <td>{{ useHumanChunkingStrategy(experiment?.config?.chunking_strategy) === 'Fixed' ? experiment?.config?.chunk_overlap : experiment?.config?.hierarchical_chunk_overlap_percentage}}</td>
+            <td>{{ experiment?.config?.chunk_overlap }}</td>
           </tr>
           <tr>
             <td class="font-medium">N Shot Prompts</td>
