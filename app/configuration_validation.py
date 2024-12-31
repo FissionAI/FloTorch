@@ -49,9 +49,6 @@ def is_valid_combination(config, data):
         return False
     if config['knn_num'] != 3 and config['knn_num'] != 5 and config['knn_num'] != 10 and config['knn_num'] != 15:
         return False
-    if (config['embedding']["service"] == "bedrock" and config["embedding"]["model"] == "cohere.embed-english-v3"):
-        if config['chunk_size'] != 512 and config['chunk_size'] != 256:
-            return False
     if config.get('chunking_strategy', None) == "hierarchical":
         # child chunk size should be less than parent chunk size
         if config.get("hierarchical_child_chunk_size") > config.get("hierarchical_parent_chunk_size"):
@@ -255,11 +252,12 @@ def generate_all_combinations(data):
             else:
                 configuration["directional_pricing"] +=estimate_sagemaker_price()
 
-    os_price = estimate_opensearch_price(len(valid_configurations), num_prompts, num_chunks, max_rpm)
-    for configuration in valid_configurations:
-        configuration["directional_pricing"] += os_price
-        configuration["directional_pricing"] +=configuration["directional_pricing"]*0.05 #extra
-        configuration["directional_pricing"] = round(configuration["directional_pricing"],2)    
+    if len(valid_configurations) > 0:
+        os_price = estimate_opensearch_price(len(valid_configurations), num_prompts, num_chunks, max_rpm)
+        for configuration in valid_configurations:
+            configuration["directional_pricing"] += os_price
+            configuration["directional_pricing"] +=configuration["directional_pricing"]*0.05 #extra
+            configuration["directional_pricing"] = round(configuration["directional_pricing"],2)    
 
     return valid_configurations
 
