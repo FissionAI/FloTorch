@@ -170,7 +170,7 @@ const columnVisibility = ref({
       <template #chunk_size-cell="{ row }">
         {{ useHumanChunkingStrategy(row.original.chunking_strategy) === 'Fixed' ? row.original.chunk_size : [row.original.hierarchical_child_chunk_size, row.original.hierarchical_parent_chunk_size] }}
       </template>
-       <template #chunk_overlap="{ row }">
+       <template #chunk_overlap-cell="{ row }">
         {{ useHumanChunkingStrategy(row.original.chunking_strategy) === 'Fixed' ? row.original.chunk_overlap : row.original.hierarchical_chunk_overlap_percentage}}
       </template>
       <template #indexing_algorithm-cell="{ row }">
