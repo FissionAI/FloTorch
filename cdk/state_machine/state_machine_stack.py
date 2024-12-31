@@ -1658,10 +1658,10 @@ class StateMachineStack(Stack):
         # Adjust the chain inside the Experiments Map iterator
         experiments_map_definition = update_experiment_start_time\
             .next(dynamodb_get_item_by_id)\
-            .next(evaluate_chunking_strategy_choice)\
-            .next(indexing_model_check)\
-            .next(evaluate_indexing_model_check_choice)
-        
+            .next(evaluate_chunking_strategy_choice)
+
+        indexing_model_check.next(evaluate_indexing_model_check_choice)
+
         # Set up the choices for "Evaluate Chunking Strategy"
         evaluate_chunking_strategy_choice.when(
             sfn.Condition.string_equals("$.Item.Item.config.M.chunking_strategy.S", "hierarchical"),
@@ -1674,10 +1674,14 @@ class StateMachineStack(Stack):
         # Set up the choices for "Evaluate Indexing Model Check"
         evaluate_indexing_model_check_choice.when(
             sfn.Condition.number_greater_than_equals_json_path("$.modelInvocations.invocations", "$.modelInvocations.limit"),
-            wait_for_indexing_model_update.next(indexing_model_check).next(evaluate_indexing_model_check_choice)
+            wait_for_indexing_model_update.next(indexing_model_check)
         ).otherwise(
-            indexing_model_invocation_update.next(get_latest_status).next(evaluate_indexing_status_choice)
+            indexing_model_invocation_update.next(get_latest_status)
         )
+
+        get_latest_status.next(evaluate_indexing_status_choice)
+
+        indexing_model_invocation_release_chain = indexing_model_invocation_release.next(proceed_to_retrieval_model_check)
 
         # Set up the choices for "Evaluate Indexing Status"
         evaluate_indexing_status_choice.when(
