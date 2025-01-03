@@ -5,10 +5,11 @@ import logging
 from util.s3util import S3Util
 from config.config import get_config
 from decimal import Decimal
-from util.pdf_utils import extract_text_from_pdf
+from util.pdf_utils import extract_text_from_pdf_v2
 from app.price_calculator import estimate_embedding_model_bedrock_price,estimate_retrieval_model_bedrock_price,estimate_opensearch_price,estimate_sagemaker_price
 from .dependencies.database import get_execution_db
 from constants.validation_status import ValidationStatus
+from functools import lru_cache
 
 configs = get_config()
 
@@ -127,6 +128,7 @@ def restructure_combination(combination):
 
     return result
 
+@lru_cache(maxsize=100)
 def count_characters_in_file(file_path):
     file_path = S3Util().download_directory_from_s3(file_path)
     character_counts = 0
@@ -139,7 +141,7 @@ def count_characters_in_file(file_path):
                     character_counts+= len(content)
             elif file.endswith('.pdf'):
                 with open(full_file, 'rb') as file:
-                    text_data = extract_text_from_pdf(file)
+                    text_data = extract_text_from_pdf_v2(file)
                     character_counts += len(text_data)
             else:
                 character_counts+= 1

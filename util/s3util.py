@@ -266,6 +266,7 @@ class S3Util:
                     self.logger.info(f"Downloading file {s3_key} to directory: {local_file_path}")
                     self.s3_client.download_file(Bucket=bucket, Key=s3_key, Filename=local_file_path)
             local_path = os.path.join(local_path, key)
+            self.logger.info(f"Downloaded all files in the folder from S3: bucket: {bucket}, key={key}")
             return local_path
         
         except Exception as e:
