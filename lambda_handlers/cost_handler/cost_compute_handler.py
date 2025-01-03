@@ -73,7 +73,8 @@ def lambda_handler(event, context):
             experiment = experiment_items[0]
             total_duration, indexing_time, retrieval_time, eval_time = calculate_experiment_duration(experiment)
 
-            logger.info(f"Experiment {experiment_id} Total Time (in minutes): {total_duration} Indexing Time: {indexing_time}, Retrieval: {retrieval_time}, Evaluation: {eval_time}")
+            logger.info(
+                f"Experiment {experiment_id} Total Time (in minutes): {total_duration} Indexing Time: {indexing_time}, Retrieval: {retrieval_time}, Evaluation: {eval_time}")
 
             total_index_embed_tokens = experiment.get("index_embed_tokens", 0)
             total_query_embed_tokens = experiment.get("retrieval_query_embed_tokens", 0)

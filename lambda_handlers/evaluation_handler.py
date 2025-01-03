@@ -9,6 +9,7 @@ from evaluation.eval import Evaluator
 logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO)
 
+
 def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     """
     Lambda handler to invoke the eval method.
@@ -52,7 +53,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         config = Config.load_config()
 
         evaluator = Evaluator(config)
-        
+
         evaluator.perform_evaluation(experiment_id=exp_config.experiment_id)
 
         return {
@@ -64,4 +65,3 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             "status": "failed",
             "errorMessage": str(e)
         }
-

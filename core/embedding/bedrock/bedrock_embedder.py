@@ -10,6 +10,7 @@ from util.boto3_utils import BedRockRetryHander
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+
 # Bedrock Base Embedder
 class BedrockEmbedder(BaseEmbedder):
     def __init__(self, model_id: str, region: str, role_arn: str = None) -> None:

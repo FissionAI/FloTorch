@@ -7,7 +7,7 @@ from core.opensearch_vectorstore import OpenSearchVectorDatabase
 from util.dynamo_utils import deserialize_dynamodb_json
 
 logging.basicConfig(
-    level=logging.INFO, 
+    level=logging.INFO,
 )
 logger = logging.getLogger(__name__)
 
@@ -104,7 +104,7 @@ class OpenSearchIndexManager:
             # Validate required configuration fields
             index_id = config_data.get('index_id')
             config = config_data.get('config', {})
-            
+
             if not index_id or not config:
                 logger.warning(f"Invalid configuration: Missing index_id or config - {config_data}")
                 return None

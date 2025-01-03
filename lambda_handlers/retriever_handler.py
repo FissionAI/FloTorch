@@ -9,6 +9,7 @@ from retriever.retriever import Retriever
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+
 def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     """
     Lambda handler to invoke the retrieve method.
@@ -52,9 +53,9 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
         # Load base configuration
         config = Config.load_config()
-        
+
         # Execute retrieve method
-        Retriever().retrieve(config, exp_config)
+        Retriever(config, exp_config).execute()
 
         return {
             "status": "success",

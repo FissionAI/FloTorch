@@ -9,6 +9,7 @@ from indexing.indexing import Indexer
 logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO)
 
+
 def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     """
     Lambda handler to invoke the retrieve method.
@@ -54,9 +55,9 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
         # Load base configuration
         config = Config.load_config()
-           
+
         # Execute retrieve method
-        Indexer().chunk_embed_store(config, exp_config)
+        Indexer(config, exp_config).execute()
 
         return {
             **event,  # Pass the entire input event
@@ -69,4 +70,3 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             "status": "failed",
             "errorMessage": str(e)
         }
-

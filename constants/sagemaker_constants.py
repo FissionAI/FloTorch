@@ -1,5 +1,6 @@
 from typing import Final, Dict
 
+
 class SageMakerInstanceConstants:
     INSTANCE_CONFIGS: Final[Dict[str, str]] = {
         "BAAI/bge-large-en-v1.5": "ml.g5.2xlarge",

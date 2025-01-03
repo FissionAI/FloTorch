@@ -15,6 +15,7 @@ from baseclasses.base_classes import BaseEmbedder
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+
 # Sagemaker Base Embedder
 class SageMakerEmbedder(BaseEmbedder):
     def __init__(self, model_id: str, region: str, role_arn: str) -> None:
@@ -31,7 +32,6 @@ class SageMakerEmbedder(BaseEmbedder):
         )
         self.predictor.serializer = JSONSerializer()
         self.predictor.deserializer = JSONDeserializer()
-        
 
     def _ensure_endpoint_exists(self):
         """Create endpoint if it doesn't exist"""
@@ -44,20 +44,20 @@ class SageMakerEmbedder(BaseEmbedder):
 
     def _create_endpoint(self):
         """Create a new SageMaker endpoint for the BGE model"""
-        
+
         # TODO: move this based on config endpoint
         instance_type = "ml.g5.2xlarge"
-        
+
         # Create unique names for model and config
         model_name = f"{self.endpoint_name}-model"
         config_name = f"{self.endpoint_name}-config"
-        
+
         # HF model configuration
         hub = {
             'HF_MODEL_ID': self.model_id,
             'HF_TASK': 'feature-extraction'
         }
-        
+
         # Create HuggingFace Model
         huggingface_model = HuggingFaceModel(
             env=hub,
@@ -67,7 +67,7 @@ class SageMakerEmbedder(BaseEmbedder):
             py_version="py39",
             sagemaker_session=self.session
         )
-        
+
         # Deploy the model
         huggingface_model.deploy(
             initial_instance_count=1,
@@ -75,7 +75,7 @@ class SageMakerEmbedder(BaseEmbedder):
             endpoint_name=self.endpoint_name,
             endpoint_config_name=config_name
         )
-        
+
         logger.info(f"Endpoint {self.endpoint_name} created successfully")
 
     @staticmethod
@@ -103,7 +103,7 @@ class SageMakerEmbedder(BaseEmbedder):
 
     def extract_embedding(self, response: Dict) -> List[float]:
         raise NotImplementedError("Subclasses must implement `extract_embedding`")
-    
+
     def _get_role(self):
         """Get current SageMaker execution role with fallback"""
         try:
@@ -123,6 +123,7 @@ class SageMakerEmbedder(BaseEmbedder):
                     return role_arn
             except Exception as sts_error:
                 logger.error(f"Failed to get role from STS: {sts_error}")
-            
-            logger.error("Failed to get execution role. Make sure you're running in a SageMaker context or provide a role ARN.")
+
+            logger.error(
+                "Failed to get execution role. Make sure you're running in a SageMaker context or provide a role ARN.")
             return self.role_arn

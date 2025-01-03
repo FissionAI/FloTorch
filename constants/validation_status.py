@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class ValidationStatus(Enum):
     QUEUED = "queued"
     INPROGRESS = "inprogress"

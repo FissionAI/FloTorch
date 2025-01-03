@@ -15,7 +15,9 @@ from config.config import Config
 from config.experimental_config import ExperimentalConfig
 
 logger = logging.getLogger(__name__)
-#Vector Datastore
+
+
+# Vector Datastore
 class VectorDatabase(ABC):
     @abstractmethod
     def create_index(self, index_name: str, mapping: Dict[str, Any], algorithm: str) -> None:
@@ -42,9 +44,10 @@ class VectorDatabase(ABC):
         """Perform a vector search on the specified index."""
         pass
 
+
 class BaseInferencer(ABC):
-    
-    def __init__(self, model_id: str, experiment_config : ExperimentalConfig,region: str = 'us-east-1'):
+
+    def __init__(self, model_id: str, experiment_config: ExperimentalConfig, region: str = 'us-east-1'):
         self.model_id = model_id
         self.region = region
         self.experiment_config = experiment_config
@@ -66,21 +69,22 @@ class BaseInferencer(ABC):
 
 
 class ExperimentQuestionMetrics(BaseModel):
-    id : str = Field(default_factory=lambda: str(uuid.uuid4()), description="The unique identifier for the question")
-    execution_id : str = Field(..., description="The execution id")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()), description="The unique identifier for the question")
+    execution_id: str = Field(..., description="The execution id")
     experiment_id: str = Field(..., description="The unique identifier for the experiment")
     timestamp: datetime = Field(default_factory=datetime.now, description="The timestamp of the experiment")
     question: str = Field(..., description="The question that was asked")
     gt_answer: str = Field(..., description="The answer that was given")
     generated_answer: str = Field(default='', description="The answer that was generated")
-    reference_contexts:  Optional[List[str]] = Field(..., description="The reference contexts retrieved from vectorstore") 
+    reference_contexts: Optional[List[str]] = Field(...,
+                                                    description="The reference contexts retrieved from vectorstore")
     query_metadata: Optional[Dict[str, int]] = Field(..., description="The metadata during querying")
     answer_metadata: Optional[Dict[str, int]] = Field(..., description="The metadata during answer generation")
 
     def to_dynamo_item(self) -> Dict[str, Dict[str, str]]:
         """Convert to DynamoDB item format."""
         return {
-            'id' : {'S': self.id},
+            'id': {'S': self.id},
             'execution_id': {'S': self.execution_id},
             'experiment_id': {'S': self.experiment_id},
             'question': {'S': self.question},
@@ -95,8 +99,7 @@ class ExperimentQuestionMetrics(BaseModel):
             'answer_metadata': {
                 'M': {key: {'N': str(value)} for key, value in self.answer_metadata.items()}
             }
-        } 
-
+        }
 
 
 class BaseChunker(ABC):
@@ -110,6 +113,7 @@ class BaseChunker(ABC):
     def chunk(self, text: str) -> List[str]:
         """Abstract method for chunking text."""
         pass
+
 
 class BaseHierarchicalChunker(ABC):
     """Abstract base class for chunking strategies."""
@@ -141,7 +145,8 @@ class BaseEmbedder(ABC):
 
     def get_model_id(self) -> str:
         return self.model_id
-    
+
+
 class BaseEvaluator(ABC):
 
     def __init__(self, config: Config, experimental_config: ExperimentalConfig) -> None:
@@ -155,9 +160,10 @@ class BaseEvaluator(ABC):
         pass
 
     @abstractmethod
-    def evaluate(self, question: str, generated_answer: str, gt_answer: str, reference_contexts: List[str]) -> 'EvaluationMetrics':
+    def evaluate(self, question: str, generated_answer: str, gt_answer: str,
+                 reference_contexts: List[str]) -> 'EvaluationMetrics':
         """Evaluate the generated answer against the ground truth answer."""
-        pass 
+        pass
 
     @abstractmethod
     def get_questions(self, experiment_id: str) -> List[Dict]:
@@ -166,6 +172,7 @@ class BaseEvaluator(ABC):
     @abstractmethod
     def update_experiment_metrics(self, experiment_id: str, metrics_list: List['EvaluationMetrics']):
         pass
+
 
 # Experiment
 class Experiment(BaseModel):
@@ -196,6 +203,7 @@ class Execution(BaseModel):
     region: str
     name: str
 
+
 @dataclass
 class EvaluationMetrics():
     faithfulness_score: Optional[float] = 0.0
@@ -205,7 +213,6 @@ class EvaluationMetrics():
     string_similarity: Optional[float] = 0.0
     context_recall: Optional[float] = 0.0
     rouge_score: Optional[float] = 0.0
-
 
     def from_dict(self, metrics_dict: Dict[str, str]) -> 'EvaluationMetrics':
         """Convert metrics from DynamoDB format to EvaluationMetrics"""
@@ -222,14 +229,16 @@ class EvaluationMetrics():
     def to_dict(self) -> Dict[str, str]:
         return {
             'faithfulness_score': str(self.faithfulness_score) if self.faithfulness_score is not None else '0.0',
-            'context_precision_score': str(self.context_precision_score) if self.context_precision_score is not None else '0.0',
+            'context_precision_score': str(
+                self.context_precision_score) if self.context_precision_score is not None else '0.0',
             'aspect_critic_score': str(self.aspect_critic_score) if self.aspect_critic_score is not None else '0.0',
-            'answers_relevancy_score': str(self.answers_relevancy_score) if self.answers_relevancy_score is not None else '0.0',
+            'answers_relevancy_score': str(
+                self.answers_relevancy_score) if self.answers_relevancy_score is not None else '0.0',
             'string_similarity_score': str(self.string_similarity) if self.string_similarity is not None else '0.0',
             'context_recall_score': str(self.context_recall) if self.context_recall is not None else '0.0',
             'rouge_score': str(self.rouge_score) if self.rouge_score is not None else '0.0'
         }
-    
+
     def to_dynamo_format(self) -> dict:
         return {
             'eval_metrics': {
@@ -237,19 +246,23 @@ class EvaluationMetrics():
                 'context_recall_score': str(self.context_recall) if self.context_recall is not None else '0.0',
                 'rouge_score': str(self.rouge_score) if self.rouge_score is not None else '0.0',
                 'faithfulness_score': str(self.faithfulness_score) if self.faithfulness_score is not None else '0.0',
-                'context_precision_score': str(self.context_precision_score) if self.context_precision_score is not None else '0.0',
+                'context_precision_score': str(
+                    self.context_precision_score) if self.context_precision_score is not None else '0.0',
                 'aspect_critic_score': str(self.aspect_critic_score) if self.aspect_critic_score is not None else '0.0',
-                'answers_relevancy_score': str(self.answers_relevancy_score) if self.answers_relevancy_score is not None else '0.0'
+                'answers_relevancy_score': str(
+                    self.answers_relevancy_score) if self.answers_relevancy_score is not None else '0.0'
             }
         }
-    
+
     def to_dynamo_format(self) -> Dict[str, Dict[str, str]]:
         """Convert metrics to DynamoDB format"""
         return {
             'Faithfulness': {'S': str(self.faithfulness_score) if self.faithfulness_score is not None else '0.0'},
-            'Context_Precision': {'S': str(self.context_precision_score) if self.context_precision_score is not None else '0.0'},
+            'Context_Precision': {
+                'S': str(self.context_precision_score) if self.context_precision_score is not None else '0.0'},
             'Aspect_Critic': {'S': str(self.aspect_critic_score) if self.aspect_critic_score is not None else '0.0'},
-            'Answers_Relevancy': {'S': str(self.answers_relevancy_score) if self.answers_relevancy_score is not None else '0.0'},
+            'Answers_Relevancy': {
+                'S': str(self.answers_relevancy_score) if self.answers_relevancy_score is not None else '0.0'},
             'String_Similarity': {'S': str(self.string_similarity) if self.string_similarity is not None else '0.0'},
             'Context_Precision': {'S': str(self.context_precision) if self.context_precision is not None else '0.0'},
             'Context_Recall': {'S': str(self.context_recall) if self.context_recall is not None else '0.0'},
@@ -261,21 +274,21 @@ class RetryParams(BaseModel):
     max_retries: int
     retry_delay: int
     backoff_factor: int
-    
+
+
 class BotoRetryHandler(ABC):
     """Abstract class for retry handler"""
-    
+
     @property
     @abstractmethod
     def retry_params(self) -> RetryParams:
         pass
-    
+
     @property
     @abstractmethod
     def retryable_errors(self) -> set[str]:
         pass
-        
-        
+
     def __call__(self, func):
         def wrapper(*args, **kwargs):
             retries = 0
@@ -287,12 +300,13 @@ class BotoRetryHandler(ABC):
                     error_code = e.response['Error']['Code']
                     if error_code in self.retryable_errors:
                         retries += 1
-                        logger.error(f"Rate limit error in Bedrock converse (Attempt {retries}/{retry_params.max_retries}): {str(e)}")
-                        
+                        logger.error(
+                            f"Rate limit error in Bedrock converse (Attempt {retries}/{retry_params.max_retries}): {str(e)}")
+
                         if retries >= retry_params.max_retries:
                             logger.error("Max retries reached. Could not complete Bedrock converse operation.")
                             raise
-                        
+
                         backoff_time = retry_params.retry_delay * (retry_params.backoff_factor ** (retries - 1))
                         logger.info(f"Retrying in {backoff_time} seconds...")
                         time.sleep(backoff_time)
@@ -303,5 +317,5 @@ class BotoRetryHandler(ABC):
                     # For any other exception, log and raise immediately
                     logger.error(f"Unexpected error in Bedrock converse: {str(e)}")
                     raise
-            
+
         return wrapper

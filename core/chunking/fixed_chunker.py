@@ -8,14 +8,14 @@ from baseclasses.base_classes import BaseChunker
 class FixedChunker(BaseChunker):
     """Fixed chunking strategy using LangChain’s CharacterTextSplitter."""
 
-    def chunk(self, text : str) -> List[str]:
+    def chunk(self, text: str) -> List[str]:
         if self.chunk_size <= 0:
             raise ValueError("chunk_size must be positive")
         if self.chunk_overlap >= self.chunk_size:
             raise ValueError("chunk_overlap must be less than chunk_size")
         if not text:
             raise ValueError("Input text cannot be empty or None")
-        
+
         # TODO: Temporary fix, better to move to recursive
         separators = [' ', '\t', '\n', '\r', '\f', '\v']
         for sep in separators:

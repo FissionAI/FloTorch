@@ -7,10 +7,11 @@ from core.embedding import EmbedderFactory
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+
 class EmbedProcessor:
     """Processor for embedding text chunks."""
 
-    def __init__(self, experimentalConfig : ExperimentalConfig) -> None:
+    def __init__(self, experimentalConfig: ExperimentalConfig) -> None:
         self.experimentalConfig = experimentalConfig
         self.embedder = EmbedderFactory.create_embedder(experimentalConfig)
 
@@ -18,7 +19,7 @@ class EmbedProcessor:
         """Embed each chunk one by one."""
         embeddings = []
         try:
-            dimensions = self.experimentalConfig.vector_dimension 
+            dimensions = self.experimentalConfig.vector_dimension
             normalize = True  # Always normalize
 
             logger.info(f"Embedding {len(chunks)} chunks with dimensions: {dimensions}.")
@@ -36,7 +37,7 @@ class EmbedProcessor:
     def embed_text(self, text: str) -> Tuple[Dict[Any, Any], List[float]]:
         """Embed each chunk one by one."""
         try:
-            dimensions = self.experimentalConfig.vector_dimension 
+            dimensions = self.experimentalConfig.vector_dimension
             normalize = True  # Always normalize
             metadata, embedding = self.embedder.embed(text, dimensions=dimensions, normalize=normalize)
             logger.info("Embedding text process completed successfully.")

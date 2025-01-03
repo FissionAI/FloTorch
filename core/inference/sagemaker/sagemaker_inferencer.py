@@ -9,9 +9,10 @@ from baseclasses.base_classes import BaseInferencer
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+
 class SageMakerInferencer(BaseInferencer):
     """Base class for SageMaker models - each model needs its own implementation"""
-    
+
     @abstractmethod
     def _get_endpoint_name(self) -> str:
         """Each SageMaker model implementation should provide its endpoint name"""
@@ -26,4 +27,3 @@ class SageMakerInferencer(BaseInferencer):
 
     def generate_text(self, user_query: str, context: List[Dict], default_prompt: str, **kwargs) -> str:
         raise NotImplementedError("Subclasses must implement `extract_embedding`")
-

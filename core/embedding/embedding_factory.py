@@ -8,6 +8,7 @@ from config.experimental_config import ExperimentalConfig
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+
 class EmbedderFactory:
     """Factory to create embedders based on model ID and service type."""
 
@@ -19,7 +20,7 @@ class EmbedderFactory:
         cls._registry[key] = embedder_cls
 
     @classmethod
-    def create_embedder(cls, experimentalConfig : ExperimentalConfig) -> BaseEmbedder:
+    def create_embedder(cls, experimentalConfig: ExperimentalConfig) -> BaseEmbedder:
         service_type = experimentalConfig.embedding_service
         model_id = experimentalConfig.embedding_model
         key = f"{service_type}:{model_id}"
@@ -31,6 +32,5 @@ class EmbedderFactory:
         embedder_cls = cls._registry.get(key)
         if not embedder_cls:
             raise ValueError(f"No embedder registered for service {service_type} and model {model_id}")
-        
-        return embedder_cls(model_id, experimentalConfig.aws_region, role_arn)
 
+        return embedder_cls(model_id, experimentalConfig.aws_region, role_arn)

@@ -4,9 +4,8 @@ from pydantic import BaseModel, Field
 
 
 class ExperimentalConfig(BaseModel):
-
     execution_id: str
-    experiment_id: str 
+    experiment_id: str
     aws_region: str = Field(alias="aws_region")
     kb_data: str = Field(alias="kb_data")
     gt_data: str = Field(alias="gt_data")
@@ -18,7 +17,7 @@ class ExperimentalConfig(BaseModel):
     hierarchical_chunk_overlap_percentage: int = Field(alias="hierarchical_chunk_overlap_percentage")
     embedding_service: str = Field(alias="embedding_service")
     embedding_model: str = Field(alias="embedding_model")
-    embedding_model_endpoint: str = None 
+    embedding_model_endpoint: str = None
     indexing_algorithm: str = Field(alias="indexing_algorithm")
     index_id: str = Field(alias="index_id")
     n_shot_prompts: int = Field(alias="n_shot_prompts")
@@ -38,9 +37,14 @@ class ExperimentalConfig(BaseModel):
     ragas_inference_temperature: float = float(0.4)
     # Rerank model id
     rerank_model_id: str = Field(alias="rerank_model_id", default="none")
+
+    def is_hierarchical(self):
+        return self.experimentalConfig.chunking_strategy.lower() == 'hierarchical'
+
     class Config:
         alias_generator = lambda string: string.replace("-", "_")
         populate_by_name = True
+
 
 class NShotPromptGuide(BaseModel):
     system_prompt: str

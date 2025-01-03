@@ -4,6 +4,7 @@ from typing import Dict, Any
 logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO)
 
+
 def deserialize_dynamodb_json(dynamodb_json: Dict[str, Any]) -> Dict[str, Any]:
     """
     Deserialize DynamoDB JSON to regular Python dictionary.
@@ -17,12 +18,12 @@ def deserialize_dynamodb_json(dynamodb_json: Dict[str, Any]) -> Dict[str, Any]:
     # Handle None/Null response from DynamoDB
     if dynamodb_json is None:
         return None
-        
+
     try:
         def _deserialize_value(value: Dict[str, Any]) -> Any:
             if not isinstance(value, dict):
                 return value
-                
+
             if 'N' in value:
                 return float(value['N'])
             elif 'S' in value:

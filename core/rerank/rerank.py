@@ -6,6 +6,7 @@ import boto3
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.ERROR)
 
+
 class DocumentReranker:
     def __init__(self, region, rerank_model_id):
         """
@@ -19,7 +20,7 @@ class DocumentReranker:
         self.region = region
         self.rerank_model_id = rerank_model_id
         self.bedrock_agent_runtime = boto3.client('bedrock-agent-runtime', region_name=self.region)
-        
+
     def rerank_documents(self, input_prompt, retrieved_documents):
         """
         Rerank a list of documents based on a query using Amazon Bedrock's reranking model.
@@ -35,7 +36,7 @@ class DocumentReranker:
             # Construct the model ARN using the provided model ID
             model_package_arn = f"arn:aws:bedrock:{self.region}::foundation-model/{self.rerank_model_id}"
             rerank_return_count = len(retrieved_documents)
-            
+
             # Prepare the text sources for the documents (wrap text in a dictionary)
             document_sources = [{
                 "type": "INLINE",
@@ -67,7 +68,7 @@ class DocumentReranker:
             if 'results' not in response:
                 logger.error("Error in rerank response: No results found.")
                 return []
-            
+
             # Create a list to store the reranked documents
             reranked_documents = []
 

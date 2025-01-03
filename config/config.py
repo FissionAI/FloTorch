@@ -22,10 +22,10 @@ class Config:
     execution_model_invocations_table: str
     opensearch_username: Optional[str]
     opensearch_password: Optional[str]
-    step_function_arn : str
-    inference_system_prompt : str
-    s3_bucket : str
-    bedrock_role_arn : str
+    step_function_arn: str
+    inference_system_prompt: str
+    s3_bucket: str
+    bedrock_role_arn: str
     sagemaker_role_arn: str
     bedrock_limit_csv_path: str
 
@@ -38,7 +38,7 @@ class Config:
             Config: Configuration object with loaded values
         """
         load_dotenv()
-        
+
         return Config(
             profile_name=os.getenv('profile_name'),
             aws_region=os.getenv('aws_region', 'us-east-1'),
@@ -50,7 +50,8 @@ class Config:
             execution_table=os.getenv('execution_table', ''),
             experiment_table=os.getenv('experiment_table', ''),
             experiment_question_metrics_table=os.getenv('experiment_question_metrics_table', ''),
-            experiment_question_metrics_experimentid_index = os.getenv('experiment_question_metrics_experimentid_index', ''),
+            experiment_question_metrics_experimentid_index=os.getenv('experiment_question_metrics_experimentid_index',
+                                                                     ''),
             execution_model_invocations_table=os.getenv('execution_model_invocations_table', ''),
             opensearch_password=os.getenv('opensearch_password', ''),
             opensearch_username=os.getenv('opensearch_username', ''),
@@ -60,7 +61,7 @@ class Config:
             bedrock_role_arn=os.getenv('bedrock_role_arn', ''),
             sagemaker_role_arn=os.getenv('sagemaker_role_arn', ''),
             bedrock_limit_csv_path=os.getenv('bedrock_limit_csv', '')
-            )
+        )
 
 
 def get_config() -> Config:

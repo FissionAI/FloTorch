@@ -8,6 +8,7 @@ from botocore.exceptions import ClientError
 logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO)
 
+
 class FargateTaskProcessor():
     def __init__(self):
         self.sfn_client = boto3.client('stepfunctions')
@@ -21,7 +22,7 @@ class FargateTaskProcessor():
 
     def process(self):
         raise NotImplementedError("Subclasses must implement the process method.")
-    
+
     def send_task_success(self, output):
         try:
             self.sfn_client.send_task_success(

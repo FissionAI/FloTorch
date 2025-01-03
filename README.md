@@ -1,6 +1,11 @@
 # What is FloTorch.ai?
 
-FloTorch.ai is an innovative product poised to transform the field of Generative AI by simplifying and optimizing the decision-making process for leveraging Large Language Models (LLMs) in Retrieval Augmented Generation (RAG) systems. In today’s fast-paced digital landscape, selecting the right LLM setup is critical for achieving efficiency, accuracy, and cost-effectiveness. However, this process often involves extensive trial-and-error, significant resource expenditure, and complex comparisons of performance metrics. Our solution addresses these challenges with a streamlined, user-friendly approach.
+FloTorch.ai is an innovative product poised to transform the field of Generative AI by simplifying and optimizing the
+decision-making process for leveraging Large Language Models (LLMs) in Retrieval Augmented Generation (RAG) systems. In
+today’s fast-paced digital landscape, selecting the right LLM setup is critical for achieving efficiency, accuracy, and
+cost-effectiveness. However, this process often involves extensive trial-and-error, significant resource expenditure,
+and complex comparisons of performance metrics. Our solution addresses these challenges with a streamlined,
+user-friendly approach.
 
 ## Demo
 
@@ -8,10 +13,13 @@ FloTorch.ai is an innovative product poised to transform the field of Generative
 
 ## Key Features
 
-- **Automated Evaluation of LLMs**: FloTorch.ai evaluates multiple LLMs by analyzing combinations of hyperparameters defined by the end user.
+- **Automated Evaluation of LLMs**: FloTorch.ai evaluates multiple LLMs by analyzing combinations of hyperparameters
+  defined by the end user.
 - **Performance Metrics**: Produces detailed performance scores, including relevance, fluency, and robustness.
-- **Cost and Time Insights**: Provides actionable insights into the pricing and execution times for each LLM configuration.
-- **Data-Driven Decision-Making**: Empowers users to align LLM configurations with specific goals and budget constraints.
+- **Cost and Time Insights**: Provides actionable insights into the pricing and execution times for each LLM
+  configuration.
+- **Data-Driven Decision-Making**: Empowers users to align LLM configurations with specific goals and budget
+  constraints.
 
 ## Who Benefits from FloTorch.ai?
 
@@ -32,32 +40,40 @@ FloTorch.ai caters to a broad spectrum of users, including:
 
 ## Vision
 
-By combining advanced evaluation capabilities with a focus on cost and time efficiency, FloTorch.ai provides a holistic solution for navigating the evolving RAG landscape. It empowers users to focus on innovation and deployment, setting a new standard for intelligent decision-making in AI-driven applications.
+By combining advanced evaluation capabilities with a focus on cost and time efficiency, FloTorch.ai provides a holistic
+solution for navigating the evolving RAG landscape. It empowers users to focus on innovation and deployment, setting a
+new standard for intelligent decision-making in AI-driven applications.
 
-With FloTorch.ai, we aim to be a pivotal enabler of progress in the generative AI ecosystem, helping our users achieve excellence in their projects.
+With FloTorch.ai, we aim to be a pivotal enabler of progress in the generative AI ecosystem, helping our users achieve
+excellence in their projects.
 
 # FloTorch Installation Guide
 
 ## Overview
 
-The CDK directory under the main directory in the FloTorch directory structure defines the AWS infrastructure creation for the FloTorch application using AWS CDK in Python. The infrastructure is designed with a suffix-based deployment strategy, allowing multiple isolated deployments to coexist in the same AWS account.
+The CDK directory under the main directory in the FloTorch directory structure defines the AWS infrastructure creation
+for the FloTorch application using AWS CDK in Python. The infrastructure is designed with a suffix-based deployment
+strategy, allowing multiple isolated deployments to coexist in the same AWS account.
 
 ### AWS Account Requirements
+
 - An AWS account with sufficient credit / payment method.
-- An EC2 instance (t2.large recommended; choose an Ubuntu or Amazon Linux 2 AMI), with an attached IAM role having the following permissions:
-  - [AmazonDynamoDBFullAccess](https://docs.aws.amazon.com/aws-managed-policy/latest/reference/AmazonDynamoDBFullAccess.html)
-  - [AmazonEC2ContainerRegistryFullAccess](https://docs.aws.amazon.com/aws-managed-policy/latest/reference/AmazonEC2ContainerRegistryFullAccess.html)
-  - [AmazonEC2FullAccess](https://docs.aws.amazon.com/aws-managed-policy/latest/reference/AmazonEC2FullAccess.html)
-  - [AmazonECS_FullAccess](https://docs.aws.amazon.com/aws-managed-policy/latest/reference/AmazonECS_FullAccess.html)
-  - [AmazonS3FullAccess](https://docs.aws.amazon.com/aws-managed-policy/latest/reference/AmazonS3FullAccess.html)
-  - [AmazonSSMFullAccess](https://docs.aws.amazon.com/aws-managed-policy/latest/reference/AmazonSSMFullAccess.html)
-  - [AmazonVPCFullAccess](https://docs.aws.amazon.com/aws-managed-policy/latest/reference/AmazonVPCFullAccess.html)
-  - [AWSAppRunnerFullAccess](https://docs.aws.amazon.com/aws-managed-policy/latest/reference/AWSAppRunnerFullAccess.html)
-  - [AWSStepFunctionsFullAccess](https://docs.aws.amazon.com/aws-managed-policy/latest/reference/AWSStepFunctionsFullAccess.html)
-  - [IAMFullAccess](https://docs.aws.amazon.com/aws-managed-policy/latest/reference/IAMFullAccess.html)
-  - [AWSCloudFormationFullAccess](https://docs.aws.amazon.com/aws-managed-policy/latest/reference/AWSCloudFormationFullAccess.html)
+- An EC2 instance (t2.large recommended; choose an Ubuntu or Amazon Linux 2 AMI), with an attached IAM role having the
+  following permissions:
+    - [AmazonDynamoDBFullAccess](https://docs.aws.amazon.com/aws-managed-policy/latest/reference/AmazonDynamoDBFullAccess.html)
+    - [AmazonEC2ContainerRegistryFullAccess](https://docs.aws.amazon.com/aws-managed-policy/latest/reference/AmazonEC2ContainerRegistryFullAccess.html)
+    - [AmazonEC2FullAccess](https://docs.aws.amazon.com/aws-managed-policy/latest/reference/AmazonEC2FullAccess.html)
+    - [AmazonECS_FullAccess](https://docs.aws.amazon.com/aws-managed-policy/latest/reference/AmazonECS_FullAccess.html)
+    - [AmazonS3FullAccess](https://docs.aws.amazon.com/aws-managed-policy/latest/reference/AmazonS3FullAccess.html)
+    - [AmazonSSMFullAccess](https://docs.aws.amazon.com/aws-managed-policy/latest/reference/AmazonSSMFullAccess.html)
+    - [AmazonVPCFullAccess](https://docs.aws.amazon.com/aws-managed-policy/latest/reference/AmazonVPCFullAccess.html)
+    - [AWSAppRunnerFullAccess](https://docs.aws.amazon.com/aws-managed-policy/latest/reference/AWSAppRunnerFullAccess.html)
+    - [AWSStepFunctionsFullAccess](https://docs.aws.amazon.com/aws-managed-policy/latest/reference/AWSStepFunctionsFullAccess.html)
+    - [IAMFullAccess](https://docs.aws.amazon.com/aws-managed-policy/latest/reference/IAMFullAccess.html)
+    - [AWSCloudFormationFullAccess](https://docs.aws.amazon.com/aws-managed-policy/latest/reference/AWSCloudFormationFullAccess.html)
 
 ### Prerequisites
+
 - Docker 20.10.x or later
 - AWS CLI v2
 - Python 3.8+
@@ -69,10 +85,12 @@ The CDK directory under the main directory in the FloTorch directory structure d
 
 ## Automatic Setup and Installation Script
 
-Installs all prerequisites and necessary AWS infrastructure for FloTorch automatically before installing the FloTorch components.
+Installs all prerequisites and necessary AWS infrastructure for FloTorch automatically before installing the FloTorch
+components.
 
 1. Go into your AWS EC2 instance (Using SSH, SSM, or Instance Connect) (Choose an Ubuntu or Amazon Linux 2 AMI).
-2. Clone the FloTorch git repository and follow the steps below to automatically install FloTorch and its prerequisites on AWS:
+2. Clone the FloTorch git repository and follow the steps below to automatically install FloTorch and its prerequisites
+   on AWS:
 
    ```bash
    git clone https://github.com/FissionAI/FloTorch.git
@@ -81,44 +99,48 @@ Installs all prerequisites and necessary AWS infrastructure for FloTorch automat
    ./deploy.sh
    ```
 
-The `deploy.sh` script supports Ubuntu and Amazon Linux 2, automatically detecting the OS and using the appropriate package manager (`apt` for Ubuntu, `yum` for Amazon Linux). This script will also automatically install and set up the prerequisites needed for FloTorch to be running.
+The `deploy.sh` script supports Ubuntu and Amazon Linux 2, automatically detecting the OS and using the appropriate
+package manager (`apt` for Ubuntu, `yum` for Amazon Linux). This script will also automatically install and set up the
+prerequisites needed for FloTorch to be running.
 
 ## What components are used & installed?
+
 - **Networking**
-  - VPC with public and private subnets
-  - NAT Gateways for private subnet internet access
-  - Security Groups for various services
+    - VPC with public and private subnets
+    - NAT Gateways for private subnet internet access
+    - Security Groups for various services
 - **OpenSearch Domain**
-  - Version: OpenSearch 2.15
-  - Instance Type: r7g.large.search
-  - Data Nodes: 3
-  - Storage: 100GB GP3 EBS volumes
+    - Version: OpenSearch 2.15
+    - Instance Type: r7g.large.search
+    - Data Nodes: 3
+    - Storage: 100GB GP3 EBS volumes
 - **DynamoDB Tables**
-  - Experiment Table
-  - Metrics Table
-  - Model Invocations Table
+    - Experiment Table
+    - Metrics Table
+    - Model Invocations Table
 - **S3 Buckets**
-  - Data bucket for storing application data
-  - Versioning enabled
-  - Encryption enabled
+    - Data bucket for storing application data
+    - Versioning enabled
+    - Encryption enabled
 - **ECS Configuration**
-  - Fargate Task Definitions
-    - Memory: 32GB
-    - CPU: 8 vCPUs
-    - Task Role with necessary permissions
+    - Fargate Task Definitions
+        - Memory: 32GB
+        - CPU: 8 vCPUs
+        - Task Role with necessary permissions
 - **Step Functions State Machine**
-  - Parallel execution of experiments
-  - Map state with failure tolerance:
-    - Maximum concurrency: 10
-    - Continues processing even if individual experiments fail
-  - Lambda function configurations:
-    - Memory: 1024MB
+    - Parallel execution of experiments
+    - Map state with failure tolerance:
+        - Maximum concurrency: 10
+        - Continues processing even if individual experiments fail
+    - Lambda function configurations:
+        - Memory: 1024MB
 - **App Runner Service**
-  - 4 vCPU and 12 GM memory
+    - 4 vCPU and 12 GM memory
 
 ### Post-Installation
 
 After successful deployment, you'll receive:
+
 1. **Access Information**:
     - Web UI URL (App Runner endpoint)
     - Nginx authentication credentials
@@ -135,15 +157,15 @@ To remove FloTorch and its infrastructure:
 
 1. Go to AWS CloudFormation console in your deployed region
 2. Remove all images in the each of the following repositories:
-   - `flotorch-indexing-<suffix>`
-   - `flotorch-retriever-<suffix>`
-   - `flotorch-app-<suffix>`
-   - `flotorch-evaluation-<suffix>`
-   - `flotorch-runtime-<suffix>`
+    - `flotorch-indexing-<suffix>`
+    - `flotorch-retriever-<suffix>`
+    - `flotorch-app-<suffix>`
+    - `flotorch-evaluation-<suffix>`
+    - `flotorch-runtime-<suffix>`
 3. Delete the following stacks in order:
-   - `FlotorchAppStack-<suffix>`
-   - `FlotorchStateMachineStack-<suffix>`
-   - `FlotorchVPCStack-<suffix>`
+    - `FlotorchAppStack-<suffix>`
+    - `FlotorchStateMachineStack-<suffix>`
+    - `FlotorchVPCStack-<suffix>`
 
 # Using the FloTorch Application for RAG Evaluation
 
@@ -165,9 +187,13 @@ Each project is listed with details such as ID, Name, Region, Status, and Date o
 
 ## Creating a New Project
 
-When creating a new project, you'll go through three main steps where you'll need to specify the necessary settings and options for your project.
+When creating a new project, you'll go through three main steps where you'll need to specify the necessary settings and
+options for your project.
 
-You will also have the option to use a previously saved configuration file if you have one. Simply click on 'Upload config' and select a valid JSON file with all necessary parameters. The application will automatically load these parameters and display the available experiments you can run. If you don't have a configuration file, please proceed with manual setup.
+You will also have the option to use a previously saved configuration file if you have one. Simply click on 'Upload
+config' and select a valid JSON file with all necessary parameters. The application will automatically load these
+parameters and display the available experiments you can run. If you don't have a configuration file, please proceed
+with manual setup.
 
 ### Data Strategy
 
@@ -194,11 +220,14 @@ In this page, you’ll be configuring experiment retrieval-related settings. Def
 - **Inferencing LLM**
 - **Inferencing LLM Temperature**
 
-Once these are selected, all the valid configurations will be displayed on the next page based on the choices you’ve made.
+Once these are selected, all the valid configurations will be displayed on the next page based on the choices you’ve
+made.
 
 You will have the option to save the valid configurations by clicking the ‘Download config’ button.
 
-Please review the configurations and select all the experiments that you’d like to run by marking the checkboxes and click ‘Run’. Now all the experiments you had marked will be displayed on a table, review it and click ‘Confirm’ to start the experiments.
+Please review the configurations and select all the experiments that you’d like to run by marking the checkboxes and
+click ‘Run’. Now all the experiments you had marked will be displayed on a table, review it and click ‘Confirm’ to start
+the experiments.
 
 You’ll now be taken back to the projects page where you can monitor the status of experiments.
 
@@ -217,7 +246,8 @@ If you select an experiment that is in progress, you’ll be able to view its st
 
 ## Evaluation
 
-Once an experiment is completed, an evaluation will be run based on a few metrics and the results will be displayed in the experiment table along with directional pricing and the duration.  
+Once an experiment is completed, an evaluation will be run based on a few metrics and the results will be displayed in
+the experiment table along with directional pricing and the duration.  
 The evaluation metrics include:
 
 - **Faithfulness**
@@ -225,72 +255,92 @@ The evaluation metrics include:
 - **Aspect Critic**
 - **Answer Relevancy**
 
-If you’d like to see the answers the model generated, you can click on the experiment ID to view them along with the questions and the ground truth answers.
+If you’d like to see the answers the model generated, you can click on the experiment ID to view them along with the
+questions and the ground truth answers.
 
-You’ll also have the option to view all the parameters of the experiment configuration; click the ‘details’ button on the same page.
+You’ll also have the option to view all the parameters of the experiment configuration; click the ‘details’ button on
+the same page.
 
 # Frequently Asked Questions
 
 ## 1. What is FloTorch.ai? What are its service offerings?
 
-FloTorch.ai is an innovative platform designed to simplify and optimize the selection and configuration of Large Language Models (LLMs) for use in Retrieval Augmented Generation (RAG) systems. It addresses the challenges of manual evaluation, resource-intensive experimentation, and complex performance comparisons by providing an automated, user-friendly approach to decision-making. The platform enables efficient and cost-effective utilization of LLMs, making it a valuable tool for startups, researchers, developers, and enterprises.
+FloTorch.ai is an innovative platform designed to simplify and optimize the selection and configuration of Large
+Language Models (LLMs) for use in Retrieval Augmented Generation (RAG) systems. It addresses the challenges of manual
+evaluation, resource-intensive experimentation, and complex performance comparisons by providing an automated,
+user-friendly approach to decision-making. The platform enables efficient and cost-effective utilization of LLMs, making
+it a valuable tool for startups, researchers, developers, and enterprises.
 
 ### Service Offerings of FloTorch.ai:
 
 - **Automated Evaluation of LLMs**
-  - FloTorch.ai analyzes multiple LLM configurations by evaluating combinations of hyperparameters specified by users.
-  - It measures key performance metrics such as relevance, fluency, and robustness.
+    - FloTorch.ai analyzes multiple LLM configurations by evaluating combinations of hyperparameters specified by users.
+    - It measures key performance metrics such as relevance, fluency, and robustness.
 - **Performance Insights**
-  - Provides detailed performance scores for each evaluated LLM configuration.
-  - Offers actionable insights into execution times and pricing, helping users understand the cost-effectiveness of each setup.
+    - Provides detailed performance scores for each evaluated LLM configuration.
+    - Offers actionable insights into execution times and pricing, helping users understand the cost-effectiveness of
+      each setup.
 - **Cost and Time Efficiency**
-  - Streamlines the LLM selection process by eliminating manual trial-and-error.
-  - Saves time and resources by automating comparisons and evaluations.
+    - Streamlines the LLM selection process by eliminating manual trial-and-error.
+    - Saves time and resources by automating comparisons and evaluations.
 - **User-Friendly Decision-Making**
-  - Helps users make data-driven decisions aligned with their specific goals and budgets.
-  - Simplifies the complexity of optimizing LLMs in RAG systems.
+    - Helps users make data-driven decisions aligned with their specific goals and budgets.
+    - Simplifies the complexity of optimizing LLMs in RAG systems.
 - **Broad Applicability**
-  - Caters to diverse use cases, such as enhancing customer experiences, improving content generation, and refining data retrieval processes.
+    - Caters to diverse use cases, such as enhancing customer experiences, improving content generation, and refining
+      data retrieval processes.
 - **Targeted Support for Users**
-  - Designed for startups, data scientists, developers, researchers, and enterprises seeking to optimize AI-driven systems.
+    - Designed for startups, data scientists, developers, researchers, and enterprises seeking to optimize AI-driven
+      systems.
 
-By focusing on performance, cost, and time efficiency, FloTorch.ai empowers users to maximize the potential of generative AI without the need for extensive experimentation.
+By focusing on performance, cost, and time efficiency, FloTorch.ai empowers users to maximize the potential of
+generative AI without the need for extensive experimentation.
 
 ---
 
 ## 2. Is an API key required to be able to use this tool?
 
-It is a platform hosted on AWS infrastructure and provides web-based access through an App Runner instance; it is common for such systems to require authentication mechanisms for secure access.
+It is a platform hosted on AWS infrastructure and provides web-based access through an App Runner instance; it is common
+for such systems to require authentication mechanisms for secure access.
 
 ### For Web-Based Access:
 
-After the installation is complete, users receive a web URL and credentials to log into the FloTorch application. This implies that secure login credentials (possibly including an API key or token) are required for authentication.
+After the installation is complete, users receive a web URL and credentials to log into the FloTorch application. This
+implies that secure login credentials (possibly including an API key or token) are required for authentication.
 
 ### For Programmatic Access:
 
-If FloTorch.ai provides an API for external integrations, it is likely that credentials would be required to authenticate API calls.
+If FloTorch.ai provides an API for external integrations, it is likely that credentials would be required to
+authenticate API calls.
 
 ### AWS Infrastructure:
 
-Since FloTorch runs on AWS, users must have their AWS credentials configured locally to deploy and manage infrastructure. This is separate from accessing the FloTorch application itself.
+Since FloTorch runs on AWS, users must have their AWS credentials configured locally to deploy and manage
+infrastructure. This is separate from accessing the FloTorch application itself.
 
 ---
 
 ## 3. Can I run this tool from a local machine, or do I have to necessarily use an EC2 instance?
 
-FloTorch.ai is designed primarily for deployment on AWS infrastructure, including the use of an EC2 instance for setup and hosting. However, whether it can be run from a local machine depends on the specific requirements of the tool and the intended use case.
+FloTorch.ai is designed primarily for deployment on AWS infrastructure, including the use of an EC2 instance for setup
+and hosting. However, whether it can be run from a local machine depends on the specific requirements of the tool and
+the intended use case.
 
 ---
 
 ## 4. Is there any sample data available for use as knowledge base data and ground truth data?
 
-FloTorch.ai includes sample data for knowledge base data and ground truth data. However, FloTorch typically provides some form of example datasets or pre-configured templates to help users get started.
+FloTorch.ai includes sample data for knowledge base data and ground truth data. However, FloTorch typically provides
+some form of example datasets or pre-configured templates to help users get started.
 
 ---
 
 ## 5. Do I require AWS account access as a root user to be able to use the features and to be able to get the tool running?
 
-No, you do not require root user access to an AWS account to use and set up FloTorch.ai. However, you do need an AWS account with sufficient permissions to perform specific actions necessary for deploying and managing the infrastructure. Using the root account directly is not recommended for security reasons. Instead, you should use an IAM user or role with the required permissions.
+No, you do not require root user access to an AWS account to use and set up FloTorch.ai. However, you do need an AWS
+account with sufficient permissions to perform specific actions necessary for deploying and managing the infrastructure.
+Using the root account directly is not recommended for security reasons. Instead, you should use an IAM user or role
+with the required permissions.
 
 ---
 
@@ -299,7 +349,8 @@ No, you do not require root user access to an AWS account to use and set up FloT
 If you encounter errors while using FloTorch.ai, there are several avenues to seek help and resolve the issues:
 
 - Check the installation guide, FAQs, and other resources provided in the FloTorch repository or official website.
-- Review detailed error logs (if available) for clues. The application may log specific issues during infrastructure setup or usage.
+- Review detailed error logs (if available) for clues. The application may log specific issues during infrastructure
+  setup or usage.
 
 ---
 
@@ -308,23 +359,25 @@ If you encounter errors while using FloTorch.ai, there are several avenues to se
 ### Support Channels
 
 - **GitHub Repository:**
-  - If the tool is hosted on GitHub (e.g., FissionAI/FloTorch), check for an "Issues" tab.
-  - You can report bugs or errors by creating a new issue with detailed information.
+    - If the tool is hosted on GitHub (e.g., FissionAI/FloTorch), check for an "Issues" tab.
+    - You can report bugs or errors by creating a new issue with detailed information.
 - **FloTorch.ai Website**
 
 ---
 
 ## 8. What is evaluation? What does the evaluation process do?
 
-Evaluation refers to the process of analyzing the performance of the experiments conducted using Large Language Models (LLMs) for Retrieval Augmented Generation (RAG) tasks. The evaluation process measures how effectively the selected configurations and models meet specific criteria, such as relevance, fluency, robustness, and cost efficiency.
+Evaluation refers to the process of analyzing the performance of the experiments conducted using Large Language Models (
+LLMs) for Retrieval Augmented Generation (RAG) tasks. The evaluation process measures how effectively the selected
+configurations and models meet specific criteria, such as relevance, fluency, robustness, and cost efficiency.
 
 ### Evaluation Process:
 
 - **Metrics Assessment:**
-  - Faithfulness
-  - Context Precision
-  - Aspect Critic
-  - Answer Relevancy
+    - Faithfulness
+    - Context Precision
+    - Aspect Critic
+    - Answer Relevancy
 - **Cost and Time Analysis**
 - **Configuration Validation**
 - **Result Visualization**
@@ -364,7 +417,8 @@ It will be released shortly. Please stay tuned to the FloTorch.ai website for re
 
 ## 14. What is the meaning of directional pricing? Is it not accurate?
 
-Directional pricing is an effective price taken for an experiment to complete. It is the summation of OpenSearch price, embedding model price, retrieval, and evaluation price.
+Directional pricing is an effective price taken for an experiment to complete. It is the summation of OpenSearch price,
+embedding model price, retrieval, and evaluation price.
 
 ---
 
@@ -386,7 +440,9 @@ The next version of the product will be released shortly. Stay tuned to the FloT
 
 ## 17. How much time does it take to complete an experiment with a typical configuration?
 
-The time it takes to complete an experiment in FloTorch.ai with a typical configuration can vary based on several factors, including the complexity of the configuration, the size of the data, the type of model used, and the available computational resources.
+The time it takes to complete an experiment in FloTorch.ai with a typical configuration can vary based on several
+factors, including the complexity of the configuration, the size of the data, the type of model used, and the available
+computational resources.
 
 ---
 
@@ -398,7 +454,8 @@ No, we do not have any default configuration available in Git.
 
 ## 19. Is the data which I use (project data and evaluation data) transferred to the cloud or made public?
 
-No, it will be saved in an S3 bucket, but it is not made public. It will be limited to your AWS Account based on your default IAM configurations and Security Group settings.
+No, it will be saved in an S3 bucket, but it is not made public. It will be limited to your AWS Account based on your
+default IAM configurations and Security Group settings.
 
 ---
 
@@ -443,7 +500,7 @@ Follow the detailed steps provided in [instructions.md](./instructions.md).
 ### Naming Conventions
 
 - Use **snake_case** for:
-  - names
-  - Configuration variables
-  - python file names
-    Example: `example_snake_case`
+    - names
+    - Configuration variables
+    - python file names
+      Example: `example_snake_case`

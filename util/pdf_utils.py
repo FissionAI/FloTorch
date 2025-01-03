@@ -6,6 +6,7 @@ from PyPDF2 import PdfReader
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+
 def extract_text_from_pdf(file_path: str) -> str:
     """Extract text from a PDF file."""
     try:
@@ -19,7 +20,8 @@ def extract_text_from_pdf(file_path: str) -> str:
     except Exception as e:
         logger.error(f"Failed to extract text from PDF: {e}")
         raise
-    
+
+
 def process_pdf_from_folder(file_path: str) -> str:
     "Extract text from all files in a folder"
     try:
