@@ -9,3 +9,4 @@ click==8.1.7
 uvicorn==0.32.0
 pandas
 PyPDF2==3.0.1
+pymupdf
