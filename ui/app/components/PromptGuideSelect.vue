@@ -14,10 +14,10 @@ const { open, reset, onChange } = useFileDialog({
 const validationSchema = computed(() => {
   const schema = ProjectNShotPromptGuideSchema.extend({
     examples: z.array(z.object({
-      example: z.string(),
-    })).min(props.requiredPrompts, {
-      message: `Must have at least ${props.requiredPrompts} examples`
-    })
+          example: z.string(),
+        })).min(props.requiredPrompts, {
+        message: `Must have at least ${props.requiredPrompts} examples`
+      })
   })
   if (props.requiredPrompts > 0) {
     return schema
@@ -36,36 +36,50 @@ onChange(async (files) => {
   const file = files[0]
   const reader = new FileReader()
   reader.onload = (e) => {
+    let errorMessage:string = ''
     try {
       const json = JSON.parse(e.target?.result as string)
+      if(!json['user_prompt'] || !json['system_prompt']){
+        errorMessage = "User prompt and System prompt are required in json file."
+      }else {
+        errorMessage = ''
+      }
       const parsed = validationSchema.value.safeParse(json)
       if (parsed.success) {
         modelValue.value = parsed.data
         filepath.value = "Attached"
         emits("error", undefined)
       } else {
-        const errorMessage = [parsed.error.flatten().fieldErrors.examples?.[0], parsed.error.flatten().fieldErrors.user_prompt?.[0], parsed.error.flatten().fieldErrors.system_prompt?.[0]].filter(Boolean).join("\n")
-        emits("error", { name: "n_shot_prompt_guide", message: errorMessage })
+        const errorMsg = errorMessage || "Upload a valid json file"
+        emits("error", { name: "n_shot_prompt_guide", message: errorMsg });
       }
     } catch (error) {
-      console.error(error)
-      emits("error", { name: "n_shot_prompt_guide", message: "Invalid file format" })
+      console.error(error);
+      emits("error", {
+        name: "n_shot_prompt_guide",
+        message: "Invalid file format",
+      });
+       modelValue.value = undefined;
+    } finally {
+      reset();
     }
-  }
-  reader.readAsText(file!, "UTF-8")
-  reset()
+  };
+  reader.readAsText(file!, "UTF-8");
 })
+
+const handleOpen = ()=>{
+  reset();
+  modelValue.value = undefined;
+  open();
+}
 
 const filepath = ref('')
 const isUploading = ref(false)
-
 </script>
-
-
 
 <template>
   <UButtonGroup class="w-full">
     <UInput v-model="filepath" disabled />
-    <UButton color="neutral" variant="subtle" icon="i-lucide-upload" :loading="isUploading" @click="open()" />
+    <UButton color="neutral" variant="subtle" icon="i-lucide-upload" :loading="isUploading" @click="handleOpen()" />
   </UButtonGroup>
 </template>

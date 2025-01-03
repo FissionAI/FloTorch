@@ -105,7 +105,7 @@ export const ProjectCreateIndexingStrategySchema = z.object({
     }),
   embedding: ProjectCreateModelSchema.array().min(1, {
     message: "At least one embedding model is required",
-  }),
+  }).default([]),
 }).superRefine((data, ctx) => {
   console.log(data, ctx)
   if (
@@ -151,6 +151,8 @@ export const ProjectNShotPromptGuideSchema = z.object({
   system_prompt: z.string({
     required_error: "System prompt is required",
   }),
+}, {
+  message : "Shot prompt file is required"
 });
 
 export type ProjectNShotPromptGuide = z.infer<
@@ -190,7 +192,7 @@ export const ProjectCreateRetrievalStrategySchema = z
       }),
     retrieval: ProjectCreateModelSchema.array().min(1, {
       message: "At least one retrieval model is required",
-    }),
+    }).default([]),
     n_shot_prompt_guide: ProjectNShotPromptGuideSchema,
   })
   .superRefine((data, ctx) => {
