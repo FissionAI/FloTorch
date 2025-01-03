@@ -1,0 +1,226 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'CloudFormation template for App Runner Service'
+
+Parameters:
+  TableSuffix:
+    Type: String
+    Description: Suffix for table names and other resources
+  
+  Region:
+    Type: String
+    Description: AWS Region
+  
+  AccountId:
+    Type: String
+    Description: AWS Account ID
+  
+  OpenSearchEndpoint:
+    Type: String
+    Description: OpenSearch Domain Endpoint
+  
+  DataBucketName:
+    Type: String
+    Description: S3 Bucket Name for data storage
+  
+  EcsStepFunctionArn:
+    Type: String
+    Description: ECS Step Function ARN
+  
+  OpenSearchAdminUser:
+    Type: String
+    Description: OpenSearch Admin Username
+  
+  OpenSearchAdminPassword:
+    Type: String
+    Description: OpenSearch Admin Password
+    NoEcho: true
+  
+  NginxAuthUser:
+    Type: String
+    Description: Nginx Auth Username
+    Default: admin
+  
+  NginxAuthPassword:
+    Type: String
+    Description: Nginx Auth Password
+    NoEcho: true
+  
+  VpcConnectorArn:
+    Type: String
+    Description: VPC Connector ARN
+  
+  BedrockRoleArn:
+    Type: String
+    Description: Bedrock Role ARN
+  
+  EcrRepositoryUri:
+    Type: String
+    Description: ECR Repository URI for the app image
+  
+  AppImageTag:
+    Type: String
+    Description: Tag for the app image
+
+Resources:
+  AppRunnerInstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: tasks.apprunner.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSAppRunnerServicePolicyForECRAccess
+      Policies:
+        - PolicyName: AppRunnerServicePolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:*
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - s3:*
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - logs:*
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - ec2:*
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - states:*
+                Resource: '*'
+
+  AppRunnerAccessRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: build.apprunner.amazonaws.com
+            Action: sts:AssumeRole
+          - Effect: Allow
+            Principal:
+              Service: tasks.apprunner.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSAppRunnerServicePolicyForECRAccess
+      Policies:
+        - PolicyName: AppRunnerServicePolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - states:*
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - s3:*
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - dynamodb:*
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - ecr:*
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - logs:*
+                Resource: '*'
+
+  FlotorchWebApp:
+    Type: AWS::AppRunner::Service
+    Properties:
+      ServiceName: !Sub flotorch-webapp-${TableSuffix}
+      SourceConfiguration:
+        AuthenticationConfiguration:
+          AccessRoleArn: !GetAtt AppRunnerAccessRole.Arn
+        AutoDeploymentsEnabled: true
+        ImageRepository:
+          ImageIdentifier: !Sub ${EcrRepositoryUri}:latest
+          ImageRepositoryType: ECR
+          ImageConfiguration:
+            Port: 80
+            RuntimeEnvironmentVariables:
+              - Name: AWS_DEFAULT_REGION
+                Value: !Ref Region
+              - Name: AWS_REGION
+                Value: !Ref Region
+              - Name: DATA_BUCKET
+                Value: !Ref DataBucketName
+              - Name: TABLE_SUFFIX
+                Value: !Ref TableSuffix
+              - Name: NGINX_AUTH_USER
+                Value: !Ref NginxAuthUser
+              - Name: NGINX_AUTH_PASSWORD
+                Value: !Ref NginxAuthPassword
+              - Name: OPENSEARCH_ENDPOINT
+                Value: !Ref OpenSearchEndpoint
+              - Name: PORT
+                Value: '80'
+              - Name: aws_region
+                Value: !Ref Region
+              - Name: bedrock_limit_csv
+                Value: seed/bedrock_limits_small.csv
+              - Name: bedrock_role_arn
+                Value: !Ref BedrockRoleArn
+              - Name: execution_model_invocations_table
+                Value: !Sub ExecutionModelInvocations_${TableSuffix}
+              - Name: execution_table
+                Value: !Sub Execution_${TableSuffix}
+              - Name: experiment_question_metrics_table
+                Value: !Sub ExperimentQuestionMetrics_${TableSuffix}
+              - Name: experiment_table
+                Value: !Sub Experiment_${TableSuffix}
+              - Name: inference_system_prompt
+                Value: You are an intelligent assistant. Answer user questions using only the provided context. Do not make up information, make assumptions or use external knowledge. If the context does not contain the answer, explicitly state that. Do not disclose sensitive information. Maintain a professional tone and ensure responses are accurate and relevant without assumptions.
+              - Name: opensearch_host
+                Value: !Ref OpenSearchEndpoint
+              - Name: opensearch_password
+                Value: !Ref OpenSearchAdminPassword
+              - Name: opensearch_serverless
+                Value: 'false'
+              - Name: opensearch_username
+                Value: !Ref OpenSearchAdminUser
+              - Name: s3_bucket
+                Value: !Ref DataBucketName
+              - Name: sagemaker_role_arn
+                Value: !Ref BedrockRoleArn
+              - Name: step_function_arn
+                Value: !Sub arn:aws:states:${Region}:${AccountId}:stateMachine:FlotorchStateMachine-${TableSuffix}
+              - Name: vector_field_name
+                Value: vectors
+      HealthCheckConfiguration:
+        Path: /health
+        Protocol: HTTP
+        Interval: 20
+        Timeout: 5
+        HealthyThreshold: 1
+        UnhealthyThreshold: 5
+      InstanceConfiguration:
+        Cpu: 2048
+        Memory: 4096
+        InstanceRoleArn: !GetAtt AppRunnerInstanceRole.Arn
+      NetworkConfiguration:
+        EgressConfiguration:
+          EgressType: VPC
+          VpcConnectorArn: !Ref VpcConnectorArn
+
+Outputs:
+  ServiceUrl:
+    Description: App Runner Service URL
+    Value: !GetAtt FlotorchWebApp.ServiceUrl

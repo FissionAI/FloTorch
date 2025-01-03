@@ -1,0 +1,125 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'CloudFormation template for OpenSearch Domain'
+
+Parameters:
+  ProjectName:
+    Type: String
+    Description: Name of the project
+  ClientName:
+    Type: String
+    Description: Client name
+  CreatedBy:
+    Type: String
+    Description: Created By
+  TableSuffix:
+    Type: String
+    Description: Suffix to append to resource names
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC ID where OpenSearch will be deployed
+  PrivateSubnetId:
+    Type: AWS::EC2::Subnet::Id
+    Description: Private subnet ID for OpenSearch
+  VpcCidr:
+    Type: String
+    Description: CIDR block of the VPC
+  OpenSearchAdminUser:
+    Type: String
+    Description: OpenSearch admin username
+  OpenSearchAdminPassword:
+    Type: String
+    Description: OpenSearch admin password
+    NoEcho: true
+
+Resources:
+  OpenSearchSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for OpenSearch domain
+      GroupName: !Sub ${ClientName}-opensearch-sg
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: !Ref VpcCidr
+          Description: Allow HTTPS access from VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${ClientName}-opensearch-sg
+        - Key: ClientName
+          Value: !Ref ClientName
+        - Key: CreatedBy
+          Value: !Ref CreatedBy
+        - Key: ProjectName
+          Value: !Ref ProjectName
+
+  OpenSearchDomain:
+    Type: AWS::OpenSearchService::Domain
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      DomainName: !Sub flotorch-${TableSuffix}
+      EngineVersion: OpenSearch_2.17
+      ClusterConfig:
+        InstanceType: r7g.2xlarge.search
+        InstanceCount: 3
+        DedicatedMasterEnabled: false
+        ZoneAwarenessEnabled: false
+      EBSOptions:
+        EBSEnabled: true
+        VolumeType: gp3
+        VolumeSize: 500
+        Iops: 16000
+        Throughput: 1000
+      VPCOptions:
+        SubnetIds:
+          - !Ref PrivateSubnetId
+        SecurityGroupIds:
+          - !Ref OpenSearchSecurityGroup
+      EncryptionAtRestOptions:
+        Enabled: true
+      NodeToNodeEncryptionOptions:
+        Enabled: true
+      DomainEndpointOptions:
+        EnforceHTTPS: true
+      AdvancedSecurityOptions:
+        Enabled: true
+        InternalUserDatabaseEnabled: true
+        MasterUserOptions:
+          MasterUserName: !Ref OpenSearchAdminUser
+          MasterUserPassword: !Ref OpenSearchAdminPassword
+      AccessPolicies:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: '*'
+            Action: 'es:*'
+            Resource: !Sub 'arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/flotorch-${TableSuffix}/*'
+      Tags:
+        - Key: Name
+          Value: !Sub ${ClientName}-opensearch
+        - Key: ClientName
+          Value: !Ref ClientName
+        - Key: CreatedBy
+          Value: !Ref CreatedBy
+        - Key: ProjectName
+          Value: !Ref ProjectName
+
+Outputs:
+  OpenSearchEndpoint:
+    Description: OpenSearch domain endpoint
+    Value: !GetAtt OpenSearchDomain.DomainEndpoint
+  OpenSearchDomainArn:
+    Description: OpenSearch domain ARN
+    Value: !GetAtt OpenSearchDomain.DomainArn
+  OpenSearchAdminUser:
+    Description: OpenSearch admin username
+    Value: !Ref OpenSearchAdminUser
+  OpenSearchAdminPassword:
+    Description: OpenSearch admin password
+    Value: !Ref OpenSearchAdminPassword
+  DashboardsUrl:
+    Description: OpenSearch Dashboards URL
+    Value: !Sub https://${OpenSearchDomain.DomainEndpoint}/_dashboards/

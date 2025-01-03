@@ -1,0 +1,77 @@
+# AWSTemplateFormatVersion: '2010-09-09'
+# Description: 'IAM roles for FloTorch'
+
+# Parameters:
+#   Environment:
+#     Type: String
+#     Description: Environment (e.g., dev, staging, prod)
+#   ProjectName:
+#     Type: String
+#     Description: Name of the project
+#   ClientName:
+#     Type: String
+#     Description: Client name
+#   CreatedBy:
+#     Type: String
+#     Description: Created By
+
+# Resources:
+#   OpenSearchRole:
+#     Type: AWS::IAM::Role
+#     Properties:
+#       RoleName: !Sub ${ClientName}-${Environment}-opensearch-role
+#       AssumeRolePolicyDocument:
+#         Version: '2012-10-17'
+#         Statement:
+#           - Effect: Allow
+#             Principal:
+#               Service: cloudformation.amazonaws.com
+#             Action: sts:AssumeRole
+#       ManagedPolicyArns:
+#         - arn:aws:iam::aws:policy/service-role/AWSCloudFormationFullAccess
+#       Policies:
+#         - PolicyName: OpenSearchAccess
+#           PolicyDocument:
+#             Version: '2012-10-17'
+#             Statement:
+#               - Effect: Allow
+#                 Action:
+#                   - es:*
+#                   - ec2:CreateVpcEndpoint
+#                   - ec2:DeleteVpcEndpoints
+#                   - ec2:DescribeVpcEndpoints
+#                   - ec2:ModifyVpcEndpoint
+#                   - ec2:CreateTags
+#                   - ec2:DeleteTags
+#                   - ec2:DescribeTags
+#                   - ec2:CreateSecurityGroup
+#                   - ec2:DeleteSecurityGroup
+#                   - ec2:DescribeSecurityGroups
+#                   - ec2:AuthorizeSecurityGroupIngress
+#                   - ec2:RevokeSecurityGroupIngress
+#                   - ec2:UpdateSecurityGroupRuleDescriptionsIngress
+#                   - ec2:AuthorizeSecurityGroupEgress
+#                   - ec2:RevokeSecurityGroupEgress
+#                   - ec2:UpdateSecurityGroupRuleDescriptionsEgress
+#                   - ec2:DescribeVpcs
+#                   - ec2:DescribeSubnets
+#                   - iam:PassRole
+#                   - iam:GetRole
+#                   - iam:CreateServiceLinkedRole
+#                 Resource: '*'
+#       Tags:
+#         - Key: Name
+#           Value: !Sub ${ClientName}-${Environment}-opensearch-role
+#         - Key: Environment
+#           Value: !Ref Environment
+#         - Key: ClientName
+#           Value: !Ref ClientName
+#         - Key: CreatedBy
+#           Value: !Ref CreatedBy
+#         - Key: ProjectName
+#           Value: !Ref ProjectName
+
+# Outputs:
+#   OpenSearchRoleArn:
+#     Description: ARN of the OpenSearch IAM role
+#     Value: !GetAtt OpenSearchRole.Arn
