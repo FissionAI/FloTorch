@@ -5,7 +5,7 @@ import logging
 from util.s3util import S3Util
 from config.config import get_config
 from decimal import Decimal
-from util.pdf_utils import extract_text_from_pdf_v2
+from util.pdf_utils import extract_text_from_pdf_pymudf
 from app.price_calculator import estimate_embedding_model_bedrock_price,estimate_retrieval_model_bedrock_price,estimate_opensearch_price,estimate_sagemaker_price
 from .dependencies.database import get_execution_db
 from constants.validation_status import ValidationStatus
@@ -141,7 +141,7 @@ def count_characters_in_file(file_path):
                     character_counts+= len(content)
             elif file.endswith('.pdf'):
                 with open(full_file, 'rb') as file:
-                    text_data = extract_text_from_pdf_v2(file)
+                    text_data = extract_text_from_pdf_pymudf(file)
                     character_counts += len(text_data)
             else:
                 character_counts+= 1

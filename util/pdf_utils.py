@@ -21,7 +21,7 @@ def extract_text_from_pdf(file_path: str) -> str:
         logger.error(f"Failed to extract text from PDF: {e}")
         raise
 
-def extract_text_from_pdf_v2(file_path: str) -> str:
+def extract_text_from_pdf_pymudf(file_path: str) -> str:
     """Extract text from a PDF file."""
     try:
         logger.info(f"Extracting text from PDF: {file_path}")
