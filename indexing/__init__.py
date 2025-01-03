@@ -1,1 +1,1 @@
-from .indexing import chunk_embed_store
+from .indexing import Indexer

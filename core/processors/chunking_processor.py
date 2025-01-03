@@ -1,8 +1,9 @@
-from typing import Dict, List, Type, Union
-from core.chunking import FixedChunker, HierarchicalChunker
-from baseclasses.base_classes import BaseChunker, BaseHierarchicalChunker
 import logging
+from typing import Dict, List, Type, Union
+
+from baseclasses.base_classes import BaseChunker, BaseHierarchicalChunker
 from config.experimental_config import ExperimentalConfig
+from core.chunking import FixedChunker, HierarchicalChunker
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)

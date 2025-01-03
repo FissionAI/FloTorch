@@ -1,10 +1,9 @@
-from baseclasses.base_classes import BaseEvaluator, EvaluationMetrics
-from core.dynamodb import DynamoDBOperations
-from typing import List, Dict
-import json
-import numpy as np
-
 import logging
+from typing import List, Dict
+
+from baseclasses.base_classes import BaseEvaluator
+from core.dynamodb import DynamoDBOperations
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 

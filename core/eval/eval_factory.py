@@ -1,9 +1,9 @@
-from baseclasses.base_classes import BaseEvaluator
-from config.experimental_config import ExperimentalConfig
-from config.config import Config
+import logging
 from typing import Dict, Type
 
-import logging
+from baseclasses.base_classes import BaseEvaluator
+from config.config import Config
+from config.experimental_config import ExperimentalConfig
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)

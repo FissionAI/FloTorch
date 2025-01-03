@@ -1,8 +1,9 @@
-import os
 import json
+import logging
+import os
+
 import boto3
 from botocore.exceptions import ClientError
-import logging
 
 logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO)

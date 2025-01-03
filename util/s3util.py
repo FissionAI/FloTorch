@@ -1,13 +1,14 @@
-import os
+import csv
+import io
 import json
 import logging
-import boto3
-import io
-from botocore.exceptions import ClientError
+import os
+from typing import Optional, Dict
 from urllib.parse import urlparse
-import csv
+
+import boto3
 import pandas as pd
-from typing import Optional, List, Dict
+from botocore.exceptions import ClientError
 
 
 class S3Util:

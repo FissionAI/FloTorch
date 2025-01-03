@@ -1,7 +1,8 @@
-from core.embedding import EmbedderFactory
-from typing import Dict, List, Tuple, Any
-from config.experimental_config import ExperimentalConfig
 import logging
+from typing import Dict, List, Tuple, Any
+
+from config.experimental_config import ExperimentalConfig
+from core.embedding import EmbedderFactory
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)

@@ -1,16 +1,21 @@
 import json
-from task_processor import FargateTaskProcessor
-from config.config import Config
-from config.experimental_config import ExperimentalConfig
-from core.service.experimental_config_service import ExperimentalConfigService
 import logging
-from retriever.retriever import retrieve
+
+from config.config import Config
+from core.service.experimental_config_service import ExperimentalConfigService
+from retriever.retriever import Retriever
+from task_processor import FargateTaskProcessor
 
 logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO)
 
 
 class RetrieverProcessor(FargateTaskProcessor):
+
+    def __init__(self):
+        super().__init__()
+        self.retriever = Retriever()
+
     def process(self):
         try:
             logger.info("Input data: %s", self.input_data)
@@ -23,7 +28,7 @@ class RetrieverProcessor(FargateTaskProcessor):
             logger.info("Into retriever processor. Processing event: %s", json.dumps(exp_config_data))
                 
             # Execute retrieve method
-            retrieve(config, exp_config)
+            self.retriever.retrieve(config, exp_config)
 
             self.send_task_success({  
                 "status": "success"

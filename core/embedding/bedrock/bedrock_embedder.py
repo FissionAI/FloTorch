@@ -1,10 +1,11 @@
-import boto3
+import json
+import logging
 from typing import Dict, List, Tuple, Any
+
+import boto3
+
 from baseclasses.base_classes import BaseEmbedder
 from util.boto3_utils import BedRockRetryHander
-import json
-
-import logging
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)

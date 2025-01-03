@@ -1,11 +1,10 @@
-from typing import Dict, Any, List, Optional
 import logging
+from dataclasses import dataclass
+from typing import Dict, Any, List, Optional
 
 from config.config import Config
 from core.opensearch_vectorstore import OpenSearchVectorDatabase
-from dataclasses import dataclass
 from util.dynamo_utils import deserialize_dynamodb_json
-
 
 logging.basicConfig(
     level=logging.INFO, 

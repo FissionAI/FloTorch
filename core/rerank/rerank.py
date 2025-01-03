@@ -1,7 +1,6 @@
 import logging
+
 import boto3
-from config.experimental_config import ExperimentalConfig
-from config.config import Config, get_config
 
 # Set up logging
 logger = logging.getLogger(__name__)

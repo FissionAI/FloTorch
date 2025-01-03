@@ -1,9 +1,10 @@
-from abc import abstractmethod
-from baseclasses.base_classes import BaseInferencer
-import boto3
-from typing import List, Dict, Any
 import logging
-from config.experimental_config import ExperimentalConfig
+from abc import abstractmethod
+from typing import List, Dict
+
+import boto3
+
+from baseclasses.base_classes import BaseInferencer
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)

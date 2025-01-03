@@ -1,11 +1,12 @@
-import boto3
 import logging
-from typing import Dict, List, Any, Optional
-from botocore.exceptions import ClientError
-from decimal import Decimal
-import json
 import time
 from datetime import datetime, timezone
+from decimal import Decimal
+from typing import Dict, List, Any, Optional
+
+import boto3
+from botocore.exceptions import ClientError
+
 
 class DynamoDBOperations:
     """Class to handle DynamoDB operations."""

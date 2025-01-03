@@ -1,5 +1,7 @@
 from typing import List
+
 from langchain.text_splitter import CharacterTextSplitter
+
 from baseclasses.base_classes import BaseChunker
 
 

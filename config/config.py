@@ -1,7 +1,9 @@
 import os
-from dotenv import load_dotenv
-from typing import Optional
 from dataclasses import dataclass
+from typing import Optional
+
+from dotenv import load_dotenv
+
 
 @dataclass
 class Config:

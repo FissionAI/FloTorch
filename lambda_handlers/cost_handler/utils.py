@@ -1,11 +1,13 @@
-import boto3
 import csv
 import io
 import logging
-from botocore.exceptions import ClientError
-from typing import Optional
-import pandas as pd
 from datetime import datetime, timezone
+from typing import Optional
+
+import boto3
+import pandas as pd
+from botocore.exceptions import ClientError
+
 
 def read_csv_from_s3(object_key: str, bucket_name: str, as_dataframe: bool = True) -> Optional[object]:
     """

@@ -1,16 +1,16 @@
-import boto3
+import logging
+import re
 from typing import Dict, List
-from baseclasses.base_classes import BaseEmbedder
-from config.experimental_config import ExperimentalConfig
-from sagemaker.predictor import Predictor
-from sagemaker.serializers import JSONSerializer
+
+import boto3
+from sagemaker import get_execution_role
 from sagemaker.deserializers import JSONDeserializer
 from sagemaker.huggingface import HuggingFaceModel
+from sagemaker.predictor import Predictor
+from sagemaker.serializers import JSONSerializer
 from sagemaker.session import Session
-from sagemaker import get_execution_role
-import re
 
-import logging
+from baseclasses.base_classes import BaseEmbedder
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)

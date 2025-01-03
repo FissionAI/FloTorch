@@ -1,6 +1,7 @@
-import os
-from PyPDF2 import PdfReader
 import logging
+import os
+
+from PyPDF2 import PdfReader
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)

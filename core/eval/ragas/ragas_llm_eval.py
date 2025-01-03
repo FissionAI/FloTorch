@@ -1,16 +1,16 @@
-from core.eval.ragas.ragas_eval import RagasEvaluator
+import logging
+from typing import Optional, List
+
+from langchain_aws import ChatBedrockConverse, BedrockEmbeddings
 from ragas import evaluate
 from ragas.dataset_schema import SingleTurnSample, EvaluationDataset
-from ragas.metrics._string import NonLLMStringSimilarity
-from ragas.metrics import Faithfulness, AspectCritic, LLMContextPrecisionWithoutReference, ResponseRelevancy
-from langchain_aws import ChatBedrockConverse, BedrockEmbeddings
 from ragas.embeddings import LangchainEmbeddingsWrapper
 from ragas.llms import LangchainLLMWrapper
-from baseclasses.base_classes import ExperimentQuestionMetrics, EvaluationMetrics
-from typing import Optional, List
-from core.eval.eval_factory import EvalFactory
+from ragas.metrics import Faithfulness, AspectCritic, LLMContextPrecisionWithoutReference, ResponseRelevancy
 
-import logging
+from baseclasses.base_classes import ExperimentQuestionMetrics, EvaluationMetrics
+from core.eval.eval_factory import EvalFactory
+from core.eval.ragas.ragas_eval import RagasEvaluator
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)

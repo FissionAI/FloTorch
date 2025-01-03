@@ -1,9 +1,10 @@
 import json
+import logging
 from typing import Dict, Any
+
 from config.config import Config
 from config.experimental_config import ExperimentalConfig
-from indexing.indexing import chunk_embed_store
-import logging
+from indexing.indexing import Indexer
 
 logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO)
@@ -55,7 +56,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         config = Config.load_config()
            
         # Execute retrieve method
-        chunk_embed_store(config, exp_config)
+        Indexer().chunk_embed_store(config, exp_config)
 
         return {
             **event,  # Pass the entire input event

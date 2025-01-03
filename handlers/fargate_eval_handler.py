@@ -1,10 +1,11 @@
 import json
-from task_processor import FargateTaskProcessor
+import logging
+
 from config.config import Config
 from core.service.experimental_config_service import ExperimentalConfigService
 from evaluation.eval import evaluate
+from task_processor import FargateTaskProcessor
 
-import logging
 logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO)
 

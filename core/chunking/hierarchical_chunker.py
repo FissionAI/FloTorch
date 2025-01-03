@@ -1,7 +1,10 @@
-from typing import List
-from baseclasses.base_classes import BaseHierarchicalChunker
-from langchain.text_splitter import CharacterTextSplitter
 import uuid
+from typing import List
+
+from langchain.text_splitter import CharacterTextSplitter
+
+from baseclasses.base_classes import BaseHierarchicalChunker
+
 
 class HierarchicalChunker(BaseHierarchicalChunker):
     """Hierarchical chunking strategy."""

@@ -1,9 +1,11 @@
-import boto3
 import json
+import logging
 import os
+
+import boto3
+
 from pricing import compute_actual_price, calculate_experiment_duration
 
-import logging
 logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO)
 

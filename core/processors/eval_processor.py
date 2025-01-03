@@ -1,7 +1,7 @@
-from core.eval.eval_factory import EvalFactory
-from typing import Dict, List, Tuple
-from config.experimental_config import ExperimentalConfig
 import logging
+
+from config.experimental_config import ExperimentalConfig
+from core.eval.eval_factory import EvalFactory
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)

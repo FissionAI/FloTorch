@@ -1,8 +1,8 @@
-from config.config import get_config
-from config.experimental_config import ExperimentalConfig
 import logging
-from baseclasses.base_classes import BaseInferencer
 from typing import Dict, Type
+
+from baseclasses.base_classes import BaseInferencer
+from config.experimental_config import ExperimentalConfig
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)

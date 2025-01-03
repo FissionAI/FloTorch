@@ -1,9 +1,10 @@
 import json
+import logging
 from typing import Dict, Any
+
 from config.config import Config
 from config.experimental_config import ExperimentalConfig
 from evaluation.eval import Evaluator
-import logging
 
 logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO)

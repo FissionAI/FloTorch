@@ -1,7 +1,8 @@
-from core.inference import InferencerFactory
-from typing import Dict, List, Tuple, Any
-from config.experimental_config import ExperimentalConfig
 import logging
+from typing import Dict, List, Tuple, Any
+
+from config.experimental_config import ExperimentalConfig
+from core.inference import InferencerFactory
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)

@@ -1,6 +1,5 @@
-from typing import Dict, Any
-
 import logging
+from typing import Dict, Any
 
 logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO)

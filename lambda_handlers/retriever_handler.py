@@ -1,10 +1,10 @@
 import json
+import logging
 from typing import Dict, Any
-from retriever.retriever import retrieve
+
 from config.config import Config
 from config.experimental_config import ExperimentalConfig
-import logging
-
+from retriever.retriever import Retriever
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -54,7 +54,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         config = Config.load_config()
         
         # Execute retrieve method
-        retrieve(config, exp_config)
+        Retriever().retrieve(config, exp_config)
 
         return {
             "status": "success",

@@ -1,3 +1,3 @@
 from .bedrock.bedrock_inferencer import BedrockInferencer
-from .sagemaker.sagemaker_inferencer import SageMakerInferencer
 from .inference_factory import InferencerFactory
+from .sagemaker.sagemaker_inferencer import SageMakerInferencer

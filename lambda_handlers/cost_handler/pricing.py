@@ -1,9 +1,10 @@
-import os
-import boto3
-from utils import read_csv_from_s3, parse_datetime
-from datetime import datetime
-import math
 import logging
+import math
+import os
+
+import boto3
+
+from utils import read_csv_from_s3, parse_datetime
 
 logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO)

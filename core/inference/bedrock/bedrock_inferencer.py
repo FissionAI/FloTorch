@@ -1,11 +1,13 @@
-from baseclasses.base_classes import BaseInferencer
-import boto3
-from typing import List, Dict, Any, Union, Tuple
 import logging
-from config.experimental_config import ExperimentalConfig, NShotPromptGuide
+import random
+from typing import List, Dict, Any, Tuple
+
+import boto3
+
+from baseclasses.base_classes import BaseInferencer
+from config.experimental_config import ExperimentalConfig
 from core.inference.inference_factory import InferencerFactory
 from util.boto3_utils import BedRockRetryHander
-import random
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)

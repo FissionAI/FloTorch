@@ -1,10 +1,8 @@
 import json
-from typing import Dict, Any, List
-from config.config import Config
-from core.opensearch_vectorstore import OpenSearchVectorDatabase
 import logging
-from dataclasses import dataclass
-from util.dynamo_utils import deserialize_dynamodb_json
+from typing import Dict, Any
+
+from config.config import Config
 from opensearch.opensearch_index_manager import OpenSearchIndexManager
 
 logger = logging.getLogger(__name__)

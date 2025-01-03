@@ -1,10 +1,9 @@
-from config.experimental_config import ExperimentalConfig
-
 import logging
-
 from typing import Type, Dict
+
 from baseclasses.base_classes import BaseEmbedder
 from config.config import get_config
+from config.experimental_config import ExperimentalConfig
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)

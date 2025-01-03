@@ -1,11 +1,9 @@
 
-from typing import Dict, List
 import logging
+from typing import Dict, List
 
 from core.embedding import EmbedderFactory
-from baseclasses.base_classes import BaseEmbedder
 from . import BedrockEmbedder
-
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
