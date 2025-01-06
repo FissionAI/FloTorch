@@ -33,7 +33,17 @@ class InferencerFactory:
         if not inferencer_cls:
             raise InferenceServiceError(f"No inferencer_cls registered for service {service_type} and model {model_id}")
         
-        return inferencer_cls(model_id=model_id, region=experimentalConfig.aws_region, experiment_config=experimentalConfig)
-
-
-
+        if service_type == "sagemaker":
+            role_arn = get_config().sagemaker_role_arn
+        elif service_type == "bedrock":
+            role_arn = get_config().bedrock_role_arn
+        else:
+            role_arn = None
+        
+        # return inferencer_cls(model_id=model_id, region=experimentalConfig.aws_region, experiment_config=experimentalConfig)
+        return inferencer_cls(
+            model_id=model_id,
+            experiment_config=experimentalConfig,
+            region=experimentalConfig.aws_region,
+            role_arn=role_arn
+        )

@@ -44,6 +44,9 @@ def is_valid_combination(config, data):
             config['embedding']["service"] == "sagemaker" and config["embedding"]["model"] == "bge-m3"):
         if config['vector_dimension'] != 1024:
             return False
+    if (config['embedding']["service"] == "sagemaker" and config["embedding"]["model"] == "qwen"):
+        if config['vector_dimension'] != 3584:
+            return False
     valid_values = {Decimal('0.5'), Decimal('0.3'), Decimal('0.7'), Decimal('0')}
     if config['temp_retrieval_llm'] not in valid_values:
         return False

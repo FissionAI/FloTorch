@@ -27,6 +27,7 @@ class EmbedderFactory:
 
         if experimentalConfig.embedding_service == "sagemaker":
             role_arn = get_config().sagemaker_role_arn
+            print(f"Sagemaker role: {role_arn}")
         elif experimentalConfig.embedding_service == "bedrock":
             role_arn = get_config().bedrock_role_arn
         embedder_cls = cls._registry.get(key)

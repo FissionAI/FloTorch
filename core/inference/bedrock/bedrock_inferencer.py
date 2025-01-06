@@ -14,10 +14,17 @@ logger.setLevel(logging.INFO)
 class BedrockInferencer(BaseInferencer):
     """Base class for all Bedrock models since they share the same invocation pattern"""
 
+    # This part was added as part of the SageMaker implementation changes. 
+    # Due to updates in the base class implementation, the invocation point was changed from 
+    # '_initialize_client' to '__init__'.
+    def __init__(self, model_id: str, experiment_config: ExperimentalConfig, region: str = 'us-east-1', role_arn: str = None):
+        super().__init__(model_id, experiment_config, region, role_arn)
+        self._initialize_client() 
+    
     def _initialize_client(self) -> None:
         self.client = boto3.client(
             service_name='bedrock-runtime',
-            region_name=self.region
+            region_name=self.region_name
         )
 
     def generate_prompt(self, experiment_config: ExperimentalConfig, default_prompt: str, user_query: str, context: List[Dict]):
