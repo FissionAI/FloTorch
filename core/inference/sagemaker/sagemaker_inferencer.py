@@ -333,7 +333,7 @@ class SageMakerInferencer(BaseInferencer):
         # Define default parameters for the model's generation
         default_params = {
             "max_new_tokens": 256,
-            "temperature": 0.1,
+            "temperature": self.experiment_config.temp_retrieval_llm,
             "top_p": 0.9,
             "do_sample": True
         }
