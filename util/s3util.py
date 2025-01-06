@@ -3,7 +3,7 @@ import io
 import json
 import logging
 import os
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 from urllib.parse import urlparse
 
 import boto3
@@ -13,11 +13,78 @@ from botocore.exceptions import ClientError
 
 class S3Util:
     """Utility class for reading JSON data from AWS S3 and converting it to dictionary."""
-    
+
     def __init__(self):
         """Initialize S3 client."""
         self.s3_client = boto3.client('s3')
         self.logger = logging.getLogger(__name__)
+
+    def read_text_from_s3(self, s3_path: str) -> List[str]:
+        """
+        Read all text files in an S3 folder and return a list of strings, each representing the content of one file.
+
+        Args:
+            s3_path (str): S3 path in the format 's3://bucket-name/path/to/folder/'
+
+        Returns:
+            Optional[List[str]]: A list of strings where each string represents the content of a file in the folder.
+
+        Raises:
+            ClientError: If there's an error accessing S3.
+            IOError: If there's an issue reading the files.
+        """
+        try:
+            bucket_name, folder_key = self.parse_s3_path(s3_path)
+
+            # List all files in the specified S3 folder
+            files = self.s3_client.list_objects_v2(Bucket=bucket_name, Prefix=folder_key)
+
+            # If there are no files, return None
+            if 'Contents' not in files or all(file['Key'].endswith('/') for file in files['Contents']):
+                self.logger.info("No files found in the specified S3 folder.")
+                return None
+
+            file_contents = []
+
+            # Iterate through each file in the folder
+            for file in files['Contents']:
+                s3_key = file['Key']
+                file_size = file['Size']
+
+                # Skip directories or files with size 0
+                if s3_key.endswith('/') or file_size == 0:
+                    continue
+
+                # Get the object from S3
+                response = self.s3_client.get_object(Bucket=bucket_name, Key=s3_key)
+
+                # Read and decode the file content as a single string
+                file_content = response['Body'].read().decode('utf-8')
+                file_contents.append(file_content)
+            return file_contents
+
+        except ClientError as e:
+            error_code = e.response.get('Error', {}).get('Code', 'Unknown')
+            error_message = e.response.get('Error', {}).get('Message', 'Unknown error')
+            self.logger.error(
+                f"Failed to read from S3: {error_code} - {error_message}",
+                exc_info=True
+            )
+            raise
+
+        except IOError as e:
+            self.logger.error(
+                f"Failed to read text content from {bucket_name}/{folder_key}",
+                exc_info=True
+            )
+            raise
+
+        except Exception as e:
+            self.logger.error(
+                f"Unexpected error reading from S3: {str(e)}",
+                exc_info=True
+            )
+            raise
 
     def read_json_from_s3(self, s3_path: str) -> Optional[Dict]:
         """
@@ -36,19 +103,19 @@ class S3Util:
         """
         try:
             bucket_name, object_key = self.parse_s3_path(s3_path)
-            
+
             # Get the object from S3
             response = self.s3_client.get_object(
                 Bucket=bucket_name,
                 Key=object_key
             )
-            
+
             # Read the data and decode it
             file_content = response['Body'].read().decode('utf-8')
-            
+
             # Parse JSON content
             json_content = json.loads(file_content)
-            
+
             return json_content
 
         except ClientError as e:
@@ -62,7 +129,7 @@ class S3Util:
 
         except json.JSONDecodeError as e:
             self.logger.error(
-                f"Failed to parse JSON content from {bucket_name}/{key}",
+                f"Failed to parse JSON content from {s3_path}",
                 exc_info=True
             )
             raise
@@ -90,7 +157,7 @@ class S3Util:
             csv.Error: If the content cannot be parsed as CSV.
         """
         try:
-            
+
             self.logger.info(bucket_name + "--" + object_key)
             # Get the object from S3
             response = self.s3_client.get_object(
@@ -176,7 +243,7 @@ class S3Util:
 
         except json.JSONDecodeError as e:
             self.logger.error(
-                f"Failed to parse JSON content from {bucket_name}/{key}",
+                f"Failed to parse JSON content from {s3_path}",
                 exc_info=True
             )
             raise
@@ -187,7 +254,7 @@ class S3Util:
                 exc_info=True
             )
             raise
-    
+
     def parse_s3_path(self, s3_path: str) -> tuple[str, str]:
         """
         Parse S3 path into bucket and key.
@@ -203,19 +270,18 @@ class S3Util:
         """
         if not s3_path.startswith('s3://'):
             raise ValueError("S3 path must start with 's3://'")
-        
+
         path = s3_path.replace('s3://', '')
         parts = path.split('/', 1)
-        
+
         if len(parts) < 2:
             raise ValueError("Invalid S3 path format")
-        
+
         return parts[0], parts[1]
-    
 
     def download_file_from_s3(self, s3_path: str, local_path: str = '/tmp/downloaded_file.pdf') -> str:
         """Download file from S3 using a full S3 path and return the local path."""
-        
+
         try:
             parsed_url = urlparse(s3_path)
             bucket = parsed_url.netloc
@@ -228,9 +294,8 @@ class S3Util:
         except Exception as e:
             self.logger.error(f"Failed to download file from S3: {e}")
             raise
-        
-        
-    def download_directory_from_s3(self, s3_path: str, local_path:str = '/tmp/downloaded_folder') -> str:
+
+    def download_directory_from_s3(self, s3_path: str, local_path: str = '/tmp/downloaded_folder') -> str:
         "Download all files using an s3 path to a folder and return the local path"
         try:
             parse_url = urlparse(s3_path)
@@ -238,42 +303,41 @@ class S3Util:
             key = parse_url.path.lstrip('/')
 
             self.logger.info(f"Downloading all files in the folder from S3: bucket: {bucket}, key={key}")
-            
+
             # Check if the directory exists and create one if it doesn't
             if os.path.exists(local_path):
                 self.logger.info(f"Directory {local_path} already exists. Skipping creation.")
             os.makedirs(local_path, exist_ok=True)
-                
+
             files = self.s3_client.list_objects_v2(Bucket=bucket, Prefix=key)
-            
+
             # Check if there are any files in the folder
             if 'Contents' not in files or all(file['Key'].endswith('/') for file in files['Contents']):
                 self.logger.info("No files found in the specified S3 folder.")
                 return local_path
-            
+
             for file in files['Contents']:
                 s3_key = file['Key']
                 file_size = file['Size']
-                
+
                 # Skip the folder itself and any zero size folders
                 if s3_key.endswith('/') or file_size == 0:
                     continue
-                
+
                 # Check if the file is a pdf
                 if s3_key.lower().endswith('.pdf'):
-                        
                     local_file_path = os.path.join(local_path, s3_key)
                     os.makedirs(os.path.dirname(local_file_path), exist_ok=True)
                     self.logger.info(f"Downloading file {s3_key} to directory: {local_file_path}")
                     self.s3_client.download_file(Bucket=bucket, Key=s3_key, Filename=local_file_path)
             local_path = os.path.join(local_path, key)
             return local_path
-        
+
         except Exception as e:
             self.logger.error(f"Failed to download file from S3: {e}")
             raise
 
-    def write_json_to_s3(self, object_key:str, bucket: str, json_data):
+    def write_json_to_s3(self, object_key: str, bucket: str, json_data):
         """
         Write JSON data to an S3 bucket.
 
@@ -284,9 +348,9 @@ class S3Util:
         """
         try:
             json_string = json.dumps(json_data)
-            
+
             self.s3_client.put_object(Bucket=bucket, Key=object_key, Body=json_string, ContentType='application/json')
-            
+
             self.logger.info(f"Successfully wrote JSON data to {bucket}/{object_key}")
         except Exception as e:
             self.logger.error(f"Failed to write JSON to S3: {str(e)}")

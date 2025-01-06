@@ -12,7 +12,8 @@ from util.boto3_utils import BedRockRetryHander
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-# Class for handling inference using Amazon Bedrock 
+
+# Class for handling inference using Amazon Bedrock
 class BedrockInferencer(BaseInferencer):
     """Base class for all Bedrock models since they share the same invocation pattern"""
 
@@ -22,7 +23,8 @@ class BedrockInferencer(BaseInferencer):
             region_name=self.region
         )
 
-    def generate_prompt(self, experiment_config: ExperimentalConfig, default_prompt: str, user_query: str, context: List[Dict]):
+    def generate_prompt(self, experiment_config: ExperimentalConfig, default_prompt: str, user_query: str,
+                        context: List[Dict]):
         # Get n_shot config values first to avoid repeated lookups
         n_shot_prompt_guide = experiment_config.n_shot_prompt_guide_obj
         n_shot_prompt = experiment_config.n_shot_prompts
@@ -30,63 +32,64 @@ class BedrockInferencer(BaseInferencer):
         # Input validation
         if n_shot_prompt < 0:
             raise ValueError("n_shot_prompt must be non-negative")
-        
+
         # Get system prompt
         system_prompt = default_prompt if n_shot_prompt_guide is None or n_shot_prompt_guide.system_prompt is None else n_shot_prompt_guide.system_prompt
-        
+
         context_text = self._format_context(context)
-        
+
         base_prompt = n_shot_prompt_guide.user_prompt if n_shot_prompt_guide.user_prompt else ""
-        
+
         # Return early if no examples needed
         if n_shot_prompt == 0:
             # Use string concatenation
             logger.info("into zero shot prompt")
             prompt = (
-                system_prompt + "\n\n" + 
-                "<context>\n" + 
-                context_text + "\n" + 
-                "</context>\n" + 
-                base_prompt + "\n" + 
-                "Question: " + user_query
+                    system_prompt + "\n\n" +
+                    "<context>\n" +
+                    context_text + "\n" +
+                    "</context>\n" +
+                    base_prompt + "\n" +
+                    "Question: " + user_query
             )
             return prompt.strip()
-        
+
         # Get examples
         examples = n_shot_prompt_guide.examples
-        
+
         # Format examples
-        selected_examples = (random.sample(examples, n_shot_prompt) 
-                        if len(examples) > n_shot_prompt 
-                        else examples)
-        
+        selected_examples = (random.sample(examples, n_shot_prompt)
+                             if len(examples) > n_shot_prompt
+                             else examples)
+
         # Use string concatenation for example formatting
         example_text = ""
         for example in selected_examples:
             example_text += "- " + example["example"] + "\n"
-        
+
         logger.info(f"into {n_shot_prompt} shot prompt  with examples {len(selected_examples)}")
         # Use string concatenation for the entire prompt
         prompt = (
-            system_prompt + "\n\n" + 
-            "Few examples:\n" + 
-            example_text + "\n" + 
-            "<context>\n" + 
-            context_text + "\n" + 
-            "</context>\n" + 
-            base_prompt + "\n" + 
-            "Question: " + user_query
+                system_prompt + "\n\n" +
+                "Few examples:\n" +
+                example_text + "\n" +
+                "<context>\n" +
+                context_text + "\n" +
+                "</context>\n" +
+                base_prompt + "\n" +
+                "Question: " + user_query
         )
-        
+
         return prompt.strip()
-     
+
     @BedRockRetryHander()
-    def generate_text(self, user_query: str, context: List[Dict], default_prompt: str, **kwargs) -> Tuple[Dict[Any, Any], str]:
+    def generate_text(self, user_query: str, context: List[Dict], default_prompt: str, **kwargs) -> Tuple[
+        Dict[Any, Any], str]:
         try:
             # Code to generate prompt considering the upload prompt config file
             converse_prompt = self.generate_prompt(self.experiment_config, default_prompt, user_query, context)
             messages = self._prepare_payload(context, converse_prompt, user_query)
-            inference_config={"maxTokens": 512, "temperature": self.experiment_config.temp_retrieval_llm, "topP": 0.9}
+            inference_config = {"maxTokens": 512, "temperature": self.experiment_config.temp_retrieval_llm, "topP": 0.9}
             response = self.client.converse(
                 modelId=self.model_id,
                 messages=messages,
@@ -111,8 +114,8 @@ class BedrockInferencer(BaseInferencer):
 
         conversation = [
             {
-                "role": "user", 
-                "content": [{"text" : f"{prompt}"}]
+                "role": "user",
+                "content": [{"text": f"{prompt}"}]
             }
         ]
         return conversation
@@ -120,7 +123,7 @@ class BedrockInferencer(BaseInferencer):
     def _format_context(self, context: List[Dict[str, str]]) -> str:
         """Format context documents into a single string."""
         context_text = "\n".join([
-            f"Context {i+1}:\n{doc.get('text', '')}"
+            f"Context {i + 1}:\n{doc.get('text', '')}"
             for i, doc in enumerate(context)
         ])
         logger.debug(f"Formatted context text length: {len(context_text)}")
@@ -132,8 +135,8 @@ class BedrockInferencer(BaseInferencer):
         logger.info("Successfully generated response")
         logger.debug(f"Response length: {len(response_text)}")
         return response_text
-    
-    
+
+
 model_list = ["mistral.mistral-7b-instruct-v0:2",
               "mistral.mistral-large-2402-v1:0",
               "us.meta.llama3-2-90b-instruct-v1:0",
@@ -153,5 +156,3 @@ model_list = ["mistral.mistral-7b-instruct-v0:2",
 
 for model in model_list:
     InferencerFactory.register_inferencer('bedrock', model, BedrockInferencer)
-    
-    

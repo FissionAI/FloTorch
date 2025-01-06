@@ -8,7 +8,8 @@ from baseclasses.base_classes import BaseHierarchicalChunker
 
 class HierarchicalChunker(BaseHierarchicalChunker):
     """Hierarchical chunking strategy."""
-    def chunk(self, text : str) -> List[List[str]]:
+
+    def chunk(self, text: str) -> List[List[str]]:
         overlap_tokens = int((self.chunk_overlap / 100) * self.child_chunk_size)
         if self.parent_chunk_size <= 0:
             raise ValueError("parent chunk size must be positive")
@@ -20,13 +21,12 @@ class HierarchicalChunker(BaseHierarchicalChunker):
             raise ValueError("chunk_overlap must be less than child chunk size")
         if not text:
             raise ValueError("Input text cannot be empty or None")
-        
+
         # TODO: Temporary fix, better to move to recursive
         separators = [' ', '\t', '\n', '\r', '\f', '\v']
         for sep in separators:
             text = text.replace(sep, ' ')
 
-        
         # chunk size is in tokens, general norm : 1 token = 4 chars
         parent_character_chunk_size = 4 * self.parent_chunk_size
         child_character_chunk_size = 4 * self.child_chunk_size
@@ -35,7 +35,7 @@ class HierarchicalChunker(BaseHierarchicalChunker):
         self.parent_text_splitter = CharacterTextSplitter(
             separator=" ",
             chunk_size=parent_character_chunk_size,
-            chunk_overlap=0, # Can change this at a later point of time
+            chunk_overlap=0,  # Can change this at a later point of time
             length_function=len,
             is_separator_regex=False
         )

@@ -22,11 +22,11 @@ class DynamoDBOperations:
         self.table_name = table_name
         self.region = region
         self.logger = logging.getLogger(__name__)
-        
+
         # Initialize DynamoDB resources
         self.dynamodb = boto3.resource('dynamodb', region_name=region)
         self.table = self.dynamodb.Table(table_name)
-        
+
         # Initialize DynamoDB client for batch operations
         self.dynamodb_client = boto3.client('dynamodb', region_name=region)
 
@@ -59,8 +59,9 @@ class DynamoDBOperations:
         elif isinstance(obj, datetime):
             return obj.isoformat()  # Convert datetime to ISO 8601 string
         return obj
-    
-    def scan_all(self, filter_expression: Optional[str] = None, expression_values: Optional[Dict[str, Any]] = None, expression_attribute_names: Optional[Dict[str, str]] = None) -> Dict:
+
+    def scan_all(self, filter_expression: Optional[str] = None, expression_values: Optional[Dict[str, Any]] = None,
+                 expression_attribute_names: Optional[Dict[str, str]] = None) -> Dict:
         """
         Scan items from DynamoDB, optionally applying filter expressions.
         Args:
@@ -99,8 +100,9 @@ class DynamoDBOperations:
         except Exception as e:
             self.logger.error(f"Error scanning items: {str(e)}")
             raise
-    
-    def scan(self, filter_expression: Optional[str] = None, expression_values: Optional[Dict[str, Any]] = None, expression_attribute_names: Optional[Dict[str, str]] = None) -> Dict:
+
+    def scan(self, filter_expression: Optional[str] = None, expression_values: Optional[Dict[str, Any]] = None,
+             expression_attribute_names: Optional[Dict[str, str]] = None) -> Dict:
         """
         Scan items from DynamoDB, optionally applying filter expressions.
 
@@ -128,7 +130,6 @@ class DynamoDBOperations:
             self.logger.error(f"Error scanning items: {str(e)}")
             raise
 
-    
     def _serialize_data(self, obj: Any) -> Any:
         """
         Recursively convert float to Decimal and serialize datetime to string.
@@ -142,7 +143,7 @@ class DynamoDBOperations:
         elif isinstance(obj, datetime):
             return obj.isoformat()  # Convert datetime to ISO 8601 string
         return obj
-    
+
     def get_item(self, key: Dict[str, Any]) -> Optional[Dict]:
         """
         Retrieve an item from DynamoDB.
@@ -156,11 +157,11 @@ class DynamoDBOperations:
         try:
             response = self.table.get_item(Key=key)
             item = response.get('Item')
-            
+
             if item:
                 self.logger.info(f"Successfully retrieved item with key: {key}")
                 return item
-            
+
             self.logger.info(f"No item found with key: {key}")
             return None
 
@@ -217,11 +218,9 @@ class DynamoDBOperations:
             self.logger.error(f"Unexpected error: {str(e)}")
             raise
 
-
-
-    def update_item(self, 
-                    key: Dict[str, Any], 
-                    update_expression: str, 
+    def update_item(self,
+                    key: Dict[str, Any],
+                    update_expression: str,
                     expression_values: Dict[str, Any],
                     condition_expression: str = None) -> Dict:
         """
@@ -238,12 +237,12 @@ class DynamoDBOperations:
         """
         try:
             # Add last_updated to expression values
-            #expression_values[':updated'] = datetime.utcnow().isoformat()
-            #update_expression += ', last_updated = :updated'
-            
+            # expression_values[':updated'] = datetime.utcnow().isoformat()
+            # update_expression += ', last_updated = :updated'
+
             # Handle decimal types in expression values
             processed_values = self._handle_decimal_type(expression_values)
-            
+
             # Prepare update parameters
             params = {
                 'Key': key,
@@ -251,12 +250,12 @@ class DynamoDBOperations:
                 'ExpressionAttributeValues': processed_values,
                 'ReturnValues': 'UPDATED_NEW'
             }
-            
+
             if condition_expression:
                 params['ConditionExpression'] = condition_expression
-            
+
             response = self.table.update_item(**params)
-            
+
             self.logger.info(f"Successfully updated item with key: {key}")
             return response
 
@@ -270,7 +269,7 @@ class DynamoDBOperations:
             self.logger.error(f"Unexpected error: {str(e)}")
             raise
 
-    def query(self, 
+    def query(self,
               key_condition_expression: str,
               expression_values: Dict[str, Any],
               index_name: str = None, projection: str = None) -> Dict:
@@ -288,21 +287,21 @@ class DynamoDBOperations:
         try:
             # Handle decimal types in expression values
             processed_values = self._handle_decimal_type(expression_values)
-            
+
             # Prepare query parameters
             params = {
                 'KeyConditionExpression': key_condition_expression,
                 'ExpressionAttributeValues': processed_values
             }
-            
+
             if index_name:
                 params['IndexName'] = index_name
-            
+
             if projection:
                 params['ProjectionExpression'] = projection
-            
+
             response = self.table.query(**params)
-            
+
             self.logger.info(f"Successfully queried {len(response['Items'])} items")
             return response
 
@@ -325,10 +324,10 @@ class DynamoDBOperations:
         try:
             if len(items) > 25:
                 raise ValueError("DynamoDB batch_write_item operation can only process up to 25 items at a time")
-                
+
             unprocessed_items = items
             retry_count = 0
-            
+
             while unprocessed_items and retry_count < max_retries:
                 # Prepare batch write request
                 request_items = {
@@ -341,23 +340,23 @@ class DynamoDBOperations:
                         for item in unprocessed_items
                     ]
                 }
-                
+
                 response = self.dynamodb_client.batch_write_item(
                     RequestItems=request_items
                 )
-                
+
                 # Handle unprocessed items
                 unprocessed_items = [
                     item['PutRequest']['Item']
                     for item in response.get('UnprocessedItems', {}).get(self.table_name, [])
                 ]
-                
+
                 if unprocessed_items:
                     retry_count += 1
                     if retry_count < max_retries:
                         # Exponential backoff
                         time.sleep(2 ** retry_count)
-            
+
             if unprocessed_items:
                 self.logger.warning(f"{len(unprocessed_items)} items remained unprocessed after {max_retries} retries")
             else:
@@ -383,12 +382,12 @@ class DynamoDBOperations:
         """
         try:
             params = {'Key': key}
-            
+
             if condition_expression:
                 params['ConditionExpression'] = condition_expression
-            
+
             response = self.table.delete_item(**params)
-            
+
             self.logger.info(f"Successfully deleted item with key: {key}")
             return response
 

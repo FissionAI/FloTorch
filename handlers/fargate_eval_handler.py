@@ -18,14 +18,13 @@ class EvaluationProcessor(FargateTaskProcessor):
 
             # Load base configuration
             config = Config.load_config()
-            
+
             exp_config = ExperimentalConfigService(config).create_experimental_config(exp_config_data)
             logger.info("Into evaluate processor. Processing event: %s", json.dumps(exp_config_data))
-                          
+
             evaluate(experiment_config=exp_config)
 
-
-            self.send_task_success({  
+            self.send_task_success({
                 "status": "success"
             })
 
@@ -44,6 +43,7 @@ def main():
     except Exception as e:
         logger.error(f"Error processing event: {str(e)}")
         raise
+
 
 if __name__ == "__main__":
     main()

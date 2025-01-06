@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 
+
 class DateTimeUtils:
     @staticmethod
     def parse_datetime(datetime_str):

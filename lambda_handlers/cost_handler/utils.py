@@ -61,6 +61,7 @@ def read_csv_from_s3(object_key: str, bucket_name: str, as_dataframe: bool = Tru
         logger.error(f"Unexpected error reading from S3: {str(e)}", exc_info=True)
         raise
 
+
 def parse_datetime(datetime_str):
     if not datetime_str:
         return None

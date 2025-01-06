@@ -12,12 +12,12 @@ from core.eval.ragas.ragas_eval import RagasEvaluator
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
+
 class RagasNonLLMEvaluator(RagasEvaluator):
 
     def __init__(self, config, experimental_config):
         super().__init__(config, experimental_config)
         self._initialize_scorers()
-
 
     def _initialize_scorers(self):
         """Initialize all metric scorers"""
@@ -47,9 +47,9 @@ class RagasNonLLMEvaluator(RagasEvaluator):
                 metrics_list.append(metrics)
                 update_expression = "SET eval_metrics = :metrics"
                 expression_attribute_values = {
-                    ':metrics': {'M' : metrics.to_dict()}
+                    ':metrics': {'M': metrics.to_dict()}
                 }
-                
+
                 self.metrics_db.update_item(
                     key={'id': metrics_record.id},
                     update_expression=update_expression,
@@ -74,12 +74,13 @@ class RagasNonLLMEvaluator(RagasEvaluator):
                 string_similarity=self.calculate_eval_score(self.str_similar_scorer, answer_sample),
                 context_precision=self.calculate_eval_score(self.context_precision, context_sample),
                 context_recall=self.calculate_eval_score(self.context_recall, context_sample),
-                rouge_score=self.calculate_eval_score(self.rouge_score,answer_sample)
+                rouge_score=self.calculate_eval_score(self.rouge_score, answer_sample)
             )
 
             return metrics
         except Exception as e:
             logger.error(f"Error processing sample {metrics_record.id}: {e}")
             return None
+
 
 EvalFactory.register_evaluator('ragas', 'non_llm', RagasNonLLMEvaluator)

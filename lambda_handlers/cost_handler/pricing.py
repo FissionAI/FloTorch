@@ -20,7 +20,7 @@ SECONDS_IN_MINUTE = 60
 
 
 def compute_actual_price(
-    configuration, input_tokens, output_tokens, embed_tokens, os_time, ecs_time
+        configuration, input_tokens, output_tokens, embed_tokens, os_time, ecs_time
 ):
     """Compute the actual price based on the given configuration and token/time inputs."""
 
@@ -62,13 +62,13 @@ def compute_actual_price(
 
         embedding_model_price = df[
             (df["model"] == embedding_model) & (df["Region"] == aws_region)
-        ]["input_price"]
+            ]["input_price"]
         retrieval_model_input_price = df[
             (df["model"] == retrieval_model) & (df["Region"] == aws_region)
-        ]["input_price"]
+            ]["input_price"]
         retrieval_model_output_price = df[
             (df["model"] == retrieval_model) & (df["Region"] == aws_region)
-        ]["output_price"]
+            ]["output_price"]
 
         if embedding_model_price.empty:
             logger.error(f"No embedding model {embedding_model} price found.")
@@ -77,7 +77,7 @@ def compute_actual_price(
         if retrieval_model_input_price.empty:
             logger.error(f"No retrieval model {retrieval_model} input price found.")
             return None
-        
+
         if retrieval_model_output_price.empty:
             logger.error(f"No retrieval model {retrieval_model} output price found.")
             return None
@@ -95,25 +95,25 @@ def compute_actual_price(
         # Calculate costs
         embedding_actual_cost = (embedding_model_price * float(embed_tokens)) / THOUSAND
         retrieval_model_input_actual_cost = (
-            retrieval_model_input_price * float(input_tokens)
-        ) / MILLION
+                                                    retrieval_model_input_price * float(input_tokens)
+                                            ) / MILLION
         retrieval_model_output_actual_cost = (
-            retrieval_model_output_price * float(output_tokens)
-        ) / MILLION
+                                                     retrieval_model_output_price * float(output_tokens)
+                                             ) / MILLION
 
         opensearch_actual_cost = (0.711 * 3 * os_time / SECONDS_IN_MINUTE) + (
-            (0.122 * 2 * os_time + 13000 * 0.008 * os_time) / (30 * 24)
+                (0.122 * 2 * os_time + 13000 * 0.008 * os_time) / (30 * 24)
         ) / SECONDS_IN_MINUTE
         ecs_actual_cost = (
-            0.04048 * 8 * ecs_time + 0.004445 * 16 * ecs_time
-        ) / SECONDS_IN_MINUTE
+                                  0.04048 * 8 * ecs_time + 0.004445 * 16 * ecs_time
+                          ) / SECONDS_IN_MINUTE
 
         total_actual_cost = (
-            embedding_actual_cost
-            + retrieval_model_input_actual_cost
-            + retrieval_model_output_actual_cost
-            + opensearch_actual_cost
-            + ecs_actual_cost
+                embedding_actual_cost
+                + retrieval_model_input_actual_cost
+                + retrieval_model_output_actual_cost
+                + opensearch_actual_cost
+                + ecs_actual_cost
         )
 
         return total_actual_cost

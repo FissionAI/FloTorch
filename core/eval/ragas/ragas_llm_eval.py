@@ -15,12 +15,12 @@ from core.eval.ragas.ragas_eval import RagasEvaluator
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
+
 class RagasLLMEvaluator(RagasEvaluator):
     def __init__(self, config, experimental_config):
         super().__init__(config, experimental_config)
         self._initialze_llm()
         self._initialize_scorers()
-
 
     def _initialze_llm(self):
         self.evaluator_llm = LangchainLLMWrapper(ChatBedrockConverse(
@@ -34,7 +34,6 @@ class RagasLLMEvaluator(RagasEvaluator):
             region_name=self.experimental_config.aws_region,
             model_id=self.experimental_config.ragas_embedding_llm,
         ))
-
 
     def _initialize_scorers(self):
         """Initialize all metric scorers"""
@@ -65,11 +64,11 @@ class RagasLLMEvaluator(RagasEvaluator):
         experiment_eval_metrics = {}
         if metrics:
             experiment_eval_metrics = metrics._repr_dict
-            experiment_eval_metrics = {key: round(value, 2) if isinstance(value, float) else value for key, value in experiment_eval_metrics.items()}        
+            experiment_eval_metrics = {key: round(value, 2) if isinstance(value, float) else value for key, value in
+                                       experiment_eval_metrics.items()}
             experiment_eval_metrics = EvaluationMetrics().from_dict(experiment_eval_metrics).to_dict()
             logger.info(f"Experiment {experiment_id} evaluation metrics: {experiment_eval_metrics}")
 
-        
         self.update_experiment_metrics(experiment_id, experiment_eval_metrics)
 
     def evaluate_bulk_questions(self, metrics_records: List[ExperimentQuestionMetrics]):
@@ -86,10 +85,10 @@ class RagasLLMEvaluator(RagasEvaluator):
             answer_samples.append(answer_sample)
 
         evaluation_dataset = EvaluationDataset(answer_samples)
-        metrics = evaluate(evaluation_dataset, [self.faithfulness, self.context_precision, self.aspect_critic, self.answers_relevancy])
+        metrics = evaluate(evaluation_dataset,
+                           [self.faithfulness, self.context_precision, self.aspect_critic, self.answers_relevancy])
 
         return metrics
-
 
     def _evaluate_single_question(self, metrics_record: ExperimentQuestionMetrics) -> Optional[EvaluationMetrics]:
         """Evaluate a single question and return its metrics"""
@@ -104,13 +103,13 @@ class RagasLLMEvaluator(RagasEvaluator):
 
                 metrics = EvaluationMetrics(
 
-                    faithfulness_score=self.calculate_eval_score(self.faithfulness,answer_sample),
+                    faithfulness_score=self.calculate_eval_score(self.faithfulness, answer_sample),
 
-                    context_precision_score=self.calculate_eval_score(self.context_precision,answer_sample),
+                    context_precision_score=self.calculate_eval_score(self.context_precision, answer_sample),
 
-                    aspect_critic_score=self.calculate_eval_score(self.aspect_critic,answer_sample),
+                    aspect_critic_score=self.calculate_eval_score(self.aspect_critic, answer_sample),
 
-                    answers_relevancy_score=self.calculate_eval_score(self.answers_relevancy,answer_sample)
+                    answers_relevancy_score=self.calculate_eval_score(self.answers_relevancy, answer_sample)
 
                 )
                 return metrics

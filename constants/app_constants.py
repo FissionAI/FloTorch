@@ -4,6 +4,7 @@ class ErrorTypes:
     UNAUTHORIZED_ERROR = "UNAUTHORIZED_ERROR"
     NOT_FOUND_ERROR = "NOT_FOUND_ERROR"
 
+
 class StatusCodes:
     SUCCESS = 200
     CREATED = 201
