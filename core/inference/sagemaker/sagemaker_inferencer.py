@@ -11,6 +11,7 @@ from sagemaker.jumpstart.model import JumpStartModel
 import sagemaker
 import logging
 import time
+import random
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -218,6 +219,95 @@ class SageMakerInferencer(BaseInferencer):
         # Log an error if the model_id doesn't match any known type
         else:
             logger.error(f"Model ID {model_id} is not recognized as an embedding or inferencing model.")
+            
+    def generate_prompt(self, experiment_config: ExperimentalConfig, default_prompt: str, user_query: str, context: List[Dict]):
+        n_shot_prompt_guide = experiment_config.n_shot_prompt_guide_obj
+        n_shot_prompt = experiment_config.n_shot_prompts
+
+        # Input validation
+        if n_shot_prompt < 0:
+            raise ValueError("n_shot_prompt must be non-negative")
+        
+        # Get system prompt
+        system_prompt = default_prompt if n_shot_prompt_guide is None or n_shot_prompt_guide.system_prompt is None else n_shot_prompt_guide.system_prompt
+        
+        context_text = self._format_context(user_query, context)
+        
+        base_prompt = n_shot_prompt_guide.user_prompt if n_shot_prompt_guide.user_prompt else ""
+        
+        # Return early if no examples needed
+        if n_shot_prompt == 0:
+            # Use string concatenation
+            logger.info("into zero shot prompt")
+            prompt = (
+                "Human: " + system_prompt + "\n\n" + 
+                context_text + "\n\n" + 
+                base_prompt + "\n\n" +
+                "Assistant: The final answer is:" 
+            )
+            return prompt.strip()
+        
+        # Get examples
+        examples = n_shot_prompt_guide.examples
+        
+        # Format examples
+        selected_examples = (random.sample(examples, n_shot_prompt) 
+                        if len(examples) > n_shot_prompt 
+                        else examples)
+        
+        # Use string concatenation for example formatting
+        example_text = ""
+        for example in selected_examples:
+            example_text += "- " + example["example"] + "\n"
+        
+        logger.info(f"into {n_shot_prompt} shot prompt  with examples {len(selected_examples)}")
+        # Use string concatenation for the entire prompt
+        prompt = (
+            "Human: " + system_prompt + "\n\n" + 
+            "Few examples:\n" + 
+            example_text + "\n" + 
+            context_text + "\n\n" + 
+            base_prompt + "\n\n" +
+            "Assistant: The final answer is:" 
+        )
+        
+        prompt = (
+            "Human: " + system_prompt + "\n\n" + 
+            "Few examples:\n" + 
+            example_text + "\n" + 
+            context_text + "\n\n" + 
+            "Assistant: " + base_prompt
+        )
+        return prompt.strip()
+    
+    def _format_context(self, user_query: str, context: List[Dict[str, str]]) -> str:
+        """Format context documents into a single string."""
+        # Format context: create a string representation of the query and passages
+        formatted_context = f"Search Query: {user_query}\n\nRelevant Passages:\n"
+        
+        try:
+            for i, item in enumerate(context, 1):
+                # Retrieve text from the context, handling both possible structures
+                content = None
+                if 'text' in item:
+                    content = item['text']
+                elif '_source' in item and 'text' in item['_source']:
+                    content = item['_source']['text']
+                
+                # If no text found, skip the current context item
+                if not content:
+                    continue
+                
+                # Add score to context if available
+                score = item.get('_score', 'N/A')
+                formatted_context += f"\nPassage {i} (Score: {score}):\n{content}\n"
+            return formatted_context
+        
+        except Exception as e:
+            logger.error(f"Error formatting context: {str(e)}")
+            formatted_context += "Error processing context"
+            return formatted_context
+        
 
     def generate_text(self, user_query: str, context: List[Dict], default_prompt: str, **kwargs) -> str:
         """
@@ -238,44 +328,13 @@ class SageMakerInferencer(BaseInferencer):
         if not self.inferencing_predictor:
             raise ValueError("Generation predictor not initialized")
         
-        # Format context: create a string representation of the query and passages
-        formatted_context = f"Search Query: {user_query}\n\nRelevant Passages:\n"
-        
-        try:
-            for i, item in enumerate(context, 1):
-                # Retrieve text from the context, handling both possible structures
-                content = None
-                if 'text' in item:
-                    content = item['text']
-                elif '_source' in item and 'text' in item['_source']:
-                    content = item['_source']['text']
-                
-                # If no text found, skip the current context item
-                if not content:
-                    continue
-                
-                # Add score to context if available
-                score = item.get('_score', 'N/A')
-                formatted_context += f"\nPassage {i} (Score: {score}):\n{content}\n"
-        
-        except Exception as e:
-            logger.error(f"Error formatting context: {str(e)}")
-            formatted_context += "Error processing context"
+        prompt = self.generate_prompt(self.experiment_config, default_prompt, user_query, context)
 
-        # Construct the prompt that will be passed to the model for text generation
-        prompt = f"""Human: Based on the search query and provided passages, create a clear and concise summary.
-            Focus only on relevant details and ensure the response is complete.
-            Provide only the relevant information without any additional pleasantries or follow-up questions.
-            Avoid repetition and unnecessary details. Make sure to complete all sentences.
-
-            {formatted_context}
-
-            Assistant: The final answer is:"""
-        
         if self.inferencing_model_id == "huggingface-llm-falcon-7b-instruct-bf16":
+            context_text = self._format_context(user_query, context)
             prompt = f"""Below are search results and a query. Create a concise summary.
                 Query: {user_query}
-                Search Results: {formatted_context}
+                Search Results: {context_text}
                 Summary:"""
         
         # Define default parameters for the model's generation
