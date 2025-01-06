@@ -271,13 +271,6 @@ class SageMakerInferencer(BaseInferencer):
             "Assistant: The final answer is:" 
         )
         
-        prompt = (
-            "Human: " + system_prompt + "\n\n" + 
-            "Few examples:\n" + 
-            example_text + "\n" + 
-            context_text + "\n\n" + 
-            "Assistant: " + base_prompt
-        )
         return prompt.strip()
     
     def _format_context(self, user_query: str, context: List[Dict[str, str]]) -> str:
