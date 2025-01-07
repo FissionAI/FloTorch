@@ -41,10 +41,10 @@ def is_valid_combination(config, data):
         if config['vector_dimension'] != 1024:
             return False
     if (config['embedding']["service"] == "sagemaker" and config["embedding"]["model"] == "huggingface-sentencesimilarity-bge-large-en-v1-5") or (
-            config['embedding']["service"] == "sagemaker" and config["embedding"]["model"] == "bge-m3"):
+            config['embedding']["service"] == "sagemaker" and config["embedding"]["model"] == "huggingface-sentencesimilarity-bge-m3"):
         if config['vector_dimension'] != 1024:
             return False
-    if (config['embedding']["service"] == "sagemaker" and config["embedding"]["model"] == "qwen"):
+    if (config['embedding']["service"] == "sagemaker" and config["embedding"]["model"] == "huggingface-textembedding-gte-qwen2-7b-instruct"):
         if config['vector_dimension'] != 3584:
             return False
     valid_values = {Decimal('0.5'), Decimal('0.3'), Decimal('0.7'), Decimal('0')}
