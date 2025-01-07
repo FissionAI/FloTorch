@@ -235,17 +235,25 @@ class SageMakerInferencer(BaseInferencer):
         
         base_prompt = n_shot_prompt_guide.user_prompt if n_shot_prompt_guide.user_prompt else ""
         
-        # Return early if no examples needed
         if n_shot_prompt == 0:
-            # Use string concatenation
             logger.info("into zero shot prompt")
-            prompt = (
-                "Human: " + system_prompt + "\n\n" + 
-                context_text + "\n\n" + 
-                base_prompt + "\n\n" +
-                "Assistant: The final answer is:" 
-            )
-            return prompt.strip()
+        
+            if self.inferencing_model_id == "huggingface-llm-falcon-7b-instruct-bf16":
+                prompt = f"""Below are search results and a query. Create a concise summary.
+                    Query: {user_query}
+                    Search Results: {context_text}
+                    Summary:"""
+                return prompt
+                    
+            else:
+                prompt = (
+                    "Human: " + system_prompt + "\n\n" + 
+                    context_text + "\n\n" + 
+                    base_prompt + "\n\n" +
+                    "Assistant: The final answer is:" 
+                )
+                return prompt.strip()
+                
         
         # Get examples
         examples = n_shot_prompt_guide.examples
@@ -261,17 +269,28 @@ class SageMakerInferencer(BaseInferencer):
             example_text += "- " + example["example"] + "\n"
         
         logger.info(f"into {n_shot_prompt} shot prompt  with examples {len(selected_examples)}")
-        # Use string concatenation for the entire prompt
-        prompt = (
-            "Human: " + system_prompt + "\n\n" + 
-            "Few examples:\n" + 
-            example_text + "\n" + 
-            context_text + "\n\n" + 
-            base_prompt + "\n\n" +
-            "Assistant: The final answer is:" 
-        )
         
-        return prompt.strip()
+        if self.inferencing_model_id == "huggingface-llm-falcon-7b-instruct-bf16":
+            prompt = f"""Below are search results and a query. Create a concise summary.
+                Query: {user_query}
+                Few examples:\n 
+                {example_text}\n 
+                Search Results: {context_text}
+                Summary:"""
+                
+            return prompt
+        
+        else:            
+            prompt = (
+                "Human: " + system_prompt + "\n\n" + 
+                "Few examples:\n" + 
+                example_text + "\n" + 
+                context_text + "\n\n" + 
+                base_prompt + "\n\n" +
+                "Assistant: The final answer is:" 
+            )
+            
+            return prompt.strip()
     
     def _format_context(self, user_query: str, context: List[Dict[str, str]]) -> str:
         """Format context documents into a single string."""
@@ -322,13 +341,6 @@ class SageMakerInferencer(BaseInferencer):
             raise ValueError("Generation predictor not initialized")
         
         prompt = self.generate_prompt(self.experiment_config, default_prompt, user_query, context)
-
-        if self.inferencing_model_id == "huggingface-llm-falcon-7b-instruct-bf16":
-            context_text = self._format_context(user_query, context)
-            prompt = f"""Below are search results and a query. Create a concise summary.
-                Query: {user_query}
-                Search Results: {context_text}
-                Summary:"""
         
         # Define default parameters for the model's generation
         default_params = {
