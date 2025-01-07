@@ -20,9 +20,10 @@ class GuardRailsUtils:
             
             return [
                     {
-                        "id": guardrail.get("id"), 
+                        "guardrails_id": guardrail.get("id"), 
                         "description": guardrail.get("description"), 
-                        "name": guardrail.get("name")
+                        "name": guardrail.get("name"),
+                        "version": guardrail.get("version")
                     }
                     for guardrail in guardrails
                 ]
