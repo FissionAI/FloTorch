@@ -211,6 +211,20 @@ export type ProjectCreateRetrievalStrategy = z.infer<
   typeof ProjectCreateRetrievalStrategySchema
 >;
 
+export const ProjectCreateEvalSchema = z.object({
+  service: z.string({
+    required_error: "Service is required",
+  }),
+  ragas_embedding_llm: z.string({
+    required_error: "Ragas embedding LLM is required",
+  }),
+  ragas_inference_llm: z.string({
+    required_error: "Ragas inference LLM is required",
+  }),
+});
+
+export type ProjectCreateEval = z.infer<typeof ProjectCreateEvalSchema>;
+
 export const ProjectExperimentStatusSchema = z.enum([
   "not_started",
   "in_progress",
@@ -358,6 +372,7 @@ export const ProjectCreateSchema = z.object({
   indexing: ProjectCreateIndexingStrategySchema,
   retrieval: ProjectCreateRetrievalStrategySchema,
   n_shot_prompt_guide: ProjectNShotPromptGuideSchema,
+  eval: ProjectCreateEvalSchema,
 });
 
 export type ProjectCreate = z.infer<typeof ProjectCreateSchema>;
