@@ -40,7 +40,7 @@ def is_valid_combination(config, data):
         "model"] == "cohere.embed-multilingual-v3"):
         if config['vector_dimension'] != 1024:
             return False
-    if (config['embedding']["service"] == "sagemaker" and config["embedding"]["model"] == "bge-large-en-v1.5") or (
+    if (config['embedding']["service"] == "sagemaker" and config["embedding"]["model"] == "huggingface-sentencesimilarity-bge-large-en-v1-5") or (
             config['embedding']["service"] == "sagemaker" and config["embedding"]["model"] == "bge-m3"):
         if config['vector_dimension'] != 1024:
             return False
