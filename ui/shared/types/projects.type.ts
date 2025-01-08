@@ -213,6 +213,31 @@ export type ProjectCreateRetrievalStrategy = z.infer<
   typeof ProjectCreateRetrievalStrategySchema
 >;
 
+export const ProjectCreateEvalSchema = z.object({
+  service: z.string({
+    required_error: "Service is required",
+  }),
+  ragas_embedding_llm: z.string({
+    required_error: "Ragas embedding LLM is required",
+  }),
+  ragas_inference_llm: z.string({
+    required_error: "Ragas inference LLM is required",
+  }),
+  guardrails : z.array(
+      z.object({
+        label : z.string(),
+        value : z.string(),
+        name : z.string(),
+        guardrails_id: z.string(),
+        guardrail_version: z.string(),
+        enable_prompt_guardrails: z.boolean(),
+        enable_context_guardrails:z.boolean(),
+        enable_response_guardrails: z.boolean(),
+  })).optional()
+});
+
+export type ProjectCreateEval = z.infer<typeof ProjectCreateEvalSchema>;
+
 export const ProjectExperimentStatusSchema = z.enum([
   "not_started",
   "in_progress",
@@ -360,6 +385,15 @@ export const ProjectCreateSchema = z.object({
   indexing: ProjectCreateIndexingStrategySchema,
   retrieval: ProjectCreateRetrievalStrategySchema,
   n_shot_prompt_guide: ProjectNShotPromptGuideSchema,
+  eval: ProjectCreateEvalSchema,
 });
 
 export type ProjectCreate = z.infer<typeof ProjectCreateSchema>;
+
+export interface Guardrail {
+    guardrails_id: string;
+    description: string;
+    name: string;
+    version: string;
+}
+

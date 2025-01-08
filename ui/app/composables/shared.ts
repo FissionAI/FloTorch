@@ -442,8 +442,152 @@ export const useProjectCreateMeta = () => {
         }
       ]
     },
+    evalStrategy: {
+      service: [
+        {
+          label: 'Ragas',
+          value: 'ragas',
+        },
+      ],
+      ragas_embedding_llm: [
+        {
+          label: 'Titan Embeddings V1 - Text',
+          value: 'amazon.titan-embed-text-v1',
+          service: 'bedrock',
+        },
+        {
+          label: "Titan Embeddings V2 - Text",
+          value: "amazon.titan-embed-text-v2:0",
+          service: "bedrock",
+        },
+        {
+          label: "Titan Multimodal embeddings G1",
+          value: "amazon.titan-embed-image-v1",
+          service: "bedrock",
+        },
+        {
+          label: "Cohere Embed English",
+          value: "cohere.embed-english-v3",
+          service: "bedrock",
+        },
+        {
+          label: "Cohere Embed Multilingual",
+          value: "cohere.embed-multilingual-v3",
+          service: "bedrock",
+        },
+
+      ],
+      ragas_inference_llm: [
+        {
+          label: "Amazon Titan Text G1 - Lite",
+          value: "amazon.titan-text-lite-v1",
+          service: "bedrock",
+        },
+        {
+          label: "Amazon Titan Text G1 - Express",
+          value: "amazon.titan-text-express-v1",
+          service: "bedrock",
+        },
+        {
+          label: "Amazon Nova Lite V1",
+          value: "us.amazon.nova-lite-v1:0",
+          service: "bedrock",
+        },
+        {
+          label: "Amazon Nova Micro V1",
+          value: "us.amazon.nova-micro-v1:0",
+          service: "bedrock",
+        },
+        {
+          label: "Amazon Nova Pro V1",
+          value:"us.amazon.nova-pro-v1:0",
+          service: "bedrock",
+        },
+        {
+          label: "Claude 3.5 Sonnet v2",
+          value: "us.anthropic.claude-3-5-sonnet-20241022-v2:0",
+          service: "bedrock",
+        },
+        {
+          label: "Claude 3.5 Sonnet",
+          value: "anthropic.claude-3-5-sonnet-20240620-v1:0",
+          service: "bedrock",
+        },
+        {
+          label: "Cohere Command R+",
+          value: "cohere.command-r-plus-v1:0",
+          service: "bedrock",
+        },
+        {
+          label: "Cohere Command R",
+          value: "cohere.command-r-v1:0",
+          service: "bedrock",
+        },
+        {
+          label: "Meta Llama 3.2 1B Instruct",
+          value: "us.meta.llama3-2-1b-instruct-v1:0",
+          service: "bedrock",
+        },
+        {
+          label: "Meta Llama 3.2 3B Instruct",
+          value: "us.meta.llama3-2-3b-instruct-v1:0",
+          service: "bedrock",
+        },
+        {
+          label: "Meta Llama 3.2 11B Vision Instruct",
+          value: "us.meta.llama3-2-11b-instruct-v1:0",
+          service: "bedrock",
+        },
+        {
+          label: "Meta Llama 3.2 90B Vision Instruct",
+          value: "us.meta.llama3-2-90b-instruct-v1:0",
+          service: "bedrock",
+        },
+        {
+          label: "Mistral 7B Instruct",
+          value: "mistral.mistral-7b-instruct-v0:2",
+          service: "bedrock",
+        },
+        {
+          label: 'Mistral Mixtral 8x7B Instruct',
+          value: 'mistral.mixtral-8x7b-instruct-v0:1',
+          service: 'bedrock',
+        },
+        {
+          label: "Mistral Large",
+          value: "mistral.mistral-large-2402-v1:0",
+          service: "bedrock",
+        },
+      ],
+    },
   };
 };
+
+export const useFilteredRagasEmbeddingModels = (embeddingModel: string[]) => {
+  const meta = useProjectCreateMeta();
+  return meta.evalStrategy.ragas_embedding_llm.map((model) => {
+    if (model.value !== 'none' && embeddingModel.includes(model.value)) {
+      return {
+        ...model,
+        disabled: true
+      };
+    }
+    return model;
+  });
+};
+
+export const useFilteredRagasInferenceModels = (inferenceModel: string[]) => {
+  const meta = useProjectCreateMeta();
+  return meta.evalStrategy.ragas_inference_llm.map((model) => {
+    if (model.value !== 'none' && inferenceModel.includes(model.value)) {
+      return {
+        ...model,
+        disabled: true
+      };
+    }
+    return model;
+  });
+}
 
 export const useFilteredRerankModels = (region: string) => {
   const meta = useProjectCreateMeta();
@@ -514,6 +658,12 @@ export const useProjectUploadConfig = () => {
         }),
         rerank_model_id: undefined,
       },
+      eval: {
+        ...config.eval,
+        ragas_embedding_llm: undefined,
+        ragas_inference_llm: undefined,
+      },
+    
     };
     return id;
   };
