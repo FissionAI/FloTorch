@@ -201,10 +201,19 @@ export const useProjectCreateMeta = () => {
           label: "SageMaker",
         },
         {
-          label: "BAAI/bge-large-en-v1.5 (Coming Soon)",
-          value: "BAAI/bge-large-en-v1.5",
+          label: "bge-large-en-v1-5",
+          value: "huggingface-sentencesimilarity-bge-large-en-v1-5",
           service: "sagemaker",
-          disabled: true,
+        },
+        {
+          label: "bge-m3",
+          value: "huggingface-sentencesimilarity-bge-m3",
+          service: "sagemaker",
+        },
+        {
+          label: "gte-qwen2-7b-instruct",
+          value: "huggingface-textembedding-gte-qwen2-7b-instruct",
+          service: "sagemaker",
         },
       ],
       vectorDimensions: [
@@ -223,6 +232,10 @@ export const useProjectCreateMeta = () => {
         {
           label: "1024",
           value: 1024,
+        },
+        {
+          label: "3584",
+          value: 3584,
         },
       ],
       indexingAlgorithms: [
@@ -362,28 +375,19 @@ export const useProjectCreateMeta = () => {
           label: "SageMaker",
         },
         {
-          label: "Qwen/Qwen2.5-32B-Instruct (Coming Soon)",
-          value: "Qwen/Qwen2.5-32B-Instruct",
+          label: "llama-3-1-8b-instruct",
+          value: "meta-textgeneration-llama-3-1-8b-instruct",
           service: "sagemaker",
-          disabled: true,
         },
         {
-          label: "Qwen/Qwen2.5-14B-Instruct (Coming Soon)",
-          value: "Qwen/Qwen2.5-14B-Instruct",
+          label: "llm-falcon-7b-instruct-bf16",
+          value: "huggingface-llm-falcon-7b-instruct-bf16",
           service: "sagemaker",
-          disabled: true,
         },
         {
-          label: "Meta-Llama/Llama-3.1-8B (Coming Soon)",
-          value: "Meta-Llama/Llama-3.1-8B",
+          label: "llama-3-3-70b-instruct",
+          value: "meta-textgeneration-llama-3-3-70b-instruct",
           service: "sagemaker",
-          disabled: true,
-        },
-        {
-          label: "Meta-Llama/Llama-3.1-70B-Instruct (Coming Soon)",
-          value: "Meta-Llama/Llama-3.1-70B-Instruct",
-          service: "sagemaker",
-          disabled: true,
         },
       ],
       temperature: [

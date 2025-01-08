@@ -48,11 +48,15 @@ class VectorDatabase(ABC):
 
 class BaseInferencer(ABC):
     
-    def __init__(self, model_id: str, experiment_config : ExperimentalConfig,region: str = 'us-east-1'):
+    # Added a new parameter `role_arn` as part of the SageMaker integration. 
+    # The `_initialize_client` method has been commented out for now, 
+    # and will be invoked within the respective inference classes when needed.
+    def __init__(self, model_id: str, experiment_config: ExperimentalConfig, region: str = 'us-east-1', role_arn: str = None):
         self.model_id = model_id
-        self.region = region
+        self.region_name = region
         self.experiment_config = experiment_config
-        self._initialize_client()
+        self.role_arn = role_arn
+        # self._initialize_client()
 
     @abstractmethod
     def _initialize_client(self) -> None:
@@ -225,13 +229,13 @@ class EvaluationMetrics():
 
     def to_dict(self) -> Dict[str, str]:
         return {
-            'faithfulness_score': str(self.faithfulness_score) if self.faithfulness_score is not None else '0.0',
-            'context_precision_score': str(self.context_precision_score) if self.context_precision_score is not None else '0.0',
-            'aspect_critic_score': str(self.aspect_critic_score) if self.aspect_critic_score is not None else '0.0',
-            'answers_relevancy_score': str(self.answers_relevancy_score) if self.answers_relevancy_score is not None else '0.0',
-            'string_similarity_score': str(self.string_similarity) if self.string_similarity is not None else '0.0',
-            'context_recall_score': str(self.context_recall) if self.context_recall is not None else '0.0',
-            'rouge_score': str(self.rouge_score) if self.rouge_score is not None else '0.0'
+            'faithfulness_score': str(self.faithfulness_score),
+            'context_precision_score': str(self.context_precision_score),
+            'aspect_critic_score': str(self.aspect_critic_score),
+            'answers_relevancy_score': str(self.answers_relevancy_score),
+            'string_similarity_score': str(self.string_similarity),
+            'context_recall_score': str(self.context_recall),
+            'rouge_score': str(self.rouge_score)
         }
     
     def to_dynamo_format(self) -> dict:

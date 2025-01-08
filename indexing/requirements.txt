@@ -9,3 +9,4 @@ opensearch-py
 sagemaker
 ragas==0.2.6
 langchain_aws==0.2.7
+pymupdf
