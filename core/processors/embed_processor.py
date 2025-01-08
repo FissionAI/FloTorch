@@ -1,11 +1,26 @@
 import logging
-from typing import Dict, List, Tuple, Any
-
+from typing import Dict, List, Any
 from config.experimental_config import ExperimentalConfig
+from core.chunking import Chunk
 from core.embedding import EmbedderFactory
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
+
+
+class Embed:
+    """Class to encapsulate the embedding result with metadata and chunk."""
+
+    def __init__(self, embedding:[float], chunk: Chunk) -> None:
+        self.embedding = embedding
+        self.chunk = chunk
+
+    def __init__(self, embedding:[float], text: str) -> None:
+        self.embedding = embedding
+        self.text = text
+
+    def __repr__(self) -> str:
+        return f"Embed(chunk={self.chunk}, embedding=[...] , metadata={self.metadata})"
 
 
 class EmbedProcessor:
@@ -15,7 +30,7 @@ class EmbedProcessor:
         self.experimentalConfig = experimentalConfig
         self.embedder = EmbedderFactory.create_embedder(experimentalConfig)
 
-    def embed(self, chunks: List[str]) -> List[Tuple[List[float], str, Dict[Any, Any]]]:
+    def embed(self, chunks: List[Chunk]) -> List[Embed]:
         """Embed each chunk one by one."""
         embeddings = []
         try:
@@ -25,8 +40,9 @@ class EmbedProcessor:
             logger.info(f"Embedding {len(chunks)} chunks with dimensions: {dimensions}.")
             for idx, chunk in enumerate(chunks):
                 logger.debug(f"Embedding chunk {idx + 1}/{len(chunks)}: {chunk[:50]}...")
-                metadata, embedding = self.embedder.embed(chunk, dimensions=dimensions, normalize=normalize)
-                embeddings.append((embedding, chunk, metadata))  # Append as tuple
+                embedding = self.embedder.embed(chunk.chunk, dimensions=dimensions, normalize=normalize)
+                embed = Embed(embedding, chunk=chunk)
+                embeddings.append(embed)
 
             logger.info("Embedding process completed successfully.")
             return embeddings
@@ -34,14 +50,15 @@ class EmbedProcessor:
             logger.error(f"Error during embedding process: {e}")
             raise
 
-    def embed_text(self, text: str) -> Tuple[Dict[Any, Any], List[float]]:
-        """Embed each chunk one by one."""
+    def embed_text(self, text: str) -> Embed:
+        """Embed text and return an Embed object."""
         try:
             dimensions = self.experimentalConfig.vector_dimension
             normalize = True  # Always normalize
-            metadata, embedding = self.embedder.embed(text, dimensions=dimensions, normalize=normalize)
+            embedding = self.embedder.embed(text, dimensions=dimensions, normalize=normalize)
+            embed = Embed(embedding, text)
             logger.info("Embedding text process completed successfully.")
-            return metadata, embedding
+            return embed
         except Exception as e:
             logger.error(f"Error during embedding process: {e}")
             raise
