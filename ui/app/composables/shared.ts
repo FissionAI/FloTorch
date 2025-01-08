@@ -475,7 +475,6 @@ export const useProjectCreateMeta = () => {
           value: "cohere.embed-multilingual-v3",
           service: "bedrock",
         },
-
       ],
       ragas_inference_llm: [
         {

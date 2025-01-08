@@ -101,7 +101,7 @@ const steps = [
   { label: 'Data Strategy', icon: 'i-lucide-square-stack' },
   { label: 'Indexing Strategy', icon: 'i-lucide-layers' },
   { label: 'Retrieval Strategy', icon: 'i-lucide-file-search' },
-  { label: 'Evaluation Strategy', icon: 'i-lucide-bar-chart-2' }
+  { label: 'Guardrails and Evaluation', icon: 'i-lucide-search' }
 ]
 </script>
 

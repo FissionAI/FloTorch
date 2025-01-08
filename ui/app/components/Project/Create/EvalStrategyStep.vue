@@ -31,7 +31,6 @@ const state = reactive<Partial<ProjectCreateEval>>({
 const emits = defineEmits(["next", "previous"])
 
 const onSubmit = (event: FormSubmitEvent<ProjectCreateEval>) => {
-  console.log('the submit data : ',event.data)
   modelValue.value = event.data
   emits("next")
 }
