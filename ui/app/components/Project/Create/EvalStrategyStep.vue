@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { FormSubmitEvent } from '@nuxt/ui';
-import { useQuery, useMutation } from '@tanstack/vue-query';
+import {  useMutation } from '@tanstack/vue-query';
 
 const meta = useProjectCreateMeta()
 const modelValue = defineModel<ProjectCreateEval>({
@@ -25,6 +25,7 @@ const state = reactive<Partial<ProjectCreateEval>>({
   service: modelValue.value?.service || undefined,
   ragas_embedding_llm: modelValue.value?.ragas_embedding_llm || undefined,
   ragas_inference_llm: modelValue.value?.ragas_inference_llm || undefined,
+  guardrails : modelValue.value?.guardrails || []
 })
 
 const emits = defineEmits(["next", "previous"])
@@ -33,6 +34,37 @@ const onSubmit = (event: FormSubmitEvent<ProjectCreateEval>) => {
   modelValue.value = event.data
   emits("next")
 }
+
+const guardrailsList = ref([]);
+
+const { mutateAsync: getGuardrailsList, isPending: isFetchingGuardrailsList } = useMutation({
+  mutationFn: async () => {
+    const response = await useGuardrailsList()    
+    guardrailsList.value = response?.map(item=>{
+      return {
+        label : item.name,
+        value : item.name,
+        name : item.name,
+        guardrails_id: item.guardrails_id,
+        guardrail_version: item.version,
+        enable_prompt_guardrails: true,
+        enable_context_guardrails: true,
+        enable_response_guardrails: true
+      }
+    })
+    return response
+  }
+})
+
+const fetchGuardrails = ()=>{
+  state.guardrails = [];
+   getGuardrailsList()
+}
+
+onMounted(() => {
+  fetchGuardrails()
+})
+
 </script>
 
 
@@ -66,6 +98,27 @@ const onSubmit = (event: FormSubmitEvent<ProjectCreateEval>) => {
           <FieldTooltip field-name="ragas_inference_llm" />
         </template>
       </UFormField>
+      <div class="flex gap-2 items-center w-full">
+      <UFormField name="guardrails"
+        :label="`Guardrails ${state?.guardrails?.length === 0 || state?.guardrails === undefined ? '' : `(${state?.guardrails?.length})`}`"
+         class="text-ellipsis overflow-hidden flex-11">
+        <USelectMenu v-model="state.guardrails" :disabled="isFetchingGuardrailsList" :loading="isFetchingGuardrailsList"  multiple
+          :items="guardrailsList" class="w-full"
+          placeholder="None"
+           />
+        <template #hint>
+          <FieldTooltip field-name="guardrails" />
+        </template>
+      </UFormField>
+      <UFormField name="refetch_guardrail_list" label=" " class="flex-1" >
+        <UButton 
+        class="w-full mt-8"
+          label="Refresh" 
+          trailing-icon="i-lucide-repeat-2" 
+          @click.prevent="fetchGuardrails"
+          />
+      </UFormField>
+      </div>
     <div class="flex justify-between items-center w-full mt-6">
       <div>
         <UButton v-if="showBackButton" type="button" icon="i-lucide-arrow-left" label="Back" variant="outline"

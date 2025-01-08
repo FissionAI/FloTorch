@@ -223,6 +223,17 @@ export const ProjectCreateEvalSchema = z.object({
   ragas_inference_llm: z.string({
     required_error: "Ragas inference LLM is required",
   }),
+  guardrails : z.array(
+      z.object({
+        label : z.string(),
+        value : z.string(),
+        name : z.string(),
+        guardrails_id: z.string(),
+        guardrail_version: z.string(),
+        enable_prompt_guardrails: z.boolean(),
+        enable_context_guardrails:z.boolean(),
+        enable_response_guardrails: z.boolean(),
+  })).optional()
 });
 
 export type ProjectCreateEval = z.infer<typeof ProjectCreateEvalSchema>;
@@ -378,3 +389,11 @@ export const ProjectCreateSchema = z.object({
 });
 
 export type ProjectCreate = z.infer<typeof ProjectCreateSchema>;
+
+export interface Guardrail {
+    guardrails_id: string;
+    description: string;
+    name: string;
+    version: string;
+}
+

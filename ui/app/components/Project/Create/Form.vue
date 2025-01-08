@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { useMutation, useQueryClient } from '@tanstack/vue-query';
 
+import { v4 as uuidv4 } from 'uuid';
+
 const props = defineProps<{
   config?: Record<string, any>
 }>()
-
-import { v4 as uuidv4 } from 'uuid';
 
 const uuid = uuidv4()
 
@@ -78,7 +78,8 @@ const nextStep = () => {
       eval: {
         service: state.eval?.service,
         ragas_embedding_llm: state.eval?.ragas_embedding_llm,
-        ragas_inference_llm: state.eval?.ragas_inference_llm
+        ragas_inference_llm: state.eval?.ragas_inference_llm,
+        guardrails: state.eval?.guardrails
       },
       n_shot_prompt_guide: state.retrieval?.n_shot_prompt_guide || {}
     }
@@ -100,7 +101,7 @@ const steps = [
   { label: 'Data Strategy', icon: 'i-lucide-square-stack' },
   { label: 'Indexing Strategy', icon: 'i-lucide-layers' },
   { label: 'Retrieval Strategy', icon: 'i-lucide-file-search' },
-  { label: 'Evaluation Strategy', icon: 'i-lucide-bar-chart-2' }
+  { label: 'Guardrails and Evaluation', icon: 'i-lucide-search' }
 ]
 </script>
 
