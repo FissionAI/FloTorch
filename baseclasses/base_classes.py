@@ -113,7 +113,7 @@ class BaseEmbedder(ABC):
         pass
 
     @abstractmethod
-    def embed(self, text: str, dimensions: int = 256, normalize: bool = True) -> List[float]:
+    def embed(self, text: str, dimensions: int = 256, normalize: bool = True) -> (Dict[str, str], List[float]):
         pass
 
     def get_model_id(self) -> str:
