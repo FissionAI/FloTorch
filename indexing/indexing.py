@@ -32,14 +32,13 @@ class Indexer(BasePipeline):
             embedding_results = EmbedProcessor(self.experimentalConfig).embed(chunks)
 
             #total_index_embed_tokens = sum(int(metadata['inputTokens']) for _, _, metadata in embedding_results)
-            total_index_embed_tokens = 0
             # Process hierarchical chunking
-            documents = self.prepare_documents(embedding_results, chunks, total_index_embed_tokens)
+            documents = self.prepare_documents(embedding_results.embedList, chunks, embedding_results.input_tokens)
 
             logger.info(
-                f"Experiment {self.experimentalConfig.experiment_id} Indexing Embed Tokens : {total_index_embed_tokens}")
+                f"Experiment {self.experimentalConfig.experiment_id} Indexing Embed Tokens : {embedding_results.input_tokens}")
 
-            self.log_dynamodb_update(total_index_embed_tokens, 0, 0)
+            self.log_dynamodb_update(embedding_results.input_tokens, 0, 0)
             self._insert_to_opensearch(documents)
 
         except Exception as e:
@@ -52,7 +51,7 @@ class Indexer(BasePipeline):
             temp_results = []
             for i, chunk in enumerate(chunks):
                 temp_embedding = list(embedding_results[i])
-                temp_embedding.extend([chunk[0], chunk[1]])
+                temp_embedding.extend([chunk.chunk, chunk.child_chunk])
                 temp_results.append(temp_embedding)
             embedding_results = temp_results
             documents = [
