@@ -27,18 +27,12 @@ class Indexer(BasePipeline):
             pdf_folder_path = S3Util().download_directory_from_s3(self.experimentalConfig.kb_data)
 
             # Step 2: Chunking
-            chunks = ChunkingProcessor(self.experimentalConfig).chunk(process_pdf_from_folder(pdf_folder_path))
-
-            # Determine embedding chunks (hierarchical or flat)
-            embed_chunks = chunks
-            if self.experimentalConfig.is_hierarchical():
-                embed_chunks = [chunk[2] for chunk in chunks]
-
+            chunks = ChunkingProcessor(self.experimentalConfig).chunk([process_pdf_from_folder(pdf_folder_path)])
             # Step 3: Embedding
-            embedding_results = EmbedProcessor(self.experimentalConfig).embed(embed_chunks)
+            embedding_results = EmbedProcessor(self.experimentalConfig).embed(chunks)
 
-            total_index_embed_tokens = sum(int(metadata['inputTokens']) for _, _, metadata in embedding_results)
-
+            #total_index_embed_tokens = sum(int(metadata['inputTokens']) for _, _, metadata in embedding_results)
+            total_index_embed_tokens = 0
             # Process hierarchical chunking
             documents = self.prepare_documents(embedding_results, chunks, total_index_embed_tokens)
 
