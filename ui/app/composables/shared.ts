@@ -561,16 +561,28 @@ export const useProjectCreateMeta = () => {
 
 export const useFilteredRagasEmbeddingModels = (embeddingModel: string[]) => {
   const meta = useProjectCreateMeta();
-  return meta.evalStrategy.ragas_embedding_llm.filter(model => 
-    model.value !== 'none' && !embeddingModel.includes(model.value)
-  )
-}
+  return meta.evalStrategy.ragas_embedding_llm.map((model) => {
+    if (model.value !== 'none' && embeddingModel.includes(model.value)) {
+      return {
+        ...model,
+        disabled: true
+      };
+    }
+    return model;
+  });
+};
 
 export const useFilteredRagasInferenceModels = (inferenceModel: string[]) => {
   const meta = useProjectCreateMeta();
-  return meta.evalStrategy.ragas_inference_llm.filter(model => 
-    model.value !== 'none' && !inferenceModel.includes(model.value)
-  )
+  return meta.evalStrategy.ragas_inference_llm.map((model) => {
+    if (model.value !== 'none' && inferenceModel.includes(model.value)) {
+      return {
+        ...model,
+        disabled: true
+      };
+    }
+    return model;
+  });
 }
 
 export const useFilteredRerankModels = (region: string) => {
