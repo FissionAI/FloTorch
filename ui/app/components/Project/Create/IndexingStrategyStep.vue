@@ -53,7 +53,7 @@ const meta = useProjectCreateMeta()
     </UFormField>
     <div v-if="state.chunking_strategy?.includes('fixed')">
       <UCard>
-      <label class="font-bold text-sm"> Fixed Chunking Settings : </label>
+      <label class="font-bold text-sm"> Fixed Chunking Settings </label>
         <UFormField name="chunk_size"
       :label="`Chunk Size ${state?.chunk_size?.length === 0 || state?.chunk_size === undefined ? '' : `(${state?.chunk_size?.length})`}`"
       required>
@@ -81,7 +81,7 @@ const meta = useProjectCreateMeta()
     
     <div v-if="state.chunking_strategy?.includes('hierarchical')">
       <UCard>
-       <label class="font-bold text-sm"> Hierarchical Chunking Settings : </label>
+       <label class="font-bold text-sm"> Hierarchical Chunking Settings  </label>
       <UFormField name="hierarchical_child_chunk_size"
         :label="`Child Chunk Size ${state?.hierarchical_child_chunk_size?.length === 0 || state?.hierarchical_child_chunk_size === undefined ? '' : `(${state?.hierarchical_child_chunk_size?.length})`}`"
         required>
