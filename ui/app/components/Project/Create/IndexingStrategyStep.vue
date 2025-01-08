@@ -53,6 +53,7 @@ const meta = useProjectCreateMeta()
     </UFormField>
     <div v-if="state.chunking_strategy?.includes('fixed')">
       <UCard>
+      <label class="font-bold text-sm"> Fixed Chunking Settings : </label>
         <UFormField name="chunk_size"
       :label="`Chunk Size ${state?.chunk_size?.length === 0 || state?.chunk_size === undefined ? '' : `(${state?.chunk_size?.length})`}`"
       required>
@@ -66,7 +67,11 @@ const meta = useProjectCreateMeta()
       :label="`Chunk Overlap Percentage ${state?.chunk_overlap?.length === 0 || state?.chunk_overlap === undefined ? '' : `(${state?.chunk_overlap?.length})`}`"
       required>
       <USelectMenu v-model="state.chunk_overlap" value-key="value" multiple
-        :items="meta.indexingStrategy.chunkOverlapPercentage" class="w-full" />
+        :items="meta.indexingStrategy.chunkOverlapPercentage" class="w-full" >
+          <template #item-label="{ item }">
+              {{ item.label + '%' }}
+          </template>
+        </USelectMenu>
       <template #hint>
             <FieldTooltip field-name="chunk_overlap" />
           </template>
@@ -76,17 +81,9 @@ const meta = useProjectCreateMeta()
     
     <div v-if="state.chunking_strategy?.includes('hierarchical')">
       <UCard>
-        <UFormField name="hierarchical_parent_chunk_size"
-      :label="`Hierarchical Parent Chunk Size ${state?.hierarchical_parent_chunk_size?.length === 0 || state?.hierarchical_parent_chunk_size === undefined ? '' : `(${state?.hierarchical_parent_chunk_size?.length})`}`"
-      required>
-        <USelectMenu v-model="state.hierarchical_parent_chunk_size" value-key="value" multiple
-          :items="meta.indexingStrategy.hierarchical_parent_chunk_size" class="w-full" />
-        <template #hint>
-          <FieldTooltip field-name="hierarchical_parent_chunk_size" />
-        </template>
-      </UFormField>
+       <label class="font-bold text-sm"> Hierarchical Chunking Settings : </label>
       <UFormField name="hierarchical_child_chunk_size"
-        :label="`Hierarchical Child Chunk Size ${state?.hierarchical_child_chunk_size?.length === 0 || state?.hierarchical_child_chunk_size === undefined ? '' : `(${state?.hierarchical_child_chunk_size?.length})`}`"
+        :label="`Child Chunk Size ${state?.hierarchical_child_chunk_size?.length === 0 || state?.hierarchical_child_chunk_size === undefined ? '' : `(${state?.hierarchical_child_chunk_size?.length})`}`"
         required>
         <USelectMenu v-model="state.hierarchical_child_chunk_size" value-key="value" multiple
         :items="meta.indexingStrategy.hierarchical_child_chunk_size" class="w-full" />
@@ -94,11 +91,24 @@ const meta = useProjectCreateMeta()
           <FieldTooltip field-name="hierarchical_child_chunk_size" />
         </template>
       </UFormField>
+       <UFormField name="hierarchical_parent_chunk_size"
+      :label="`Parent Chunk Size ${state?.hierarchical_parent_chunk_size?.length === 0 || state?.hierarchical_parent_chunk_size === undefined ? '' : `(${state?.hierarchical_parent_chunk_size?.length})`}`"
+      required>
+        <USelectMenu v-model="state.hierarchical_parent_chunk_size" value-key="value" multiple
+          :items="meta.indexingStrategy.hierarchical_parent_chunk_size" class="w-full" />
+        <template #hint>
+          <FieldTooltip field-name="hierarchical_parent_chunk_size" />
+        </template>
+      </UFormField>
       <UFormField name="hierarchical_chunk_overlap_percentage"
-        :label="`Hierarchical Chunk Overlap Percentage ${state?.hierarchical_chunk_overlap_percentage?.length === 0 || state?.hierarchical_chunk_overlap_percentage === undefined ? '' : `(${state?.hierarchical_chunk_overlap_percentage?.length})`}`"
+        :label="` Chunk Overlap Percentage ${state?.hierarchical_chunk_overlap_percentage?.length === 0 || state?.hierarchical_chunk_overlap_percentage === undefined ? '' : `(${state?.hierarchical_chunk_overlap_percentage?.length})`}`"
         required>
         <USelectMenu v-model="state.hierarchical_chunk_overlap_percentage" value-key="value" multiple
-        :items="meta.indexingStrategy.hierarchical_chunk_overlap_percentage" class="w-full" />
+        :items="meta.indexingStrategy.hierarchical_chunk_overlap_percentage" class="w-full">
+              <template #item-label="{ item }">
+              {{ item.label + '%' }}
+          </template>
+        </USelectMenu>
         <template #hint>
           <FieldTooltip field-name="hierarchical_chunk_overlap_percentage" />
         </template>

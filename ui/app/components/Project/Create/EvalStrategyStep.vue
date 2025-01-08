@@ -114,7 +114,7 @@ onMounted(() => {
       <UFormField name="refetch_guardrail_list" label=" " class="flex-1" >
         <UButton 
         class="w-full mt-8"
-          label="Refresh" 
+          label="Sync Guardrails" 
           trailing-icon="i-lucide-repeat-2" 
           @click.prevent="fetchGuardrails"
           />
