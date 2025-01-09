@@ -1,6 +1,6 @@
 from core.dynamodb import DynamoDBOperations
 from typing import Dict, Any, Optional
-from config.experimental_config import ExperimentalConfig, NShotPromptGuide, Evaluation
+from config.experimental_config import ExperimentalConfig, NShotPromptGuide
 from util.dynamo_utils import deserialize_dynamodb_json
 from config.config import Config
 
