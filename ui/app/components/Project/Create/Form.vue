@@ -73,7 +73,7 @@ const nextStep = () => {
             label: pc.label
           }
         }),
-        rerank_model_id: state.retrieval?.rerank_model_id,
+        rerank_model_id: state.prestep?.region === 'us-east-1' ? ['none'] : state.retrieval?.rerank_model_id,
       },
       eval: {
         service: state.eval?.service,

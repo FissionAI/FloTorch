@@ -107,7 +107,6 @@ export const ProjectCreateIndexingStrategySchema = z.object({
     message: "At least one embedding model is required",
   }).default([]),
 }).superRefine((data, ctx) => {
-  console.log(data, ctx)
   if (
     (data.chunking_strategy.includes("hierarchical") && 
     !data.hierarchical_child_chunk_size?.length) || 
