@@ -238,7 +238,7 @@ async def get_question_metrics(
                     ":experiment_id": experiment_id,
                 },
                 "index_name":"execution_id-experiment_id-index",
-                "projection": "generated_answer, gt_answer, question, id",
+                "projection": "generated_answer, gt_answer, question, id, guardrail_input_assessment, guardrail_context_assessment, guardrail_output_assessment",
             }
 
             if last_evaluated_key:

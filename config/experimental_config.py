@@ -30,12 +30,18 @@ class ExperimentalConfig(BaseModel):
     retrieval_model: str = Field(alias="retrieval_model")
     retrieval_model_endpoint: str = None
     vector_dimension: int = Field(alias="vector_dimension")
+    enable_guardrails: bool = False
+    guardrail_id: Optional[str] = None
+    guardrail_version: Optional[str] = None
+    enable_prompt_guardrails: bool = False
+    enable_context_guardrails: bool = False
+    enable_response_guardrails: bool = False
     # This should ideally work need furthur debugging
     llm_based_eval: bool = True
     eval_service: str = 'ragas'
-    ragas_embedding_llm: str = 'amazon.titan-embed-text-v1'
-    ragas_inference_llm: str = 'mistral.mixtral-8x7b-instruct-v0:1'
-    ragas_inference_temperature: float = float(0.4)
+    eval_embedding_model: str = 'amazon.titan-embed-text-v1'
+    eval_retrieval_model: str = 'mistral.mixtral-8x7b-instruct-v0:1'
+    eval_retrieval_temperature: float = float(0.4)
     # Rerank model id
     rerank_model_id: str = Field(alias="rerank_model_id", default="none")
     class Config:
