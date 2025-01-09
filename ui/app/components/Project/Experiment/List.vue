@@ -113,6 +113,21 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
     }
   },
   {
+    header: "Evaluation Service",
+    accessorKey: "config.eval_service",
+    enableHiding: true,
+  },
+  {
+    header: "Evaluation Embedding Model",
+    accessorKey: "config.eval_embedding_model",
+    enableHiding: true,
+  },
+  {
+    header: "Evaluation Retrieval Model",
+    accessorKey: "config.eval_retrieval_model",
+    enableHiding: true,
+  },
+  {
     header: "Directional Pricing",
     accessorKey: "directional_pricing",
     enableHiding: true,
