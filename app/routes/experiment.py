@@ -242,7 +242,7 @@ async def get_question_metrics(
             }
 
             if last_evaluated_key:
-                query_params["ExclusiveStartKey"] = last_evaluated_key
+                query_params["exclusive_start_key"] = last_evaluated_key
 
             # Query DynamoDB
             response = question_metrics_db.query(**query_params)
