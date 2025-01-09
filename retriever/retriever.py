@@ -217,7 +217,7 @@ def process_questions(
                         log_prefix="Question"
                     )
                     if blocked:
-                        question = modified_question
+                        answer = modified_question
                         guardrail_blocked = 'INPUT'
 
                 # Apply CONTEXT guardrails if not already blocked
@@ -228,7 +228,7 @@ def process_questions(
                     )
 
                     if experimentalConfig.chunking_strategy.lower() == 'hierarchical':
-                        query_results = __duplicate_removal_for_hierarchical_config(query_results)
+                        query_results = __duplicate_removal_for_heirarchical_config(query_results)
 
                     if experimentalConfig.rerank_model_id and experimentalConfig.rerank_model_id.lower() != 'none':
                         #Rerank the query results
@@ -245,7 +245,7 @@ def process_questions(
                             log_prefix="Context"
                         )
                         if blocked:
-                            question = modified_context
+                            answer = modified_context
                             guardrail_blocked = 'CONTEXT'
 
                 # Generate and check answer if not blocked
@@ -273,6 +273,19 @@ def process_questions(
                     )
                     retrieval_input_tokens += int(answer_metadata["inputTokens"])
                     retrieval_output_tokens += int(answer_metadata["outputTokens"])
+
+                    # Apply OUTPUT guardrails if enabled
+                    if experimentalConfig.enable_response_guardrails:
+                        blocked, modified_answer, guardrail_output_assessment = apply_guardrail_check(
+                            components,
+                            guardrail_id,
+                            content={'text': answer},
+                            source='OUTPUT',
+                            log_prefix="Answer"
+                        )
+                        if blocked:
+                            answer = modified_answer
+                            guardrail_blocked = 'OUTPUT'
             else:
                 # Search for relevant context
                 query_results = components["vector_database"].search(
