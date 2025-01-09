@@ -26,13 +26,13 @@ class RagasLLMEvaluator(RagasEvaluator):
         self.evaluator_llm = LangchainLLMWrapper(ChatBedrockConverse(
             region_name=self.experimental_config.aws_region,
             base_url=f"https://bedrock-runtime.{self.experimental_config.aws_region}.amazonaws.com",
-            model=self.experimental_config.ragas_inference_llm,
-            temperature=self.experimental_config.ragas_inference_temperature,
+            model=self.experimental_config.eval_retrieval_model,
+            temperature=self.experimental_config.eval_retrieval_temperature,
         ))
 
         self.embedding_llm = LangchainEmbeddingsWrapper(BedrockEmbeddings(
             region_name=self.experimental_config.aws_region,
-            model_id=self.experimental_config.ragas_embedding_llm,
+            model_id=self.experimental_config.eval_embedding_model,
         ))
 
 
