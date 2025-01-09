@@ -1,8 +1,7 @@
 import logging
-from typing import Dict, List, Any
-from config.experimental_config import ExperimentalConfig
+from typing import Dict, List
 from core.chunking import Chunk
-from core.embedding import EmbedderFactory
+from core.embedding.embedding_factory import EmbedderFactory
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -11,18 +10,13 @@ logger.setLevel(logging.INFO)
 class Embed:
     """Class to encapsulate the embedding result with metadata and chunk."""
 
-    def __init__(self, embedding:[float], chunk: Chunk, metadata: Dict[str, str]) -> None:
-        self.embedding = embedding
-        self.chunk = chunk
-        self.metadata = metadata
-
-    def __init__(self, embedding:[float], text: str, metadata: Dict[str, str]) -> None:
+    def __init__(self, embedding: List[float], text: str, metadata: Dict[str, str]) -> None:
         self.embedding = embedding
         self.text = text
         self.metadata = metadata
 
     def __repr__(self) -> str:
-        return f"Embed(chunk={self.chunk}, embedding=[...] , metadata={self.metadata})"
+        return f"Embed(text={self.text[:50]}, embedding=[...] , metadata={self.metadata})"
 
     def input_tokens(self):
         try:
@@ -33,34 +27,57 @@ class Embed:
         except (ValueError, TypeError):
             return 0
 
+
 class EmbedList:
     def __init__(self):
-        self.embedList = []
+        self.embed_list = []
         self.input_tokens = 0
 
     def append(self, embed: Embed):
-        self.embedList.append(embed)
+        self.embed_list.append(embed)
         self.input_tokens += embed.input_tokens()
+
 
 class EmbedProcessor:
     """Processor for embedding text chunks."""
 
-    def __init__(self, experimentalConfig: ExperimentalConfig) -> None:
-        self.experimentalConfig = experimentalConfig
-        self.embedder = EmbedderFactory.create_embedder(experimentalConfig)
+    def __init__(
+        self,
+        service_type: str,
+        model_id: str,
+        aws_region: str,
+        role_arn: str,
+        vector_dimension: int,
+        normalize: bool = True
+    ) -> None:
+        self.service_type = service_type
+        self.model_id = model_id
+        self.aws_region = aws_region
+        self.role_arn = role_arn
+        self.vector_dimension = vector_dimension
+        self.normalize = normalize
+
+        # Create the embedder instance
+        self.embedder = EmbedderFactory.create_embedder(
+            service_type=service_type,
+            model_id=model_id,
+            aws_region=aws_region,
+            role_arn=role_arn
+        )
 
     def embed(self, chunks: List[Chunk]) -> EmbedList:
         """Embed each chunk one by one."""
         embeddings = EmbedList()
         try:
-            dimensions = self.experimentalConfig.vector_dimension
-            normalize = True  # Always normalize
-
-            logger.info(f"Embedding {len(chunks)} chunks with dimensions: {dimensions}.")
+            logger.info(f"Embedding {len(chunks)} chunks with dimensions: {self.vector_dimension}.")
             for idx, chunk in enumerate(chunks):
-                logger.debug(f"Embedding chunk {idx + 1}/{len(chunks)}: {chunk[:50]}...")
-                metadata, embedding = self.embedder.embed(chunk.chunk, dimensions=dimensions, normalize=normalize)
-                embed = Embed(embedding, chunk=chunk, metadata=metadata)
+                logger.debug(f"Embedding chunk {idx + 1}/{len(chunks)}: {chunk.chunk[:50]}...")
+                metadata, embedding = self.embedder.embed(
+                    chunk.chunk,
+                    dimensions=self.vector_dimension,
+                    normalize=self.normalize
+                )
+                embed = Embed(embedding, text=chunk.chunk, metadata=metadata)
                 embeddings.append(embed)
 
             logger.info("Embedding process completed successfully.")
@@ -72,9 +89,11 @@ class EmbedProcessor:
     def embed_text(self, text: str) -> Embed:
         """Embed text and return an Embed object."""
         try:
-            dimensions = self.experimentalConfig.vector_dimension
-            normalize = True  # Always normalize
-            metadata, embedding = self.embedder.embed(text, dimensions=dimensions, normalize=normalize)
+            metadata, embedding = self.embedder.embed(
+                text,
+                dimensions=self.vector_dimension,
+                normalize=self.normalize
+            )
             embed = Embed(embedding, text=text, metadata=metadata)
             logger.info("Embedding text process completed successfully.")
             return embed

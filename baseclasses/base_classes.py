@@ -147,36 +147,6 @@ class BaseEvaluator(ABC):
         pass
 
 
-# Experiment
-class Experiment(BaseModel):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    execution_id: str
-    start_datetime: datetime = Field(default_factory=datetime.now)
-    end_datetime: Optional[datetime] = None
-    config: Dict[str, Any]
-    experiment_status: str = "not_started"
-    index_status: str = "not_started"
-    retrieval_status: str = "not_started"
-    index_id: Optional[str] = None
-    indexing_time: int = 0
-    retrieval_time: int = 0
-    total_time: int = 0
-    cost: float = 0.0
-    eval_metrics: Dict[str, Any] = Field(default_factory=dict)
-
-
-# Execution
-class Execution(BaseModel):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    date: datetime = Field(default_factory=datetime.now)
-    config: Dict[str, Any]
-    status: str = "not_started"
-    gt_data: str
-    kb_data: str
-    region: str
-    name: str
-
-
 @dataclass
 class EvaluationMetrics():
     faithfulness_score: Optional[float] = 0.0

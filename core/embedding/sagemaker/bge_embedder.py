@@ -1,7 +1,7 @@
 import logging
 from typing import Dict, List, Union
 
-from core.embedding import EmbedderFactory
+from core.embedding.embedding_factory import EmbedderFactory
 from core.embedding.sagemaker.sagemaker_embedder import SageMakerEmbedder
 
 logger = logging.getLogger()

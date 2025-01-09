@@ -23,11 +23,10 @@ class Retriever(BasePipeline):
             gt_data = self.load_ground_truth_data()
 
             # Process questions and store results
-            retrieval_query_embed_tokens, retrieval_input_tokens, retrieval_output_tokens = self.process_questions(
-                gt_data, components)
+            retrieval_tokens = self.process_questions(gt_data, components)
 
             # Log DynamoDB update
-            self.log_dynamodb_update(retrieval_query_embed_tokens, retrieval_input_tokens, retrieval_output_tokens)
+            self.log_dynamodb_update(*retrieval_tokens)
 
             logger.info("Retrieval process completed successfully")
 
@@ -47,97 +46,115 @@ class Retriever(BasePipeline):
         retrieval_input_tokens = 0
         retrieval_output_tokens = 0
 
-        logger.info(
-            f"Rerank model id for experiment {self.experimentalConfig.experiment_id}: {self.experimentalConfig.rerank_model_id}")
         for idx, item in enumerate(gt_data):
             try:
                 question = item["question"]
                 logger.debug(f"Processing question {idx + 1}: {question}")
 
-                # Generate embeddings
-                query_metadata, query_embedding = components["embed_processor"].embed_text(
-                    question
-                )
+                # Process the question and generate embeddings
+                query_metadata, query_embedding = self.process_question_embedding(question, components)
                 retrieval_query_embed_tokens += int(query_metadata["inputTokens"])
 
-                # Search for relevant context
-                query_results = components["vector_database"].search(
-                    self.experimentalConfig.index_id, query_embedding, self.experimentalConfig.knn_num
-                )
+                # Retrieve relevant context based on the query
+                query_results = self.retrieve_relevant_context(query_embedding, components)
 
-                if self.experimentalConfig.chunking_strategy.lower() == 'hierarchical':
-                    overall_documents = []
-                    parent_dict = {}
-                    for document in query_results:
-                        temp_document = document
-                        parent_id = document.get('parent_id')
-                        if parent_id not in parent_dict:
-                            overall_documents.append(temp_document)
-                            parent_dict[parent_id] = 1
-                    query_results = overall_documents
+                # Optionally, rerank the results
+                query_results = self.rerank_results(question, query_results, idx)
 
-                if self.experimentalConfig.rerank_model_id and self.experimentalConfig.rerank_model_id.lower() != 'none':
-                    # Rerank the query results
-                    logger.info(
-                        f"Into reranking for experiment {self.experimentalConfig.experiment_id} for question {idx + 1}")
-                    start_time = time.time()
-                    reranker = DocumentReranker(region=self.experimentalConfig.aws_region,
-                                                rerank_model_id=self.experimentalConfig.rerank_model_id)
-                    query_results = reranker.rerank_documents(question, query_results)
-                    end_time = time.time()
-                    logger.info(f"Reranking for question {idx + 1} took {end_time - start_time:.2f} seconds")
-
-                # Generate answer
-                answer_metadata, answer = components["inference_processor"].generate_text(
-                    user_query=question,
-                    context=query_results,
-                    default_prompt=self.config.inference_system_prompt,
-                )
+                # Generate answer from context
+                answer_metadata, answer = self.generate_answer(question, query_results, components)
                 retrieval_input_tokens += int(answer_metadata["inputTokens"])
                 retrieval_output_tokens += int(answer_metadata["outputTokens"])
 
-                reference_contexts = (
-                    [record["text"] for record in query_results] if query_results else []
-                )
+                # Collect the reference contexts for metrics
+                reference_contexts = self.get_reference_contexts(query_results)
 
-                #  Update the metrics here to store the DynamoDb Table
-                metrics = self._create_metrics(
-                    experimental_config=self.experimentalConfig,
-                    question=question,
-                    answer=answer,
-                    gt_answer=item["answer"],
-                    reference_contexts=reference_contexts,
-                    query_metadata=query_metadata,
-                    answer_metadata=answer_metadata,
-                )
-
+                # Create and store metrics
+                metrics = self.create_metrics(item, question, answer, reference_contexts, query_metadata, answer_metadata)
                 batch_items.append(metrics.to_dynamo_item())
-
-                # batch_items.append(metrics.__dict__)
 
                 # Write batch if size reaches threshold
                 if len(batch_items) >= 25:
                     self.write_batch_to_dynamodb(batch_items, components["metrics_dynamodb"])
                     batch_items = []
+
             except Exception as e:
-                logger.error(f"Error processing question {idx+1}: {str(e)}")
-                metrics = metrics = self._create_metrics(
-                    experimental_config=self.experimentalConfig,
-                    question=question,
-                    answer="",
-                    gt_answer=item["answer"],
-                    reference_contexts=[],
-                    query_metadata={},
-                    answer_metadata={},
-                )
+                logger.error(f"Error processing question {idx + 1}: {str(e)}")
+                metrics = self.create_error_metrics(item, question)
                 batch_items.append(metrics.to_dynamo_item())
                 continue
 
         # Write remaining items
         if batch_items:
             self.write_batch_to_dynamodb(batch_items, components["metrics_dynamodb"])
-        logger.info(f"Experiment {self.experimentalConfig.experiment_id} Retrieval Tokens : \n Query Embed Tokens : {retrieval_query_embed_tokens} \n Input Tokens : {retrieval_input_tokens} \n Output Tokens : {retrieval_output_tokens}")
-        return (retrieval_query_embed_tokens, retrieval_input_tokens, retrieval_output_tokens)
+
+        logger.info(f"Experiment {self.experimentalConfig.experiment_id} Retrieval Tokens : "
+                    f"\n Query Embed Tokens : {retrieval_query_embed_tokens} \n Input Tokens : {retrieval_input_tokens} \n Output Tokens : {retrieval_output_tokens}")
+
+        return retrieval_query_embed_tokens, retrieval_input_tokens, retrieval_output_tokens
+
+    def process_question_embedding(self, question: str, components) -> Tuple[Dict, List[float]]:
+        """Generate embeddings for the question."""
+        logger.debug(f"Generating embedding for question: {question}")
+        return components["embed_processor"].embed_text(question)
+
+    def retrieve_relevant_context(self, query_embedding: List[float], components) -> List[Dict]:
+        """Retrieve the relevant context based on the query embedding."""
+        logger.debug("Searching for relevant context based on query embedding")
+        return components["vector_database"].search(
+            self.experimentalConfig.index_id, query_embedding, self.experimentalConfig.knn_num
+        )
+
+    def rerank_results(self, question: str, query_results: List[Dict], idx: int) -> List[Dict]:
+        """Rerank the query results if a rerank model is defined."""
+        if self.experimentalConfig.rerank_model_id and self.experimentalConfig.rerank_model_id.lower() != 'none':
+            logger.info(f"Reranking results for question {idx + 1}: {question}")
+            reranker = DocumentReranker(
+                region=self.experimentalConfig.aws_region,
+                rerank_model_id=self.experimentalConfig.rerank_model_id
+            )
+            start_time = time.time()
+            query_results = reranker.rerank_documents(question, query_results)
+            end_time = time.time()
+            logger.info(f"Reranking took {end_time - start_time:.2f} seconds")
+        return query_results
+
+    def generate_answer(self, question: str, query_results: List[Dict], components) -> Tuple[Dict, str]:
+        """Generate the answer based on the question and context."""
+        logger.debug(f"Generating answer for question: {question}")
+        return components["inference_processor"].generate_text(
+            user_query=question,
+            context=query_results,
+            default_prompt=self.config.inference_system_prompt,
+        )
+
+    def get_reference_contexts(self, query_results: List[Dict]) -> List[str]:
+        """Extract reference contexts from query results."""
+        return [record["text"] for record in query_results] if query_results else []
+
+    def create_metrics(self, item, question, answer, reference_contexts, query_metadata, answer_metadata):
+        """Create and return metrics to store."""
+        return self._create_metrics(
+            experimental_config=self.experimentalConfig,
+            question=question,
+            answer=answer,
+            gt_answer=item["answer"],
+            reference_contexts=reference_contexts,
+            query_metadata=query_metadata,
+            answer_metadata=answer_metadata,
+        )
+
+    def create_error_metrics(self, item, question):
+        """Create error metrics for failed processing."""
+        return self._create_metrics(
+            experimental_config=self.experimentalConfig,
+            question=question,
+            answer="",
+            gt_answer=item["answer"],
+            reference_contexts=[],
+            query_metadata={},
+            answer_metadata={},
+        )
 
 
 class RetrievalError(Exception):

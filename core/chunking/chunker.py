@@ -14,14 +14,11 @@ class Chunk:
 class BaseChunker(ABC):
     """Abstract base class for chunking strategies."""
 
-    def __init__(self, chunk_size: int, chunk_overlap: int) -> None:
+    def __init__(self, chunk_size: int, chunk_overlap: int, child_chunk_size: int = None) -> None:
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
-
-    def __init__(self, chunk_size: int,  chunk_overlap: int, child_chunk_size: int) -> None:
-        self.chunk_size = chunk_size
-        self.chunk_overlap = chunk_overlap
-        self.child_chunk_size = child_chunk_size
+        if child_chunk_size is not None:
+            self.child_chunk_size = child_chunk_size
 
     @abstractmethod
     def chunk(self, text: str) -> List[Chunk]:
