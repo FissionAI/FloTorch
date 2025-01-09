@@ -71,9 +71,9 @@ class ExperimentalConfigService:
             n_shot_prompts=exp_config_data.get('n_shot_prompts', 0),
             indexing_algorithm=exp_config_data.get('indexing_algorithm'),
             rerank_model_id=exp_config_data.get('rerank_model_id', "none"),
-            eval_service=exp_config_data.get('eval_service', "none"),
-            eval_embedding_model=exp_config_data.get('eval_embedding_model', "none"),
-            eval_retrieval_model=exp_config_data.get('eval_retrieval_model', "none"),
+            eval_service=exp_config_data.get('eval_service', "ragas"),
+            eval_embedding_model=exp_config_data.get('eval_embedding_model', "amazon.titan-embed-text-v1"),
+            eval_retrieval_model=exp_config_data.get('eval_retrieval_model', "mistral.mixtral-8x7b-instruct-v0:1"),
         )
         
         n_shot_prompt_guide = experiment.get('config').get('n_shot_prompt_guide')
