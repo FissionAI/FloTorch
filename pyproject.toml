@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "FloTorch"
+version = "0.1.0"
+description = "FloTorch is a tool for building and deploying machine learning models."
+authors = ["FloTorch Team "]
+[tool.poetry.dependencies]
+python = "^3.9"
+boto3 = "1.35.87"
+botocore = "1.35.87"
+fastapi = "0.115.5"
+langchain_community = "0.3.7"
+opensearch_py = "2.7.1"
+pydantic = "2.9.2"
+python-dotenv = "1.0.1"
+sagemaker = "2.235.2"
+ragas = "0.2.6"
+langchain_aws = "0.2.7"
+langchain = "*"
+PyPDF2 = "*"
+llama-index = "*"
+
+[tool.poetry.dev-dependencies]
+pytest = "^6.2"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

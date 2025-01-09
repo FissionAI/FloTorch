@@ -1,5 +1,5 @@
 # Use the official AWS Lambda Python 3.9 runtime base image
-FROM ${PLATFORM} python:3.9-slim as base
+FROM python:3.9-slim as base
 
 # Create and set the working directory inside the container
 WORKDIR /var/task
@@ -15,7 +15,8 @@ COPY ${BUILD_DIR}/baseclasses/ baseclasses/
 COPY ${BUILD_DIR}/config/ config/
 COPY ${BUILD_DIR}/core/ core/
 COPY ${BUILD_DIR}/util/ util/
-COPY ${BUILD_DIR}/lambda_handlers/retriever_handler.py .
+COPY ${BUILD_DIR}/lambda_handlers/ lambda_handlers/
+COPY ${BUILD_DIR}/handlers/ handlers/
 
 # Set environment variables
 ENV PYTHONPATH=/var/task

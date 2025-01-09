@@ -8,3 +8,7 @@ python-dotenv==1.0.1
 sagemaker==2.235.2
 ragas==0.2.6
 langchain_aws==0.2.7
+langchain
+PyPDF2
+llama-index
+python-dotenv
