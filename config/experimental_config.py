@@ -33,9 +33,9 @@ class ExperimentalConfig(BaseModel):
     # This should ideally work need furthur debugging
     llm_based_eval: bool = True
     eval_service: str = 'ragas'
-    ragas_embedding_llm: str = 'amazon.titan-embed-text-v1'
-    ragas_inference_llm: str = 'mistral.mixtral-8x7b-instruct-v0:1'
-    ragas_inference_temperature: float = float(0.4)
+    eval_embedding_model: str = 'amazon.titan-embed-text-v1'
+    eval_retrieval_model: str = 'mistral.mixtral-8x7b-instruct-v0:1'
+    eval_retrieval_temperature: float = float(0.4)
     # Rerank model id
     rerank_model_id: str = Field(alias="rerank_model_id", default="none")
     class Config:

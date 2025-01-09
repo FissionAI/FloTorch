@@ -1,6 +1,6 @@
 from core.dynamodb import DynamoDBOperations
 from typing import Dict, Any, Optional
-from config.experimental_config import ExperimentalConfig, NShotPromptGuide
+from config.experimental_config import ExperimentalConfig, NShotPromptGuide, Evaluation
 from util.dynamo_utils import deserialize_dynamodb_json
 from config.config import Config
 
@@ -70,7 +70,10 @@ class ExperimentalConfigService:
             kb_data=exp_config_data.get('kb_data', {}),
             n_shot_prompts=exp_config_data.get('n_shot_prompts', 0),
             indexing_algorithm=exp_config_data.get('indexing_algorithm'),
-            rerank_model_id=exp_config_data.get('rerank_model_id', "none")
+            rerank_model_id=exp_config_data.get('rerank_model_id', "none"),
+            eval_service=exp_config_data.get('eval_service', "none"),
+            eval_embedding_model=exp_config_data.get('eval_embedding_model', "none"),
+            eval_retrieval_model=exp_config_data.get('eval_retrieval_model', "none"),
         )
         
         n_shot_prompt_guide = experiment.get('config').get('n_shot_prompt_guide')
