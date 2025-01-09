@@ -623,6 +623,10 @@ export const useGetModelData = (
   return model;
 };
 
+// export const getModelLabel = (type: "indexing" | "retrieval", model: string) => {
+
+// }
+
 export const useModelName = (type: "indexing" | "retrieval", model: string) => {
   return useGetModelData(type, model)?.label?.replace(" (Coming Soon)", "");
 };
