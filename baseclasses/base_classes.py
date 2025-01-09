@@ -84,13 +84,185 @@ class ExperimentQuestionMetrics(BaseModel):
     reference_contexts:  Optional[List[str]] = Field(..., description="The reference contexts retrieved from vectorstore") 
     query_metadata: Optional[Dict[str, int]] = Field(..., description="The metadata during querying")
     answer_metadata: Optional[Dict[str, int]] = Field(..., description="The metadata during answer generation")
+    reference_contexts: Optional[List[str]] = Field(..., description="The reference contexts retrieved from vectorstore") 
+    guardrail_input_assessment: Optional[Union[List[Dict], Dict]] = Field(default=None, description="Input guardrail assessment results")
+    guardrail_context_assessment: Optional[Union[List[Dict], Dict]] = Field(default=None, description="Context guardrail assessment results")
+    guardrail_output_assessment: Optional[Union[List[Dict], Dict]] = Field(default=None, description="Output guardrail assessment results")
+    guardrail_id: Optional[str] = Field(default=None, description="The guardrail id that was used")
+    guardrail_blocked: Optional[str] = Field(default=None, description="Input or Output blocked by Guardrail")
+
+
+    @staticmethod
+    def _format_guardrail_assessment(assessment: Union[List[Dict], Dict]) -> Dict:
+        """Format guardrail assessment for DynamoDB"""
+        if not assessment:
+            return None
+
+        # Convert single dictionary to list if necessary
+        if isinstance(assessment, dict):
+            assessment = [assessment]
+
+        formatted_assessment = []
+        for item in assessment:
+            formatted_item = {}
+
+            # Format Topic Policy
+            if 'topicPolicy' in item:
+                formatted_item['topicPolicy'] = {
+                    'M': {
+                        'topics': {
+                            'L': [
+                                {
+                                    'M': {
+                                        'name': {'S': topic.get('name', '')},
+                                        'type': {'S': topic.get('type', '')},
+                                        'action': {'S': topic.get('action', '')}
+                                    }
+                                }
+                                for topic in item['topicPolicy'].get('topics', [])
+                            ]
+                        }
+                    }
+                }
+
+            # Format Content Policy
+            if 'contentPolicy' in item:
+                formatted_item['contentPolicy'] = {
+                    'M': {
+                        'filters': {
+                            'L': [
+                                {
+                                    'M': {
+                                        'type': {'S': filter.get('type', '')},
+                                        'confidence': {'S': filter.get('confidence', '')},
+                                        'filterStrength': {'S': filter.get('filterStrength', '')},
+                                        'action': {'S': filter.get('action', '')}
+                                    }
+                                }
+                                for filter in item['contentPolicy'].get('filters', [])
+                            ]
+                        }
+                    }
+                }
+
+            # Format Word Policy
+            if 'wordPolicy' in item:
+                word_policy = {'M': {}}
+
+                if 'customWords' in item['wordPolicy']:
+                    word_policy['M']['customWords'] = {
+                        'L': [
+                            {
+                                'M': {
+                                    'match': {'S': word.get('match', '')},
+                                    'action': {'S': word.get('action', '')}
+                                }
+                            }
+                            for word in item['wordPolicy'].get('customWords', [])
+                        ]
+                    }
+
+                if 'managedWordLists' in item['wordPolicy']:
+                    word_policy['M']['managedWordLists'] = {
+                        'L': [
+                            {
+                                'M': {
+                                    'match': {'S': word.get('match', '')},
+                                    'type': {'S': word.get('type', '')},
+                                    'action': {'S': word.get('action', '')}
+                                }
+                            }
+                            for word in item['wordPolicy'].get('managedWordLists', [])
+                        ]
+                    }
+
+                formatted_item['wordPolicy'] = word_policy
+
+            # Format Sensitive Information Policy
+            if 'sensitiveInformationPolicy' in item:
+                sensitive_info_policy = {'M': {}}
+
+                if 'piiEntities' in item['sensitiveInformationPolicy']:
+                    sensitive_info_policy['M']['piiEntities'] = {
+                        'L': [
+                            {
+                                'M': {
+                                    'match': {'S': entity.get('match', '')},
+                                    'type': {'S': entity.get('type', '')},
+                                    'action': {'S': entity.get('action', '')}
+                                }
+                            }
+                            for entity in item['sensitiveInformationPolicy'].get('piiEntities', [])
+                        ]
+                    }
+
+                if 'regexes' in item['sensitiveInformationPolicy']:
+                    sensitive_info_policy['M']['regexes'] = {
+                        'L': [
+                            {
+                                'M': {
+                                    'name': {'S': regex.get('name', '')},
+                                    'match': {'S': regex.get('match', '')},
+                                    'regex': {'S': regex.get('regex', '')},
+                                    'action': {'S': regex.get('action', '')}
+                                }
+                            }
+                            for regex in item['sensitiveInformationPolicy'].get('regexes', [])
+                        ]
+                    }
+
+                formatted_item['sensitiveInformationPolicy'] = sensitive_info_policy
+
+            # Format Contextual Grounding Policy
+            if 'contextualGroundingPolicy' in item:
+                formatted_item['contextualGroundingPolicy'] = {
+                    'M': {
+                        'filters': {
+                            'L': [
+                                {
+                                    'M': {
+                                        'type': {'S': filter.get('type', '')},
+                                        'threshold': {'N': str(filter.get('threshold', 0))},
+                                        'score': {'N': str(filter.get('score', 0))},
+                                        'action': {'S': filter.get('action', '')}
+                                    }
+                                }
+                                for filter in item['contextualGroundingPolicy'].get('filters', [])
+                            ]
+                        }
+                    }
+                }
+
+            # Format Invocation Metrics
+            if 'invocationMetrics' in item:
+                metrics = item['invocationMetrics']
+                formatted_item['invocationMetrics'] = {
+                    'M': {
+                        'guardrailProcessingLatency': {'N': str(metrics.get('guardrailProcessingLatency', 0))},
+                        'usage': {
+                            'M': {
+                                'topicPolicyUnits': {'N': str(metrics.get('usage', {}).get('topicPolicyUnits', 0))},
+                                'contentPolicyUnits': {'N': str(metrics.get('usage', {}).get('contentPolicyUnits', 0))},
+                                'wordPolicyUnits': {'N': str(metrics.get('usage', {}).get('wordPolicyUnits', 0))},
+                                'sensitiveInformationPolicyUnits': {'N': str(metrics.get('usage', {}).get('sensitiveInformationPolicyUnits', 0))},
+                                'sensitiveInformationPolicyFreeUnits': {'N': str(metrics.get('usage', {}).get('sensitiveInformationPolicyFreeUnits', 0))},
+                                'contextualGroundingPolicyUnits': {'N': str(metrics.get('usage', {}).get('contextualGroundingPolicyUnits', 0))}
+                            }
+                        }
+                    }
+                }
+
+            formatted_assessment.append({'M': formatted_item})
+
+        return {'L': formatted_assessment}
 
     def to_dynamo_item(self) -> Dict[str, Dict[str, str]]:
         """Convert to DynamoDB item format."""
-        return {
+        item = {
             'id' : {'S': self.id},
             'execution_id': {'S': self.execution_id},
             'experiment_id': {'S': self.experiment_id},
+            'timestamp': {'S': self.timestamp.isoformat()},
             'question': {'S': self.question},
             'gt_answer': {'S': self.gt_answer},
             'generated_answer': {'S': self.generated_answer},
@@ -104,6 +276,24 @@ class ExperimentQuestionMetrics(BaseModel):
                 'M': {key: {'N': str(value)} for key, value in self.answer_metadata.items()}
             }
         } 
+
+        # Format and add guardrail assessments if they exist
+        if self.guardrail_input_assessment is not None:
+            item['guardrail_input_assessment'] = self._format_guardrail_assessment(self.guardrail_input_assessment)
+
+        if self.guardrail_context_assessment is not None:
+            item['guardrail_context_assessment'] = self._format_guardrail_assessment(self.guardrail_context_assessment)
+
+        if self.guardrail_output_assessment is not None:
+            item['guardrail_output_assessment'] = self._format_guardrail_assessment(self.guardrail_output_assessment)
+
+        if self.guardrail_id is not None:
+            item['guardrail_id'] = {'S': self.guardrail_id}
+
+        if self.guardrail_blocked is not None:
+            item['guardrail_blocked'] = {'S': self.guardrail_blocked}
+
+        return item
 
 
 
