@@ -102,33 +102,6 @@ class ExperimentQuestionMetrics(BaseModel):
         }
 
 
-class BaseChunker(ABC):
-    """Abstract base class for chunking strategies."""
-
-    def __init__(self, chunk_size: int, chunk_overlap: int) -> None:
-        self.chunk_size = chunk_size
-        self.chunk_overlap = chunk_overlap
-
-    @abstractmethod
-    def chunk(self, text: str) -> List[str]:
-        """Abstract method for chunking text."""
-        pass
-
-
-class BaseHierarchicalChunker(ABC):
-    """Abstract base class for chunking strategies."""
-
-    def __init__(self, parent_chunk_size: int, child_chunk_size: int, chunk_overlap: int) -> None:
-        self.parent_chunk_size = parent_chunk_size
-        self.child_chunk_size = child_chunk_size
-        self.chunk_overlap = chunk_overlap
-
-    @abstractmethod
-    def chunk(self, text: str) -> List[List[str]]:
-        """Abstract method for chunking text."""
-        pass
-
-
 class BaseEmbedder(ABC):
     """Abstract base class for all embedders."""
 
@@ -140,7 +113,7 @@ class BaseEmbedder(ABC):
         pass
 
     @abstractmethod
-    def embed(self, text: str, dimensions: int = 256, normalize: bool = True) -> List[float]:
+    def embed(self, text: str, dimensions: int = 256, normalize: bool = True) -> (Dict[str, str], List[float]):
         pass
 
     def get_model_id(self) -> str:

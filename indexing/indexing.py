@@ -27,25 +27,18 @@ class Indexer(BasePipeline):
             pdf_folder_path = S3Util().download_directory_from_s3(self.experimentalConfig.kb_data)
 
             # Step 2: Chunking
-            chunks = ChunkingProcessor(self.experimentalConfig).chunk(process_pdf_from_folder(pdf_folder_path))
-
-            # Determine embedding chunks (hierarchical or flat)
-            embed_chunks = chunks
-            if self.experimentalConfig.is_hierarchical():
-                embed_chunks = [chunk[2] for chunk in chunks]
-
+            chunks = ChunkingProcessor(self.experimentalConfig).chunk([process_pdf_from_folder(pdf_folder_path)])
             # Step 3: Embedding
-            embedding_results = EmbedProcessor(self.experimentalConfig).embed(embed_chunks)
+            embedding_results = EmbedProcessor(self.experimentalConfig).embed(chunks)
 
-            total_index_embed_tokens = sum(int(metadata['inputTokens']) for _, _, metadata in embedding_results)
-
+            #total_index_embed_tokens = sum(int(metadata['inputTokens']) for _, _, metadata in embedding_results)
             # Process hierarchical chunking
-            documents = self.prepare_documents(embedding_results, chunks, total_index_embed_tokens)
+            documents = self.prepare_documents(embedding_results.embedList, chunks, embedding_results.input_tokens)
 
             logger.info(
-                f"Experiment {self.experimentalConfig.experiment_id} Indexing Embed Tokens : {total_index_embed_tokens}")
+                f"Experiment {self.experimentalConfig.experiment_id} Indexing Embed Tokens : {embedding_results.input_tokens}")
 
-            self.log_dynamodb_update(total_index_embed_tokens, 0, 0)
+            self.log_dynamodb_update(embedding_results.input_tokens, 0, 0)
             self._insert_to_opensearch(documents)
 
         except Exception as e:
@@ -58,7 +51,7 @@ class Indexer(BasePipeline):
             temp_results = []
             for i, chunk in enumerate(chunks):
                 temp_embedding = list(embedding_results[i])
-                temp_embedding.extend([chunk[0], chunk[1]])
+                temp_embedding.extend([chunk.chunk, chunk.child_chunk])
                 temp_results.append(temp_embedding)
             embedding_results = temp_results
             documents = [
