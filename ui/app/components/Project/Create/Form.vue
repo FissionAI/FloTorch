@@ -75,13 +75,17 @@ const nextStep = () => {
         }),
         rerank_model_id: state.retrieval?.rerank_model_id,
       },
-      eval: {
-        service: state.eval?.service,
-        ragas_embedding_llm: state.eval?.ragas_embedding_llm,
-        ragas_inference_llm: state.eval?.ragas_inference_llm,
-        guardrails: state.eval?.guardrails
+      evaluation: {
+        evaluation: [
+          {
+            service: state.eval?.service,
+            embedding_model: state.eval?.ragas_embedding_llm,
+            retrieval_model: state.eval?.ragas_inference_llm,
+          }
+        ],
       },
-      n_shot_prompt_guide: state.retrieval?.n_shot_prompt_guide || {}
+      n_shot_prompt_guide: state.retrieval?.n_shot_prompt_guide || {},
+      guardrails: state.eval?.guardrails
     }
     mutate(submitData)
   } else {
