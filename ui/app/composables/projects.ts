@@ -1,3 +1,5 @@
+import type { Guardrail } from "~~/shared/types/projects.type";
+
 export const useProjects = (data?: ProjectsListQuery) => {
   return useApi<ProjectListItem[]>("/execution", {
     query: data,
@@ -87,4 +89,12 @@ export const useProjectExperimentQuestionMetrics = (
       method: "GET",
     }
   );
+};
+
+export const useGuardrailsList = () => {
+  return useApi<{
+    data : Guardrail[]
+  }>("/bedrock/guardrails", {
+    method: "GET"
+  });
 };

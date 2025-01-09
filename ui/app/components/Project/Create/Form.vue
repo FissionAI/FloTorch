@@ -1,21 +1,22 @@
 <script setup lang="ts">
 import { useMutation, useQueryClient } from '@tanstack/vue-query';
 
+import { v4 as uuidv4 } from 'uuid';
+
 const props = defineProps<{
   config?: Record<string, any>
 }>()
 
-import { v4 as uuidv4 } from 'uuid';
-
 const uuid = uuidv4()
 
 const currentStep = ref(1)
-const totalSteps = 3
+const totalSteps = 4
 
 const state = reactive<Partial<ProjectCreate>>({
   prestep: props.config?.prestep || undefined,
   indexing: props.config?.indexing || undefined,
-  retrieval: props.config?.retrieval || undefined
+  retrieval: props.config?.retrieval || undefined,
+  eval: props.config?.eval || undefined,
 })
 
 const isLastStep = computed(() => currentStep.value === totalSteps)
@@ -74,7 +75,17 @@ const nextStep = () => {
         }),
         rerank_model_id: state.retrieval?.rerank_model_id,
       },
-      n_shot_prompt_guide: state.retrieval?.n_shot_prompt_guide || {}
+      evaluation: {
+        evaluation: [
+          {
+            service: state.eval?.service,
+            embedding_model: state.eval?.ragas_embedding_llm,
+            retrieval_model: state.eval?.ragas_inference_llm,
+          }
+        ],
+      },
+      n_shot_prompt_guide: state.retrieval?.n_shot_prompt_guide || {},
+      guardrails: state.eval?.guardrails
     }
     mutate(submitData)
   } else {
@@ -93,7 +104,8 @@ const kbFilesUploadedData = ref();
 const steps = [
   { label: 'Data Strategy', icon: 'i-lucide-square-stack' },
   { label: 'Indexing Strategy', icon: 'i-lucide-layers' },
-  { label: 'Retrieval Strategy', icon: 'i-lucide-file-search' }
+  { label: 'Retrieval Strategy', icon: 'i-lucide-file-search' },
+  { label: 'Guardrails and Evaluation', icon: 'i-lucide-search' }
 ]
 </script>
 
@@ -132,8 +144,10 @@ const steps = [
       <ProjectCreateIndexingStrategyStep v-model="state.indexing" @previous="previousStep" @next="nextStep" />
     </div>
     <div v-if="currentStep === 3">
-      <ProjectCreateRetrievalStrategyStep :region="state.prestep?.region" v-model="state.retrieval" next-button-label="Submit" @previous="previousStep"
-        @next="nextStep" />
+      <ProjectCreateRetrievalStrategyStep :region="state.prestep?.region" v-model="state.retrieval" @next="nextStep" @previous="previousStep" />
+    </div>
+    <div v-if="currentStep === 4">
+      <ProjectCreateEvalStrategyStep :inferenceModel="state.retrieval?.retrieval?.map(model => model.value)" :embeddingModel="state.indexing?.embedding?.map(model => model.value)" v-model="state.eval" @previous="previousStep" @next="nextStep" next-button-label="Submit" />
     </div>
   </div>
 </template>

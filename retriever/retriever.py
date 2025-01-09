@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+from core.guardrails.bedrock_guardrails import BedrockGuardrails
 from core.opensearch_vectorstore import OpenSearchVectorDatabase
 from config.experimental_config import ExperimentalConfig
 from util.s3util import S3Util
@@ -9,7 +11,7 @@ from core.processors import InferenceProcessor
 from core.rerank.rerank import DocumentReranker
 import time
 
-import boto3
+import boto3, json, uuid
 from core.inference.inference_factory import InferencerFactory
 import logging
 
@@ -17,7 +19,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 # Function to retrieve and process data using Vectorstore and inference models
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Any, Optional, Tuple, Union
 from dataclasses import asdict
 
 def retrieve(config: Config, experimentalConfig: ExperimentalConfig) -> None:
@@ -36,6 +38,18 @@ def retrieve(config: Config, experimentalConfig: ExperimentalConfig) -> None:
         
         # Initialize all required components
         components = initialize_components(config, experimentalConfig)
+
+        # Initialize guardrails if enabled
+        if experimentalConfig.enable_guardrails:
+            logger.info("Initializing guardrails")
+            guardrails = BedrockGuardrails()
+
+            # Add guardrails component for use in processing
+            components['guardrails'] = {
+                'client': guardrails,
+                'id': experimentalConfig.guardrail_id,
+                'version': experimentalConfig.guardrail_version
+            }
         
         # Process ground truth data
         gt_data = load_ground_truth_data(experimentalConfig)
@@ -113,6 +127,36 @@ def initialize_components(config: Config, experimentalConfig: ExperimentalConfig
         logger.error(f"Failed to initialize components: {str(e)}")
         raise
 
+def apply_guardrail_check(components, guardrail_id, content, source, log_prefix):
+    """Helper function to apply guardrails and process response
+    
+    Args:
+        components: Dictionary containing guardrail components
+        guardrail_id: ID of the guardrail to apply
+        content: Content to check against guardrails
+        source: Source type ('INPUT', 'OUTPUT', etc.)
+        log_prefix: Prefix for logging messages
+    
+    Returns:
+        Tuple of (blocked, modified_text, assessment)
+    """
+    response = components['guardrails']['client'].apply_guardrail(
+        guardrail_id=guardrail_id,
+        guardrail_version=components['guardrails']['version'],
+        content=[{'text': content}],
+        source=source
+    )
+
+    if response['action'] == 'GUARDRAIL_INTERVENED':
+        assessment = response.get('assessments', [])
+        modified_text = ' '.join(output['text'] for output in response['outputs'])
+        logger.info(f"{log_prefix} failed guardrails check: {assessment}")
+        return True, modified_text, assessment
+
+    logger.info(f"{log_prefix} passed guardrails check")
+    return False, None, None
+
+
 def load_ground_truth_data(experimentalConfig: ExperimentalConfig) -> List[Dict]:
     """Load ground truth data from S3."""
     logger.info(f"Reading ground truth data from S3: {experimentalConfig.gt_data}")
@@ -142,57 +186,158 @@ def process_questions(
             query_metadata, query_embedding = components["embed_processor"].embed_text(
                 question
             )
+            query_results=None
+            guardrail_input_assessment = None
+            guardrail_output_assessment = None
+            guardrail_context_assessment = None
+            guardrail_id = None
+            guardrail_blocked = None
+
+            retrieval_input_tokens = 0
+            retrieval_output_tokens = 0
+            answer_metadata = {}
+            answer = ""
+
             retrieval_query_embed_tokens += int(query_metadata["inputTokens"])
 
-            # Search for relevant context
-            query_results = components["vector_database"].search(
-                experimentalConfig.index_id, query_embedding, experimentalConfig.knn_num
-            )
+            #Apply Guardrails
+            if experimentalConfig.enable_guardrails:
+                logger.info("Applying guardrails")
+                guardrail_id = components['guardrails']['id']
+                guardrail_blocked = 'NONE'
+                query_results = None
 
-            if experimentalConfig.chunking_strategy.lower() == 'hierarchical':
-                overall_documents = []
-                parent_dict = {}
-                for document in query_results:
-                    temp_document = document
-                    parent_id = document.get('parent_id')
-                    if parent_id not in parent_dict:
-                        overall_documents.append(temp_document)
-                        parent_dict[parent_id] = 1
-                query_results = overall_documents
+                # Apply INPUT guardrails
+                if experimentalConfig.enable_prompt_guardrails:
+                    blocked, modified_question, guardrail_input_assessment = apply_guardrail_check(
+                        components,
+                        guardrail_id,
+                        content={'text': question},
+                        source='INPUT',
+                        log_prefix="Question"
+                    )
+                    if blocked:
+                        answer = modified_question
+                        guardrail_blocked = 'INPUT'
 
-            if experimentalConfig.rerank_model_id and experimentalConfig.rerank_model_id.lower() != 'none':
-                #Rerank the query results
-                logger.info(f"Into reranking for experiment {experimentalConfig.experiment_id} for question {idx+1}")
-                start_time = time.time()
-                reranker = DocumentReranker(region=experimentalConfig.aws_region, rerank_model_id=experimentalConfig.rerank_model_id)  
-                query_results = reranker.rerank_documents(question, query_results)
-                end_time = time.time()
-                logger.info(f"Reranking for question {idx+1} took {end_time - start_time:.2f} seconds")                
-            
+                # Apply CONTEXT guardrails if not already blocked
+                if experimentalConfig.enable_context_guardrails and guardrail_blocked == 'NONE':
+                    # Search for relevant context once
+                    query_results = components["vector_database"].search(
+                        experimentalConfig.index_id, query_embedding, experimentalConfig.knn_num
+                    )
 
-            # Generate answer
-            answer_metadata, answer = components["inference_processor"].generate_text(
-                user_query=question,
-                context=query_results,
-                default_prompt=config.inference_system_prompt,
-            )
-            retrieval_input_tokens += int(answer_metadata["inputTokens"])
-            retrieval_output_tokens += int(answer_metadata["outputTokens"])
+                    if experimentalConfig.chunking_strategy.lower() == 'hierarchical':
+                        query_results = __duplicate_removal_for_heirarchical_config(query_results)
+
+                    if experimentalConfig.rerank_model_id and experimentalConfig.rerank_model_id.lower() != 'none':
+                        #Rerank the query results
+                        query_results = __rerank_query_result(query_results, question, experimentalConfig, idx)
+
+
+                    if query_results:
+                        context = ' '.join(record['text'] for record in query_results)
+                        blocked, modified_context, guardrail_context_assessment = apply_guardrail_check(
+                            components,
+                            guardrail_id,
+                            content={'text': context},
+                            source='INPUT',
+                            log_prefix="Context"
+                        )
+                        if blocked:
+                            answer = modified_context
+                            guardrail_blocked = 'CONTEXT'
+
+                # Generate and check answer if not blocked
+                if guardrail_blocked == 'NONE':
+                    # Fetch context if not already done
+                    if query_results is None:
+                        query_results = components['vector_database'].search(
+                            experimentalConfig.index_id,
+                            query_embedding,
+                            experimentalConfig.knn_num
+                        )
+
+                        if experimentalConfig.chunking_strategy.lower() == 'hierarchical':
+                            query_results = __duplicate_removal_for_heirarchical_config(query_results)
+
+                        if experimentalConfig.rerank_model_id and experimentalConfig.rerank_model_id.lower() != 'none':
+                            #Rerank the query results
+                            query_results = __rerank_query_result(query_results, question, experimentalConfig, idx)
+
+                   # Generate answer
+                    answer_metadata, answer = components["inference_processor"].generate_text(
+                        user_query=question,
+                        context=query_results,
+                        default_prompt=config.inference_system_prompt,
+                    )
+                    retrieval_input_tokens += int(answer_metadata["inputTokens"])
+                    retrieval_output_tokens += int(answer_metadata["outputTokens"])
+
+                    # Apply OUTPUT guardrails if enabled
+                    if experimentalConfig.enable_response_guardrails:
+                        blocked, modified_answer, guardrail_output_assessment = apply_guardrail_check(
+                            components,
+                            guardrail_id,
+                            content={'text': answer},
+                            source='OUTPUT',
+                            log_prefix="Answer"
+                        )
+                        if blocked:
+                            answer = modified_answer
+                            guardrail_blocked = 'OUTPUT'
+            else:
+                # Search for relevant context
+                query_results = components["vector_database"].search(
+                    experimentalConfig.index_id, query_embedding, experimentalConfig.knn_num
+                )
+
+                if experimentalConfig.chunking_strategy.lower() == 'hierarchical':
+                    query_results = __duplicate_removal_for_heirarchical_config(query_results)
+
+                if experimentalConfig.rerank_model_id and experimentalConfig.rerank_model_id.lower() != 'none':
+                    #Rerank the query results
+                    query_results = __rerank_query_result(query_results, question, experimentalConfig, idx)
+
+                # Generate answer
+                answer_metadata, answer = components["inference_processor"].generate_text(
+                    user_query=question,
+                    context=query_results,
+                    default_prompt=config.inference_system_prompt,
+                )
+                retrieval_input_tokens += int(answer_metadata["inputTokens"])
+                retrieval_output_tokens += int(answer_metadata["outputTokens"])
 
             reference_contexts = (
                 [record["text"] for record in query_results] if query_results else []
             )
 
-            #  Update the metrics here to store the DynamoDb Table
-            metrics = _create_metrics(
-                experimental_config=experimentalConfig,
-                question=question,
-                answer=answer,
-                gt_answer=item["answer"],
-                reference_contexts=reference_contexts,
-                query_metadata=query_metadata,
-                answer_metadata=answer_metadata,
-            )
+            if experimentalConfig.enable_guardrails:
+                metrics = _create_metrics(
+                    experimental_config=experimentalConfig,
+                    question=question,
+                    answer=answer,
+                    gt_answer=item['answer'],
+                    reference_contexts=reference_contexts,
+                    guardrail_input_assessment=guardrail_input_assessment,
+                    guardrail_context_assessment=guardrail_context_assessment,
+                    guardrail_output_assessment=guardrail_output_assessment,
+                    guardrail_id=guardrail_id,
+                    guardrail_blocked=guardrail_blocked,
+                    query_metadata=query_metadata,
+                    answer_metadata=answer_metadata,
+                )
+            else:
+                #  Update the metrics here to store the DynamoDb Table
+                metrics = _create_metrics(
+                    experimental_config=experimentalConfig,
+                    question=question,
+                    answer=answer,
+                    gt_answer=item["answer"],
+                    reference_contexts=reference_contexts,
+                    query_metadata=query_metadata,
+                    answer_metadata=answer_metadata,
+                )
 
             batch_items.append(metrics.to_dynamo_item())
 
@@ -222,6 +367,27 @@ def process_questions(
     logger.info(f"Experiment {experimentalConfig.experiment_id} Retrieval Tokens : \n Query Embed Tokens : {retrieval_query_embed_tokens} \n Input Tokens : {retrieval_input_tokens} \n Output Tokens : {retrieval_output_tokens}")
     return (retrieval_query_embed_tokens, retrieval_input_tokens, retrieval_output_tokens)
 
+def __duplicate_removal_for_heirarchical_config(query_results):
+    overall_documents = []
+
+    parent_dict = {}
+    for document in query_results:
+        temp_document = document
+        parent_id = document.get('parent_id')
+        if parent_id not in parent_dict:
+            overall_documents.append(temp_document)
+            parent_dict[parent_id] = 1
+
+    return overall_documents
+
+def __rerank_query_result(query_results, question, experimentalConfig, index):
+    logger.info(f"Into reranking for experiment {experimentalConfig.experiment_id} for question {index+1}")
+    start_time = time.time()
+    reranker = DocumentReranker(region=experimentalConfig.aws_region, rerank_model_id=experimentalConfig.rerank_model_id)  
+    result = reranker.rerank_documents(question, query_results)
+    end_time = time.time()
+    logger.info(f"Reranking for question {index+1} took {end_time - start_time:.2f} seconds") 
+    return result
 
 def _create_metrics(
     experimental_config: ExperimentalConfig,
@@ -231,6 +397,11 @@ def _create_metrics(
     reference_contexts: List[str],
     query_metadata: Dict[str, int],
     answer_metadata: Dict[str, int],
+    guardrail_input_assessment: Optional[Union[List[Dict], Dict]] = None,
+    guardrail_context_assessment: Optional[Union[List[Dict], Dict]] = None,
+    guardrail_output_assessment: Optional[Union[List[Dict], Dict]] = None,
+    guardrail_id: Optional[str] = None,
+    guardrail_blocked: Optional[str] = None
 ) -> "ExperimentQuestionMetrics":
     """Create metrics object with provided data."""
     return ExperimentQuestionMetrics(
@@ -242,6 +413,11 @@ def _create_metrics(
         reference_contexts=reference_contexts,
         query_metadata=query_metadata,
         answer_metadata=answer_metadata,
+        guardrail_input_assessment=guardrail_input_assessment,  
+        guardrail_context_assessment=guardrail_context_assessment,
+        guardrail_output_assessment=guardrail_output_assessment,  
+        guardrail_id=guardrail_id,
+        guardrail_blocked=guardrail_blocked
     )
 
 def write_batch_to_dynamodb(batch_items: List[Dict], dynamodb: DynamoDBOperations) -> None:
