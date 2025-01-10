@@ -238,11 +238,11 @@ async def get_question_metrics(
                     ":experiment_id": experiment_id,
                 },
                 "index_name":"execution_id-experiment_id-index",
-                "projection": "generated_answer, gt_answer, question, id",
+                "projection": "generated_answer, gt_answer, question, id, guardrail_input_assessment, guardrail_context_assessment, guardrail_output_assessment",
             }
 
             if last_evaluated_key:
-                query_params["ExclusiveStartKey"] = last_evaluated_key
+                query_params["exclusive_start_key"] = last_evaluated_key
 
             # Query DynamoDB
             response = question_metrics_db.query(**query_params)

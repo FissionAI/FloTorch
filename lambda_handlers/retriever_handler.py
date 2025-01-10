@@ -47,7 +47,13 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             n_shot_prompts=exp_config_data.get('n_shot_prompts'),
             n_shot_prompt_guide=exp_config_data.get('n_shot_prompt_guide'),
             n_shot_prompt_guide_obj=exp_config_data.get('n_shot_prompt_guide_obj'),
-            indexing_algorithm=exp_config_data.get('indexing_algorithm')
+            indexing_algorithm=exp_config_data.get('indexing_algorithm'),
+            enable_guardrails=exp_config_data.get('enable_guardrails', False),
+            guardrail_id=exp_config_data.get('guardrail_id'),
+            guardrail_version=exp_config_data.get('guardrail_version'),
+            enable_prompt_guardrails=exp_config_data.get('enable_prompt_guardrails', False),
+            enable_context_guardrails=exp_config_data.get('enable_context_guardrails', False),
+            enable_response_guardrails=exp_config_data.get('enable_response_guardrails', False)
         )
 
         # Load base configuration

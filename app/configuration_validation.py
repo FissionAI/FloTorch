@@ -201,20 +201,37 @@ def remove_invalid_combinations_keys(combinations):
 
     return combinations
 
+def unpack_guardrails(combinations):
+    for combination in combinations:
+        combination["enable_guardrails"] = True if "guardrails" in combination else False
+        combination["guardrail_id"] = combination.get("guardrails", {}).get("guardrails_id", "")
+        combination["guardrail_version"] = combination.get("guardrails", {}).get("guardrail_version", "")
+        combination["enable_prompt_guardrails"] = combination.get("guardrails", {}).get("enable_prompt_guardrails", False)
+        combination["enable_context_guardrails"] = combination.get("guardrails", {}).get("enable_context_guardrails", False)
+        combination["enable_response_guardrails"] = combination.get("guardrails", {}).get("enable_response_guardrails", False)
+
+        if "guardrails" in combination:
+            del combination["guardrails"]
+
+    return combinations
+
 
 def generate_all_combinations(data):
     # Parse the DynamoDB-style JSON
     parsed_data = {k: parse_dynamodb(v) for k, v in data.items()}
 
-
     parameters_all = parsed_data["prestep"]
     parameters_all.update(parsed_data["indexing"])
     parameters_all.update(parsed_data["retrieval"])
+    if "guardrails" in parsed_data["eval"] and parsed_data["eval"]["guardrails"]:
+        parameters_all.update({"guardrails": parsed_data["eval"]["guardrails"]})
+    parameters_all.update(parsed_data["evaluation"])
     parameters_all = {key: value if isinstance(value, list) else [value] for key, value in parameters_all.items()}
 
     keys = parameters_all.keys()
     combinations = [dict(zip(keys, values)) for values in itertools.product(*parameters_all.values())]
     combinations = remove_invalid_combinations_keys(combinations)
+    combinations = unpack_guardrails(combinations)
 
     gt_data = parameters_all["gt_data"][0]
     [num_prompts, num_chars] = read_gt_data(gt_data)
@@ -237,11 +254,15 @@ def generate_all_combinations(data):
         if is_valid_combination(configuration, data):
             
             configuration = {
-                **{k: v for k, v in configuration.items() if k not in ["embedding", "retrieval", "gt_data", "kb_data"]},
+                **{k: v for k, v in configuration.items() if k not in ["embedding", "retrieval", "gt_data", "kb_data", "evaluation"]},
                 "embedding_service": configuration["embedding"]["service"],
                 "embedding_model": configuration["embedding"]["model"],
                 "retrieval_service": configuration["retrieval"]["service"],
-                "retrieval_model": configuration["retrieval"]["model"]}
+                "retrieval_model": configuration["retrieval"]["model"],
+                "eval_service": configuration["evaluation"]["service"],
+                "eval_embedding_model": configuration["evaluation"]["embedding_model"],
+                "eval_retrieval_model": configuration["evaluation"]["retrieval_model"],
+                }
             valid_configurations.append(configuration)
 
             configuration["directional_pricing"] = 0
@@ -299,6 +320,7 @@ def generate_all_combinations_in_background(execution_id: str, execution_config_
         ) 
     except Exception as e:
         # update status of execution id to failed
+        logger.error(f"Error in generate_all_combinations_in_background: {e}")
         get_execution_db().update_item(
             key={"id": execution_id}, 
             update_expression="SET validation_status = :status_value", 

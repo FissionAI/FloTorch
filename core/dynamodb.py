@@ -272,7 +272,7 @@ class DynamoDBOperations:
     def query(self, 
               key_condition_expression: str,
               expression_values: Dict[str, Any],
-              index_name: str = None, projection: str = None) -> Dict:
+              index_name: str = None, projection: str = None, exclusive_start_key = None) -> Dict:
         """
         Query items from DynamoDB.
 
@@ -280,6 +280,7 @@ class DynamoDBOperations:
             key_condition_expression (str): Key condition expression
             expression_values (Dict[str, Any]): Expression attribute values
             index_name (str, optional): Name of the index to query
+            exclusive_start_key(Dict[str, Any]): LastEvaluateKey for pagination
 
         Returns:
             Dict: Query results
@@ -299,6 +300,9 @@ class DynamoDBOperations:
             
             if projection:
                 params['ProjectionExpression'] = projection
+
+            if exclusive_start_key:
+                params['ExclusiveStartKey'] = exclusive_start_key
             
             response = self.table.query(**params)
             

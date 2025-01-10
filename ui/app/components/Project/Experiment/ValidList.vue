@@ -108,6 +108,21 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
     accessorKey: "n_shot_prompts"
   },
   {
+    header: "Evaluation Service",
+    enableHiding: true,
+    accessorKey: "eval_service"
+  },
+  {
+    header: "Evaluation Embedding Model",
+    enableHiding: true,
+    accessorKey: "eval_embedding_model"
+  },
+  {
+    header: "Evaluation Retrieval Model",
+    enableHiding: true,
+    accessorKey: "eval_retrieval_model"
+  },
+  {
     header: "Directional Pricing",
     enableHiding: true,
     accessorKey: "directional_pricing"

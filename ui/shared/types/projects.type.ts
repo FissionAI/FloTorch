@@ -105,7 +105,7 @@ export const ProjectCreateIndexingStrategySchema = z.object({
     }),
   embedding: ProjectCreateModelSchema.array().min(1, {
     message: "At least one embedding model is required",
-  }),
+  }).default([]),
 }).superRefine((data, ctx) => {
   console.log(data, ctx)
   if (
@@ -151,6 +151,8 @@ export const ProjectNShotPromptGuideSchema = z.object({
   system_prompt: z.string({
     required_error: "System prompt is required",
   }),
+}, {
+  message : "Shot prompt file is required"
 });
 
 export type ProjectNShotPromptGuide = z.infer<
@@ -190,7 +192,7 @@ export const ProjectCreateRetrievalStrategySchema = z
       }),
     retrieval: ProjectCreateModelSchema.array().min(1, {
       message: "At least one retrieval model is required",
-    }),
+    }).default([]),
     n_shot_prompt_guide: ProjectNShotPromptGuideSchema,
   })
   .superRefine((data, ctx) => {
@@ -210,6 +212,31 @@ export const ProjectCreateRetrievalStrategySchema = z
 export type ProjectCreateRetrievalStrategy = z.infer<
   typeof ProjectCreateRetrievalStrategySchema
 >;
+
+export const ProjectCreateEvalSchema = z.object({
+  service: z.string({
+    required_error: "Service is required",
+  }),
+  ragas_embedding_llm: z.string({
+    required_error: "Ragas embedding LLM is required",
+  }),
+  ragas_inference_llm: z.string({
+    required_error: "Ragas inference LLM is required",
+  }),
+  guardrails : z.array(
+      z.object({
+        label : z.string(),
+        value : z.string(),
+        name : z.string(),
+        guardrails_id: z.string(),
+        guardrail_version: z.string(),
+        enable_prompt_guardrails: z.boolean(),
+        enable_context_guardrails:z.boolean(),
+        enable_response_guardrails: z.boolean(),
+  })).optional()
+});
+
+export type ProjectCreateEval = z.infer<typeof ProjectCreateEvalSchema>;
 
 export const ProjectExperimentStatusSchema = z.enum([
   "not_started",
@@ -358,6 +385,15 @@ export const ProjectCreateSchema = z.object({
   indexing: ProjectCreateIndexingStrategySchema,
   retrieval: ProjectCreateRetrievalStrategySchema,
   n_shot_prompt_guide: ProjectNShotPromptGuideSchema,
+  eval: ProjectCreateEvalSchema,
 });
 
 export type ProjectCreate = z.infer<typeof ProjectCreateSchema>;
+
+export interface Guardrail {
+    guardrails_id: string;
+    description: string;
+    name: string;
+    version: string;
+}
+
