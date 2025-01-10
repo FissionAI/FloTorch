@@ -130,9 +130,9 @@ useHead({
       <div class="flex justify-end mt-4">
         <div class="flex gap-2">
           <ProjectDownloadConfigButton
-            
+            :key="validExperiments?.length"
+            :disabled="validExperiments?.length === 0"
             :project-id="project!.id"
-            :config="selectedExperiments"
             variant="outline"
           />
           <UButton

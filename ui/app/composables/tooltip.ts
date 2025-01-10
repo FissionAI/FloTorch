@@ -17,6 +17,6 @@ retrieval: "Select the language model used to retrieve and generate responses ba
 hierarchical_parent_chunk_size: 'Set the size (in tokens) of the parent chunks for hierarchical chunking.',
 hierarchical_child_chunk_size: 'Set the size (in tokens) of the child chunks for hierarchical chunking.',
 hierarchical_chunk_overlap_percentage: 'Set the overlap percentage for hierarchical chunking.',
-rerank_model_id: "Select an Amazon Bedrock model to reorder and refine search results from your vector store based on relevance.",
+rerank_model_id: "Select an Amazon Bedrock model to reorder and refine search results from your vector store based on relevance. (Rerank is not available in us-east-1)",
 guardrails: "Applied at Query,Context and Response levels."
 }
