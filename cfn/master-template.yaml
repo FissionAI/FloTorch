@@ -1,0 +1,228 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Master template for FloTorch deployment
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: flotorch
+    Description: Name of the project
+    
+  TableSuffix:
+    Type: String
+    Description: "A unique suffix to append to resource names in this Environment"
+    AllowedPattern: "^[a-z]+$"
+    ConstraintDescription: "Must contain only lowercase letters, only 6 characters long."
+    MaxLength: 6
+    MinLength: 6
+    
+  ClientName:
+    Type: String
+    Default: "flotorch"
+    Description: "Client Name (must be lowercase)"
+    ConstraintDescription: "Must be one of the client name (lowercase)."
+    AllowedPattern: "^[a-z0-9-]+$"
+    MaxLength: 20
+    MinLength: 3
+    
+  CreatedBy:
+    Type: String
+    Default: "DevOpsTeam"
+    Description: "Created By"
+
+  OpenSearchAdminUser:
+    Type: String
+    Default: "admin"
+    Description: "OpenSearch admin username"
+    MinLength: 1
+
+  OpenSearchAdminPassword:
+    Type: String
+    Default: "Flotorch@123"
+    NoEcho: true
+    Description: "OpenSearch admin password"
+    MinLength: 8
+    MaxLength: 41
+    ConstraintDescription: "Must be between 8 and 41 characters containing letters, numbers and symbols."
+
+  NginxAuthPassword:
+    Type: String
+    NoEcho: true
+    Description: "Password for NGINX basic authentication"
+    MinLength: 8
+    MaxLength: 41
+    ConstraintDescription: "Must be between 8 and 41 characters containing letters, numbers and symbols."
+
+Resources:
+  VPCStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/templates/vpc-template.yaml
+      Parameters:
+        ProjectName: !Ref ProjectName
+        ClientName: !Ref ClientName
+        CreatedBy: !Ref CreatedBy
+        TableSuffix: !Ref TableSuffix
+
+  ECRRepositoryStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: [VPCStack]
+    Properties:
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/templates/ecr-repository-template.yaml
+      Parameters:
+        ProjectName: !Ref ProjectName
+        CreatedBy: !Ref CreatedBy
+        TableSuffix: !Ref TableSuffix
+
+  VPCEndpointStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: VPCStack
+    Properties:
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/templates/vpc-endpoint-template.yaml
+      Parameters:
+        VPCId: !GetAtt VPCStack.Outputs.VpcId
+        PrivateRouteTableId: !GetAtt VPCStack.Outputs.PrivateRouteTableId
+        PrivateSubnetIds: !Join [",", [!GetAtt VPCStack.Outputs.PrivateSubnet1, !GetAtt VPCStack.Outputs.PrivateSubnet2]]
+        ProjectName: !Ref ProjectName
+        ClientName: !Ref ClientName
+        CreatedBy: !Ref CreatedBy
+        TableSuffix: !Ref TableSuffix
+
+  DynamoDBStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: [VPCStack]
+    Properties:
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/templates/dynamodb-template.yaml
+      Parameters:
+        ProjectName: !Ref ProjectName
+        TableSuffix: !Ref TableSuffix
+        ClientName: !Ref ClientName
+        CreatedBy: !Ref CreatedBy
+
+  OpenSearchStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: [VPCStack]
+    Properties:
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/templates/opensearch-template.yaml
+      Parameters:
+        VpcId: !GetAtt VPCStack.Outputs.VpcId
+        PrivateSubnetId: !GetAtt VPCStack.Outputs.PrivateSubnet1
+        VpcCidr: "10.0.0.0/16"
+        ProjectName: !Ref ProjectName
+        ClientName: !Ref ClientName
+        CreatedBy: !Ref CreatedBy
+        TableSuffix: !Ref TableSuffix
+        OpenSearchAdminUser: !Ref OpenSearchAdminUser
+        OpenSearchAdminPassword: !Ref OpenSearchAdminPassword
+
+  LambdaStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: [VPCStack, DynamoDBStack, OpenSearchStack, ECRRepositoryStack]
+    Properties:
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/templates/lambda-template.yaml
+      Parameters:
+        TableSuffix: !Ref TableSuffix
+        VpcId: !GetAtt VPCStack.Outputs.VpcId
+        PrivateSubnets: !Join [",", [!GetAtt VPCStack.Outputs.PrivateSubnet1, !GetAtt VPCStack.Outputs.PrivateSubnet2, !GetAtt VPCStack.Outputs.PrivateSubnet3]]
+        DataBucketName: !GetAtt DynamoDBStack.Outputs.DataBucketName
+        ExecutionTableName: !GetAtt DynamoDBStack.Outputs.ExecutionTableName
+        ExperimentTableName: !GetAtt DynamoDBStack.Outputs.ExperimentTableName
+        MetricsTableName: !GetAtt DynamoDBStack.Outputs.MetricsTableName
+        ModelInvocationsTableName: !GetAtt DynamoDBStack.Outputs.ModelInvocationsTableName
+        OpenSearchEndpoint: !GetAtt OpenSearchStack.Outputs.OpenSearchEndpoint
+        OpenSearchAdminUser: !Ref OpenSearchAdminUser
+        OpenSearchAdminPassword: !Ref OpenSearchAdminPassword
+        IndexingRepositoryUri: !GetAtt ECRRepositoryStack.Outputs.IndexingRepositoryURI
+        RetrieverRepositoryUri: !GetAtt ECRRepositoryStack.Outputs.RetrieverRepositoryURI
+        AppRepositoryUri: !GetAtt ECRRepositoryStack.Outputs.AppRepositoryURI
+        EvaluationRepositoryUri: !GetAtt ECRRepositoryStack.Outputs.EvaluationRepositoryURI
+        RuntimeRepositoryUri: !GetAtt ECRRepositoryStack.Outputs.RuntimeRepositoryURI
+        AiRepositoryUri: !GetAtt ECRRepositoryStack.Outputs.AIRepositoryURI
+        PublicSubnet1: !GetAtt VPCStack.Outputs.PublicSubnet1
+        PrivateSubnet1: !GetAtt VPCStack.Outputs.PrivateSubnet1
+        IndexingImageTag: "1.6.0"
+        RetrieverImageTag: "1.6.0"
+        AppImageTag: "1.6.0"
+        EvaluationImageTag: "1.6.0"
+        RuntimeImageTag: "1.6.0"
+        AiImageTag: "1.6.0"
+
+  ECSStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: [VPCStack, DynamoDBStack, OpenSearchStack, ECRRepositoryStack]
+    Properties:
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/templates/ecs-template.yaml
+      Parameters:
+        TableSuffix: !Ref TableSuffix
+        VpcId: !GetAtt VPCStack.Outputs.VpcId
+        PrivateSubnets: !Join [",", [!GetAtt VPCStack.Outputs.PrivateSubnet1, !GetAtt VPCStack.Outputs.PrivateSubnet2, !GetAtt VPCStack.Outputs.PrivateSubnet3]]
+        DataBucketName: !GetAtt DynamoDBStack.Outputs.DataBucketName
+        ExecutionTableName: !GetAtt DynamoDBStack.Outputs.ExecutionTableName
+        ExperimentTableName: !GetAtt DynamoDBStack.Outputs.ExperimentTableName
+        MetricsTableName: !GetAtt DynamoDBStack.Outputs.MetricsTableName
+        ModelInvocationsTableName: !GetAtt DynamoDBStack.Outputs.ModelInvocationsTableName
+        OpenSearchEndpoint: !GetAtt OpenSearchStack.Outputs.OpenSearchEndpoint
+        OpenSearchAdminUser: !Ref OpenSearchAdminUser
+        OpenSearchAdminPassword: !Ref OpenSearchAdminPassword
+        IndexingRepositoryUri: !GetAtt ECRRepositoryStack.Outputs.IndexingRepositoryURI
+        RetrieverRepositoryUri: !GetAtt ECRRepositoryStack.Outputs.RetrieverRepositoryURI
+        EvaluationRepositoryUri: !GetAtt ECRRepositoryStack.Outputs.EvaluationRepositoryURI
+
+  StateMachineStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: [VPCStack, ECSStack, LambdaStack, DynamoDBStack, OpenSearchStack]
+    Properties:
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/templates/state-machine-template.yaml
+      Parameters:
+        TableSuffix: !Ref TableSuffix
+        VpcId: !GetAtt VPCStack.Outputs.VpcId
+        PrivateSubnets: !Join [",", [!GetAtt VPCStack.Outputs.PrivateSubnet1, !GetAtt VPCStack.Outputs.PrivateSubnet2, !GetAtt VPCStack.Outputs.PrivateSubnet3]]
+        SecurityGroups: !GetAtt ECSStack.Outputs.TaskSecurityGroup
+        EcsClusterArn: !GetAtt ECSStack.Outputs.ClusterArn
+        IndexingTaskDefinitionArn: !GetAtt ECSStack.Outputs.IndexingTaskDefinitionArn
+        RetrieverTaskDefinitionArn: !GetAtt ECSStack.Outputs.RetrieverTaskDefinitionArn
+        EvaluationTaskDefinitionArn: !GetAtt ECSStack.Outputs.EvaluationTaskDefinitionArn
+        RuntimeLambdaArn: !GetAtt LambdaStack.Outputs.RuntimeLambdaArn
+        DataBucketName: !GetAtt DynamoDBStack.Outputs.DataBucketName
+        ExecutionTableName: !GetAtt DynamoDBStack.Outputs.ExecutionTableName
+        ExperimentTableName: !GetAtt DynamoDBStack.Outputs.ExperimentTableName
+        MetricsTableName: !GetAtt DynamoDBStack.Outputs.MetricsTableName
+        ModelInvocationsTableName: !GetAtt DynamoDBStack.Outputs.ModelInvocationsTableName
+        CostComputeLambdaArn: !GetAtt LambdaStack.Outputs.CostComputeLambdaArn
+        OpenSearchEndpoint: !GetAtt OpenSearchStack.Outputs.OpenSearchEndpoint
+        OpenSearchAdminUser: !Ref OpenSearchAdminUser
+        OpenSearchAdminPassword: !Ref OpenSearchAdminPassword
+        SageMakerRoleArn: !GetAtt VPCStack.Outputs.BedrockRoleArn
+
+  AppRunnerStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: [ECRRepositoryStack, DynamoDBStack, OpenSearchStack, StateMachineStack]
+    Properties:
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/templates/app-runner-template.yaml
+      Parameters:
+        TableSuffix: !Ref TableSuffix
+        Region: !Ref AWS::Region
+        AccountId: !Ref AWS::AccountId
+        OpenSearchEndpoint: !GetAtt OpenSearchStack.Outputs.OpenSearchEndpoint
+        DataBucketName: !GetAtt DynamoDBStack.Outputs.DataBucketName
+        EcsStepFunctionArn: !GetAtt StateMachineStack.Outputs.StateMachineArn
+        OpenSearchAdminUser: !Ref OpenSearchAdminUser
+        OpenSearchAdminPassword: !Ref OpenSearchAdminPassword
+        NginxAuthUser: !Ref OpenSearchAdminUser
+        NginxAuthPassword: !Ref NginxAuthPassword
+        VpcConnectorArn: !GetAtt VPCStack.Outputs.VpcConnectorArn
+        BedrockRoleArn: !GetAtt VPCStack.Outputs.BedrockRoleArn
+        EcrRepositoryUri: !GetAtt ECRRepositoryStack.Outputs.AppRepositoryURI
+        AppImageTag: "1.6.0"
+
+Outputs:
+  AppRunnerServiceUrl:
+    Description: URL of the App Runner service
+    Value: !GetAtt AppRunnerStack.Outputs.ServiceUrl
+
+  OpenSearchDashboardsUrl:
+    Description: URL for OpenSearch Dashboards
+    Value: !GetAtt OpenSearchStack.Outputs.DashboardsUrl
+
+  StateMachineArn:
+    Description: ARN of the State Machine
+    Value: !GetAtt StateMachineStack.Outputs.StateMachineArn

@@ -1,0 +1,382 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: VPC with 2 Public and 2 Private Subnets, NAT Gateway, Internet
+  Gateway with proper tags
+
+Parameters:
+  ClientName:
+    Type: String
+    Default: defaultClient
+    Description: Client Name
+  CreatedBy:
+    Type: String
+    Default: DevOpsTeam
+    Description: Created By
+  ProjectName:
+    Type: String
+    Description: Name of the project
+  TableSuffix:
+    Type: String
+    Description: Suffix to append to table names
+
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Sub flotorch-vpc-${TableSuffix}
+        - Key: ClientName
+          Value: !Ref ClientName
+        - Key: CreatedBy
+          Value: !Ref CreatedBy
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub flotorch-igw-${TableSuffix}
+        - Key: ClientName
+          Value: !Ref ClientName
+        - Key: CreatedBy
+          Value: !Ref CreatedBy
+
+  AttachInternetGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.1.0/24
+      MapPublicIpOnLaunch: true
+      AvailabilityZone: !Select
+        - 0
+        - !GetAZs ''
+      Tags:
+        - Key: Name
+          Value: !Sub flotorch-public-subnet-1-${TableSuffix}
+        - Key: ClientName
+          Value: !Ref ClientName
+        - Key: CreatedBy
+          Value: !Ref CreatedBy
+
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.2.0/24
+      MapPublicIpOnLaunch: true
+      AvailabilityZone: !Select
+        - 1
+        - !GetAZs ''
+      Tags:
+        - Key: Name
+          Value: !Sub flotorch-public-subnet-2-${TableSuffix}
+        - Key: ClientName
+          Value: !Ref ClientName
+        - Key: CreatedBy
+          Value: !Ref CreatedBy
+
+  PublicSubnet3:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.3.0/24
+      MapPublicIpOnLaunch: true
+      AvailabilityZone: !Select
+        - 1
+        - !GetAZs ''
+      Tags:
+        - Key: Name
+          Value: !Sub flotorch-public-subnet-3-${TableSuffix}
+        - Key: ClientName
+          Value: !Ref ClientName
+        - Key: CreatedBy
+          Value: !Ref CreatedBy
+
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.4.0/24
+      MapPublicIpOnLaunch: false
+      AvailabilityZone: !Select
+        - 0
+        - !GetAZs ''
+      Tags:
+        - Key: Name
+          Value: !Sub flotorch-private-subnet-1-${TableSuffix}
+        - Key: ClientName
+          Value: !Ref ClientName
+        - Key: CreatedBy
+          Value: !Ref CreatedBy
+
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.5.0/24
+      MapPublicIpOnLaunch: false
+      AvailabilityZone: !Select
+        - 1
+        - !GetAZs ''
+      Tags:
+        - Key: Name
+          Value: !Sub flotorch-private-subnet-2-${TableSuffix}
+        - Key: ClientName
+          Value: !Ref ClientName
+        - Key: CreatedBy
+          Value: !Ref CreatedBy
+
+  PrivateSubnet3:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.6.0/24
+      MapPublicIpOnLaunch: false
+      AvailabilityZone: !Select
+        - 2
+        - !GetAZs ''
+      Tags:
+        - Key: Name
+          Value: !Sub flotorch-private-subnet-3-${TableSuffix}
+        - Key: ClientName
+          Value: !Ref ClientName
+        - Key: CreatedBy
+          Value: !Ref CreatedBy
+
+  NATGatewayEIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value: !Sub flotorch-nat-eip-${TableSuffix}
+
+  NATGateway:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      SubnetId: !Ref PublicSubnet1
+      AllocationId: !GetAtt NATGatewayEIP.AllocationId
+      Tags:
+        - Key: Name
+          Value: !Sub flotorch-nat-gateway-${TableSuffix}
+        - Key: ClientName
+          Value: !Ref ClientName
+        - Key: CreatedBy
+          Value: !Ref CreatedBy
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub flotorch-public-rt-${TableSuffix}
+        - Key: ClientName
+          Value: !Ref ClientName
+        - Key: CreatedBy
+          Value: !Ref CreatedBy
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PublicSubnetRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet1
+      RouteTableId: !Ref PublicRouteTable
+
+  PublicSubnetRouteTableAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet2
+      RouteTableId: !Ref PublicRouteTable
+
+  PublicSubnetRouteTableAssociation3:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet3
+      RouteTableId: !Ref PublicRouteTable
+
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub flotorch-private-rt-${TableSuffix}
+        - Key: ClientName
+          Value: !Ref ClientName
+        - Key: CreatedBy
+          Value: !Ref CreatedBy
+
+  PrivateRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NATGateway
+
+  PrivateSubnetRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet1
+      RouteTableId: !Ref PrivateRouteTable
+
+  PrivateSubnetRouteTableAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet2
+      RouteTableId: !Ref PrivateRouteTable
+
+  PrivateSubnetRouteTableAssociation3:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet3
+      RouteTableId: !Ref PrivateRouteTable
+
+  AppRunnerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for App Runner VPC connector
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Sub ${ClientName}-apprunner-sg-${TableSuffix}
+        - Key: ClientName
+          Value: !Ref ClientName
+        - Key: CreatedBy
+          Value: !Ref CreatedBy
+
+  VPCConnector:
+    Type: AWS::AppRunner::VpcConnector
+    Properties:
+      VpcConnectorName: !Sub ${ClientName}-vpc-connector-${TableSuffix}
+      Subnets: 
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+        - !Ref PrivateSubnet3
+      SecurityGroups:
+        - !Ref AppRunnerSecurityGroup
+
+  BedrockRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub flotorch-bedrock-role-${TableSuffix}
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: 
+                - bedrock.amazonaws.com
+                - sagemaker.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: !Sub bedrock-access-policy-${TableSuffix}
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - bedrock:*
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - sagemaker:*
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - s3:*
+                  - sts:*
+                  - ecr:*
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - ec2:CreateNetworkInterface
+                  - ec2:DeleteNetworkInterface
+                  - ec2:DescribeNetworkInterfaces
+                  - ec2:DescribeVpcs
+                  - ec2:DescribeSubnets
+                  - ec2:DescribeSecurityGroups
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: 
+                  - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/bedrock/*
+      Tags:
+        - Key: Name
+          Value: !Sub ${ClientName}-bedrock-role
+        - Key: ClientName
+          Value: !Ref ClientName
+        - Key: CreatedBy
+          Value: !Ref CreatedBy
+
+Outputs:
+  VpcId:
+    Value: !Ref VPC
+    Description: VPC ID
+  PublicSubnet1:
+    Value: !Ref PublicSubnet1
+    Description: First Public Subnet ID
+  PublicSubnet2:
+    Value: !Ref PublicSubnet2
+    Description: Second Public Subnet ID
+  PublicSubnet3:
+    Value: !Ref PublicSubnet3
+    Description: Third Public Subnet ID
+  PrivateSubnet1:
+    Value: !Ref PrivateSubnet1
+    Description: First Private Subnet ID
+  PrivateSubnet2:
+    Value: !Ref PrivateSubnet2
+    Description: Second Private Subnet ID
+  PrivateSubnet3:
+    Value: !Ref PrivateSubnet3
+    Description: Third Private Subnet ID
+  PublicSubnets:
+    Value: !Join
+      - ','
+      - - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+        - !Ref PublicSubnet3
+    Description: Comma-separated list of Public Subnet IDs
+  PrivateSubnets:
+    Value: !Join
+      - ','
+      - - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+        - !Ref PrivateSubnet3
+    Description: Comma-separated list of Private Subnet IDs
+  NATGatewayId:
+    Value: !Ref NATGateway
+    Description: NAT Gateway ID
+  PrivateRouteTableId:
+    Value: !Ref PrivateRouteTable
+    Description: Private Route Table ID
+  VpcConnectorArn:
+    Description: ARN of the VPC Connector for App Runner
+    Value: !GetAtt VPCConnector.VpcConnectorArn
+  BedrockRoleArn:
+    Description: ARN of the IAM Role for Bedrock
+    Value: !GetAtt BedrockRole.Arn

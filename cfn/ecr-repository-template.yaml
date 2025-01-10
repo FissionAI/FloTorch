@@ -1,0 +1,69 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Template to create a list of ECR repositories
+
+Parameters:
+  TableSuffix:
+    Type: String
+    Description: Table suffix
+  CreatedBy:
+    Type: String
+    Description: Created By
+  ProjectName:
+    Type: String
+    Description: Name of the project
+
+Resources:
+  IndexingRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Sub "flotorch-indexing-${TableSuffix}"
+  
+  RetrieverRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Sub "flotorch-retriever-${TableSuffix}"
+
+  AppRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Sub "flotorch-app-${TableSuffix}"
+  
+  EvaluationRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Sub "flotorch-evaluation-${TableSuffix}"
+  
+  RuntimeRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Sub "flotorch-runtime-${TableSuffix}"
+
+  AIRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Sub "flotorch-ai-${TableSuffix}"
+
+Outputs:
+  AppRepositoryURI:
+    Value: !GetAtt AppRepository.RepositoryUri
+    Description: URI of the app repository
+
+  EvaluationRepositoryURI:
+    Value: !GetAtt EvaluationRepository.RepositoryUri
+    Description: URI of the evaluation repository
+
+  RetrieverRepositoryURI:
+    Value: !GetAtt RetrieverRepository.RepositoryUri
+    Description: URI of the retriever repository
+  
+  IndexingRepositoryURI:
+    Value: !GetAtt IndexingRepository.RepositoryUri
+    Description: URI of the indexing repository
+  
+  RuntimeRepositoryURI:
+    Value: !GetAtt RuntimeRepository.RepositoryUri
+    Description: URI of the runtime repository
+
+  AIRepositoryURI:
+    Value: !GetAtt AIRepository.RepositoryUri
+    Description: URI of the AI repository

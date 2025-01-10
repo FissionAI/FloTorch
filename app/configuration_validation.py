@@ -223,8 +223,8 @@ def generate_all_combinations(data):
     parameters_all = parsed_data["prestep"]
     parameters_all.update(parsed_data["indexing"])
     parameters_all.update(parsed_data["retrieval"])
-    if "guardrails" in parsed_data["eval"] and parsed_data["eval"]["guardrails"]:
-        parameters_all.update({"guardrails": parsed_data["eval"]["guardrails"]})
+    if "guardrails" in parsed_data and parsed_data["guardrails"]:
+        parameters_all.update({"guardrails": parsed_data["guardrails"]})
     parameters_all.update(parsed_data["evaluation"])
     parameters_all = {key: value if isinstance(value, list) else [value] for key, value in parameters_all.items()}
 

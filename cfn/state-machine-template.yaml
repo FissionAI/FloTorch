@@ -1,0 +1,1584 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation template for FloTorch State Machine
+
+Parameters:
+  TableSuffix:
+    Type: String
+    Description: Suffix to append to table names
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC ID where resources will be deployed
+  PrivateSubnets:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: Private subnet IDs for ECS tasks
+  DataBucketName:
+    Type: String
+    Description: Name of the S3 bucket for data storage
+  ExecutionTableName:
+    Type: String
+    Description: Name of the DynamoDB execution table
+  SecurityGroups:
+    Type: String
+    Description: List of SG IDs
+  ExperimentTableName:
+    Type: String
+    Description: Name of the DynamoDB experiment table
+  MetricsTableName:
+    Type: String
+    Description: Name of the DynamoDB metrics table
+  ModelInvocationsTableName:
+    Type: String
+    Description: Name of the DynamoDB model invocations table
+  EcsClusterArn:
+    Type: String
+    Description: ARN of the ECS cluster
+  IndexingTaskDefinitionArn:
+    Type: String
+    Description: ARN of the Indexing task definition
+  RetrieverTaskDefinitionArn:
+    Type: String
+    Description: ARN of the Retriever task definition
+  EvaluationTaskDefinitionArn:
+    Type: String
+    Description: ARN of the Evaluation task definition
+  OpenSearchEndpoint:
+    Type: String
+    Description: OpenSearch domain endpoint
+  OpenSearchAdminUser:
+    Type: String
+    Description: OpenSearch admin username
+  OpenSearchAdminPassword:
+    Type: String
+    Description: OpenSearch admin password
+    NoEcho: true
+  RuntimeLambdaArn:
+    Type: String
+    Description: ARN of the Runtime Lambda function
+  CostComputeLambdaArn:
+    Type: String
+    Description: ARN of the Cost Compute Lambda function
+  InferenceSystemPrompt:
+    Type: String
+    Description: System prompt for inference
+    Default: "You are a helpful assistant. Use the provided context to answer questions accurately. If you cannot find the answer in the context, say so"
+  SageMakerRoleArn:
+    Type: String
+    Description: ARN of the SageMaker role
+
+Resources:
+  StateMachineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub flotorch-state-machine-role-${TableSuffix}
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: states.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: !Sub states-execution-policy-${TableSuffix}
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "events:PutRule"
+                  - "events:PutTargets"
+                  - "events:DeleteRule"
+                  - "events:RemoveTargets"
+                  - "events:DescribeRule"
+                  - "events:ListTargetsByRule"
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - "ecs:RunTask"
+                  - "ecs:StopTask"
+                  - "ecs:DescribeTasks"
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - "iam:PassRole"
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - "lambda:InvokeFunction"
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - "states:*"
+                  - "sagemaker:*"
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - dynamodb:Scan
+                  - dynamodb:PutItem
+                  - dynamodb:GetItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:Query
+                Resource:
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ExecutionTableName}
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ExperimentTableName}
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${MetricsTableName}
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ModelInvocationsTableName}
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ExecutionTableName}/index/*
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ExperimentTableName}/index/*
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${MetricsTableName}/index/*
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ModelInvocationsTableName}/index/*
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogDelivery
+                  - logs:GetLogDelivery
+                  - logs:UpdateLogDelivery
+                  - logs:DeleteLogDelivery
+                  - logs:ListLogDeliveries
+                  - logs:PutResourcePolicy
+                  - logs:DescribeResourcePolicies
+                  - logs:DescribeLogGroups
+                Resource: '*'
+
+  StateMachineLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/vendedlogs/states/FlotorchStateMachine-${TableSuffix}
+      RetentionInDays: 30
+
+  FlotorchStateMachine:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      StateMachineName: !Sub FlotorchStateMachine-${TableSuffix}
+      RoleArn: !GetAtt StateMachineRole.Arn
+      LoggingConfiguration:
+        Level: ALL
+        IncludeExecutionData: true
+        Destinations:
+          - CloudWatchLogsLogGroup:
+              LogGroupArn: !GetAtt StateMachineLogGroup.Arn
+      DefinitionString: !Sub
+        - |
+          {
+            "StartAt": "InjectConfig",
+            "States": {
+              "InjectConfig": {
+                "Type": "Pass",
+                "Parameters": {
+                  "ClusterArn": "${EcsClusterArn}",
+                  "IndexingTaskDefinitionArn": "${IndexingTaskDefinitionArn}",
+                  "RetrieverTaskDefinitionArn": "${RetrieverTaskDefinitionArn}",
+                  "EvaluationTaskDefinitionArn": "${EvaluationTaskDefinitionArn}",
+                  "Region": "${AWS::Region}",
+                  "DataBucket": "${DataBucketName}",
+                  "ExecutionTable": "${ExecutionTableName}",
+                  "ExperimentTable": "${ExperimentTableName}",
+                  "MetricsTable": "${MetricsTableName}",
+                  "ModelInvocationsTable": "${ModelInvocationsTableName}",
+                  "ExperimentQuestionMetricsExperimentIdIndex": "experiment_id-index",
+                  "OpenSearchEndpoint": "${OpenSearchEndpoint}",
+                  "OpenSearchUsername": "${OpenSearchAdminUser}",
+                  "OpenSearchPassword": "${OpenSearchAdminPassword}",
+                  "OpenSearchServerless": "false",
+                  "InferencePrompt": "${InferenceSystemPrompt}",
+                  "PrivateSubnets": ${subnets_array},
+                  "SecurityGroups": ["${security_groups}"],
+                  "SageMakerRoleArn": "${SageMakerRoleArn}",
+                  "execution_id.$": "$.execution_id"
+                },
+                "Next": "Query model invocations"
+              },
+              "Query model invocations": {
+                "Next": "Map",
+                "Type": "Task",
+                "ResultPath": "$.invocations",
+                "Resource": "arn:aws:states:::aws-sdk:dynamodb:scan",
+                "Parameters": {
+                  "TableName": "${ModelInvocationsTableName}"
+                }
+              },
+              "Map": {
+                "Type": "Map",
+                "ResultPath": null,
+                "Next": "Wait for model invocations to be cleared",
+                "Parameters": {
+                  "execution_model_id.$": "$$.Map.Item.Value.execution_model_id.S"
+                },
+                "ItemsPath": "$.invocations.Items",
+                "Iterator": {
+                  "StartAt": "Clear model invocations table",
+                  "States": {
+                    "Clear model invocations table": {
+                      "End": true,
+                      "Type": "Task",
+                      "ResultPath": null,
+                      "Resource": "arn:aws:states:::aws-sdk:dynamodb:updateItem",
+                      "Parameters": {
+                        "TableName": "${ModelInvocationsTableName}",
+                        "Key": {
+                          "execution_model_id": {
+                            "S.$": "$.execution_model_id"
+                          }
+                        },
+                        "UpdateExpression": "SET invocations = :myValueRef",
+                        "ExpressionAttributeValues": {
+                          ":myValueRef": {
+                            "N": "0"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "Wait for model invocations to be cleared": {
+                "Type": "Wait",
+                "Seconds": 30,
+                "Next": "Query"
+              },
+              "Query": {
+                "Next": "Create Opensearch indices",
+                "Type": "Task",
+                "ResultPath": "$",
+                "ResultSelector": {
+                  "execution_id.$": "$.Items[0].execution_id",
+                  "Items.$": "$.Items"
+                },
+                "Resource": "arn:aws:states:::aws-sdk:dynamodb:query",
+                "Parameters": {
+                  "TableName": "${ExperimentTableName}",
+                  "IndexName": "execution_id-index",
+                  "KeyConditionExpression": "execution_id = :executionId",
+                  "ExpressionAttributeValues": {
+                    ":executionId": {
+                      "S.$": "$.execution_id"
+                    }
+                  }
+                }
+              },
+              "Create Opensearch indices": {
+                "Next": "Index creation evaluation",
+                "Retry": [
+                  {
+                    "ErrorEquals": [
+                      "Lambda.ClientExecutionTimeoutException",
+                      "Lambda.ServiceException",
+                      "Lambda.AWSLambdaException",
+                      "Lambda.SdkClientException"
+                    ],
+                    "IntervalSeconds": 2,
+                    "MaxAttempts": 6,
+                    "BackoffRate": 2
+                  },
+                  {
+                    "ErrorEquals": [
+                      "Lambda.ServiceException",
+                      "Lambda.AWSLambdaException",
+                      "Lambda.SdkClientException",
+                      "Lambda.TooManyRequestsException"
+                    ],
+                    "IntervalSeconds": 30,
+                    "MaxAttempts": 3,
+                    "BackoffRate": 2,
+                    "JitterStrategy": "FULL"
+                  }
+                ],
+                "Catch": [
+                  {
+                    "ErrorEquals": [
+                      "States.ALL"
+                    ],
+                    "Next": "Final Update Execution status"
+                  }
+                ],
+                "Type": "Task",
+                "InputPath": "$.Items",
+                "ResultPath": "$.indexCreation",
+                "Resource": "arn:aws:states:::lambda:invoke",
+                "Parameters": {
+                  "FunctionName": "${RuntimeLambdaArn}",
+                  "Payload.$": "$"
+                }
+              },
+              "Index creation evaluation": {
+                "Type": "Choice",
+                "Choices": [
+                  {
+                    "Variable": "$.indexCreation.Payload.status",
+                    "StringEquals": "success",
+                    "Next": "Experiments Map"
+                  }
+                ],
+                "Default": "Final Update Execution status"
+              },
+              "Final Update Execution status": {
+                "End": true,
+                "Type": "Task",
+                "Comment": "Update Execution status to completed",
+                "OutputPath": null,
+                "ResultPath": null,
+                "Resource": "arn:aws:states:::aws-sdk:dynamodb:updateItem",
+                "Parameters": {
+                  "TableName": "${ExecutionTableName}",
+                  "Key": {
+                    "id": {
+                      "S.$": "$.Items[0].execution_id.S"
+                    }
+                  },
+                  "UpdateExpression": "SET #val = :myValueRef",
+                  "ExpressionAttributeValues": {
+                    ":myValueRef": {
+                      "S": "completed"
+                    }
+                  },
+                  "ExpressionAttributeNames": {
+                    "#val": "status"
+                  }
+                }
+              },
+              "Experiments Map": {
+                "Type": "Map",
+                "ResultPath": null,
+                "Next": "Final Update Execution status",
+                "Parameters": {
+                  "id.$": "$$.Map.Item.Value.id.S"
+                },
+                "ItemsPath": "$.Items",
+                "Iterator": {
+                  "StartAt": "Update experiment start time",
+                  "States": {
+                    "Update experiment start time": {
+                      "Next": "DynamoDB GetItem By id",
+                      "Type": "Task",
+                      "ResultPath": null,
+                      "Resource": "arn:aws:states:::aws-sdk:dynamodb:updateItem",
+                      "Parameters": {
+                        "TableName": "${ExperimentTableName}",
+                        "Key": {
+                          "id": {
+                            "S.$": "$.id"
+                          }
+                        },
+                        "UpdateExpression": "SET start_datetime = :timeRef, experiment_status = :status",
+                        "ExpressionAttributeValues": {
+                          ":timeRef": {
+                            "S.$": "$$.State.EnteredTime"
+                          },
+                          ":status": {
+                            "S": "in_progress"
+                          }
+                        }
+                      }
+                    },
+                    "DynamoDB GetItem By id": {
+                      "Next": "Evaluate Chunking Strategy",
+                      "Type": "Task",
+                      "ResultPath": "$.Item",
+                      "Resource": "arn:aws:states:::aws-sdk:dynamodb:getItem",
+                      "Parameters": {
+                        "TableName": "${ExperimentTableName}",
+                        "Key": {
+                          "id": {
+                            "S.$": "$.id"
+                          }
+                        }
+                      }
+                    },
+                    "Evaluate Chunking Strategy": {
+                      "Type": "Choice",
+                      "Choices": [
+                        {
+                          "Variable": "$.Item.Item.config.M.chunking_strategy.S",
+                          "StringEquals": "hierarchical",
+                          "Next": "Extract config from experiment for Hierarchical"
+                        }
+                      ],
+                      "Default": "Extract config from experiment"
+                    },
+                    "Extract config from experiment": {
+                      "Type": "Pass",
+                      "ResultPath": "$.parsedConfig",
+                      "Parameters": {
+                        "parsed_config": {
+                          "id.$": "$.Item.Item.id.S",
+                          "index_id.$": "$.Item.Item.index_id.S",
+                          "execution_id.$": "$.Item.Item.execution_id.S",
+                          "experiment_id.$": "$.Item.Item.id.S",
+                          "gt_data.$": "$.Item.Item.config.M.gt_data.S",
+                          "kb_data.$": "$.Item.Item.config.M.kb_data.S",
+                          "indexing_algorithm.$": "$.Item.Item.config.M.indexing_algorithm.S",
+                          "chunk_overlap.$": "$.Item.Item.config.M.chunk_overlap.N",
+                          "retrieval_model.$": "$.Item.Item.config.M.retrieval_model.S",
+                          "knn_num.$": "$.Item.Item.config.M.knn_num.N",
+                          "chunking_strategy.$": "$.Item.Item.config.M.chunking_strategy.S",
+                          "retrieval_service.$": "$.Item.Item.config.M.retrieval_service.S",
+                          "embedding_model.$": "$.Item.Item.config.M.embedding_model.S",
+                          "embedding_service.$": "$.Item.Item.config.M.embedding_service.S",
+                          "n_shot_prompts.$": "$.Item.Item.config.M.n_shot_prompts.N",
+                          "chunk_size.$": "$.Item.Item.config.M.chunk_size.N",
+                          "vector_dimension.$": "$.Item.Item.config.M.vector_dimension.N",
+                          "temp_retrieval_llm.$": "$.Item.Item.config.M.temp_retrieval_llm.N",
+                          "aws_region.$": "$.Item.Item.config.M.region.S",
+                          "eval_service.$": "$.Item.Item.config.M.eval_service.S",
+                          "eval_embedding_model.$": "$.Item.Item.config.M.eval_embedding_model.S",
+                          "eval_retrieval_model.$": "$.Item.Item.config.M.eval_retrieval_model.S",
+                          "rerank_model_id.$": "$.Item.Item.config.M.rerank_model_id.S",
+                          "ClusterArn": "${EcsClusterArn}",
+                          "IndexingTaskDefinitionArn": "${IndexingTaskDefinitionArn}",
+                          "RetrieverTaskDefinitionArn": "${RetrieverTaskDefinitionArn}",
+                          "EvaluationTaskDefinitionArn": "${EvaluationTaskDefinitionArn}",
+                          "SageMakerRoleArn": "${SageMakerRoleArn}"
+                        }
+                      },
+                      "Next": "Indexing Model Check"
+                    },
+                    "Indexing Model Check": {
+                      "Next": "Evaluate Indexing Model Check",
+                      "Type": "Task",
+                      "ResultPath": "$.modelInvocations",
+                      "ResultSelector": {
+                        "invocations.$": "States.MathAdd(States.StringToJson($.Item.invocations.N), 0)",
+                        "limit.$": "States.MathAdd(States.StringToJson($.Item.limit.N), 0)"
+                      },
+                      "Resource": "arn:aws:states:::aws-sdk:dynamodb:getItem",
+                      "Parameters": {
+                        "TableName": "${ModelInvocationsTableName}",
+                        "Key": {
+                          "execution_model_id": {
+                            "S.$": "States.Format('{}_{}', $.parsedConfig.parsed_config.embedding_service, $.parsedConfig.parsed_config.embedding_model)"
+                          }
+                        }
+                      }
+                    },
+                    "Indexing Model Invocation Update": {
+                      "Next": "Get latest status",
+                      "Catch": [
+                        {
+                          "ErrorEquals": [
+                            "States.ALL"
+                          ],
+                          "ResultPath": null,
+                          "Next": "Indexing Model Check"
+                        }
+                      ],
+                      "Type": "Task",
+                      "ResultPath": null,
+                      "Resource": "arn:aws:states:::aws-sdk:dynamodb:updateItem",
+                      "Parameters": {
+                        "TableName": "${ModelInvocationsTableName}",
+                        "Key": {
+                          "execution_model_id": {
+                            "S.$": "States.Format('{}_{}', $.parsedConfig.parsed_config.embedding_service, $.parsedConfig.parsed_config.embedding_model)"
+                          }
+                        },
+                        "UpdateExpression": "SET invocations = invocations + :myValueRef",
+                        "ExpressionAttributeValues": {
+                          ":myValueRef": {
+                            "N": "1"
+                          },
+                          ":prevRef": {
+                            "N.$": "States.Format('{}', $.modelInvocations.invocations)"
+                          },
+                          ":limit": {
+                            "N.$": "States.Format('{}', $.modelInvocations.limit)"
+                          }
+                        },
+                        "ConditionExpression": "invocations = :prevRef AND invocations <> :limit"
+                      }
+                    },
+                    "Get latest status": {
+                      "Next": "Evaluate Indexing Status",
+                      "Type": "Task",
+                      "ResultPath": "$.modelInvocations",
+                      "Resource": "arn:aws:states:::aws-sdk:dynamodb:getItem",
+                      "Parameters": {
+                        "TableName": "${ExperimentTableName}",
+                        "Key": {
+                          "id": {
+                            "S.$": "$.Item.Item.id.S"
+                          }
+                        }
+                      }
+                    },
+                    "Evaluate Indexing Status": {
+                      "Type": "Choice",
+                      "Choices": [
+                        {
+                          "Variable": "$.Item.Item.index_status.S",
+                          "StringEquals": "not_started",
+                          "Next": "CaptureIndexingStartTime"
+                        },
+                        {
+                          "Variable": "$.Item.Item.index_status.S",
+                          "StringEquals": "in_progress",
+                          "Next": "Wait for Indexing Status Update"
+                        },
+                        {
+                          "Variable": "$.Item.Item.index_status.S",
+                          "StringEquals": "succeeded",
+                          "Next": "Index Model Invocation Release"
+                        },
+                        {
+                          "Variable": "$.Item.Item.index_status.S",
+                          "StringEquals": "failed",
+                          "Next": "Experiment Status Update as Failed"
+                        }
+                      ]
+                    },
+                    "DynamoDB GetItem For Indexing Status Loop": {
+                      "Next": "Evaluate Indexing Status",
+                      "Type": "Task",
+                      "ResultPath": "$.Item",
+                      "Resource": "arn:aws:states:::aws-sdk:dynamodb:getItem",
+                      "Parameters": {
+                        "TableName": "${ExperimentTableName}",
+                        "Key": {
+                          "id": {
+                            "S.$": "$.Item.Item.id.S"
+                          }
+                        }
+                      }
+                    },
+                    "Wait for Indexing Status Update": {
+                      "Type": "Wait",
+                      "Seconds": 600,
+                      "Next": "DynamoDB GetItem For Indexing Status Loop"
+                    },
+                    "CaptureIndexingStartTime": {
+                      "Next": "Indexing State Inprogress",
+                      "Type": "Task",
+                      "ResultPath": "$.indexingStartUpdate",
+                      "Resource": "arn:aws:states:::aws-sdk:dynamodb:updateItem",
+                      "Parameters": {
+                        "TableName": "${ExperimentTableName}",
+                        "Key": {
+                          "id": {
+                            "S.$": "$.Item.Item.id.S"
+                          }
+                        },
+                        "UpdateExpression": "SET indexing_start = :startTime",
+                        "ExpressionAttributeValues": {
+                          ":startTime": {
+                            "S.$": "$$.State.EnteredTime"
+                          }
+                        }
+                      }
+                    },
+                    "Indexing State Inprogress": {
+                      "Next": "Run Indexing Task",
+                      "Type": "Task",
+                      "ResultPath": null,
+                      "Resource": "arn:aws:states:::aws-sdk:dynamodb:updateItem",
+                      "Parameters": {
+                        "TableName": "${ExperimentTableName}",
+                        "Key": {
+                          "id": {
+                            "S.$": "$.Item.Item.id.S"
+                          }
+                        },
+                        "UpdateExpression": "SET index_status = :myValueRef, experiment_status = :expStatusRef",
+                        "ExpressionAttributeValues": {
+                          ":myValueRef": {
+                            "S": "in_progress"
+                          },
+                          ":expStatusRef": {
+                            "S": "indexing_inprogress"
+                          }
+                        }
+                      }
+                    },
+                    "Run Indexing Task": {
+                      "Next": "Evaluate Indexing Task",
+                      "Catch": [
+                        {
+                          "ErrorEquals": [
+                            "States.ALL"
+                          ],
+                          "ResultPath": null,
+                          "Next": "Indexing Model Lock Release on Failure"
+                        }
+                      ],
+                      "Type": "Task",
+                      "ResultPath": "$.indexTaskStatus",
+                      "Resource": "arn:aws:states:::ecs:runTask.sync",
+                      "Parameters": {
+                        "Cluster.$": "$.parsedConfig.parsed_config.ClusterArn",
+                        "TaskDefinition.$": "$.parsedConfig.parsed_config.IndexingTaskDefinitionArn",
+                        "NetworkConfiguration": {
+                          "AwsvpcConfiguration": {
+                            "Subnets": ${subnets_array},
+                            "SecurityGroups": ["${security_groups}"]
+                          }
+                        },
+                        "Overrides": {
+                          "ContainerOverrides": [
+                            {
+                              "Name": "FlotorchContainerIndexing-${TableSuffix}",
+                              "Environment": [
+                                {
+                                  "Name": "EXECUTION_ID",
+                                  "Value.$": "$.parsedConfig.parsed_config.execution_id"
+                                },
+                                {
+                                  "Name": "aws_region",
+                                  "Value": "${AWS::Region}"
+                                },
+                                {
+                                  "Name": "experiment_question_metrics_table",
+                                  "Value": "${MetricsTableName}"
+                                },
+                                {
+                                  "Name": "execution_table",
+                                  "Value": "${ExecutionTableName}"
+                                },
+                                {
+                                  "Name": "experiment_table",
+                                  "Value": "${ExperimentTableName}"
+                                },
+                                {
+                                  "Name": "execution_model_invocations_table",
+                                  "Value": "${ModelInvocationsTableName}"
+                                },
+                                {
+                                  "Name": "opensearch_host",
+                                  "Value": "${OpenSearchEndpoint}"
+                                },
+                                {
+                                  "Name": "opensearch_username",
+                                  "Value": "${OpenSearchAdminUser}"
+                                },
+                                {
+                                  "Name": "opensearch_password",
+                                  "Value": "${OpenSearchAdminPassword}"
+                                },
+                                {
+                                  "Name": "opensearch_serverless",
+                                  "Value": "false"
+                                },
+                                {
+                                  "Name": "inference_system_prompt",
+                                  "Value": "${InferenceSystemPrompt}"
+                                },
+                                {
+                                  "Name": "s3_bucket",
+                                  "Value": "${DataBucketName}"
+                                },
+                                {
+                                  "Name": "INPUT_DATA",
+                                  "Value.$": "States.JsonToString($.parsedConfig.parsed_config)"
+                                },
+                                {
+                                  "Name": "TASK_TOKEN",
+                                  "Value.$": "$$.Task.Token"
+                                },
+                                {
+                                  "Name": "sagemaker_role_arn",
+                                  "Value.$": "$.parsedConfig.parsed_config.SageMakerRoleArn"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        "LaunchType": "FARGATE",
+                        "PlatformVersion": "LATEST"
+                      }
+                    },
+                    "Evaluate Indexing Task": {
+                      "Type": "Choice",
+                      "Choices": [
+                        {
+                          "Variable": "$.indexTaskStatus.status",
+                          "StringEquals": "success",
+                          "Next": "Index Status Success"
+                        },
+                        {
+                          "Variable": "$.indexTaskStatus.status",
+                          "StringEquals": "failed",
+                          "Next": "Indexing Model Lock Release on Failure"
+                        }
+                      ],
+                      "Default": "Index Status Failure"
+                    },
+                    "Index Status Failure": {
+                      "Next": "Experiment Status Update as Failed",
+                      "Type": "Task",
+                      "ResultPath": null,
+                      "Resource": "arn:aws:states:::aws-sdk:dynamodb:updateItem",
+                      "Parameters": {
+                        "TableName": "${ExperimentTableName}",
+                        "Key": {
+                          "id": {
+                            "S.$": "$.Item.Item.id.S"
+                          }
+                        },
+                        "UpdateExpression": "SET index_status = :myValueRef, indexing_end = :timeRef",
+                        "ExpressionAttributeValues": {
+                          ":myValueRef": {
+                            "S": "failed"
+                          },
+                          ":timeRef": {
+                            "S.$": "$$.State.EnteredTime"
+                          }
+                        }
+                      }
+                    },
+                    "Indexing Model Lock Release on Failure": {
+                      "Next": "Index Status Failure",
+                      "Type": "Task",
+                      "ResultPath": null,
+                      "Resource": "arn:aws:states:::aws-sdk:dynamodb:updateItem",
+                      "Parameters": {
+                        "TableName": "${ModelInvocationsTableName}",
+                        "Key": {
+                          "execution_model_id": {
+                            "S.$": "States.Format('{}_{}', $.parsedConfig.parsed_config.embedding_service, $.parsedConfig.parsed_config.embedding_model)"
+                          }
+                        },
+                        "UpdateExpression": "SET invocations = invocations - :myValueRef",
+                        "ExpressionAttributeValues": {
+                          ":myValueRef": {
+                            "N": "1"
+                          }
+                        }
+                      }
+                    },
+                    "Experiment Status Update as Failed": {
+                      "Next": "Update experiment end time",
+                      "Type": "Task",
+                      "ResultPath": null,
+                      "Resource": "arn:aws:states:::aws-sdk:dynamodb:updateItem",
+                      "Parameters": {
+                        "TableName": "${ExperimentTableName}",
+                        "Key": {
+                          "id": {
+                            "S.$": "$.Item.Item.id.S"
+                          }
+                        },
+                        "UpdateExpression": "SET experiment_status = :myValueRef",
+                        "ExpressionAttributeValues": {
+                          ":myValueRef": {
+                            "S": "failed"
+                          }
+                        }
+                      }
+                    },
+                    "Retrieval model lock release on failure": {
+                      "Next": "Experiment Status Update as Failed",
+                      "Type": "Task",
+                      "ResultPath": null,
+                      "Resource": "arn:aws:states:::aws-sdk:dynamodb:updateItem",
+                      "Parameters": {
+                        "TableName": "${ModelInvocationsTableName}",
+                        "Key": {
+                          "execution_model_id": {
+                            "S.$": "States.Format('{}_{}', $.parsedConfig.parsed_config.retrieval_service, $.parsedConfig.parsed_config.retrieval_model)"
+                          }
+                        },
+                        "UpdateExpression": "SET invocations = invocations - :myValueRef",
+                        "ExpressionAttributeValues": {
+                          ":myValueRef": {
+                            "N": "1"
+                          }
+                        }
+                      }
+                    },
+                    "Retrieval State Failure": {
+                      "Next": "Retrieval model lock release on failure",
+                      "Type": "Task",
+                      "ResultPath": "$.retrievalFailureOutput",
+                      "Resource": "arn:aws:states:::aws-sdk:dynamodb:updateItem",
+                      "Parameters": {
+                        "TableName": "${ExperimentTableName}",
+                        "Key": {
+                          "id": {
+                            "S.$": "$.Item.Item.id.S"
+                          }
+                        },
+                        "UpdateExpression": "SET retrieval_status = :status, retrieval_end=:timeEndRef",
+                        "ExpressionAttributeValues": {
+                          ":status": {
+                            "S": "failed"
+                          },
+                          ":timeEndRef": {
+                            "S.$": "$$.State.EnteredTime"
+                          }
+                        }
+                      }
+                    },
+                    "Run retrieval task": {
+                      "Next": "Retrieval Model Invocation Release",
+                      "Catch": [
+                        {
+                          "ErrorEquals": [
+                            "States.ALL"
+                          ],
+                          "ResultPath": null,
+                          "Next": "Retrieval State Failure"
+                        }
+                      ],
+                      "Type": "Task",
+                      "ResultPath": "$.retrieverOutput",
+                      "Resource": "arn:aws:states:::ecs:runTask.sync",
+                      "Parameters": {
+                        "Cluster.$": "$.parsedConfig.parsed_config.ClusterArn",
+                        "TaskDefinition.$": "$.parsedConfig.parsed_config.RetrieverTaskDefinitionArn",
+                        "NetworkConfiguration": {
+                          "AwsvpcConfiguration": {
+                            "Subnets": ${subnets_array},
+                            "SecurityGroups": ["${security_groups}"]
+                          }
+                        },
+                        "Overrides": {
+                          "ContainerOverrides": [
+                            {
+                              "Name": "FlotorchContainerRetriever-${TableSuffix}",
+                              "Environment": [
+                                {
+                                  "Name": "EXECUTION_ID",
+                                  "Value.$": "$.parsedConfig.parsed_config.execution_id"
+                                },
+                                {
+                                  "Name": "aws_region",
+                                  "Value": "${AWS::Region}"
+                                },
+                                {
+                                  "Name": "experiment_question_metrics_table",
+                                  "Value": "${MetricsTableName}"
+                                },
+                                {
+                                  "Name": "execution_table",
+                                  "Value": "${ExecutionTableName}"
+                                },
+                                {
+                                  "Name": "experiment_table",
+                                  "Value": "${ExperimentTableName}"
+                                },
+                                {
+                                  "Name": "execution_model_invocations_table",
+                                  "Value": "${ModelInvocationsTableName}"
+                                },
+                                {
+                                  "Name": "opensearch_host",
+                                  "Value": "${OpenSearchEndpoint}"
+                                },
+                                {
+                                  "Name": "opensearch_username",
+                                  "Value": "${OpenSearchAdminUser}"
+                                },
+                                {
+                                  "Name": "opensearch_password",
+                                  "Value": "${OpenSearchAdminPassword}"
+                                },
+                                {
+                                  "Name": "opensearch_serverless",
+                                  "Value": "false"
+                                },
+                                {
+                                  "Name": "inference_system_prompt",
+                                  "Value": "${InferenceSystemPrompt}"
+                                },
+                                {
+                                  "Name": "s3_bucket",
+                                  "Value": "${DataBucketName}"
+                                },
+                                {
+                                  "Name": "INPUT_DATA",
+                                  "Value.$": "States.JsonToString($.parsedConfig.parsed_config)"
+                                },
+                                {
+                                  "Name": "TASK_TOKEN",
+                                  "Value.$": "$$.Task.Token"
+                                },
+                                {
+                                  "Name": "sagemaker_role_arn",
+                                  "Value.$": "$.parsedConfig.parsed_config.SageMakerRoleArn"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        "LaunchType": "FARGATE",
+                        "PlatformVersion": "1.4.0"
+                      }
+                    },
+                    "Retrieval State Update": {
+                      "Next": "Run retrieval task",
+                      "Type": "Task",
+                      "ResultPath": null,
+                      "Resource": "arn:aws:states:::aws-sdk:dynamodb:updateItem",
+                      "Parameters": {
+                        "TableName": "${ExperimentTableName}",
+                        "Key": {
+                          "id": {
+                            "S.$": "$.Item.Item.id.S"
+                          }
+                        },
+                        "UpdateExpression": "SET retrieval_status = :myValueRef, experiment_status = :expStatusRef, retrieval_start = :timeStartRef",
+                        "ExpressionAttributeValues": {
+                          ":myValueRef": {
+                            "S": "in_progress"
+                          },
+                          ":expStatusRef": {
+                            "S": "retrieval_inprogress"
+                          },
+                          ":timeStartRef": {
+                            "S.$": "$$.State.EnteredTime"
+                          }
+                        }
+                      }
+                    },
+                    "Retrieval Model Invocation Update": {
+                      "Next": "Retrieval State Update",
+                      "Catch": [
+                        {
+                          "ErrorEquals": [
+                            "States.ALL"
+                          ],
+                          "ResultPath": null,
+                          "Next": "Retrieval Model Check"
+                        }
+                      ],
+                      "Type": "Task",
+                      "ResultPath": null,
+                      "Resource": "arn:aws:states:::aws-sdk:dynamodb:updateItem",
+                      "Parameters": {
+                        "TableName": "${ModelInvocationsTableName}",
+                        "Key": {
+                          "execution_model_id": {
+                            "S.$": "States.Format('{}_{}', $.parsedConfig.parsed_config.retrieval_service, $.parsedConfig.parsed_config.retrieval_model)"
+                          }
+                        },
+                        "UpdateExpression": "SET invocations = invocations + :myValueRef",
+                        "ExpressionAttributeValues": {
+                          ":myValueRef": {
+                            "N": "1"
+                          },
+                          ":prevRef": {
+                            "N.$": "States.Format('{}', $.retrieval_invocations.invocations)"
+                          },
+                          ":limit": {
+                            "N.$": "States.Format('{}', $.retrieval_invocations.limit)"
+                          }
+                        },
+                        "ConditionExpression": "invocations = :prevRef AND invocations <> :limit"
+                      }
+                    },
+                    "Retrieval Model Check": {
+                      "Next": "Evaluate Retrieval Model Check",
+                      "Type": "Task",
+                      "ResultPath": "$.retrieval_invocations",
+                      "ResultSelector": {
+                        "invocations.$": "States.MathAdd(States.StringToJson($.Item.invocations.N), 0)",
+                        "limit.$": "States.MathAdd(States.StringToJson($.Item.limit.N), 0)"
+                      },
+                      "Resource": "arn:aws:states:::aws-sdk:dynamodb:getItem",
+                      "Parameters": {
+                        "TableName": "${ModelInvocationsTableName}",
+                        "Key": {
+                          "execution_model_id": {
+                            "S.$": "States.Format('{}_{}', $.parsedConfig.parsed_config.retrieval_service, $.parsedConfig.parsed_config.retrieval_model)"
+                          }
+                        }
+                      }
+                    },
+                    "Wait for Retrieval Model Update": {
+                      "Type": "Wait",
+                      "Seconds": 600,
+                      "Next": "Retrieval Model Check"
+                    },
+                    "Evaluate Retrieval Model Check": {
+                      "Type": "Choice",
+                      "Choices": [
+                        {
+                          "Variable": "$.retrieval_invocations.invocations",
+                          "NumericGreaterThanEqualsPath": "$.retrieval_invocations.limit",
+                          "Next": "Wait for Retrieval Model Update"
+                        }
+                      ],
+                      "Default": "Retrieval Model Invocation Update"
+                    },
+                    "Proceed to Retrieval Model Check": {
+                      "Type": "Pass",
+                      "Next": "Retrieval Model Check"
+                    },
+                    "Index Model Invocation Release": {
+                      "Next": "Proceed to Retrieval Model Check",
+                      "Type": "Task",
+                      "ResultPath": null,
+                      "Resource": "arn:aws:states:::aws-sdk:dynamodb:updateItem",
+                      "Parameters": {
+                        "TableName": "${ModelInvocationsTableName}",
+                        "Key": {
+                          "execution_model_id": {
+                            "S.$": "States.Format('{}_{}', $.parsedConfig.parsed_config.embedding_service, $.parsedConfig.parsed_config.embedding_model)"
+                          }
+                        },
+                        "UpdateExpression": "SET invocations = invocations - :myValueRef",
+                        "ExpressionAttributeValues": {
+                          ":myValueRef": {
+                            "N": "1"
+                          }
+                        }
+                      }
+                    },
+                    "Update experiment index_status": {
+                      "Type": "Map",
+                      "ResultPath": null,
+                      "Next": "Index Model Invocation Release",
+                      "Parameters": {
+                        "index_id.$": "$.Item.Item.index_id.S",
+                        "id.$": "$.Item.Item.id.S"
+                      },
+                      "ItemsPath": "$.toUpdateIds.Items",
+                      "Iterator": {
+                        "StartAt": "DynamoDB UpdateItem",
+                        "States": {
+                          "DynamoDB UpdateItem": {
+                            "End": true,
+                            "Type": "Task",
+                            "ResultPath": null,
+                            "Resource": "arn:aws:states:::aws-sdk:dynamodb:updateItem",
+                            "Parameters": {
+                              "TableName": "${ExperimentTableName}",
+                              "Key": {
+                                "id": {
+                                  "S.$": "$.id"
+                                }
+                              },
+                              "UpdateExpression": "SET index_status = :indexStatusRef, indexing_end = :endTimeRef",
+                              "ExpressionAttributeValues": {
+                                ":indexStatusRef": {
+                                  "S": "succeeded"
+                                },
+                                ":endTimeRef": {
+                                  "S.$": "$$.State.EnteredTime"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "Get experiments by index_id": {
+                      "Next": "Update experiment index_status",
+                      "Type": "Task",
+                      "ResultPath": "$.toUpdateIds",
+                      "Resource": "arn:aws:states:::aws-sdk:dynamodb:query",
+                      "Parameters": {
+                        "TableName": "${ExperimentTableName}",
+                        "IndexName": "index_id-index_status-index",
+                        "KeyConditionExpression": "index_id = :indexId",
+                        "ExpressionAttributeValues": {
+                          ":indexId": {
+                            "S.$": "$.Item.Item.index_id.S"
+                          }
+                        }
+                      }
+                    },
+                    "Index Status Success": {
+                      "Next": "Get experiments by index_id",
+                      "Type": "Task",
+                      "ResultPath": null,
+                      "Resource": "arn:aws:states:::aws-sdk:dynamodb:updateItem",
+                      "Parameters": {
+                        "TableName": "${ExperimentTableName}",
+                        "Key": {
+                          "id": {
+                            "S.$": "$.Item.Item.id.S"
+                          }
+                        },
+                        "UpdateExpression": "SET index_status = :myValueRef, experiment_status = :expStatusRef",
+                        "ExpressionAttributeValues": {
+                          ":myValueRef": {
+                            "S": "succeeded"
+                          },
+                          ":expStatusRef": {
+                            "S": "indexing_completed"
+                          }
+                        }
+                      }
+                    },
+                    "Retrieval Model Invocation Release": {
+                      "Next": "Evaluate Retrieval Model Task",
+                      "Type": "Task",
+                      "ResultPath": "$.releaseOutput",
+                      "Resource": "arn:aws:states:::aws-sdk:dynamodb:updateItem",
+                      "Parameters": {
+                        "TableName": "${ModelInvocationsTableName}",
+                        "Key": {
+                          "execution_model_id": {
+                            "S.$": "States.Format('{}_{}', $.parsedConfig.parsed_config.retrieval_service, $.parsedConfig.parsed_config.retrieval_model)"
+                          }
+                        },
+                        "UpdateExpression": "SET invocations = invocations - :val",
+                        "ExpressionAttributeValues": {
+                          ":val": {
+                            "N": "1"
+                          }
+                        }
+                      }
+                    },
+                    "Evaluate Retrieval Model Task": {
+                      "Type": "Choice",
+                      "Choices": [
+                        {
+                          "Variable": "$.retrieverOutput.status",
+                          "StringEquals": "success",
+                          "Next": "Retrieval State Success"
+                        },
+                        {
+                          "Variable": "$.retrieverOutput.status",
+                          "StringEquals": "failed",
+                          "Next": "Retrieval State Failure"
+                        }
+                      ]
+                    },
+                    "Retrieval State Success": {
+                      "Next": "Eval Model Check",
+                      "Type": "Task",
+                      "ResultPath": "$.retrievalSuccessOutput",
+                      "Resource": "arn:aws:states:::aws-sdk:dynamodb:updateItem",
+                      "Parameters": {
+                        "TableName": "${ExperimentTableName}",
+                        "Key": {
+                          "id": {
+                            "S.$": "$.Item.Item.id.S"
+                          }
+                        },
+                        "UpdateExpression": "SET retrieval_status = :status, experiment_status = :expStatusRef, retrieval_end = :timeEndRef",
+                        "ExpressionAttributeValues": {
+                          ":status": {
+                            "S": "success"
+                          },
+                          ":expStatusRef": {
+                            "S": "retrieval_completed"
+                          },
+                          ":timeEndRef": {
+                            "S.$": "$$.State.EnteredTime"
+                          }
+                        }
+                      }
+                    },
+                    "Eval Model Check": {
+                      "Next": "Evaluate eval model check",
+                      "Type": "Task",
+                      "ResultPath": "$.eval_invocations",
+                      "ResultSelector": {
+                        "invocations.$": "States.MathAdd(States.StringToJson($.Item.invocations.N), 0)",
+                        "limit.$": "States.MathAdd(States.StringToJson($.Item.limit.N), 0)"
+                      },
+                      "Resource": "arn:aws:states:::aws-sdk:dynamodb:getItem",
+                      "Parameters": {
+                        "TableName": "${ModelInvocationsTableName}",
+                        "Key": {
+                          "execution_model_id": {
+                            "S.$": "States.Format('{}_{}', 'bedrock', $.parsedConfig.parsed_config.eval_embedding_model)"
+                          }
+                        }
+                      }
+                    },
+                    "Eval Model Invocation Update": {
+                      "Next": "Update eval status in progress",
+                      "Catch": [
+                        {
+                          "ErrorEquals": [
+                            "States.ALL"
+                          ],
+                          "ResultPath": null,
+                          "Next": "Eval Model Check"
+                        }
+                      ],
+                      "Type": "Task",
+                      "ResultPath": null,
+                      "Resource": "arn:aws:states:::aws-sdk:dynamodb:updateItem",
+                      "Parameters": {
+                        "TableName": "${ModelInvocationsTableName}",
+                        "Key": {
+                          "execution_model_id": {
+                            "S.$": "States.Format('{}_{}', 'bedrock', $.parsedConfig.parsed_config.eval_embedding_model)"
+                          }
+                        },
+                        "UpdateExpression": "SET invocations = invocations + :myValueRef",
+                        "ExpressionAttributeValues": {
+                          ":myValueRef": {
+                            "N": "1"
+                          },
+                          ":prevRef": {
+                            "N.$": "States.Format('{}', $.eval_invocations.invocations)"
+                          },
+                          ":limit": {
+                            "N.$": "States.Format('{}', $.eval_invocations.limit)"
+                          }
+                        },
+                        "ConditionExpression": "invocations = :prevRef AND invocations <> :limit"
+                      }
+                    },
+                    "Update eval status in progress": {
+                      "Next": "Run evaluation task",
+                      "Type": "Task",
+                      "ResultPath": null,
+                      "Resource": "arn:aws:states:::aws-sdk:dynamodb:updateItem",
+                      "Parameters": {
+                        "TableName": "${ExperimentTableName}",
+                        "Key": {
+                          "id": {
+                            "S.$": "$.Item.Item.id.S"
+                          }
+                        },
+                        "UpdateExpression": "SET eval_status = :myValueRef, experiment_status = :expStatusRef, eval_start = :timeStartRef",
+                        "ExpressionAttributeValues": {
+                          ":myValueRef": {
+                            "S": "in_progress"
+                          },
+                          ":expStatusRef": {
+                            "S": "eval_inprogress"
+                          },
+                          ":timeStartRef": {
+                            "S.$": "$$.State.EnteredTime"
+                          }
+                        }
+                      }
+                    },
+                    "Run evaluation task": {
+                      "Next": "Evaluate task status",
+                      "Catch": [
+                        {
+                          "ErrorEquals": [
+                            "States.ALL"
+                          ],
+                          "ResultPath": null,
+                          "Next": "Eval status failed and experiment complete"
+                        }
+                      ],
+                      "Type": "Task",
+                      "ResultPath": "$.evaluatorOutput",
+                      "Resource": "arn:aws:states:::ecs:runTask.sync",
+                      "Parameters": {
+                        "Cluster.$": "$.parsedConfig.parsed_config.ClusterArn",
+                        "TaskDefinition.$": "$.parsedConfig.parsed_config.EvaluationTaskDefinitionArn",
+                        "NetworkConfiguration": {
+                          "AwsvpcConfiguration": {
+                            "Subnets": ${subnets_array},
+                            "SecurityGroups": ["${security_groups}"]
+                          }
+                        },
+                        "Overrides": {
+                          "ContainerOverrides": [
+                            {
+                              "Name": "FlotorchContainerEvaluation-${TableSuffix}",
+                              "Environment": [
+                                {
+                                  "Name": "EXECUTION_ID",
+                                  "Value.$": "$.parsedConfig.parsed_config.execution_id"
+                                },
+                                {
+                                  "Name": "aws_region",
+                                  "Value": "${AWS::Region}"
+                                },
+                                {
+                                  "Name": "experiment_question_metrics_table",
+                                  "Value": "${MetricsTableName}"
+                                },
+                                {
+                                  "Name": "execution_table",
+                                  "Value": "${ExecutionTableName}"
+                                },
+                                {
+                                  "Name": "experiment_table",
+                                  "Value": "${ExperimentTableName}"
+                                },
+                                {
+                                  "Name": "execution_model_invocations_table",
+                                  "Value": "${ModelInvocationsTableName}"
+                                },
+                                {
+                                  "Name": "opensearch_host",
+                                  "Value": "${OpenSearchEndpoint}"
+                                },
+                                {
+                                  "Name": "opensearch_username",
+                                  "Value": "${OpenSearchAdminUser}"
+                                },
+                                {
+                                  "Name": "opensearch_password",
+                                  "Value": "${OpenSearchAdminPassword}"
+                                },
+                                {
+                                  "Name": "opensearch_serverless",
+                                  "Value": "false"
+                                },
+                                {
+                                  "Name": "inference_system_prompt",
+                                  "Value": "${InferenceSystemPrompt}"
+                                },
+                                {
+                                  "Name": "s3_bucket",
+                                  "Value": "${DataBucketName}"
+                                },
+                                {
+                                  "Name": "INPUT_DATA",
+                                  "Value.$": "States.JsonToString($.parsedConfig.parsed_config)"
+                                },
+                                {
+                                  "Name": "TASK_TOKEN",
+                                  "Value.$": "$$.Task.Token"
+                                },
+                                {
+                                  "Name": "experiment_question_metrics_experimentid_index",
+                                  "Value": "experiment_id-index"
+                                },
+                                {
+                                  "Name": "sagemaker_role_arn",
+                                  "Value.$": "$.parsedConfig.parsed_config.SageMakerRoleArn"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        "LaunchType": "FARGATE",
+                        "PlatformVersion": "1.4.0"
+                      }
+                    },
+                    "Evaluate task status": {
+                      "Type": "Choice",
+                      "Choices": [
+                        {
+                          "Variable": "$.evaluatorOutput.status",
+                          "StringEquals": "success",
+                          "Next": "Experiment status update to complete"
+                        },
+                        {
+                          "Variable": "$.evaluatorOutput.status",
+                          "StringEquals": "failed",
+                          "Next": "Eval status failed and experiment complete"
+                        }
+                      ]
+                    },
+                    "Experiment status update to complete": {
+                      "Next": "Eval Model Invocation Release",
+                      "Type": "Task",
+                      "ResultPath": null,
+                      "Resource": "arn:aws:states:::aws-sdk:dynamodb:updateItem",
+                      "Parameters": {
+                        "TableName": "${ExperimentTableName}",
+                        "Key": {
+                          "id": {
+                            "S.$": "$.Item.Item.id.S"
+                          }
+                        },
+                        "UpdateExpression": "SET eval_status = :myValueRef, experiment_status = :expStatusRef, eval_end = :timeRef",
+                        "ExpressionAttributeValues": {
+                          ":myValueRef": {
+                            "S": "succeeded"
+                          },
+                          ":expStatusRef": {
+                            "S": "succeeded"
+                          },
+                          ":timeRef": {
+                            "S.$": "$$.State.EnteredTime"
+                          }
+                        }
+                      }
+                    },
+                    "Eval Model Invocation Release": {
+                      "Next": "Update experiment end time",
+                      "Type": "Task",
+                      "ResultPath": null,
+                      "Resource": "arn:aws:states:::aws-sdk:dynamodb:updateItem",
+                      "Parameters": {
+                        "TableName": "${ModelInvocationsTableName}",
+                        "Key": {
+                          "execution_model_id": {
+                            "S.$": "States.Format('{}_{}', 'bedrock', $.parsedConfig.parsed_config.eval_embedding_model)"
+                          }
+                        },
+                        "UpdateExpression": "SET invocations = invocations - :myValueRef",
+                        "ExpressionAttributeValues": {
+                          ":myValueRef": {
+                            "N": "1"
+                          }
+                        }
+                      }
+                    },
+                    "Update experiment end time": {
+                      "Next": "Run Cost Lambda function",
+                      "Type": "Task",
+                      "ResultPath": null,
+                      "Resource": "arn:aws:states:::aws-sdk:dynamodb:updateItem",
+                      "Parameters": {
+                        "TableName": "${ExperimentTableName}",
+                        "Key": {
+                          "id": {
+                            "S.$": "$.Item.Item.id.S"
+                          }
+                        },
+                        "UpdateExpression": "SET end_datetime = :timeRef",
+                        "ExpressionAttributeValues": {
+                          ":timeRef": {
+                            "S.$": "$$.State.EnteredTime"
+                          }
+                        }
+                      }
+                    },
+                    "Eval status failed and experiment complete": {
+                      "Next": "Update experiment end time",
+                      "Type": "Task",
+                      "ResultPath": null,
+                      "Resource": "arn:aws:states:::aws-sdk:dynamodb:updateItem",
+                      "Parameters": {
+                        "TableName": "${ExperimentTableName}",
+                        "Key": {
+                          "id": {
+                            "S.$": "$.Item.Item.id.S"
+                          }
+                        },
+                        "UpdateExpression": "SET eval_status = :myValueRef, experiment_status = :expStatusRef, eval_end = :timeRef",
+                        "ExpressionAttributeValues": {
+                          ":myValueRef": {
+                            "S": "failed"
+                          },
+                          ":expStatusRef": {
+                            "S": "failed"
+                          },
+                          ":timeRef": {
+                            "S.$": "$$.State.EnteredTime"
+                          }
+                        }
+                      }
+                    },
+                    "Run Cost Lambda function": {
+                      "End": true,
+                      "Retry": [
+                        {
+                          "ErrorEquals": [
+                            "Lambda.ClientExecutionTimeoutException",
+                            "Lambda.ServiceException",
+                            "Lambda.AWSLambdaException",
+                            "Lambda.SdkClientException"
+                          ],
+                          "IntervalSeconds": 2,
+                          "MaxAttempts": 6,
+                          "BackoffRate": 2
+                        },
+                        {
+                          "ErrorEquals": [
+                            "Lambda.ServiceException",
+                            "Lambda.AWSLambdaException",
+                            "Lambda.SdkClientException",
+                            "Lambda.TooManyRequestsException"
+                          ],
+                          "IntervalSeconds": 30,
+                          "MaxAttempts": 3,
+                          "BackoffRate": 2,
+                          "JitterStrategy": "FULL"
+                        }
+                      ],
+                      "Type": "Task",
+                      "ResultPath": "$.costEstimation",
+                      "Resource": "arn:aws:states:::lambda:invoke",
+                      "Parameters": {
+                        "FunctionName": "${CostComputeLambdaArn}",
+                        "Payload": {
+                          "experiment_id.$": "$.parsedConfig.parsed_config.experiment_id",
+                          "aws_region.$": "$.parsedConfig.parsed_config.aws_region",
+                          "embedding_model.$": "$.parsedConfig.parsed_config.embedding_model",
+                          "retrieval_model.$": "$.parsedConfig.parsed_config.retrieval_model"
+                        }
+                      }
+                    },
+                    "Wait for Eval Model Update": {
+                      "Type": "Wait",
+                      "Seconds": 600,
+                      "Next": "Eval Model Check"
+                    },
+                    "Evaluate eval model check": {
+                      "Type": "Choice",
+                      "Choices": [
+                        {
+                          "Variable": "$.eval_invocations.invocations",
+                          "NumericGreaterThanEqualsPath": "$.eval_invocations.limit",
+                          "Next": "Wait for Eval Model Update"
+                        }
+                      ],
+                      "Default": "Eval Model Invocation Update"
+                    },
+                    "Extract config from experiment for Hierarchical": {
+                      "Type": "Pass",
+                      "ResultPath": "$.parsedConfig",
+                      "Parameters": {
+                        "parsed_config": {
+                          "id.$": "$.Item.Item.id.S",
+                          "index_id.$": "$.Item.Item.index_id.S",
+                          "execution_id.$": "$.Item.Item.execution_id.S",
+                          "experiment_id.$": "$.Item.Item.id.S",
+                          "gt_data.$": "$.Item.Item.config.M.gt_data.S",
+                          "kb_data.$": "$.Item.Item.config.M.kb_data.S",
+                          "indexing_algorithm.$": "$.Item.Item.config.M.indexing_algorithm.S",
+                          "retrieval_model.$": "$.Item.Item.config.M.retrieval_model.S",
+                          "knn_num.$": "$.Item.Item.config.M.knn_num.N",
+                          "chunking_strategy.$": "$.Item.Item.config.M.chunking_strategy.S",
+                          "retrieval_service.$": "$.Item.Item.config.M.retrieval_service.S",
+                          "embedding_model.$": "$.Item.Item.config.M.embedding_model.S",
+                          "embedding_service.$": "$.Item.Item.config.M.embedding_service.S",
+                          "n_shot_prompts.$": "$.Item.Item.config.M.n_shot_prompts.N",
+                          "vector_dimension.$": "$.Item.Item.config.M.vector_dimension.N",
+                          "temp_retrieval_llm.$": "$.Item.Item.config.M.temp_retrieval_llm.N",
+                          "aws_region.$": "$.Item.Item.config.M.region.S",
+                          "eval_service.$": "$.Item.Item.config.M.eval_service.S",
+                          "eval_embedding_model.$": "$.Item.Item.config.M.eval_embedding_model.S",
+                          "eval_retrieval_model.$": "$.Item.Item.config.M.eval_retrieval_model.S",
+                          "rerank_model_id.$": "$.Item.Item.config.M.rerank_model_id.S",
+                          "hierarchical_parent_chunk_size.$": "$.Item.Item.config.M.hierarchical_parent_chunk_size.N",
+                          "hierarchical_child_chunk_size.$": "$.Item.Item.config.M.hierarchical_child_chunk_size.N",
+                          "hierarchical_chunk_overlap_percentage.$": "$.Item.Item.config.M.hierarchical_chunk_overlap_percentage.N",
+                          "ClusterArn": "${EcsClusterArn}",
+                          "IndexingTaskDefinitionArn": "${IndexingTaskDefinitionArn}",
+                          "RetrieverTaskDefinitionArn": "${RetrieverTaskDefinitionArn}",
+                          "EvaluationTaskDefinitionArn": "${EvaluationTaskDefinitionArn}",
+                          "SageMakerRoleArn": "${SageMakerRoleArn}"
+                        }
+                      },
+                      "Next": "Indexing Model Check"
+                    },
+                    "Wait for Indexing Model Update": {
+                      "Type": "Wait",
+                      "Seconds": 600,
+                      "Next": "Indexing Model Check"
+                    },
+                    "Evaluate Indexing Model Check": {
+                      "Type": "Choice",
+                      "Choices": [
+                        {
+                          "Variable": "$.modelInvocations.invocations",
+                          "NumericGreaterThanEqualsPath": "$.modelInvocations.limit",
+                          "Next": "Wait for Indexing Model Update"
+                        }
+                      ],
+                      "Default": "Indexing Model Invocation Update"
+                    }
+                  }
+                }
+              }
+            },
+            "TimeoutSeconds": 86400
+          }
+        - ClusterArn: !Ref EcsClusterArn
+          IndexingTaskDefinitionArn: !Ref IndexingTaskDefinitionArn
+          RetrieverTaskDefinitionArn: !Ref RetrieverTaskDefinitionArn
+          EvaluationTaskDefinitionArn: !Ref EvaluationTaskDefinitionArn
+          DataBucketName: !Ref DataBucketName
+          ExecutionTableName: !Ref ExecutionTableName
+          ExperimentTableName: !Ref ExperimentTableName
+          MetricsTableName: !Ref MetricsTableName
+          ModelInvocationsTableName: !Ref ModelInvocationsTableName
+          OpenSearchEndpoint: !Ref OpenSearchEndpoint
+          OpenSearchAdminUser: !Ref OpenSearchAdminUser
+          OpenSearchAdminPassword: !Ref OpenSearchAdminPassword
+          InferenceSystemPrompt: !Ref InferenceSystemPrompt
+          SageMakerRoleArn: !Ref SageMakerRoleArn
+          subnets_array: !Join ["", ["[\"", !Join ["\",\"", !Ref PrivateSubnets], "\"]"]]
+          security_groups: !Ref SecurityGroups
+
+Outputs:
+  StateMachineArn:
+    Description: Step Functions State Machine ARN
+    Value: !Ref FlotorchStateMachine

@@ -1,0 +1,355 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation template for ECS Cluster and Task Definitions
+
+Parameters:
+  TableSuffix:
+    Type: String
+    Description: Suffix to append to resource names
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC ID where ECS resources will be deployed
+  PrivateSubnets:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: Private subnet IDs for ECS tasks
+  DataBucketName:
+    Type: String
+    Description: Name of the S3 bucket for data storage
+  ExecutionTableName:
+    Type: String
+    Description: Name of the DynamoDB execution table
+  ExperimentTableName:
+    Type: String
+    Description: Name of the DynamoDB experiment table
+  MetricsTableName:
+    Type: String
+    Description: Name of the DynamoDB metrics table
+  ModelInvocationsTableName:
+    Type: String
+    Description: Name of the DynamoDB model invocations table
+  OpenSearchEndpoint:
+    Type: String
+    Description: OpenSearch domain endpoint
+  OpenSearchAdminUser:
+    Type: String
+    Description: OpenSearch admin username
+  OpenSearchAdminPassword:
+    Type: String
+    Description: OpenSearch admin password
+    NoEcho: true
+  IndexingRepositoryUri:
+    Type: String
+    Description: Uri of the indexing repository
+  RetrieverRepositoryUri:
+    Type: String
+    Description: Uri of the retriever repository
+  EvaluationRepositoryUri:
+    Type: String
+    Description: Uri of the evaluation repository
+
+Resources:
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Sub FlotorchCluster-${TableSuffix}
+
+  TaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub flotorch-task-role-${TableSuffix}
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+        - arn:aws:iam::aws:policy/AWSStepFunctionsFullAccess
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+        - arn:aws:iam::aws:policy/AmazonBedrockFullAccess
+        - arn:aws:iam::aws:policy/AmazonOpenSearchServiceFullAccess
+        - arn:aws:iam::aws:policy/AmazonOpenSearchIngestionFullAccess
+        - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
+        - arn:aws:iam::aws:policy/CloudWatchFullAccess
+        - arn:aws:iam::aws:policy/AmazonECS_FullAccess
+        - arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
+      Policies:
+        - PolicyName: !Sub task-role-policy-${TableSuffix}
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:*
+                  - states:StartExecution
+                  - states:StopExecution
+                  - states:DescribeExecution
+                  - states:ListExecutions
+                  - states:SendTaskFailure
+                  - states:SendTaskHeartbeat
+                  - states:SendTaskSuccess
+                  - es:*
+                  - ecr:*
+                  - cloudwatch:*
+                  - logs:*
+                  - ec2:*
+                  - ecs:*
+                  - elasticloadbalancing:*
+                  - application-autoscaling:*
+                  - autoscaling:*
+                  - route53:*
+                  - service-quotas:*
+                Resource:
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ExecutionTableName}
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ExperimentTableName}
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${MetricsTableName}
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ModelInvocationsTableName}
+                  - !Sub arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:*
+                  - !Sub arn:aws:states:${AWS::Region}:${AWS::AccountId}:execution:*:*
+                  - !Sub arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/*
+                  - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*
+                  - !Sub arn:aws:ec2:${AWS::Region}:${AWS::AccountId}:*
+                  - !Sub arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:*
+                  - !Sub arn:aws:elasticloadbalancing:${AWS::Region}:${AWS::AccountId}:*
+                  - !Sub arn:aws:application-autoscaling:${AWS::Region}:${AWS::AccountId}:*
+                  - !Sub arn:aws:autoscaling:${AWS::Region}:${AWS::AccountId}:*
+                  - !Sub arn:aws:route53:::*
+                  - !Sub arn:aws:service-quotas:${AWS::Region}:${AWS::AccountId}:*
+              - Effect: Allow
+                Action:
+                  - ecr:*
+                  - sagemaker:*
+                  - iam:*
+                  - bedrock:*
+                Resource: '*'
+
+  IndexingLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /ecs/flotorch/indexing-${TableSuffix}
+      RetentionInDays: 7
+
+  RetrieverLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /ecs/flotorch/retriever-${TableSuffix}
+      RetentionInDays: 7
+
+  EvaluationLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /ecs/flotorch/evaluation-${TableSuffix}
+      RetentionInDays: 7
+
+  IndexingTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: IndexingLogGroup
+    Properties:
+      Family: !Sub FlotorchTaskIndexing-${TableSuffix}
+      Cpu: '2048'
+      Memory: '4096'
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      TaskRoleArn: !GetAtt TaskRole.Arn
+      ExecutionRoleArn: !GetAtt TaskRole.Arn
+      ContainerDefinitions:
+        - Name: !Sub FlotorchContainerIndexing-${TableSuffix}
+          Image: !Sub ${IndexingRepositoryUri}:latest
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Sub /ecs/flotorch/indexing-${TableSuffix}
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: flotorch-indexing
+          Environment:
+            - Name: AWS_REGION
+              Value: !Ref AWS::Region
+            - Name: DATA_BUCKET
+              Value: !Ref DataBucketName
+            - Name: EXECUTION_TABLE
+              Value: !Ref ExecutionTableName
+            - Name: EXPERIMENT_TABLE
+              Value: !Ref ExperimentTableName
+            - Name: METRICS_TABLE
+              Value: !Ref MetricsTableName
+            - Name: MODEL_INVOCATIONS_TABLE
+              Value: !Ref ModelInvocationsTableName
+            - Name: OPENSEARCH_HOST
+              Value: !Ref OpenSearchEndpoint
+            - Name: OPENSEARCH_USERNAME
+              Value: !Ref OpenSearchAdminUser
+            - Name: OPENSEARCH_PASSWORD
+              Value: !Ref OpenSearchAdminPassword
+
+  RetrieverTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: RetrieverLogGroup
+    Properties:
+      Family: !Sub FlotorchTaskRetriever-${TableSuffix}
+      Cpu: '2048'
+      Memory: '4096'
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      TaskRoleArn: !GetAtt TaskRole.Arn
+      ExecutionRoleArn: !GetAtt TaskRole.Arn
+      ContainerDefinitions:
+        - Name: !Sub FlotorchContainerRetriever-${TableSuffix}
+          Image: !Sub ${RetrieverRepositoryUri}:latest
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Sub /ecs/flotorch/retriever-${TableSuffix}
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: flotorch-retriever
+          Environment:
+            - Name: AWS_REGION
+              Value: !Ref AWS::Region
+            - Name: DATA_BUCKET
+              Value: !Ref DataBucketName
+            - Name: EXECUTION_TABLE
+              Value: !Ref ExecutionTableName
+            - Name: EXPERIMENT_TABLE
+              Value: !Ref ExperimentTableName
+            - Name: METRICS_TABLE
+              Value: !Ref MetricsTableName
+            - Name: MODEL_INVOCATIONS_TABLE
+              Value: !Ref ModelInvocationsTableName
+            - Name: OPENSEARCH_HOST
+              Value: !Ref OpenSearchEndpoint
+            - Name: OPENSEARCH_USERNAME
+              Value: !Ref OpenSearchAdminUser
+            - Name: OPENSEARCH_PASSWORD
+              Value: !Ref OpenSearchAdminPassword
+
+  EvaluationTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: EvaluationLogGroup
+    Properties:
+      Family: !Sub FlotorchTaskEvaluation-${TableSuffix}
+      Cpu: '2048'
+      Memory: '4096'
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      TaskRoleArn: !GetAtt TaskRole.Arn
+      ExecutionRoleArn: !GetAtt TaskRole.Arn
+      ContainerDefinitions:
+        - Name: !Sub FlotorchContainerEvaluation-${TableSuffix}
+          Image: !Sub ${EvaluationRepositoryUri}:latest
+          Essential: true
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Sub /ecs/flotorch/evaluation-${TableSuffix}
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: flotorch-evaluation
+          Environment:
+            - Name: AWS_REGION
+              Value: !Ref AWS::Region
+            - Name: DATA_BUCKET
+              Value: !Ref DataBucketName
+            - Name: EXECUTION_TABLE
+              Value: !Ref ExecutionTableName
+            - Name: EXPERIMENT_TABLE
+              Value: !Ref ExperimentTableName
+            - Name: METRICS_TABLE
+              Value: !Ref MetricsTableName
+            - Name: MODEL_INVOCATIONS_TABLE
+              Value: !Ref ModelInvocationsTableName
+            - Name: OPENSEARCH_HOST
+              Value: !Ref OpenSearchEndpoint
+            - Name: OPENSEARCH_USERNAME
+              Value: !Ref OpenSearchAdminUser
+            - Name: OPENSEARCH_PASSWORD
+              Value: !Ref OpenSearchAdminPassword
+
+  IndexerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for Indexer ECS tasks
+      GroupName: !Sub IndexerSecurityGroup-${TableSuffix}
+      VpcId: !Ref VpcId
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 10.0.0.0/16  # Allow HTTPS traffic within VPC for VPC endpoints
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0    # Allow HTTPS traffic to internet (if needed)
+
+  RetrieverSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for Retriever ECS tasks
+      GroupName: !Sub RetrieverSecurityGroup-${TableSuffix}
+      VpcId: !Ref VpcId
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 10.0.0.0/16  # Allow HTTPS traffic within VPC for VPC endpoints
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0    # Allow HTTPS traffic to internet (if needed)
+
+  EvaluationSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for Evaluation ECS tasks
+      GroupName: !Sub EvaluationSecurityGroup-${TableSuffix}
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 10.0.0.0/16
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 10.0.0.0/16  # Allow HTTPS traffic within VPC for VPC endpoints
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0    # Allow HTTPS traffic to internet (if needed)
+
+  TaskSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for ECS tasks
+      GroupName: !Sub TaskSecurityGroup-${TableSuffix}
+      VpcId: !Ref VpcId
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          FromPort: -1
+          ToPort: -1
+          CidrIp: 0.0.0.0/0
+
+Outputs:
+  ClusterName:
+    Description: Name of the ECS cluster
+    Value: !Ref ECSCluster
+  TaskRoleArn:
+    Description: ARN of the ECS task role
+    Value: !GetAtt TaskRole.Arn
+  IndexingTaskDefinitionArn:
+    Description: ARN of the Indexing task definition
+    Value: !Ref IndexingTaskDefinition
+  RetrieverTaskDefinitionArn:
+    Description: ARN of the Retriever task definition
+    Value: !Ref RetrieverTaskDefinition
+  EvaluationTaskDefinitionArn:
+    Description: ARN of the Evaluation task definition
+    Value: !Ref EvaluationTaskDefinition
+  ClusterArn:
+    Description: ARN of the ECS cluster
+    Value: !GetAtt ECSCluster.Arn
+  TaskSecurityGroup:
+    Description: Security group for ECS tasks
+    Value: !Ref TaskSecurityGroup
