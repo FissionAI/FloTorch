@@ -117,13 +117,40 @@ class SageMakerInferencer(BaseInferencer):
         
         try:
             # Check if the endpoint already exists
-            self.sagemaker_client.describe_endpoint(EndpointName=self.inferencing_model_endpoint_name)
+            _ = self._check_model_status(self.inferencing_model_endpoint_name)
             logger.info(f"Endpoint {self.inferencing_model_endpoint_name} already exists.")
         except self.sagemaker_client.exceptions.ClientError:
             # If the endpoint does not exist, create a new one
             logger.info(f"Endpoint {self.inferencing_model_endpoint_name} does not exist. Creating endpoint.")
             self.create_endpoint(endpoint_name=self.inferencing_model_endpoint_name, model_id=self.inferencing_model_id)
-    
+            
+    def _check_model_status(self, endpoint_name):
+        """
+        Check the status of the SageMaker endpoint. 
+        If the endpoint in being created it'll wait for until it is created and return the status.
+        
+        Raises:
+            Exception: If the model creation has failed or if the status is something other than Inservice, Failed and Creating
+        """
+        try:
+            wait_time = 5
+            while True:
+                response = self.sagemaker_client.describe_endpoint(EndpointName=endpoint_name)
+                if response['EndpointStatus'] == 'InService':
+                    return 'InService'
+                elif response['EndpointStatus'] == 'Failed':
+                    logger.error(f"Endpoint {endpoint_name} creation failed.")
+                    raise Exception(f"Endpoint {endpoint_name} creation failed.")
+                elif response['EndpointStatus'] == 'Creating':
+                    time.sleep(wait_time)
+                    logger.info(f"Model creation in progress, waiting {wait_time}")
+                    
+                else:
+                    raise Exception(f"Unexpected endpoint status: {response['EndpointStatus']}")
+        except Exception as e:
+            logger.error(f"Error checking endpoint status: {e}")
+            raise
+
     def create_endpoint(self, endpoint_name: str, model_id: str) -> sagemaker.predictor.Predictor:
         """
         Creates a SageMaker endpoint for the specified model if it doesn't already exist.
@@ -146,7 +173,6 @@ class SageMakerInferencer(BaseInferencer):
 
         # Initialize a session for SageMaker interaction
         boto_session = boto3.Session(region_name=self.region_name)
-        sagemaker_client = boto_session.client('sagemaker', region_name=self.region_name)
         
         sagemaker_session = sagemaker.Session(boto_session=boto_session)
 
@@ -155,8 +181,8 @@ class SageMakerInferencer(BaseInferencer):
         
         try:
             # Check if the endpoint already exists
-            response = sagemaker_client.describe_endpoint(EndpointName=endpoint_name)
-            if response['EndpointStatus'] == 'InService':
+            status = self._check_model_status(endpoint_name)
+            if status == 'InService':
                 # If the endpoint is in service, return an existing predictor
                 predictor = sagemaker.predictor.Predictor(
                     endpoint_name=endpoint_name,
