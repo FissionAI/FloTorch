@@ -7,7 +7,7 @@ const props = defineProps<{
   experimentId: string
 }>()
 
-const isOpen = ref(false)
+// const isOpen = ref(false)
 
 const { data: experiment } = useQuery({
   queryKey: ["experiments", toRef(props, "experimentId"), toRef(props, "projectId")],
@@ -21,10 +21,17 @@ const { data: experiment } = useQuery({
 
 
 <template>
-  <UButton label="Details" icon="i-lucide-info" @click="isOpen = true" />
-  <UModal class="overflow-y-scroll max-h-[50vh]" v-model:open="isOpen" title="Experiment Details" description="More details about the experiment">
-    <template #body>
-      <table class="w-full">
+  <!-- <UButton label="Details" icon="i-lucide-info" @click="isOpen = true" /> -->
+  <!-- <UModal class="overflow-y-scroll max-h-[50vh]" v-model:open="isOpen" title="Experiment Details" description="More details about the experiment"> -->
+    <div class="w-full">
+      <UCard>
+      <template #header>
+            <div class="flex justify-between items-center">
+              <h2 class="text-xl font-medium">Experiment Details</h2>
+              
+            </div>
+          </template>
+        <table class="w-full">
         <tbody>
           <tr>
             <td class="font-medium">Experiment ID</td>
@@ -76,6 +83,7 @@ const { data: experiment } = useQuery({
           </tr>
         </tbody>
       </table>
-    </template>
-  </UModal>
+      </UCard>
+    </div>
+  <!-- </UModal> -->
 </template>
