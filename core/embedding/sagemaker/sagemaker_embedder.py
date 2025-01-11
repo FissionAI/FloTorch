@@ -127,37 +127,61 @@ class SageMakerEmbedder(BaseEmbedder):
             
     def _check_model_status(self, endpoint_name):
         """
-        Check the status of the SageMaker endpoint. 
-        If the endpoint in being created it'll wait for until it is created and return the status.
+        Check the status of the SageMaker endpoint and its configuration.
         
+        This method performs the following:
+        1. Checks if endpoint exists and is in service
+        2. If endpoint is being created, waits until creation completes
+        3. If no endpoint exists, checks for endpoint configuration
+        4. If configuration exists, waits for endpoint creation to complete
+        
+        Args:
+            endpoint_name (str): Name of the SageMaker endpoint to check
+            
+        Returns:
+            str: 'InService' if endpoint is available and running
+            
         Raises:
-            Exception: If the model creation has failed or if the status is something other than Inservice, Failed and Creating
+            Exception: If endpoint creation fails or has unexpected status
+            ClientError: If neither endpoint nor configuration exists
         """
         try:
-            
-            while True:
+            while True: 
+                # Poll endpoint status until it is in service or fails
                 response = self.sagemaker_client.describe_endpoint(EndpointName=endpoint_name)
+                
                 if response['EndpointStatus'] == 'InService':
                     logger.info(f"Endpoint {endpoint_name} is in service.")
                     return 'InService'
+                
                 elif response['EndpointStatus'] == 'Failed':
                     logger.error(f"Endpoint {endpoint_name} creation failed.")
                     raise Exception(f"Endpoint {endpoint_name} creation failed.")
+                
                 elif response['EndpointStatus'] == 'Creating':
-                    logger.info(f"Model creation in progress, waiting {self.wait_time} seconds")
-                    time.sleep(self.wait_time)
+                    time.sleep(self.wait_time) # Pause before next status check
+                    
                 else:
                     raise Exception(f"Unexpected endpoint status: {response['EndpointStatus']}")
-        except self.sagemaker_client.exceptions.ClientError:
+                
+        except self.sagemaker_client.exceptions.ClientError: 
+            # No endpoint exists - check if there's a configuration waiting to be deployed
             logger.info(f"Endpoint {endpoint_name} does not exist. Checking if endpoint configuration exists.")
-            try:
+            
+            try: 
+                # Look for endpoint configuration that may have been created by another process
                 response = self.sagemaker_client.describe_endpoint_config(EndpointConfigName=endpoint_name)
                 logger.info(f"Configuration for {endpoint_name} exists, waiting {self.wait_time} seconds for endpoint creation.")
-                time.sleep(self.wait_time)
-                _ = self._check_model_status(endpoint_name)
-            except self.sagemaker_client.exceptions.ClientError:
+                
+                time.sleep(self.wait_time) # Allow time for endpoint creation to begin
+                
+                _ = self._check_model_status(endpoint_name)  # Keep rechecking the endpoint status until it begins creation
+                
+            except self.sagemaker_client.exceptions.ClientError: 
+                # Neither endpoint nor configuration exists
                 logger.info(f"Endpoint configuration does not exist.")
                 raise
+            
         except Exception as e:
             logger.error(f"Error checking endpoint status: {e}")
             raise
@@ -176,75 +200,84 @@ class SageMakerEmbedder(BaseEmbedder):
 
         Raises:
             ValueError: If the provided model_id is not supported.
+            ClientError: If there are AWS API errors during endpoint creation/access.
         """
         
-        # Ensure that the provided model_id is valid (either an embedding or inferencing model)
+        # Validate that model_id exists in our supported model configurations
         if model_id not in EMBEDDING_MODELS and model_id not in INFERENCER_MODELS:
             raise ValueError(f"Unsupported model ID: {model_id}")
 
-        # Initialize a session for SageMaker interaction
+        # Create AWS and SageMaker sessions for API interactions
         boto_session = boto3.Session(region_name=self.region_name)
         sagemaker_session = sagemaker.Session(boto_session=boto_session)
 
-        # Determine the instance type for the model
+        # Look up the appropriate instance type from model configurations
         instance_type = (EMBEDDING_MODELS.get(model_id, INFERENCER_MODELS.get(model_id)))['instance_type']
         
         try:
-            # Check if the endpoint already exists
+            # First check if a working endpoint already exists to avoid duplicate creation
             status = self._check_model_status(endpoint_name)
             if status == 'InService':
-                # If the endpoint is in service, return an existing predictor
+                # Endpoint exists and is healthy - create and return a predictor for it
                 predictor = sagemaker.predictor.Predictor(
                     endpoint_name=endpoint_name,
                     sagemaker_session=sagemaker_session,
                     serializer=sagemaker.serializers.JSONSerializer(),
                     deserializer=sagemaker.deserializers.JSONDeserializer()
                 )
-                # Assign the correct predictor for embedding or inferencing tasks
+                # Register the predictor with the appropriate model type handler
                 self._assign_predictor(predictor, model_id)
                 return predictor
                 
         except self.sagemaker_client.exceptions.ClientError as e:
-            # Handle errors when the endpoint doesn't exist or other client errors occur
+            # Handle case where endpoint doesn't exist yet
             if e.response['Error']['Code'] == 'ValidationException':
                 try:
-                    # Create a new endpoint using JumpStartModel for the specified model_id
+                    # Initialize a new JumpStart model with the specified configuration
                     model = JumpStartModel(
                         role = self.role,
                         model_id=model_id,
                         sagemaker_session=sagemaker_session
                     )
                     
-                    # Deploy the model to the endpoint
+                    # Deploy the model to a new endpoint with the specified configuration
                     predictor = model.deploy(
                         initial_instance_count=1,
                         instance_type=instance_type,
                         endpoint_name=endpoint_name,
-                        accept_eula=True  # Accept the End User License Agreement (EULA)
+                        accept_eula=True  # Required for JumpStart models
                     )
                     
-                    # Assign the created predictor for embedding or inferencing tasks
+                    # Register the new predictor with the appropriate model type handler
                     self._assign_predictor(predictor, model_id)
                     return predictor
+                
                 except  self.sagemaker_client.exceptions.ClientError as e:
+                    # Handle race condition where another process started creating the endpoint
+                    # between our existence check and creation attempt
                     if e.response['Error']['Code'] == 'ValidationException':
-                        logger.info(f"A new endpoint creation intercepted while attempting to create new endpoint, waiting {self.wait_time} seconds")
-                        time.sleep(self.wait_time)
+                        
+                        logger.info(f"A new endpoint creation intercepted while attempting to create new endpoint, waiting.")
+                        time.sleep(self.wait_time) # Allow the other process's endpoint to finish creating
+                        
                         status = self._check_model_status(endpoint_name)
+                        
                         if status == 'InService':
                             logger.info(f"Found the new endpoint, creating the predictor.")
-                            # If the endpoint is in service, return an existing predictor
+                            # Create predictor for the endpoint that the other process created
                             predictor = sagemaker.predictor.Predictor(
                                 endpoint_name=endpoint_name,
                                 sagemaker_session=sagemaker_session,
                                 serializer=sagemaker.serializers.JSONSerializer(),
                                 deserializer=sagemaker.deserializers.JSONDeserializer()
                             )
-                            # Assign the correct predictor for embedding or inferencing tasks
+                            
+                            # Register with appropriate model type handler
                             self._assign_predictor(predictor, model_id)
+                            
                             return predictor
             
-            # Reraise any unexpected client errors
+            # Re-raise any unexpected AWS API errors
             raise
 
     def _assign_predictor(self, predictor: sagemaker.predictor.Predictor, model_id: str):
