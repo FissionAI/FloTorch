@@ -85,6 +85,16 @@ const { data: experiment } = useQuery({
             <td> {{experiment?.config?.guardrail_version}}
             </td>
           </tr>
+          <tr v-if="experiment?.config?.eval_embedding_model">
+            <td class="font-medium">Evaluations embedding model</td>
+            <td> {{experiment?.config?.eval_embedding_model}}
+            </td>
+          </tr>
+          <tr v-if="experiment?.config?.eval_retrieval_model">
+            <td class="font-medium">Evaluations retrieval model</td>
+            <td> {{experiment?.config?.eval_retrieval_model}}
+            </td>
+          </tr>
         </tbody>
       </table>
     </template>
