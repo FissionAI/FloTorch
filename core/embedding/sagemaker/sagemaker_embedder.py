@@ -84,6 +84,8 @@ class SageMakerEmbedder(BaseEmbedder):
         
         self.embedding_dimension = EMBEDDING_MODELS.get(model_id, {}).get('dimension', 1024)
         
+        self.wait_time = 5
+        
         # Ensure the endpoint exists or create it if necessary
         self._ensure_endpoint_exists()
         
@@ -120,7 +122,7 @@ class SageMakerEmbedder(BaseEmbedder):
             logger.info(f"Endpoint {self.embedding_model_endpoint_name} already exists.")
         except self.sagemaker_client.exceptions.ClientError:
             # If the endpoint does not exist, create a new one
-            logger.info(f"Endpoint {self.embedding_model_endpoint_name} does not exist. Creating endpoint.")
+            logger.info(f"Endpoint and configuration for {self.embedding_model_endpoint_name} does not exist. Creating endpoint.")
             self.create_endpoint(endpoint_name=self.embedding_model_endpoint_name, model_id=self.embedding_model_id)
             
     def _check_model_status(self, endpoint_name):
@@ -132,20 +134,30 @@ class SageMakerEmbedder(BaseEmbedder):
             Exception: If the model creation has failed or if the status is something other than Inservice, Failed and Creating
         """
         try:
-            wait_time = 5
+            
             while True:
                 response = self.sagemaker_client.describe_endpoint(EndpointName=endpoint_name)
                 if response['EndpointStatus'] == 'InService':
+                    logger.info(f"Endpoint {endpoint_name} is in service.")
                     return 'InService'
                 elif response['EndpointStatus'] == 'Failed':
                     logger.error(f"Endpoint {endpoint_name} creation failed.")
                     raise Exception(f"Endpoint {endpoint_name} creation failed.")
                 elif response['EndpointStatus'] == 'Creating':
-                    logger.info(f"Model creation in progress, waiting {wait_time}")
-                    time.sleep(wait_time)
-                    
+                    logger.info(f"Model creation in progress, waiting {self.wait_time} seconds")
+                    time.sleep(self.wait_time)
                 else:
                     raise Exception(f"Unexpected endpoint status: {response['EndpointStatus']}")
+        except self.sagemaker_client.exceptions.ClientError:
+            logger.info(f"Endpoint {endpoint_name} does not exist. Checking if endpoint configuration exists.")
+            try:
+                response = self.sagemaker_client.describe_endpoint_config(EndpointConfigName=endpoint_name)
+                logger.info(f"Configuration for {endpoint_name} exists, waiting {self.wait_time} seconds for endpoint creation.")
+                time.sleep(self.wait_time)
+                _ = self._check_model_status(endpoint_name)
+            except self.sagemaker_client.exceptions.ClientError:
+                logger.info(f"Endpoint configuration does not exist.")
+                raise
         except Exception as e:
             logger.error(f"Error checking endpoint status: {e}")
             raise
@@ -192,27 +204,45 @@ class SageMakerEmbedder(BaseEmbedder):
                 self._assign_predictor(predictor, model_id)
                 return predictor
                 
-        except ClientError as e:
+        except self.sagemaker_client.exceptions.ClientError as e:
             # Handle errors when the endpoint doesn't exist or other client errors occur
             if e.response['Error']['Code'] == 'ValidationException':
-                # Create a new endpoint using JumpStartModel for the specified model_id
-                model = JumpStartModel(
-                    role = self.role,
-                    model_id=model_id,
-                    sagemaker_session=sagemaker_session
-                )
-                
-                # Deploy the model to the endpoint
-                predictor = model.deploy(
-                    initial_instance_count=1,
-                    instance_type=instance_type,
-                    endpoint_name=endpoint_name,
-                    accept_eula=True  # Accept the End User License Agreement (EULA)
-                )
-                
-                # Assign the created predictor for embedding or inferencing tasks
-                self._assign_predictor(predictor, model_id)
-                return predictor
+                try:
+                    # Create a new endpoint using JumpStartModel for the specified model_id
+                    model = JumpStartModel(
+                        role = self.role,
+                        model_id=model_id,
+                        sagemaker_session=sagemaker_session
+                    )
+                    
+                    # Deploy the model to the endpoint
+                    predictor = model.deploy(
+                        initial_instance_count=1,
+                        instance_type=instance_type,
+                        endpoint_name=endpoint_name,
+                        accept_eula=True  # Accept the End User License Agreement (EULA)
+                    )
+                    
+                    # Assign the created predictor for embedding or inferencing tasks
+                    self._assign_predictor(predictor, model_id)
+                    return predictor
+                except  self.sagemaker_client.exceptions.ClientError as e:
+                    if e.response['Error']['Code'] == 'ValidationException':
+                        logger.info(f"A new endpoint creation intercepted while attempting to create new endpoint, waiting {self.wait_time} seconds")
+                        time.sleep(self.wait_time)
+                        status = self._check_model_status(endpoint_name)
+                        if status == 'InService':
+                            logger.info(f"Found the new endpoint, creating the predictor.")
+                            # If the endpoint is in service, return an existing predictor
+                            predictor = sagemaker.predictor.Predictor(
+                                endpoint_name=endpoint_name,
+                                sagemaker_session=sagemaker_session,
+                                serializer=sagemaker.serializers.JSONSerializer(),
+                                deserializer=sagemaker.deserializers.JSONDeserializer()
+                            )
+                            # Assign the correct predictor for embedding or inferencing tasks
+                            self._assign_predictor(predictor, model_id)
+                            return predictor
             
             # Reraise any unexpected client errors
             raise
