@@ -40,7 +40,7 @@ export const ProjectCreateIndexingStrategySchema = z.object({
     })
     .array()
     .min(1, {
-      message: "At least one indexing strategy is required",
+      message: "At least one chunking is required",
     }),
   chunk_size: z
     .number({
@@ -62,20 +62,20 @@ export const ProjectCreateIndexingStrategySchema = z.object({
     .optional(),
   hierarchical_parent_chunk_size: z
     .number({
-      required_error: "At least one chunk size is required",
+      required_error: "At least one parent chunk size is required",
     })
     .array()
     .min(1, {
-      message: "At least one chunk size is required",
+      message: "At least one parent chunk size is required",
     })
     .optional(),
   hierarchical_child_chunk_size: z
     .number({
-      required_error: "At least one chunk size is required",
+      required_error: "At least one child chunk size is required",
     })
     .array()
     .min(1, {
-      message: "At least one chunk size is required",
+      message: "At least one child chunk size is required",
     })
     .optional(),
   hierarchical_chunk_overlap_percentage: z
@@ -110,23 +110,41 @@ export const ProjectCreateIndexingStrategySchema = z.object({
   console.log(data, ctx)
   if (
     (data.chunking_strategy.includes("hierarchical") && 
-    !data.hierarchical_child_chunk_size?.length) || 
-    (data.chunking_strategy.includes("hierarchical") && 
-    !data.hierarchical_parent_chunk_size?.length) || 
-    (data.chunking_strategy.includes("hierarchical") && 
-    !data.hierarchical_chunk_overlap_percentage?.length)
-  ) {
+    !data.hierarchical_child_chunk_size?.length)) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: "Hierarchical parent chunk size, child chunk size and chunk overlap percentage are required when using hierarchical chunking strategy",
-      path: ["hierarchical_parent_chunk_size", "hierarchical_child_chunk_size", "hierarchical_chunk_overlap_percentage"],
+      message: "At least one child chunk size is required",
+      path: ["hierarchical_child_chunk_size"],
     });
   } 
-  if((data.chunking_strategy.includes("fixed") && !data.chunk_size?.length) || (data.chunking_strategy.includes("fixed") && !data.chunk_overlap?.length)) {
+  if((data.chunking_strategy.includes("hierarchical") && 
+  !data.hierarchical_parent_chunk_size?.length)){
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: "Chunk size and chunk overlap percentage are required when using fixed chunking strategy",
-      path: ["chunk_size", "chunk_overlap"],
+      message: "At least one parent chunk size is required",
+      path: ["hierarchical_parent_chunk_size"],
+    });
+  }
+  if((data.chunking_strategy.includes("hierarchical") && 
+    !data.hierarchical_chunk_overlap_percentage?.length)){
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "At least one chunk overlap percentage is required",
+        path: ["hierarchical_chunk_overlap_percentage"],
+      });
+    }
+  if((data.chunking_strategy.includes("fixed") && !data.chunk_size?.length)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "At least one chunk size is required",
+      path: ["chunk_size"],
+    });
+  }
+  if((data.chunking_strategy.includes("fixed") && !data.chunk_overlap?.length)){
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "At least one chunk overlap percentage is required",
+      path: ["chunk_overlap"],
     });
   }
 });

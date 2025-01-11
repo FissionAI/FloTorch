@@ -29,15 +29,15 @@ const columns = ref<TableColumn<ExperimentQuestionMetric>[]>([
     accessorKey: "generated_answer"
   }, 
   {
-    header : "Input Assessment",
+    header : "Guardrails Input Assessment",
     accessorKey: "guardrail_input_assessment"
   },
   {
-    header : "Context Assessment",
+    header : "Guardrails Context Assessment",
     accessorKey: "guardrail_context_assessment"
   },
   {
-    header : "Result Assessment",
+    header : "Guardrails Result Assessment",
     accessorKey: "guardrail_result_assessment"
   }
 ])
@@ -71,7 +71,7 @@ const columns = ref<TableColumn<ExperimentQuestionMetric>[]>([
       >
         <template #guardrail_input_assessment-cell="{ row }">
             <template v-if="row.original.guardrail_input_assessment" >
-              <ProjectExperimentAssessments :label="'Input Assessment'" :assessments="row.original.guardrail_input_assessment" />
+              <ProjectExperimentAssessments :label="'Guardrails Input Assessment'" :assessments="row.original.guardrail_input_assessment" />
             </template>
             <template v-else>
               NA
@@ -79,7 +79,7 @@ const columns = ref<TableColumn<ExperimentQuestionMetric>[]>([
           </template>
         <template #guardrail_context_assessment-cell="{ row }">
             <template v-if="row.original.guardrail_context_assessment" >
-              <ProjectExperimentAssessments :label="'Context Assessment'" :assessments="row.original.guardrail_context_assessment" />
+              <ProjectExperimentAssessments :label="'Guardrails Context Assessment'" :assessments="row.original.guardrail_context_assessment" />
             </template>
             <template v-else>
               NA
@@ -87,7 +87,7 @@ const columns = ref<TableColumn<ExperimentQuestionMetric>[]>([
         </template>
         <template #guardrail_result_assessment-cell="{ row }">
             <template v-if="row.original.guardrail_result_assessment" >
-              <ProjectExperimentAssessments :label="'Result Assessment'" :assessments="row.original.guardrail_result_assessment" />
+              <ProjectExperimentAssessments :label="'Gurdrails Result Assessment'" :assessments="row.original.guardrail_result_assessment" />
             </template>
             <template v-else>
               NA

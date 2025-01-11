@@ -74,6 +74,17 @@ const { data: experiment } = useQuery({
               useHumanModelService(experiment?.config?.retrieval_service!) }})
             </td>
           </tr>
+          <tr v-if="experiment?.config?.guardrail_id">
+            <td class="font-medium">Guardrails ID</td>
+            <td>{{
+              experiment?.config?.guardrail_id }}
+            </td>
+          </tr>
+          <tr v-if="experiment?.config?.guardrail_version">
+            <td class="font-medium">Guardrail Version</td>
+            <td> {{experiment?.config?.guardrail_version}}
+            </td>
+          </tr>
         </tbody>
       </table>
     </template>
