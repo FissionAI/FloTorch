@@ -1,0 +1,564 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Lambda Function Template for Flotorch'
+
+Parameters:
+  TableSuffix:
+    Type: String
+    Description: Suffix to append to resource names
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC ID where Lambda functions will be deployed
+  PrivateSubnets:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: Private subnet IDs for Lambda functions
+  DataBucketName:
+    Type: String
+    Description: Name of the S3 bucket for data storage
+  ExecutionTableName:
+    Type: String
+    Description: Name of the DynamoDB execution table
+  ExperimentTableName:
+    Type: String
+    Description: Name of the DynamoDB experiment table
+  MetricsTableName:
+    Type: String
+    Description: Name of the DynamoDB metrics table
+  ModelInvocationsTableName:
+    Type: String
+    Description: Name of the DynamoDB model invocations table
+  OpenSearchEndpoint:
+    Type: String
+    Description: OpenSearch domain endpoint
+  OpenSearchAdminUser:
+    Type: String
+    Description: OpenSearch admin username
+  OpenSearchAdminPassword:
+    Type: String
+    Description: OpenSearch admin password
+    NoEcho: true
+  IndexingRepositoryUri:
+    Type: String
+    Description: URI for the indexing repository
+  RetrieverRepositoryUri:
+    Type: String
+    Description: URI for the retriever repository
+  AppRepositoryUri:
+    Type: String
+    Description: URI for the app repository
+  EvaluationRepositoryUri:
+    Type: String
+    Description: URI for the evaluation repository
+  RuntimeRepositoryUri:
+    Type: String
+    Description: URI for the runtime repository
+  AiRepositoryUri:
+    Type: String
+    Description: URI for the AI repository
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet::Id
+    Description: First public subnet ID
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet::Id
+    Description: First private subnet ID
+  IndexingImageTag:
+    Type: String
+    Description: Tag for the indexing image
+  RetrieverImageTag:
+    Type: String
+    Description: Tag for the retriever image
+  AppImageTag:
+    Type: String
+    Description: Tag for the app image
+  EvaluationImageTag:
+    Type: String
+    Description: Tag for the evaluation image
+  RuntimeImageTag:
+    Type: String
+    Description: Tag for the runtime image
+  AiImageTag:
+    Type: String
+    Description: Tag for the AI image
+
+Resources:
+  LambdaSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for Lambda functions
+      GroupName: !Sub LambdaSecurityGroup-${TableSuffix}
+      VpcId: !Ref VpcId
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          FromPort: -1
+          ToPort: -1
+          CidrIp: 0.0.0.0/0
+
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub FlotorchLambdaRole-${TableSuffix}
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/AmazonOpenSearchServiceFullAccess
+        - arn:aws:iam::aws:policy/AmazonOpenSearchIngestionFullAccess
+        - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
+      Policies:
+        - PolicyName: LambdaVPCPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ec2:CreateNetworkInterface
+                  - ec2:DescribeNetworkInterfaces
+                  - ec2:DeleteNetworkInterface
+                  - ec2:AssignPrivateIpAddresses
+                  - ec2:UnassignPrivateIpAddresses
+                Resource: '*'
+        - PolicyName: LambdaDynamoDBPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:*
+                Resource:
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ExecutionTableName}
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ExperimentTableName}
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${MetricsTableName}
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ModelInvocationsTableName}
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ExecutionTableName}/index/*
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ExperimentTableName}/index/*
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${MetricsTableName}/index/*
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ModelInvocationsTableName}/index/*
+        - PolicyName: DynamoDBAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                Resource:
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ExecutionTableName}
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ExperimentTableName}
+
+  DockerPullPushRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: EC2AndSSMAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ec2:RunInstances
+                  - ec2:DescribeInstances
+                  - ec2:TerminateInstances
+                  - ec2:CreateTags
+                  - iam:PassRole
+                  - ssm:SendCommand
+                  - ssm:GetCommandInvocation
+                Resource: '*'
+
+  EC2InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Policies:
+        - PolicyName: ECRAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ecr:*
+                Resource: '*'
+
+  EC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: /
+      Roles:
+        - !Ref EC2InstanceRole
+
+  DockerPullPushFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: index.handler
+      Role: !GetAtt DockerPullPushRole.Arn
+      Code:
+        ZipFile: |
+          import boto3
+          import cfnresponse
+          import time
+          import os
+
+          def handler(event, context):
+              try:
+                  if event['RequestType'] in ['Create', 'Update']:
+                      ec2 = boto3.client('ec2')
+                      ssm = boto3.client('ssm')
+                      
+                      account_id = context.invoked_function_arn.split(":")[4]
+                      region = os.environ['AWS_REGION']
+                      table_suffix = event['ResourceProperties']['TableSuffix']
+                      indexing_repository_uri = event['ResourceProperties']['IndexingRepositoryUri']
+                      retriever_repository_uri = event['ResourceProperties']['RetrieverRepositoryUri']
+                      app_repository_uri = event['ResourceProperties']['AppRepositoryUri']
+                      evaluation_repository_uri = event['ResourceProperties']['EvaluationRepositoryUri']
+                      runtime_repository_uri = event['ResourceProperties']['RuntimeRepositoryUri']
+                      ai_repository_uri = event['ResourceProperties']['AiRepositoryUri']
+                      indexing_image_tag = event['ResourceProperties']['IndexingImageTag']
+                      retriever_image_tag = event['ResourceProperties']['RetrieverImageTag']
+                      app_image_tag = event['ResourceProperties']['AppImageTag']
+                      evaluation_image_tag = event['ResourceProperties']['EvaluationImageTag']
+                      runtime_image_tag = event['ResourceProperties']['RuntimeImageTag']
+                      ai_image_tag = event['ResourceProperties']['AiImageTag']
+                      
+                      # Create EC2 instance
+                      response = ec2.run_instances(
+                          ImageId='ami-01816d07b1128cd2d',
+                          InstanceType='t2.large',
+                          MinCount=1,
+                          MaxCount=1,
+                          SubnetId=event['ResourceProperties']['PublicSubnet1'],
+                          BlockDeviceMappings=[{
+                              'DeviceName': '/dev/xvda',
+                              'Ebs': {
+                                  'VolumeSize': 24,
+                                  'VolumeType': 'gp3'
+                              }
+                          }],
+                          IamInstanceProfile={
+                              'Arn': event['ResourceProperties']['InstanceProfileArn']
+                          },
+                          TagSpecifications=[
+                              {
+                                  'ResourceType': 'instance',
+                                  'Tags': [
+                                      {
+                                          'Key': 'Name',
+                                          'Value': 'ECR-Image-Handler'
+                                      },
+                                      {
+                                          'Key': 'AutoTerminate',
+                                          'Value': 'true'
+                                      }
+                                  ]
+                              }
+                          ]
+                      )
+                      
+                      instance_id = response['Instances'][0]['InstanceId']
+                      
+                      # Wait for instance to be running and SSM agent to be ready
+                      waiter = ec2.get_waiter('instance_running')
+                      waiter.wait(InstanceIds=[instance_id])
+                      time.sleep(60)  # Give the SSM agent extra time to start
+                      
+                      # Create the script with environment variables
+                      script = f'''#!/bin/bash
+                      set -e  # Exit on error
+
+                      # Set environment variables
+                      export ACCOUNT_ID="{context.invoked_function_arn.split(':')[4]}"
+                      export REGION="{os.environ['AWS_REGION']}"
+                      export TABLE_SUFFIX="{event['ResourceProperties']['TableSuffix']}"
+                      export INDEXING_IMAGE_TAG="{event['ResourceProperties']['IndexingImageTag']}"
+                      export RETRIEVER_IMAGE_TAG="{event['ResourceProperties']['RetrieverImageTag']}"
+                      export APP_IMAGE_TAG="{event['ResourceProperties']['AppImageTag']}"
+                      export EVALUATION_IMAGE_TAG="{event['ResourceProperties']['EvaluationImageTag']}"
+                      export RUNTIME_IMAGE_TAG="{event['ResourceProperties']['RuntimeImageTag']}"
+                      export AI_IMAGE_TAG="{event['ResourceProperties']['AiImageTag']}"
+
+                      detect_os() {{
+                          if [ -f /etc/os-release ]; then
+                              . /etc/os-release
+                              OS=$NAME
+                              VERSION=$VERSION_ID
+                          else
+                              echo "Cannot detect OS"
+                              exit 1
+                          fi
+                      }}
+
+                      command_exists() {{
+                          command -v "$1" >/dev/null 2>&1
+                      }}
+
+                      install_docker() {{
+                          if command_exists docker; then
+                              echo "Docker is already installed"
+                              docker --version
+                          else
+                              echo "Installing Docker..."
+                              if [[ "$OS" == "Amazon Linux" ]]; then
+                                  sudo yum update -y
+                                  sudo yum install -y docker
+                                  sudo systemctl start docker
+                                  sudo systemctl enable docker
+                                  sudo usermod -aG docker ec2-user
+                                  newgrp docker
+                              fi
+                          fi
+                      }}
+
+                      install_awscli() {{
+                          if command_exists aws; then
+                              echo "AWS CLI is already installed"
+                              aws --version
+                          else
+                              echo "Installing AWS CLI..."
+                              curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+                              sudo yum install -y unzip
+                              unzip awscliv2.zip
+                              sudo ./aws/install
+                              rm -rf aws awscliv2.zip
+                          fi
+                      }}
+
+                      # Detect OS and install requirements
+                      detect_os
+                      install_docker
+                      install_awscli
+
+                      # Configure Docker to use non-interactive mode
+                      export DOCKER_CLI_NO_INTERACTIVE=1
+
+                      # Login to source ECR
+                      aws ecr get-login-password --region "us-east-1" | docker login --username AWS --password-stdin "709825985650.dkr.ecr.us-east-1.amazonaws.com"
+
+                      # Pull images
+                      CONTAINER_IMAGES="
+                      709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-indexing:$INDEXING_IMAGE_TAG,
+                      709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-ai:$AI_IMAGE_TAG,
+                      709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-evaluation:$EVALUATION_IMAGE_TAG,
+                      709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-app:$APP_IMAGE_TAG,
+                      709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-runtime:$RUNTIME_IMAGE_TAG,
+                      709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-retriever:$RETRIEVER_IMAGE_TAG
+                      "
+
+                      for i in $(echo "$CONTAINER_IMAGES" | sed "s/,/ /g"); do 
+                          docker pull "$i"
+                      done
+
+                      # Login to target ECR
+                      aws ecr get-login-password --region "$REGION" | docker login --username AWS --password-stdin "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com"
+
+                      # Create repositories if they don't exist
+                      for repo in flotorch-indexing-$TABLE_SUFFIX flotorch-ai-$TABLE_SUFFIX flotorch-evaluation-$TABLE_SUFFIX flotorch-app-$TABLE_SUFFIX flotorch-runtime-$TABLE_SUFFIX flotorch-retriever-$TABLE_SUFFIX; do
+                          aws ecr describe-repositories --repository-names "$repo" --region "$REGION" || aws ecr create-repository --repository-name "$repo" --region "$REGION"
+                      done
+
+                      # Tag and push indexing image with version and latest tags
+                      docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-indexing:$INDEXING_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-indexing-$TABLE_SUFFIX:$INDEXING_IMAGE_TAG"
+                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-indexing-$TABLE_SUFFIX:$INDEXING_IMAGE_TAG"
+                      docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-indexing:$INDEXING_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-indexing-$TABLE_SUFFIX:latest"
+                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-indexing-$TABLE_SUFFIX:latest"
+
+                      # Tag and push AI image with version and latest tags
+                      docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-ai:$AI_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-ai-$TABLE_SUFFIX:$AI_IMAGE_TAG"
+                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-ai-$TABLE_SUFFIX:$AI_IMAGE_TAG"
+                      docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-ai:$AI_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-ai-$TABLE_SUFFIX:latest"
+                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-ai-$TABLE_SUFFIX:latest"
+
+                      # Tag and push evaluation image with version and latest tags
+                      docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-evaluation:$EVALUATION_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-evaluation-$TABLE_SUFFIX:$EVALUATION_IMAGE_TAG"
+                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-evaluation-$TABLE_SUFFIX:$EVALUATION_IMAGE_TAG"
+                      docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-evaluation:$EVALUATION_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-evaluation-$TABLE_SUFFIX:latest"
+                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-evaluation-$TABLE_SUFFIX:latest"
+
+                      # Tag and push app image with version and latest tags
+                      docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-app:$APP_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-app-$TABLE_SUFFIX:$APP_IMAGE_TAG"
+                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-app-$TABLE_SUFFIX:$APP_IMAGE_TAG"
+                      docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-app:$APP_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-app-$TABLE_SUFFIX:latest"
+                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-app-$TABLE_SUFFIX:latest"
+
+                      # Tag and push runtime image with version and latest tags
+                      docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-runtime:$RUNTIME_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-runtime-$TABLE_SUFFIX:$RUNTIME_IMAGE_TAG"
+                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-runtime-$TABLE_SUFFIX:$RUNTIME_IMAGE_TAG"
+                      docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-runtime:$RUNTIME_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-runtime-$TABLE_SUFFIX:latest"
+                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-runtime-$TABLE_SUFFIX:latest"
+
+                      # Tag and push retriever image with version and latest tags
+                      docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-retriever:$RETRIEVER_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-retriever-$TABLE_SUFFIX:$RETRIEVER_IMAGE_TAG"
+                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-retriever-$TABLE_SUFFIX:$RETRIEVER_IMAGE_TAG"
+                      docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-retriever:$RETRIEVER_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-retriever-$TABLE_SUFFIX:latest"
+                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-retriever-$TABLE_SUFFIX:latest"
+
+                      echo "Docker operations completed successfully"
+                      '''
+                      
+                      # Run script using SSM
+                      command = ssm.send_command(
+                          InstanceIds=[instance_id],
+                          DocumentName='AWS-RunShellScript',
+                          Parameters={
+                              'commands': [script]
+                          }
+                      )
+                      
+                      command_id = command['Command']['CommandId']
+                      
+                      # First, wait until the Command Invocation actually exists
+                      import botocore
+                      while True:
+                          try:
+                              result = ssm.get_command_invocation(
+                                  CommandId=command_id,
+                                  InstanceId=instance_id
+                              )
+                              break  # If we got here, the invocation exists
+                          except botocore.exceptions.ClientError as e:
+                              # If it doesn't exist yet, keep trying
+                              if "InvocationDoesNotExist" in str(e):
+                                  time.sleep(5)
+                                  continue
+                              else:
+                                  raise
+                      
+                      # Now keep polling until the command is finished
+                      while result['Status'] not in ['Success', 'Failed', 'Cancelled']:
+                          time.sleep(10)
+                          result = ssm.get_command_invocation(
+                              CommandId=command_id,
+                              InstanceId=instance_id
+                          )
+
+                      if result['Status'] != 'Success':
+                          raise Exception(f"Command failed: {result.get('StandardErrorContent', '')}")
+                      
+                      # Terminate instance
+                      ec2.terminate_instances(InstanceIds=[instance_id])
+                      
+                      response_data = {'Message': f'EC2 instance {instance_id} completed Docker operations'}
+                      cfnresponse.send(event, context, cfnresponse.SUCCESS, response_data)
+                  else:
+                      cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
+              except Exception as e:
+                  print(f"Error: {str(e)}")
+                  cfnresponse.send(event, context, cfnresponse.FAILED, {'Error': str(e)})
+
+      Runtime: python3.9
+      Timeout: 900
+      MemorySize: 1024
+
+  DockerPullPushResource:
+    Type: Custom::DockerPullPush
+    DependsOn: DockerPullPushFunction
+    Properties:
+      ServiceToken: !GetAtt DockerPullPushFunction.Arn
+      TableSuffix: !Ref TableSuffix
+      InstanceProfileArn: !GetAtt EC2InstanceProfile.Arn
+      IndexingRepositoryUri: !Ref IndexingRepositoryUri
+      RetrieverRepositoryUri: !Ref RetrieverRepositoryUri
+      AppRepositoryUri: !Ref AppRepositoryUri
+      EvaluationRepositoryUri: !Ref EvaluationRepositoryUri
+      RuntimeRepositoryUri: !Ref RuntimeRepositoryUri
+      AiRepositoryUri: !Ref AiRepositoryUri
+      PublicSubnet1: !Ref PublicSubnet1
+      PrivateSubnet1: !Ref PrivateSubnet1
+      IndexingImageTag: !Ref IndexingImageTag
+      RetrieverImageTag: !Ref RetrieverImageTag
+      AppImageTag: !Ref AppImageTag
+      EvaluationImageTag: !Ref EvaluationImageTag
+      RuntimeImageTag: !Ref RuntimeImageTag
+      AiImageTag: !Ref AiImageTag
+
+  RuntimeLambdaFunction:
+    Type: AWS::Lambda::Function
+    DependsOn: DockerPullPushResource
+    Properties:
+      FunctionName: !Sub flotorch-runtime-${TableSuffix}
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        ImageUri: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/flotorch-runtime-${TableSuffix}:${RuntimeImageTag}
+      PackageType: Image
+      MemorySize: 4096
+      Timeout: 900
+      VpcConfig:
+        SubnetIds: !Split [",", !Join [",", !Ref PrivateSubnets]]
+        SecurityGroupIds:
+          - !Ref LambdaSecurityGroup
+      Environment:
+        Variables:
+          DATA_BUCKET: !Ref DataBucketName
+          EXECUTION_TABLE: !Ref ExecutionTableName
+          EXPERIMENT_TABLE: !Ref ExperimentTableName
+          METRICS_TABLE: !Ref MetricsTableName
+          MODEL_INVOCATIONS_TABLE: !Ref ModelInvocationsTableName
+          opensearch_host: !Ref OpenSearchEndpoint
+          opensearch_username: !Ref OpenSearchAdminUser
+          opensearch_password: !Ref OpenSearchAdminPassword
+          INFERENCE_SYSTEM_PROMPT: "You are a helpful assistant. Use the provided context to answer questions accurately. If you cannot find the answer in the context, say so"
+          vector_field_name: "vectors"
+          opensearch_serverless: "false"
+          aws_region: !Ref AWS::Region
+
+  CostComputeLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub FlotorchCostComputeLambda-${TableSuffix}
+      Runtime: python3.9
+      Code:
+        S3Bucket: flotorch-public
+        S3Key: lambda/cost_compute_lambda.zip
+      Handler: cost_compute_handler.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref LambdaSecurityGroup
+        SubnetIds: !Split [",", !Join [",", !Ref PrivateSubnets]]
+      Timeout: 300
+      MemorySize: 1024
+      Layers:
+        - arn:aws:lambda:us-east-1:336392948345:layer:AWSSDKPandas-Python39:27
+      Environment:
+        Variables:
+          execution_table: !Ref ExecutionTableName
+          experiment_table: !Ref ExperimentTableName
+          s3_bucket: !Ref DataBucketName
+          bedrock_limit_csv: seed/bedrock_limits_small.csv
+
+Outputs:
+  RuntimeLambdaArn:
+    Description: ARN of the Runtime Lambda function
+    Value: !GetAtt RuntimeLambdaFunction.Arn
+  CostComputeLambdaArn:
+    Description: ARN of the Cost Compute Lambda function
+    Value: !GetAtt CostComputeLambda.Arn
+  LambdaRoleArn:
+    Description: ARN of the Lambda execution role
+    Value: !GetAtt LambdaExecutionRole.Arn
+  LambdaSecurityGroupId:
+    Description: ID of the Lambda security group
+    Value: !Ref LambdaSecurityGroup

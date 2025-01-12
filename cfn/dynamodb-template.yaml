@@ -1,0 +1,308 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'DynamoDB Tables Template for FloTorch'
+
+Parameters:
+  ClientName:
+    Type: String
+    Description: "Client Name"
+  CreatedBy:
+    Type: String
+    Description: "Created By"
+  ProjectName:
+    Type: String
+    Description: Name of the project
+  TableSuffix:
+    Type: String
+    Description: Suffix to append to table names
+
+Resources:
+  ExecutionTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "Execution_${TableSuffix}"
+      AttributeDefinitions:
+        - AttributeName: "id"
+          AttributeType: "S"
+        - AttributeName: "status"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "id"
+          KeyType: "HASH"
+      GlobalSecondaryIndexes:
+        - IndexName: "status-index"
+          KeySchema:
+            - AttributeName: "status"
+              KeyType: "HASH"
+          Projection:
+            ProjectionType: "ALL"
+      BillingMode: PAY_PER_REQUEST
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+      Tags:
+        - Key: ClientName
+          Value: !Ref ClientName
+        - Key: CreatedBy
+          Value: !Ref CreatedBy
+        - Key: ProjectName
+          Value: !Ref ProjectName
+
+  ExperimentTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "Experiment_${TableSuffix}"
+      AttributeDefinitions:
+        - AttributeName: "id"
+          AttributeType: "S"
+        - AttributeName: "execution_id"
+          AttributeType: "S"
+        - AttributeName: "index_id"
+          AttributeType: "S"
+        - AttributeName: "index_status"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "id"
+          KeyType: "HASH"
+      GlobalSecondaryIndexes:
+        - IndexName: "index_id-index_status-index"
+          KeySchema:
+            - AttributeName: "index_id"
+              KeyType: "HASH"
+            - AttributeName: "index_status"
+              KeyType: "RANGE"
+          Projection:
+            ProjectionType: "ALL"
+        - IndexName: "execution_id-index"
+          KeySchema:
+            - AttributeName: "execution_id"
+              KeyType: "HASH"
+          Projection:
+            ProjectionType: "ALL"
+      BillingMode: PAY_PER_REQUEST
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+      Tags:
+        - Key: ClientName
+          Value: !Ref ClientName
+        - Key: CreatedBy
+          Value: !Ref CreatedBy
+        - Key: ProjectName
+          Value: !Ref ProjectName
+
+  MetricsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "ExperimentQuestionMetrics_${TableSuffix}"
+      AttributeDefinitions:
+        - AttributeName: "id"
+          AttributeType: "S"
+        - AttributeName: "execution_id"
+          AttributeType: "S"
+        - AttributeName: "experiment_id"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "id"
+          KeyType: "HASH"
+      GlobalSecondaryIndexes:
+        - IndexName: "execution_id-experiment_id-index"
+          KeySchema:
+            - AttributeName: "execution_id"
+              KeyType: "HASH"
+            - AttributeName: "experiment_id"
+              KeyType: "RANGE"
+          Projection:
+            ProjectionType: "ALL"
+        - IndexName: "experiment_id-index"
+          KeySchema:
+            - AttributeName: "experiment_id"
+              KeyType: "HASH"
+          Projection:
+            ProjectionType: "ALL"
+      BillingMode: PAY_PER_REQUEST
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+      Tags:
+        - Key: ClientName
+          Value: !Ref ClientName
+        - Key: CreatedBy
+          Value: !Ref CreatedBy
+        - Key: ProjectName
+          Value: !Ref ProjectName
+
+  ModelInvocationsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "ExecutionModelInvocations_${TableSuffix}"
+      AttributeDefinitions:
+        - AttributeName: "execution_model_id"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "execution_model_id"
+          KeyType: "HASH"
+      BillingMode: PAY_PER_REQUEST
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+      Tags:
+        - Key: ClientName
+          Value: !Ref ClientName
+        - Key: CreatedBy
+          Value: !Ref CreatedBy
+        - Key: ProjectName
+          Value: !Ref ProjectName
+
+  DataBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "flotorch-data-${TableSuffix}"
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders:
+              - '*'
+            AllowedMethods:
+              - GET
+              - PUT
+              - POST
+              - DELETE
+              - HEAD
+            AllowedOrigins:
+              - '*'
+            ExposedHeaders:
+              - ETag
+            MaxAge: 3000
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      Tags:
+        - Key: ClientName
+          Value: !Ref ClientName
+        - Key: CreatedBy
+          Value: !Ref CreatedBy
+        - Key: ProjectName
+          Value: !Ref ProjectName
+
+  DataBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref DataBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - s3:*
+            Resource:
+              - !Sub "arn:aws:s3:::${DataBucket}"
+              - !Sub "arn:aws:s3:::${DataBucket}/*"
+            Condition:
+              StringEquals:
+                aws:PrincipalAccount: !Ref AWS::AccountId
+
+  CopyBedrockLimitsFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: index.handler
+      Role: !GetAtt CopyBedrockLimitsRole.Arn
+      Code:
+        ZipFile: |
+          import boto3
+          import cfnresponse
+          import os
+
+          def handler(event, context):
+              try:
+                  if event['RequestType'] in ['Create', 'Update']:
+                      s3 = boto3.client('s3')
+                      source_bucket = 'flotorch-public'
+                      source_key = 'seed/bedrock_limits_small.csv'
+                      target_bucket = event['ResourceProperties']['TargetBucket']
+                      target_key = source_key
+
+                      # Copy the file from source to target bucket
+                      s3.copy_object(
+                          Bucket=target_bucket,
+                          Key=target_key,
+                          CopySource={'Bucket': source_bucket, 'Key': source_key}
+                      )
+
+                      response_data = {'Message': f'Successfully copied {source_key} to {target_bucket}'}
+                      cfnresponse.send(event, context, cfnresponse.SUCCESS, response_data)
+                  else:
+                      cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
+              except Exception as e:
+                  print(f"Error: {str(e)}")
+                  cfnresponse.send(event, context, cfnresponse.FAILED, {'Error': str(e)})
+
+      Runtime: python3.9
+      Timeout: 300
+      MemorySize: 128
+
+  CopyBedrockLimitsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: S3Access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:CopyObject
+                Resource:
+                  - arn:aws:s3:::flotorch-public/*
+                  - !Sub arn:aws:s3:::${DataBucket}/*
+
+  CopyBedrockLimitsResource:
+    Type: Custom::CopyBedrockLimits
+    DependsOn: DataBucket
+    Properties:
+      ServiceToken: !GetAtt CopyBedrockLimitsFunction.Arn
+      TargetBucket: !Ref DataBucket
+
+Outputs:
+  ExecutionTableName:
+    Description: Name of the Execution table
+    Value: !Ref ExecutionTable
+  
+  ExperimentTableName:
+    Description: Name of the Experiment table
+    Value: !Ref ExperimentTable
+  
+  MetricsTableName:
+    Description: Name of the Metrics table
+    Value: !Ref MetricsTable
+  
+  ModelInvocationsTableName:
+    Description: Name of the Model Invocations table
+    Value: !Ref ModelInvocationsTable
+  
+  DataBucketName:
+    Description: Name of the data bucket
+    Value: !Ref DataBucket

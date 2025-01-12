@@ -522,8 +522,9 @@ class StateMachineStack(Stack):
                     "vector_dimension.$": "$.Item.Item.config.M.vector_dimension.N",
                     "temp_retrieval_llm.$": "$.Item.Item.config.M.temp_retrieval_llm.N",
                     "aws_region.$": "$.Item.Item.config.M.region.S",
-                    "eval_service": "bedrock",
-                    "eval_model": "amazon.titan-embed-text-v1",
+                    "eval_service.$": "$.Item.Item.config.M.eval_service.S",
+                    "eval_embedding_model.$": "$.Item.Item.config.M.eval_embedding_model.S",
+                    "eval_retrieval_model.$": "$.Item.Item.config.M.eval_retrieval_model.S",
                     "rerank_model_id.$": "$.Item.Item.config.M.rerank_model_id.S"
                 }
             },
@@ -553,8 +554,9 @@ class StateMachineStack(Stack):
                     "vector_dimension.$": "$.Item.Item.config.M.vector_dimension.N",
                     "temp_retrieval_llm.$": "$.Item.Item.config.M.temp_retrieval_llm.N",
                     "aws_region.$": "$.Item.Item.config.M.region.S",
-                    "eval_service": "bedrock",
-                    "eval_model": "amazon.titan-embed-text-v1",
+                    "eval_service": "$.Item.Item.config.M.eval_service.S",
+                    "eval_embedding_model.$": "$.Item.Item.config.M.eval_embedding_model.S",
+                    "eval_retrieval_model.$": "$.Item.Item.config.M.eval_retrieval_model.S",
                     "rerank_model_id.$": "$.Item.Item.config.M.rerank_model_id.S",
                     "hierarchical_parent_chunk_size.$": "$.Item.Item.config.M.hierarchical_parent_chunk_size.N",
                     "hierarchical_child_chunk_size.$": "$.Item.Item.config.M.hierarchical_child_chunk_size.N",
@@ -1351,7 +1353,7 @@ class StateMachineStack(Stack):
                 "TableName": model_invocations_table_name,
                 "Key": {
                     "execution_model_id": {
-                        "S.$": "States.Format('{}_{}', $.parsedConfig.parsed_config.eval_service, $.parsedConfig.parsed_config.eval_model)"
+                        "S.$": "States.Format('{}_{}', 'bedrock', $.parsedConfig.parsed_config.eval_embedding_model)"
                     }
                 }
             },
@@ -1395,7 +1397,7 @@ class StateMachineStack(Stack):
                 "TableName": model_invocations_table_name,
                 "Key": {
                     "execution_model_id": {
-                        "S.$": "States.Format('{}_{}', $.parsedConfig.parsed_config.eval_service, $.parsedConfig.parsed_config.eval_model)"
+                        "S.$": "States.Format('{}_{}', 'bedrock', $.parsedConfig.parsed_config.eval_embedding_model)"
                     }
                 },
                 "UpdateExpression": "SET invocations = invocations + :myValueRef",
@@ -1595,7 +1597,7 @@ class StateMachineStack(Stack):
                 "TableName": model_invocations_table_name,
                 "Key": {
                     "execution_model_id": {
-                        "S.$": "States.Format('{}_{}', $.parsedConfig.parsed_config.eval_service, $.parsedConfig.parsed_config.eval_model)"
+                        "S.$": "States.Format('{}_{}', 'bedrock', $.parsedConfig.parsed_config.eval_embedding_model)"
                     }
                 },
                 "UpdateExpression": "SET invocations = invocations - :myValueRef",

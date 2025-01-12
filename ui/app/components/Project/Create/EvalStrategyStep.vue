@@ -93,10 +93,11 @@ onMounted(() => {
             :items="guardrailsList"
             class="w-full mt-2"
             placeholder="None"
-          />
-          <!-- <template #hint>
-          <FieldTooltip field-name="guardrails" />
-        </template>  -->
+          >
+            <template #item-label="{ item }">
+                {{ item.label + ' - ' + item.guardrail_version }}
+            </template>
+          </USelectMenu>
         </UFormField>
         <UFormField name="refetch_guardrail_list" label=" " class="flex-1">
           <UButton
