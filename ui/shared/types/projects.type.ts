@@ -179,9 +179,9 @@ export type ProjectNShotPromptGuide = z.infer<
 export const ProjectCreateRetrievalStrategySchema = z
   .object({
     rerank_model_id: z.string({
-      required_error: "At least one rerank model is required",
+      required_error: "At least one reranking model is required",
     }).array().min(1, {
-      message: "At least one rerank model is required",
+      message: "At least one reranking model is required",
     }),
     n_shot_prompts: z
       .number({
@@ -201,14 +201,14 @@ export const ProjectCreateRetrievalStrategySchema = z
       }),
     temp_retrieval_llm: z
       .number({
-        required_error: "At least one retrieval LLM temperature is required",
+        required_error: "At least one Inferencing model temperature is required",
       })
       .array()
       .min(1, {
-        message: "At least one retrieval LLM temperature is required",
+        message: "At least one Inferencing model temperature is required",
       }),
     retrieval: ProjectCreateModelSchema.array().min(1, {
-      message: "At least one retrieval model is required",
+      message: "At least one Inferencing model is required",
     }).default([]),
     n_shot_prompt_guide: ProjectNShotPromptGuideSchema,
   })
@@ -235,10 +235,10 @@ export const ProjectCreateEvalSchema = z.object({
     required_error: "Service is required",
   }),
   ragas_embedding_llm: z.string({
-    required_error: "Ragas embedding LLM is required",
+    required_error: "Ragas embedding model is required",
   }),
   ragas_inference_llm: z.string({
-    required_error: "Ragas inference LLM is required",
+    required_error: "Ragas inference model is required",
   }),
   guardrails : z.array(
       z.object({

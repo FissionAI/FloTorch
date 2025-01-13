@@ -100,19 +100,19 @@ export const useProjectCreateMeta = () => {
       ],
       chunkOverlapPercentage: [
         {
-          label: "5",
+          label: "5%",
           value: 5,
         },
         {
-          label: "10",
+          label: "10%",
           value: 10,
         },
         {
-          label: "15",
+          label: "15%",
           value: 15,
         },
         {
-          label: "20",
+          label: "20%",
           value: 20,
         },
       ],
@@ -150,19 +150,19 @@ export const useProjectCreateMeta = () => {
       ],
       hierarchical_chunk_overlap_percentage: [
         {
-          label: "5",
+          label: "5%",
           value: 5,
         },
         {
-          label: "10",
+          label: "10%",
           value: 10,
         },
         {
-          label: "15",
+          label: "15%",
           value: 15,
         },
         {
-          label: "20",
+          label: "20%",
           value: 20,
         },
       ],
@@ -392,8 +392,8 @@ export const useProjectCreateMeta = () => {
       ],
       temperature: [
         {
-          label: "0",
-          value: 0,
+          label: "0.1",
+          value: 0.1,
         },
         {
           label: "0.3",
@@ -445,7 +445,7 @@ export const useProjectCreateMeta = () => {
     evalStrategy: {
       service: [
         {
-          label: 'Ragas',
+          label: 'ragas',
           value: 'ragas',
         },
       ],
@@ -568,6 +568,7 @@ export const useFilteredRagasEmbeddingModels = (embeddingModel: string[]) => {
     if (model.value !== 'none' && embeddingModel.includes(model.value)) {
       return {
         ...model,
+        label : model.label + '( Already selected)',
         disabled: true
       };
     }
@@ -581,6 +582,7 @@ export const useFilteredRagasInferenceModels = (inferenceModel: string[]) => {
     if (model.value !== 'none' && inferenceModel.includes(model.value)) {
       return {
         ...model,
+        label : model.label + '( already selected)',
         disabled: true
       };
     }
@@ -781,6 +783,7 @@ export const useHumanIndexingAlgorithm = (algorithm: string) => {
 };
 
 export const useHumanCurrencyAmount = (amount: number) => {
+  
   return Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",

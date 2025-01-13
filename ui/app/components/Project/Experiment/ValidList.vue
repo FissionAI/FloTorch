@@ -93,12 +93,12 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
     accessorKey: "embedding_model"
   },
   {
-    header: "Inferencing LLM",
+    header: "Inferencing Model",
     enableHiding: true,
     accessorKey: "retrieval_model"
   },
   {
-    header: "Inferencing LLM Temperature",
+    header: "Inferencing Model Temperature",
     enableHiding: true,
     accessorKey: "temp_retrieval_llm"
   },
@@ -133,7 +133,7 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
     accessorKey: "region"
   },
   {
-    header: "Rerank Model",
+    header: "Reranking Model",
     enableHiding: true,
     accessorKey: "rerank_model_id"
   }
@@ -169,7 +169,8 @@ const columnVisibility = ref({
     <UTable class="h-100" sticky ref="table" v-model:column-visibility="columnVisibility" :columns="columns" :data="experiments"
       :loading="isLoading">
       <template #directional_pricing-cell="{ row }">
-        {{ useHumanCurrencyAmount(row.original.directional_pricing) }}
+        <!-- {{ useHumanCurrencyAmount(row.original.directional_pricing) }} -->
+        <ProjectExperimentDirectionalPricing :label="'Directional Pricing'" :pricing-info="row.original.config" :price="row.original.config?.directional_pricing ? row.original.config?.config.directional_pricing : '-'" />
       </template>
       <template #chunking_strategy-cell="{ row }">
         {{ useHumanChunkingStrategy(row.original.chunking_strategy) }}
@@ -197,6 +198,15 @@ const columnVisibility = ref({
       <template #retrieval_model-cell="{ row }">
         {{ useModelName("retrieval", row.original.retrieval_model) }}
       </template>
+       <!-- <template #eval_cost_estimate-cell="{ row }">
+        {{ useHumanCurrencyAmount(row.original.eval_cost_estimate) }}
+      </template>
+       <template #indexing_cost_estimate-cell="{ row }">
+        {{ useHumanCurrencyAmount(row.original.indexing_cost_estimate) }}
+      </template>
+       <template #retrieval_cost_estimate-cell="{ row }">
+        {{ useHumanCurrencyAmount(row.original.retrieval_cost_estimate) }}
+      </template> -->
     </UTable>
   </div>
 </template>

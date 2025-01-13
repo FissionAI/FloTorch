@@ -115,13 +115,13 @@ const steps = [
   <div>
     <div class="relative my-8">
       <!-- Progress bar -->
-      <div class="absolute top-6 left-16 right-16 h-[2px] bg-gray-200">
+      <div class="absolute top-6 left-16 right-25 h-[2px] bg-gray-200">
         <div class="h-full bg-gray-600 transition-all duration-300 ease-in-out"
           :style="{ width: `${((currentStep - 1) / (totalSteps - 1)) * 100}%` }" />
       </div>
 
       <!-- Steps -->
-      <div class="relative flex justify-between px-1">
+      <div class="relative flex justify-between px-1 w-full">
         <div v-for="(step, index) in steps" :key="index" class="flex flex-col items-center gap-2"
           :class="{ 'text-gray-900': currentStep > index || currentStep === index + 1, 'text-gray-400': currentStep < index + 1 }">
           <div
@@ -147,7 +147,7 @@ const steps = [
       <ProjectCreateRetrievalStrategyStep :region="state.prestep?.region" v-model="state.retrieval" @next="nextStep" @previous="previousStep" />
     </div>
     <div v-if="currentStep === 4">
-      <ProjectCreateEvalStrategyStep :inferenceModel="state.retrieval?.retrieval?.map(model => model.value)" :embeddingModel="state.indexing?.embedding?.map(model => model.value)" v-model="state.eval" @previous="previousStep" @next="nextStep" next-button-label="Submit" />
+      <ProjectCreateEvalStrategyStep :region="state.prestep?.region" :inferenceModel="state.retrieval?.retrieval?.map(model => model.value)" :embeddingModel="state.indexing?.embedding?.map(model => model.value)" v-model="state.eval" @previous="previousStep" @next="nextStep" next-button-label="Submit" />
     </div>
   </div>
 </template>
