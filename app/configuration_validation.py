@@ -6,7 +6,7 @@ from util.s3util import S3Util
 from config.config import get_config
 from decimal import Decimal
 from util.pdf_utils import extract_text_from_pdf_pymudf
-from app.price_calculator import estimate_embedding_model_bedrock_price,estimate_retrieval_model_bedrock_price,estimate_opensearch_price,estimate_sagemaker_price
+from app.price_calculator import estimate_embedding_model_bedrock_price,estimate_retrieval_model_bedrock_price,estimate_opensearch_price,estimate_sagemaker_price, estimate_fargate_price, estimate_effective_kb_tokens, estimate_times
 from .dependencies.database import get_execution_db
 from constants.validation_status import ValidationStatus
 from functools import lru_cache
@@ -238,11 +238,8 @@ def generate_all_combinations(data):
 
     avg_prompt_length = round(num_chars / num_prompts / 4)
     num_tokens_kb_data = count_characters_in_file(parameters_all["kb_data"][0]) / 4
-
     configurations = []
     valid_configurations = []
-    max_rpm = 4
-    num_chunks = 0
 
     for combination in combinations:
         # Generate a unique GUID
@@ -265,23 +262,38 @@ def generate_all_combinations(data):
                 }
             valid_configurations.append(configuration)
 
+    if len(valid_configurations) > 0:
+        effective_num_tokens_kb_data = estimate_effective_kb_tokens(configuration, num_tokens_kb_data)
+        indexing_time, retrieval_time, eval_time = estimate_times(effective_num_tokens_kb_data, num_prompts, configuration)
+        for configuration in valid_configurations:
             configuration["directional_pricing"] = 0
+            configuration["indexing_cost_estimate"] = 0 
+            configuration["retrieval_cost_estimate"] = 0 
+            configuration["eval_cost_estimate"] = 0
+
             if configuration['embedding_service'] == "bedrock" :
                 embedding_price = estimate_embedding_model_bedrock_price(bedrock_price_df, configuration, num_tokens_kb_data)
-                configuration["directional_pricing"] += embedding_price
+                configuration["indexing_cost_estimate"] += embedding_price
             else:
-                configuration["directional_pricing"] +=estimate_sagemaker_price()
+                configuration["indexing_cost_estimate"] += estimate_sagemaker_price(indexing_time)
 
             if configuration["retrieval_service"] == "bedrock":
-                retrical_price = estimate_retrieval_model_bedrock_price(bedrock_price_df, configuration, avg_prompt_length, num_prompts)
-                configuration["directional_pricing"] += retrical_price
+                retrieval_price = estimate_retrieval_model_bedrock_price(bedrock_price_df, configuration, avg_prompt_length, num_prompts)
+                configuration["retrieval_cost_estimate"] += retrieval_price
             else:
-                configuration["directional_pricing"] +=estimate_sagemaker_price()
+                configuration["retrieval_cost_estimate"] += estimate_sagemaker_price(retrieval_time)
+            
+            configuration["indexing_cost_estimate"] += estimate_opensearch_price(indexing_time) + estimate_fargate_price(indexing_time)
+            configuration["retrieval_cost_estimate"] += estimate_opensearch_price(retrieval_time) + estimate_fargate_price(retrieval_time)
 
-    if len(valid_configurations) > 0:
-        os_price = estimate_opensearch_price(len(valid_configurations), num_prompts, num_chunks, max_rpm)
-        for configuration in valid_configurations:
-            configuration["directional_pricing"] += os_price
+            # Neglecting the evaluation tokens at this point of time
+            configuration["eval_cost_estimate"] += estimate_opensearch_price(eval_time) + estimate_fargate_price(eval_time)
+            if configuration['embedding_service'] == "sagemaker":
+                configuration["eval_cost_estimate"] += estimate_sagemaker_price(eval_time)
+            if configuration["retrieval_service"] == "sagemaker":
+                configuration["eval_cost_estimate"] += estimate_sagemaker_price(eval_time)
+
+            configuration["directional_pricing"] = configuration["indexing_cost_estimate"] + configuration["retrieval_cost_estimate"] + configuration["eval_cost_estimate"]
             configuration["directional_pricing"] +=configuration["directional_pricing"]*0.05 #extra
             configuration["directional_pricing"] = round(configuration["directional_pricing"],2)    
 
