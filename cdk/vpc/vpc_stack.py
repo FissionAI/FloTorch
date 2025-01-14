@@ -850,7 +850,7 @@ class VPCStack(Stack):
         pandas_layer = lambda_.LayerVersion.from_layer_version_arn(
             self,
             f"AWSSDKPandasLayer-{table_suffix}",
-            "arn:aws:lambda:us-east-1:336392948345:layer:AWSSDKPandas-Python39:27"
+            "arn:aws:lambda:us-east-1:336392948345:layer:AWSSDKPandas-Python39:28"
         )
 
         # Create Cost Lambda function
