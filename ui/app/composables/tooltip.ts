@@ -18,5 +18,9 @@ hierarchical_parent_chunk_size: 'Set the size (in tokens) of the parent chunks f
 hierarchical_child_chunk_size: 'Set the size (in tokens) of the child chunks for hierarchical chunking.',
 hierarchical_chunk_overlap_percentage: 'Set the overlap percentage for hierarchical chunking.',
 rerank_model_id: "Select an Amazon Bedrock model to reorder and refine search results from your vector store based on relevance. (Rerank is not available in us-east-1)",
-guardrails: "Applied at Query,Context and Response levels."
+guardrails: "Guardrails are safety barriers or guidelines designed to protect, direct, or limit actions in various contexts.",
+service: "Evaluation service assesses the performance, accuracy, fairness, and robustness of models ",
+ragas_embedding_llm: "Choose whether you want the language model from the Amazon Bedrock or Sagemaker family.",
+ragas_inference_llm: "Select the language model used to retrieve and generate responses based on the retrieved chunks from the Amazon family",
+ragas_rerank_llm: "Select the rerank model to use for the evaluation.",
 }

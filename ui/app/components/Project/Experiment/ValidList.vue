@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui';
 const UCheckbox = resolveComponent('UCheckbox')
-
+const UButton = resolveComponent('UButton')
 
 const toast = useToast()
 const modelValue = defineModel<ValidExperiment[]>()
@@ -58,89 +58,340 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
     enableHiding: false,
   },
   {
-    header: "Chunking",
+    header: ({ column }) => {
+      const isSorted = column.getIsSorted();
+      return h(UButton, {
+        color: "neutral",
+        variant: "ghost",
+        label: "Chunking",
+        icon: isSorted
+          ? isSorted === "asc"
+            ? "i-lucide-arrow-up-narrow-wide"
+            : "i-lucide-arrow-down-wide-narrow"
+          : "i-lucide-arrow-up-down",
+        class: "-mx-2.5",
+        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+      });
+    },
     enableHiding: true,
-    accessorKey: "chunking_strategy"
+    accessorKey: "chunking_strategy",
+    label: "Chunking"
   },
   {
-    header: "Vector Dimensions",
-    enableHiding: true,
-    accessorKey: "vector_dimension"
-  },
-  {
-    header: "Chunk Size",
+    header: ({ column }) => {
+      const isSorted = column.getIsSorted();
+      return h(UButton, {
+        color: "neutral",
+        variant: "ghost",
+        label: "Chunk Size",
+        icon: isSorted
+          ? isSorted === "asc"
+            ? "i-lucide-arrow-up-narrow-wide"
+            : "i-lucide-arrow-down-wide-narrow"
+          : "i-lucide-arrow-up-down",
+        class: "-mx-2.5",
+        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+      });
+    },
     enableHiding: true,
     accessorKey: "chunk_size",
+    label: "Chunk Size"
   },
   {
-    header: "Chunk Overlap Percentage",
+    header: ({ column }) => {
+      const isSorted = column.getIsSorted();
+      return h(UButton, {
+        color: "neutral",
+        variant: "ghost",
+        label: "Chunk\nOverlap Percentage",
+        icon: isSorted
+          ? isSorted === "asc"
+            ? "i-lucide-arrow-up-narrow-wide"
+            : "i-lucide-arrow-down-wide-narrow"
+          : "i-lucide-arrow-up-down",
+        class: "-mx-2.5",
+        style: "white-space: pre !important",
+        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+      });
+    },
     enableHiding: true,
-    accessorKey: "chunk_overlap"
+    accessorKey: "chunk_overlap",
+    label: "Chunk Overlap Percentage"
   },
   {
-    header: "Indexing Algorithm",
+    header: ({ column }) => {
+      const isSorted = column.getIsSorted();
+      return h(UButton, {
+        color: "neutral",
+        variant: "ghost",
+        label: "Embedding Model",
+        icon: isSorted
+          ? isSorted === "asc"
+            ? "i-lucide-arrow-up-narrow-wide"
+            : "i-lucide-arrow-down-wide-narrow"
+          : "i-lucide-arrow-up-down",
+        class: "-mx-2.5",
+        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+      });
+    },
     enableHiding: true,
-    accessorKey: "indexing_algorithm"
+    accessorKey: "embedding_model",
+    label: "Embedding Model"
   },
   {
-    header: "KNN",
+    header: ({ column }) => {
+      const isSorted = column.getIsSorted();
+      return h(UButton, {
+        color: "neutral",
+        variant: "ghost",
+        label: "Vector Dimensions",
+        icon: isSorted
+          ? isSorted === "asc"
+            ? "i-lucide-arrow-up-narrow-wide"
+            : "i-lucide-arrow-down-wide-narrow"
+          : "i-lucide-arrow-up-down",
+        class: "-mx-2.5",
+        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+      });
+    },
     enableHiding: true,
-    accessorKey: "knn_num"
+    accessorKey: "vector_dimension",
+    label: "Vector Dimensions"
   },
   {
-    header: "Embedding Model",
+    header: ({ column }) => {
+      const isSorted = column.getIsSorted();
+      return h(UButton, {
+        color: "neutral",
+        variant: "ghost",
+        label: "Indexing Algorithm",
+        icon: isSorted
+          ? isSorted === "asc"
+            ? "i-lucide-arrow-up-narrow-wide"
+            : "i-lucide-arrow-down-wide-narrow"
+          : "i-lucide-arrow-up-down",
+        class: "-mx-2.5",
+        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+      });
+    },
     enableHiding: true,
-    accessorKey: "embedding_model"
+    accessorKey: "indexing_algorithm",
+    label: "Indexing Algorithm"
   },
   {
-    header: "Inferencing Model",
+    header: ({ column }) => {
+      const isSorted = column.getIsSorted();
+      return h(UButton, {
+        color: "neutral",
+        variant: "ghost",
+        label: "N Shot Prompts",
+        icon: isSorted
+          ? isSorted === "asc"
+            ? "i-lucide-arrow-up-narrow-wide"
+            : "i-lucide-arrow-down-wide-narrow"
+          : "i-lucide-arrow-up-down",
+        class: "-mx-2.5",
+        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+      });
+    },
     enableHiding: true,
-    accessorKey: "retrieval_model"
+    accessorKey: "n_shot_prompts",
+    label: "N Shot Prompts"
   },
   {
-    header: "Inferencing Model Temperature",
+    header: ({ column }) => {
+      const isSorted = column.getIsSorted();
+      return h(UButton, {
+        color: "neutral",
+        variant: "ghost",
+        label: "KNN",
+        icon: isSorted
+          ? isSorted === "asc"
+            ? "i-lucide-arrow-up-narrow-wide"
+            : "i-lucide-arrow-down-wide-narrow"
+          : "i-lucide-arrow-up-down",
+        class: "-mx-2.5",
+        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+      });
+    },
     enableHiding: true,
-    accessorKey: "temp_retrieval_llm"
+    accessorKey: "knn_num",
+    label: "KNN"
   },
   {
-    header: "N Shot Prompts",
+    header: ({ column }) => {
+      const isSorted = column.getIsSorted();
+      return h(UButton, {
+        color: "neutral",
+        variant: "ghost",
+        label: "Inferencing Model",
+        icon: isSorted
+          ? isSorted === "asc"
+            ? "i-lucide-arrow-up-narrow-wide"
+            : "i-lucide-arrow-down-wide-narrow"
+          : "i-lucide-arrow-up-down",
+        class: "-mx-2.5",
+        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+      });
+    },
     enableHiding: true,
-    accessorKey: "n_shot_prompts"
+    accessorKey: "retrieval_model",
+    label: "Inferencing Model"
   },
   {
-    header: "Evaluation Service",
+    header: ({ column }) => {
+      const isSorted = column.getIsSorted();
+      return h(UButton, {
+        color: "neutral",
+        variant: "ghost",
+        label: "Inferencing Model Temperature",
+        icon: isSorted
+          ? isSorted === "asc"
+            ? "i-lucide-arrow-up-narrow-wide"
+            : "i-lucide-arrow-down-wide-narrow"
+          : "i-lucide-arrow-up-down",
+        class: "-mx-2.5",
+        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+      });
+    },
     enableHiding: true,
-    accessorKey: "eval_service"
+    accessorKey: "temp_retrieval_llm",
+    label: "Inferencing Model Temperature"
   },
   {
-    header: "Evaluation Embedding Model",
+    header: ({ column }) => {
+      const isSorted = column.getIsSorted();
+      return h(UButton, {
+        color: "neutral",
+        variant: "ghost",
+        label: "Evaluation Service",
+        icon: isSorted
+          ? isSorted === "asc"
+            ? "i-lucide-arrow-up-narrow-wide"
+            : "i-lucide-arrow-down-wide-narrow"
+          : "i-lucide-arrow-up-down",
+        class: "-mx-2.5",
+        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+      });
+    },
     enableHiding: true,
-    accessorKey: "eval_embedding_model"
+    accessorKey: "eval_service",
+    label: "Evaluation Service"
   },
   {
-    header: "Evaluation Retrieval Model",
+    header: ({ column }) => {
+      const isSorted = column.getIsSorted();
+      return h(UButton, {
+        color: "neutral",
+        variant: "ghost",
+        label: "Evaluation Embedding Model",
+        icon: isSorted
+          ? isSorted === "asc"
+            ? "i-lucide-arrow-up-narrow-wide"
+            : "i-lucide-arrow-down-wide-narrow"
+          : "i-lucide-arrow-up-down",
+        class: "-mx-2.5",
+        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+      });
+    },
     enableHiding: true,
-    accessorKey: "eval_retrieval_model"
+    accessorKey: "eval_embedding_model",
+    label: "Evaluation Embedding Model"
   },
   {
-    header: "Directional Pricing",
+    header: ({ column }) => {
+      const isSorted = column.getIsSorted();
+      return h(UButton, {
+        color: "neutral",
+        variant: "ghost",
+        label: "Evaluation Retrieval Model",
+        icon: isSorted
+          ? isSorted === "asc"
+            ? "i-lucide-arrow-up-narrow-wide"
+            : "i-lucide-arrow-down-wide-narrow"
+          : "i-lucide-arrow-up-down",
+        class: "-mx-2.5",
+        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+      });
+    },
     enableHiding: true,
-    accessorKey: "directional_pricing"
+    accessorKey: "eval_retrieval_model",
+    label: "Evaluation Retrieval Model"
   },
   {
-    header: "Region",
+    header: ({ column }) => {
+      const isSorted = column.getIsSorted();
+      return h(UButton, {
+        color: "neutral",
+        variant: "ghost",
+        label: "Directional Pricing",
+        icon: isSorted
+          ? isSorted === "asc"
+            ? "i-lucide-arrow-up-narrow-wide"
+            : "i-lucide-arrow-down-wide-narrow"
+          : "i-lucide-arrow-up-down",
+        class: "-mx-2.5",
+        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+      });
+    },
     enableHiding: true,
-    accessorKey: "region"
+    accessorKey: "directional_pricing",
+    label: "Directional Pricing"
   },
   {
-    header: "Reranking Model",
+    header: ({ column }) => {
+      const isSorted = column.getIsSorted();
+      return h(UButton, {
+        color: "neutral",
+        variant: "ghost",
+        label: "Region",
+        icon: isSorted
+          ? isSorted === "asc"
+            ? "i-lucide-arrow-up-narrow-wide"
+            : "i-lucide-arrow-down-wide-narrow"
+          : "i-lucide-arrow-up-down",
+        class: "-mx-2.5",
+        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+      });
+    },
     enableHiding: true,
-    accessorKey: "rerank_model_id"
+    accessorKey: "region",
+    label: "Region"
+  },
+  {
+    header: ({ column }) => {
+      const isSorted = column.getIsSorted();
+      return h(UButton, {
+        color: "neutral",
+        variant: "ghost",
+        label: "Reranking Model",
+        icon: isSorted
+          ? isSorted === "asc"
+            ? "i-lucide-arrow-up-narrow-wide"
+            : "i-lucide-arrow-down-wide-narrow"
+          : "i-lucide-arrow-up-down",
+        class: "-mx-2.5",
+        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+      });
+    },
+    enableHiding: true,
+    accessorKey: "rerank_model_id",
+    label: "Reranking Model"
   }
 ])
 
 const columnVisibility = ref({
-  select: props.selectable ?? false
+  select: props.selectable ?? false,
+  directional_pricing: false,
+  region: false,
+  rerank_model_id: false,
+  eval_retrieval_model: false,
+  eval_embedding_model: false,
+  eval_service:false,
+  n_shot_prompts: false,
+  knn_num: false,
+  indexing_algorithm: false,
+  temp_retrieval_llm: false,
 })
 </script>
 
@@ -152,7 +403,7 @@ const columnVisibility = ref({
         ?.getAllColumns()
         .filter((column: any) => column.getCanHide())
         .map((column: any) => ({
-          label: column.columnDef.header,
+          label: column.columnDef.label,
           type: 'checkbox' as const,
           checked: column.getIsVisible(),
           onUpdateChecked(checked: boolean) {
@@ -178,16 +429,13 @@ const columnVisibility = ref({
       <template #chunk_size-header="{ column }">
         <div class="flex items-center gap-2">
           Chunk Size
-          <UTooltip arrow text="Chunk size refers to the amount of text or data that is retrieved from a knowledge source (measured in tokens). Fixed chunk size refers to a predefined, consistent length or amount of text that is retrieved from a knowledge source. For Hierarchical chunking strategy, organizes your data into a hierarchical structure ([child, parent]),for more granular and efficient retrieval.">
-            <UButton icon="i-lucide-info" size="md" color="neutral" variant="ghost" />
-          </UTooltip>
         </div>
       </template>
       <template #chunk_size-cell="{ row }">
         {{ useHumanChunkingStrategy(row.original.chunking_strategy) === 'Fixed' ? row.original.chunk_size : [row.original.hierarchical_child_chunk_size, row.original.hierarchical_parent_chunk_size] }}
       </template>
        <template #chunk_overlap-cell="{ row }">
-        {{ useHumanChunkingStrategy(row.original.chunking_strategy) === 'Fixed' ? row.original.chunk_overlap : row.original.hierarchical_chunk_overlap_percentage}}
+          {{ useHumanChunkingStrategy(row.original.chunking_strategy) === 'Fixed' ? row.original.chunk_overlap : row.original.hierarchical_chunk_overlap_percentage}}
       </template>
       <template #indexing_algorithm-cell="{ row }">
         {{ useHumanIndexingAlgorithm(row.original.indexing_algorithm) }}
@@ -210,3 +458,10 @@ const columnVisibility = ref({
     </UTable>
   </div>
 </template>
+
+<style scoped>
+span.truncate {
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+}
+</style>
