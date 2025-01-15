@@ -276,13 +276,10 @@ class SageMakerEmbedder(BaseEmbedder):
                             self._assign_predictor(predictor, model_id)
                             
                             return predictor
-<<<<<<< HEAD
                         
                     elif e.response['Error']['Code'] == 'ResourceLimitExceeded':
                         logger.error(f"Resource limit exceeded while creating endpoint: {e}")
                         raise
-=======
->>>>>>> 46ac2259de33a32eb754481c0840949b62b939a3
             
             # Re-raise any unexpected AWS API errors
             raise
