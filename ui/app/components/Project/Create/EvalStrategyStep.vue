@@ -160,7 +160,7 @@ onMounted(() => {
     </UFormField>
     <UFormField
       name="ragas_inference_llm"
-      :label="`Inference Model`"
+      :label="`Inferencing Model`"
       required
     >
       <USelectMenu

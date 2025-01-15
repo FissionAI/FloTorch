@@ -199,7 +199,7 @@ const items = ref([
                   <td class="w-40">
                     {{ 
                       experimentsData?.indexing_time ? 
-                      useConvertSecondsToDHM(experimentsData?.indexing_time) 
+                      useConvertSecondsToDHM(Number(experimentsData?.indexing_time)) 
                       : 'Unable to fetch time'
                     }}
                   </td>
@@ -209,7 +209,7 @@ const items = ref([
                   <td>
                     {{
                       experimentsData?.retrieval_time ? 
-                      useConvertSecondsToDHM(experimentsData?.retrieval_time)
+                      useConvertSecondsToDHM(Number(experimentsData?.retrieval_time))
                       : 'Unable to fetch time'
                     }}
                   </td>
@@ -219,7 +219,7 @@ const items = ref([
                   <td >
                     {{ 
                       experimentsData?.eval_time ? 
-                      useConvertSecondsToDHM(experimentsData?.eval_time)
+                      useConvertSecondsToDHM(Number(experimentsData?.eval_time))
                       :'Unable to fetch time'
                     }}
                   </td>

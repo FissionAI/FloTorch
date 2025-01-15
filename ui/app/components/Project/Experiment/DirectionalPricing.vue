@@ -16,7 +16,6 @@
   <UModal class="overflow-y-scroll max-h-[50vh]" v-model:open="isOpen" :title="props.label">
     <template #body>
         <UCard>
-           <!-- {{props.pricingInfo  }} -->
             <table class="w-full text-left">
               <tbody>
                

@@ -394,13 +394,16 @@ const columnVisibility = ref({
         </UButton>
       </template>
       <template #directional_pricing-cell="{ row }">
-        <span class="flex justify-center">
+        <div class="flex justify-center" v-if="row.original.directional_pricing">
           <ProjectExperimentDirectionalPricing :label="'Directional Pricing'" :pricing-info="{
             retrieval_cost_estimate : row.original?.retrieval_cost_estimate,
             indexing_cost_estimate : row.original?.indexing_cost_estimate,
             eval_cost_estimate : row.original?.eval_cost_estimate
-          }" :price="row.original?.directional_pricing ? row.original.directional_pricing : '-'" />
-          </span>
+          }" :price="row.original.directional_pricing" />
+          </div>
+          <div v-else>
+             - 
+          </div>
       </template>
       <template #chunk_overlap-header="{ column }">
         <UButton

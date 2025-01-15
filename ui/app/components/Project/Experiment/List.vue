@@ -574,7 +574,12 @@ const columnVisibility = ref({
         </UBadge>
       </template>
       <template #directional_pricing-cell="{row}">     
-        <ProjectExperimentDirectionalPricing :label="'Directional Pricing'" :pricing-info="row.original.config" :price="row.original.config?.directional_pricing ? row.original.config.directional_pricing : '-'" />
+      <div v-if="row.original.config?.directional_pricing">
+        <ProjectExperimentDirectionalPricing :label="'Directional Pricing'" :pricing-info="row.original.config" :price="row.original.config?.directional_pricing" />
+      </div>
+      <div v-else>
+      -
+      </div>
       </template>
     </UTable>
     <div v-if="hasAllExperimentsCompleted" class="flex justify-end">

@@ -826,13 +826,13 @@ export const useHumanDuration = (durationInMins: number) => {
 
 export const  useConvertSecondsToDHM = (seconds: number): string => {
   const hours = Math.floor(seconds / 3600); // Calculate hours
-  const minutes = Math.floor((seconds % 3600) / 60); // Calculate minutes
-  const remainingSeconds = seconds % 60; // Calculate remaining seconds
+  const minutes = Number(Math.floor((seconds % 3600) / 60)); // Calculate minutes
+  const remainingSeconds = (seconds % 60); // Calculate remaining seconds
+  const formattedSeconds = remainingSeconds.toFixed(0)
 
   // Pad hours, minutes, and seconds to always display 2 digits
   const paddedHours = hours.toString().padStart(2, '0');
   const paddedMinutes = minutes.toString().padStart(2, '0');
-  const paddedSeconds = remainingSeconds.toString().padStart(2, '0');
-
-  return `${paddedHours}:${paddedMinutes}:${paddedSeconds}`;
+  
+  return `${paddedHours}:${paddedMinutes}:${formattedSeconds}`;
 }
