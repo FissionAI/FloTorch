@@ -426,11 +426,6 @@ const columnVisibility = ref({
       <template #chunking_strategy-cell="{ row }">
         {{ useHumanChunkingStrategy(row.original.chunking_strategy) }}
       </template>
-      <template #chunk_size-header="{ column }">
-        <div class="flex items-center gap-2">
-          Chunk Size
-        </div>
-      </template>
       <template #chunk_size-cell="{ row }">
         {{ useHumanChunkingStrategy(row.original.chunking_strategy) === 'Fixed' ? row.original.chunk_size : [row.original.hierarchical_child_chunk_size, row.original.hierarchical_parent_chunk_size] }}
       </template>
