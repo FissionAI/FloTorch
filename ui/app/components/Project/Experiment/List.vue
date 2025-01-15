@@ -473,12 +473,12 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
     accessorKey: "experiment_cost",
     enableHiding: true,
     sortingFn: (rowA, rowB) => {
-      const a = rowA.original.experiment_cost ?? 0;
-      const b = rowB.original.experiment_cost ?? 0;
+      const a = rowA.original.cost ?? 0;
+      const b = rowB.original.cost ?? 0;
       return Number(a) - Number(b);
     },
     cell: ({ row }) => {
-      return row.original.experiment_cost? useHumanCurrencyAmount(row.original.experiment_cost) : "-"
+      return row.original.cost? useHumanCurrencyAmount(row.original.cost) : "-"
     }
   },
   {
