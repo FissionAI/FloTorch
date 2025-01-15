@@ -52,7 +52,7 @@ const props = defineProps<{
             <td>{{ props.experimentsData?.config?.knn_num }}</td>
           </tr>
           <tr>
-            <td class="font-medium">Inferencing LLM Temperature</td>
+            <td class="font-medium">Inferencing Model Temperature</td>
             <td>{{ props.experimentsData?.config?.temp_retrieval_llm }}</td>
           </tr>
           <tr>
@@ -66,7 +66,7 @@ const props = defineProps<{
             </td>
           </tr>
           <tr>
-            <td class="font-medium">Inferencing LLM</td>
+            <td class="font-medium">Inferencing Model</td>
             <td>{{ useModelName("retrieval", props.experimentsData?.config?.retrieval_model!) }} ({{
               useHumanModelService(props.experimentsData?.config?.retrieval_service!) }})
             </td>
