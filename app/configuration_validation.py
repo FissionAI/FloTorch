@@ -48,7 +48,7 @@ def is_valid_combination(config, data):
     if (config['embedding']["service"] == "sagemaker" and config["embedding"]["model"] == "huggingface-textembedding-gte-qwen2-7b-instruct"):
         if config['vector_dimension'] != 3584:
             return False
-    valid_values = {Decimal('0.5'), Decimal('0.3'), Decimal('0.7'), Decimal('0')}
+    valid_values = {Decimal('0.5'), Decimal('0.3'), Decimal('0.7'), Decimal('0'), Decimal('0.1')}
     if config['temp_retrieval_llm'] not in valid_values:
         return False
     if config['knn_num'] != 3 and config['knn_num'] != 5 and config['knn_num'] != 10 and config['knn_num'] != 15:
