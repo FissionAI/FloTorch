@@ -3,12 +3,18 @@ import json
 import os
 from pricing import compute_actual_price, calculate_experiment_duration
 from decimal import Decimal
-from constants.time_constants import TimeConstants
 import math
 
 import logging
 logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO)
+
+MILLION = 1_000_000
+THOUSAND = 1_000
+SECONDS_IN_MINUTE = 60
+MINUTES_IN_HOUR = 60
+HOURS_IN_DAY = 24
+DAYS_IN_MONTH = 30
 
 # Initialize AWS services clients
 dynamodb = boto3.resource("dynamodb")
@@ -73,9 +79,9 @@ def lambda_handler(event, context):
         if experiment_items:
             experiment = experiment_items[0]
             indexing_time, retrieval_time, eval_time = calculate_experiment_duration(experiment)
-            indexing_time_in_min = math.ceil(indexing_time / TimeConstants.SECONDS_IN_MINUTE)
-            retrieval_time_in_min = math.ceil(retrieval_time / TimeConstants.SECONDS_IN_MINUTE)
-            eval_time_in_min = math.ceil(eval_time / TimeConstants.SECONDS_IN_MINUTE)
+            indexing_time_in_min = math.ceil(indexing_time / SECONDS_IN_MINUTE)
+            retrieval_time_in_min = math.ceil(retrieval_time / SECONDS_IN_MINUTE)
+            eval_time_in_min = math.ceil(eval_time / SECONDS_IN_MINUTE)
             total_duration = indexing_time + retrieval_time + eval_time
             total_duration_in_min = indexing_time_in_min + retrieval_time_in_min + eval_time_in_min
             logger.info(f"Experiment {experiment_id} Total Time (in minutes): {total_duration_in_min} Indexing Time: {indexing_time_in_min}, Retrieval: {retrieval_time_in_min}, Evaluation: {eval_time_in_min}")
