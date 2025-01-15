@@ -117,13 +117,13 @@ def lambda_handler(event, context):
                 UpdateExpression="SET cost = :new_cost, indexing_time = :new_indexing_time, retrieval_time = :new_retrieval_time, eval_time = :new_eval_time, total_time = :new_total_time, indexing_cost = :new_indexing_cost, retrieval_cost = :new_retrieval_cost, eval_cost = :new_eval_cost",
                 ExpressionAttributeValues={
                     ":new_cost": str(total_cost),
-                    ":new_indexing_cost": Decimal(str(indexing_cost)),
-                    ":new_retrieval_cost": Decimal(str(retrieval_cost)),
-                    ":new_eval_cost": Decimal(str(eval_cost)),
-                    ":new_indexing_time": indexing_time,
-                    ":new_retrieval_time": retrieval_time,
-                    ":new_eval_time": eval_time,
-                    ":new_total_time": total_duration,
+                    ":new_indexing_cost": str(indexing_cost),
+                    ":new_retrieval_cost": str(retrieval_cost),
+                    ":new_eval_cost": str(eval_cost),
+                    ":new_indexing_time": str(indexing_time),
+                    ":new_retrieval_time": str(retrieval_time),
+                    ":new_eval_time": str(eval_time),
+                    ":new_total_time": str(total_duration),
                 },
             )
         except Exception as e:
@@ -152,13 +152,3 @@ def lambda_handler(event, context):
             "statusCode": 500,
             "body": json.dumps({"error": "Internal server error"}),
         }
-
-
-lambda_handler({
-    'aws_region': 'us-east-1',
-    'experiment_id': '036TQ98Q', 
-    'embedding_model': 'amazon.titan-embed-text-v2:0', 
-    'retrieval_model': 'amazon.titan-text-lite-v1',
-    'embedding_service': 'bedrock',
-    'retrieval_service': 'bedrock'
-    }, None)
