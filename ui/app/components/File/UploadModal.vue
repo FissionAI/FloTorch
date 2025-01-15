@@ -9,8 +9,11 @@
             emit('close-kb-upload-modal');
           },
           fileManagerSelectionType: 'both',
+          note: 'Drag and drop files/folders here'
         }"
-      />
+      >
+      </Dashboard>
+      
     </div>
   </template>
   
@@ -126,5 +129,41 @@ const { mutateAsync: getKbPresignedUrls, isPending: isFetchingKbPresignedUrls } 
     padding: 0 !important;
     margin: 0 !important;
     display: none !important;
+    }
+    .uppy-Dashboard-AddFiles-title {
+      display: none !important;
+    }
+    .uppy-Dashboard-AddFiles-info {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 1.2em;
+      font-weight: bold;
+      margin: 15px 0;
+      text-align: center;
+    }
+
+    .uppy-Dashboard--singleFile .uppy-Dashboard-filesInner {
+      align-items: unset !important;
+    }
+
+    .uppy-Dashboard--singleFile .uppy-Dashboard-Item{
+      height: 71px;
+    }
+    .uppy-Dashboard--singleFile .uppy-Dashboard-Item{
+      flex-direction: row;
+      padding: 0px !important;
+    }
+
+    .uppy-Dashboard--singleFile .uppy-Dashboard-Item-preview {
+      width: 50px !important;
+      height: 50px !important;
+      margin-right: 12px !important;
+      flex-shrink: unset !important;
+      flex-grow: unset !important;
+    }
+    .uppy-Dashboard--singleFile.uppy-size--height-md .uppy-Dashboard-Item-action--remove {
+      top: unset !important;
     }
 </style>

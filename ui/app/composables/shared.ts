@@ -100,19 +100,19 @@ export const useProjectCreateMeta = () => {
       ],
       chunkOverlapPercentage: [
         {
-          label: "5",
+          label: "5%",
           value: 5,
         },
         {
-          label: "10",
+          label: "10%",
           value: 10,
         },
         {
-          label: "15",
+          label: "15%",
           value: 15,
         },
         {
-          label: "20",
+          label: "20%",
           value: 20,
         },
       ],
@@ -150,26 +150,26 @@ export const useProjectCreateMeta = () => {
       ],
       hierarchical_chunk_overlap_percentage: [
         {
-          label: "5",
+          label: "5%",
           value: 5,
         },
         {
-          label: "10",
+          label: "10%",
           value: 10,
         },
         {
-          label: "15",
+          label: "15%",
           value: 15,
         },
         {
-          label: "20",
+          label: "20%",
           value: 20,
         },
       ],
       embeddingService: [
         {
           type: "label",
-          label: "Bedrock",
+          label: "Bedrock (Serverless)",
         },
         // {
         //   label: "Titan Embeddings - Text",
@@ -177,41 +177,41 @@ export const useProjectCreateMeta = () => {
         //   service: "bedrock",
         // },
         {
-          label: "Titan Embeddings V2 - Text",
+          label: "Amazon/amazon.titan-embed-text-v2:0",
           value: "amazon.titan-embed-text-v2:0",
           service: "bedrock",
         },
         {
-          label: "Titan Multimodal embeddings G1",
+          label: "Amazon/amazon.titan-embed-image-v1",
           value: "amazon.titan-embed-image-v1",
           service: "bedrock",
         },
         {
-          label: "Cohere Embed English",
+          label: "Cohere/cohere.embed-english-v3",
           value: "cohere.embed-english-v3",
           service: "bedrock",
         },
         {
-          label: "Cohere Embed Multilingual",
+          label: "Cohere/cohere.embed-multilingual-v3",
           value: "cohere.embed-multilingual-v3",
           service: "bedrock",
         },
         {
           type: "label",
-          label: "SageMaker",
+          label: "SageMaker (Provisioned)",
         },
         {
-          label: "bge-large-en-v1-5",
+          label: "BAAI/bge-large-en-v1.5 (ml.g5.2xlarge)",
           value: "huggingface-sentencesimilarity-bge-large-en-v1-5",
           service: "sagemaker",
         },
         {
-          label: "bge-m3",
+          label: "BAAI/bge-m3 (ml.g5.2xlarge)",
           value: "huggingface-sentencesimilarity-bge-m3",
           service: "sagemaker",
         },
         {
-          label: "gte-qwen2-7b-instruct",
+          label: "Alibaba-NLP/gte-Qwen2-7B-instruct (ml.g5.2xlarge)",
           value: "huggingface-textembedding-gte-qwen2-7b-instruct",
           service: "sagemaker",
         },
@@ -293,107 +293,107 @@ export const useProjectCreateMeta = () => {
       llmService: [
         {
           type: "label",
-          label: "Bedrock",
+          label: "Bedrock (Serverless)",
         },
         {
-          label: "Amazon Titan Text G1 - Lite",
+          label: "Amazon/amazon.titan-text-lite-v1",
           value: "amazon.titan-text-lite-v1",
           service: "bedrock",
         },
         {
-          label: "Amazon Titan Text G1 - Express",
+          label: "Amazon/amazon.titan-text-express-v1",
           value: "amazon.titan-text-express-v1",
           service: "bedrock",
         },
         {
-          label: "Amazon Nova Lite V1",
+          label: "Amazon/amazon.nova-lite-v1:0",
           value: "us.amazon.nova-lite-v1:0",
           service: "bedrock",
         },
         {
-          label: "Amazon Nova Micro V1",
+          label: "Amazon/amazon.nova-micro-v1:0",
           value: "us.amazon.nova-micro-v1:0",
           service: "bedrock",
         },
         {
-          label: "Amazon Nova Pro V1",
+          label: "Amazon/amazon.nova-pro-v1:0",
           value:"us.amazon.nova-pro-v1:0",
           service: "bedrock",
         },
         {
-          label: "Claude 3.5 Sonnet v2",
+          label: "Anthropic/anthropic.claude-3-5-sonnet-20241022-v2:0",
           value: "us.anthropic.claude-3-5-sonnet-20241022-v2:0",
           service: "bedrock",
         },
         {
-          label: "Claude 3.5 Sonnet",
+          label: "Anthropic/anthropic.claude-3-5-sonnet-20240620-v1:0",
           value: "anthropic.claude-3-5-sonnet-20240620-v1:0",
           service: "bedrock",
         },
         {
-          label: "Cohere Command R+",
+          label: "Cohere/cohere.command-r-plus-v1:0",
           value: "cohere.command-r-plus-v1:0",
           service: "bedrock",
         },
         {
-          label: "Cohere Command R",
+          label: "Cohere/cohere.command-r-v1:0",
           value: "cohere.command-r-v1:0",
           service: "bedrock",
         },
         {
-          label: "Meta Llama 3.2 1B Instruct",
+          label: "Meta/meta.llama3-2-1b-instruct-v1:0",
           value: "us.meta.llama3-2-1b-instruct-v1:0",
           service: "bedrock",
         },
         {
-          label: "Meta Llama 3.2 3B Instruct",
+          label: "Meta/meta.llama3-2-3b-instruct-v1:0",
           value: "us.meta.llama3-2-3b-instruct-v1:0",
           service: "bedrock",
         },
         {
-          label: "Meta Llama 3.2 11B Vision Instruct",
+          label: "Meta/meta.llama3-2-11b-instruct-v1:0",
           value: "us.meta.llama3-2-11b-instruct-v1:0",
           service: "bedrock",
         },
         {
-          label: "Meta Llama 3.2 90B Vision Instruct",
+          label: "Meta/meta.llama3-2-90b-instruct-v1:0",
           value: "us.meta.llama3-2-90b-instruct-v1:0",
           service: "bedrock",
         },
         {
-          label: "Mistral 7B Instruct",
+          label: "Mistral AI/mistral.mistral-7b-instruct-v0:2",
           value: "mistral.mistral-7b-instruct-v0:2",
           service: "bedrock",
         },
         {
-          label: "Mistral Large",
+          label: "Mistral AI/mistral.mistral-large-2402-v1:0",
           value: "mistral.mistral-large-2402-v1:0",
           service: "bedrock",
         },
         {
           type: "label",
-          label: "SageMaker",
+          label: "SageMaker (Provisioned)",
         },
         {
-          label: "llama-3-1-8b-instruct",
+          label: "meta-llama/Llama-3.1-8B-Instruct (ml.g5.2xlarge)",
           value: "meta-textgeneration-llama-3-1-8b-instruct",
           service: "sagemaker",
         },
         {
-          label: "llm-falcon-7b-instruct-bf16",
+          label: "tiiuae/falcon-7b-instruct (ml.g5.2xlarge)",
           value: "huggingface-llm-falcon-7b-instruct-bf16",
           service: "sagemaker",
         },
         {
-          label: "llama-3-3-70b-instruct",
+          label: "meta-llama/Meta-Llama-3-70B-Instruct (ml.p4d.24xlarge)",
           value: "meta-textgeneration-llama-3-3-70b-instruct",
           service: "sagemaker",
         },
       ],
       temperature: [
         {
-          label: "0",
-          value: 0,
+          label: "0.1",
+          value: 0.1,
         },
         {
           label: "0.3",
@@ -445,115 +445,115 @@ export const useProjectCreateMeta = () => {
     evalStrategy: {
       service: [
         {
-          label: 'Ragas',
+          label: 'ragas',
           value: 'ragas',
         },
       ],
       ragas_embedding_llm: [
         {
-          label: 'Titan Embeddings V1 - Text',
+          label: 'Amazon/amazon.titan-embed-text-v1',
           value: 'amazon.titan-embed-text-v1',
           service: 'bedrock',
         },
         {
-          label: "Titan Embeddings V2 - Text",
+          label: "Amazon/amazon.titan-embed-text-v2:0",
           value: "amazon.titan-embed-text-v2:0",
           service: "bedrock",
         },
         {
-          label: "Titan Multimodal embeddings G1",
+          label: "Amazon/amazon.titan-embed-image-v1",
           value: "amazon.titan-embed-image-v1",
           service: "bedrock",
         },
         {
-          label: "Cohere Embed English",
+          label: "Cohere/cohere.embed-english-v3",
           value: "cohere.embed-english-v3",
           service: "bedrock",
         },
         {
-          label: "Cohere Embed Multilingual",
+          label: "Cohere/cohere.embed-multilingual-v3",
           value: "cohere.embed-multilingual-v3",
           service: "bedrock",
         },
       ],
       ragas_inference_llm: [
         {
-          label: "Amazon Titan Text G1 - Lite",
+          label: "Amazon/amazon.titan-text-lite-v1",
           value: "amazon.titan-text-lite-v1",
           service: "bedrock",
         },
         {
-          label: "Amazon Titan Text G1 - Express",
+          label: "Amazon/amazon.titan-text-express-v1",
           value: "amazon.titan-text-express-v1",
           service: "bedrock",
         },
         {
-          label: "Amazon Nova Lite V1",
+          label: "Amazon/amazon.nova-lite-v1:0",
           value: "us.amazon.nova-lite-v1:0",
           service: "bedrock",
         },
         {
-          label: "Amazon Nova Micro V1",
+          label: "Amazon/amazon.nova-micro-v1:0",
           value: "us.amazon.nova-micro-v1:0",
           service: "bedrock",
         },
         {
-          label: "Amazon Nova Pro V1",
+          label: "Amazon/amazon.nova-pro-v1:0",
           value:"us.amazon.nova-pro-v1:0",
           service: "bedrock",
         },
         {
-          label: "Claude 3.5 Sonnet v2",
+          label: "Anthropic/anthropic.claude-3-5-sonnet-20241022-v2:0",
           value: "us.anthropic.claude-3-5-sonnet-20241022-v2:0",
           service: "bedrock",
         },
         {
-          label: "Claude 3.5 Sonnet",
+          label: "Anthropic/anthropic.claude-3-5-sonnet-20240620-v1:0",
           value: "anthropic.claude-3-5-sonnet-20240620-v1:0",
           service: "bedrock",
         },
         {
-          label: "Cohere Command R+",
+          label: "Cohere/cohere.command-r-plus-v1:0",
           value: "cohere.command-r-plus-v1:0",
           service: "bedrock",
         },
         {
-          label: "Cohere Command R",
+          label: "Cohere/cohere.command-r-v1:0",
           value: "cohere.command-r-v1:0",
           service: "bedrock",
         },
         {
-          label: "Meta Llama 3.2 1B Instruct",
+          label: "Meta/meta.llama3-2-1b-instruct-v1:0",
           value: "us.meta.llama3-2-1b-instruct-v1:0",
           service: "bedrock",
         },
         {
-          label: "Meta Llama 3.2 3B Instruct",
+          label: "Meta/meta.llama3-2-3b-instruct-v1:0",
           value: "us.meta.llama3-2-3b-instruct-v1:0",
           service: "bedrock",
         },
         {
-          label: "Meta Llama 3.2 11B Vision Instruct",
+          label: "Meta/meta.llama3-2-11b-instruct-v1:0",
           value: "us.meta.llama3-2-11b-instruct-v1:0",
           service: "bedrock",
         },
         {
-          label: "Meta Llama 3.2 90B Vision Instruct",
+          label: "Meta/meta.llama3-2-90b-instruct-v1:0",
           value: "us.meta.llama3-2-90b-instruct-v1:0",
           service: "bedrock",
         },
         {
-          label: "Mistral 7B Instruct",
+          label: "Mistral AI/mistral.mistral-7b-instruct-v0:2",
           value: "mistral.mistral-7b-instruct-v0:2",
           service: "bedrock",
         },
         {
-          label: 'Mistral Mixtral 8x7B Instruct',
+          label: 'Mistral AI/mistral.mixtral-8x7b-instruct-v0:1',
           value: 'mistral.mixtral-8x7b-instruct-v0:1',
           service: 'bedrock',
         },
         {
-          label: "Mistral Large",
+          label: "Mistral AI/mistral.mistral-large-2402-v1:0",
           value: "mistral.mistral-large-2402-v1:0",
           service: "bedrock",
         },
@@ -568,6 +568,7 @@ export const useFilteredRagasEmbeddingModels = (embeddingModel: string[]) => {
     if (model.value !== 'none' && embeddingModel.includes(model.value)) {
       return {
         ...model,
+        label : model.label + '( Already selected)',
         disabled: true
       };
     }
@@ -581,6 +582,7 @@ export const useFilteredRagasInferenceModels = (inferenceModel: string[]) => {
     if (model.value !== 'none' && inferenceModel.includes(model.value)) {
       return {
         ...model,
+        label : model.label + '( already selected)',
         disabled: true
       };
     }
@@ -622,6 +624,10 @@ export const useGetModelData = (
   );
   return model;
 };
+
+// export const getModelLabel = (type: "indexing" | "retrieval", model: string) => {
+
+// }
 
 export const useModelName = (type: "indexing" | "retrieval", model: string) => {
   return useGetModelData(type, model)?.label?.replace(" (Coming Soon)", "");
@@ -777,6 +783,7 @@ export const useHumanIndexingAlgorithm = (algorithm: string) => {
 };
 
 export const useHumanCurrencyAmount = (amount: number) => {
+  
   return Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",

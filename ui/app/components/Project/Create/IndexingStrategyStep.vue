@@ -68,9 +68,6 @@ const meta = useProjectCreateMeta()
       required>
       <USelectMenu v-model="state.chunk_overlap" value-key="value" multiple
         :items="meta.indexingStrategy.chunkOverlapPercentage" class="w-full" >
-          <template #item-label="{ item }">
-              {{ item.label + '%' }}
-          </template>
         </USelectMenu>
       <template #hint>
             <FieldTooltip field-name="chunk_overlap" />
@@ -105,9 +102,6 @@ const meta = useProjectCreateMeta()
         required>
         <USelectMenu v-model="state.hierarchical_chunk_overlap_percentage" value-key="value" multiple
         :items="meta.indexingStrategy.hierarchical_chunk_overlap_percentage" class="w-full">
-              <template #item-label="{ item }">
-              {{ item.label + '%' }}
-          </template>
         </USelectMenu>
         <template #hint>
           <FieldTooltip field-name="hierarchical_chunk_overlap_percentage" />

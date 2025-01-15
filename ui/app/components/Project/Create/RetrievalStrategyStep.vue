@@ -3,7 +3,7 @@ import type { FormError, FormSubmitEvent } from '@nuxt/ui';
 import { useMax } from '@vueuse/math'
 
 
-withDefaults(defineProps<{
+const props = withDefaults(defineProps<{
   showBackButton?: boolean,
   nextButtonLabel?: string,
   region?: string,
@@ -28,7 +28,8 @@ const state = reactive<ProjectCreateRetrievalStrategy>({
   n_shot_prompts: modelValue.value.n_shot_prompts || undefined,
   n_shot_prompt_guide: modelValue.value.n_shot_prompt_guide || undefined,
   temp_retrieval_llm: modelValue.value.temp_retrieval_llm || undefined,
-  rerank_model_id: modelValue.value.rerank_model_id || undefined,
+  rerank_model_id: props.region === 'us-east-1' ? ['none'] : modelValue.value.rerank_model_id || undefined,
+  // region: modelValue.value.region || props.region
 })
 
 const onSubmit = (event: FormSubmitEvent<ProjectCreateRetrievalStrategy>) => {
@@ -88,8 +89,15 @@ const handlePromptGuideError = (error?: FormError) => {
         <FieldTooltip field-name="knn_num" />
       </template>
     </UFormField>
+    <UFormField name="rerank_model_id" :label="`Reranking Model ${region === 'us-east-1' ? `(Reranking is not available in us-east-1)`:``}`" :required="region !== 'us-east-1'">
+      <USelectMenu :disabled="region === 'us-east-1'" v-model="state.rerank_model_id" value-key="value" multiple
+        :items="useFilteredRerankModels(region)" class="w-full" />
+      <template #hint>
+        <FieldTooltip field-name="rerank_model_id" />
+      </template>
+    </UFormField>
     <UFormField name="retrieval"
-      :label="`Inferencing LLM ${state?.retrieval?.length === 0 || state?.retrieval === undefined ? '' : `(${state?.retrieval?.length})`}`"
+      :label="`Inferencing Model ${state?.retrieval?.length === 0 || state?.retrieval === undefined ? '' : `(${state?.retrieval?.length})`}`"
       required>
       <ModelSelect v-model="state.retrieval" model="retrieval" />
       <template #hint>
@@ -97,7 +105,7 @@ const handlePromptGuideError = (error?: FormError) => {
       </template>
     </UFormField>
     <UFormField name="temp_retrieval_llm"
-      :label="`Inferencing LLM Temperature ${state?.temp_retrieval_llm?.length === 0 || state?.temp_retrieval_llm === undefined ? '' : `(${state?.temp_retrieval_llm?.length})`}`"
+      :label="`Inferencing Model Temperature ${state?.temp_retrieval_llm?.length === 0 || state?.temp_retrieval_llm === undefined ? '' : `(${state?.temp_retrieval_llm?.length})`}`"
       required>
       <USelectMenu v-model="state.temp_retrieval_llm" value-key="value" multiple
         :items="meta.retrievalStrategy.temperature" class="w-full" />
@@ -105,13 +113,9 @@ const handlePromptGuideError = (error?: FormError) => {
         <FieldTooltip field-name="temp_retrieval_llm" />
       </template>
     </UFormField>
-    <UFormField name="rerank_model_id" label="Rerank Model" required>
-      <USelectMenu v-model="state.rerank_model_id" value-key="value" multiple
-        :items="useFilteredRerankModels(region)" class="w-full" />
-      <template #hint>
-        <FieldTooltip field-name="rerank_model_id" />
-      </template>
-    </UFormField>
+    <!-- <UFormField name="region-selected" label="Selected Region">
+      <UInput v-model="state.region"/>
+    </UFormField> -->
     <div class="flex justify-between items-center w-full mt-6">
       <div>
         <UButton v-if="showBackButton" type="button" icon="i-lucide-arrow-left" label="Back" variant="outline"

@@ -1,18 +1,9 @@
 <script setup lang="ts">
-import { useQuery } from '@tanstack/vue-query';
-
 
 const props = defineProps<{
-  projectId: string
-  experimentId: string
+ experimentsData : any
+ loading : boolean
 }>()
-
-const isOpen = ref(false)
-
-const { data: experiment } = useQuery({
-  queryKey: ["experiments", toRef(props, "experimentId"), toRef(props, "projectId")],
-  queryFn: () => useProjectExperiment(props.projectId, props.experimentId)
-})
 
 
 
@@ -21,61 +12,88 @@ const { data: experiment } = useQuery({
 
 
 <template>
-  <UButton label="Details" icon="i-lucide-info" @click="isOpen = true" />
-  <UModal class="overflow-y-scroll max-h-[50vh]" v-model:open="isOpen" title="Experiment Details" description="More details about the experiment">
-    <template #body>
-      <table class="w-full">
+    <div class="w-full">
+    
+      <UCard v-if="!loading">
+      <template #header>
+            <div class="flex justify-between items-center">
+              <h2 class="text-xl font-medium">Experiment Details</h2>
+              
+            </div>
+          </template>
+        <table class="w-full">
         <tbody>
           <tr>
             <td class="font-medium">Experiment ID</td>
-            <td>{{ experiment?.id }}</td>
+            <td>{{ props.experimentsData?.id }}</td>
           </tr>
           <tr>
             <td class="font-medium">Chunking</td>
-            <td>{{ experiment?.config?.chunking_strategy }}</td>
+            <td>{{ props.experimentsData?.config?.chunking_strategy }}</td>
           </tr>
           <tr>
             <td class="font-medium">Vector Dimensions</td>
-            <td>{{ experiment?.config?.vector_dimension }}</td>
+            <td>{{ props.experimentsData?.config?.vector_dimension }}</td>
           </tr>
           <tr>
             <td class="font-medium">Chunk Size</td>
-            <td>{{ useHumanChunkingStrategy(experiment?.config?.chunking_strategy) === 'Fixed' ? experiment?.config?.chunk_size : [experiment?.config?.hierarchical_child_chunk_size, experiment?.config?.hierarchical_parent_chunk_size]}}</td>
+            <td>{{ useHumanChunkingStrategy(props.experimentsData?.config?.chunking_strategy) === 'Fixed' ? props.experimentsData?.config?.chunk_size : [props.experimentsData?.config?.hierarchical_child_chunk_size, props.experimentsData?.config?.hierarchical_parent_chunk_size]}}</td>
           </tr>
           <tr>
             <td class="font-medium">Chunk Overlap Percentage</td>
-            <td>{{ useHumanChunkingStrategy(experiment?.config?.chunking_strategy) === 'Fixed' ? experiment?.config?.chunk_overlap : experiment?.config?.hierarchical_chunk_overlap_percentage}}</td>
+            <td>{{ useHumanChunkingStrategy(props.experimentsData?.config?.chunking_strategy) === 'Fixed' ? props.experimentsData?.config?.chunk_overlap : props.experimentsData?.config?.hierarchical_chunk_overlap_percentage}}</td>
           </tr>
           <tr>
             <td class="font-medium">N Shot Prompts</td>
-            <td>{{ experiment?.config?.n_shot_prompts }}</td>
+            <td>{{ props.experimentsData?.config?.n_shot_prompts }}</td>
           </tr>
           <tr>
             <td class="font-medium">KNN</td>
-            <td>{{ experiment?.config?.knn_num }}</td>
+            <td>{{ props.experimentsData?.config?.knn_num }}</td>
           </tr>
           <tr>
             <td class="font-medium">Inferencing LLM Temperature</td>
-            <td>{{ experiment?.config?.temp_retrieval_llm }}</td>
+            <td>{{ props.experimentsData?.config?.temp_retrieval_llm }}</td>
           </tr>
           <tr>
             <td class="font-medium">Indexing Algorithm</td>
-            <td>{{ useHumanIndexingAlgorithm(experiment?.config?.indexing_algorithm!) }}</td>
+            <td>{{ useHumanIndexingAlgorithm(props.experimentsData?.config?.indexing_algorithm!) }}</td>
           </tr>
           <tr>
             <td class="font-medium">Embedding Model</td>
-            <td>{{ useModelName("indexing", experiment?.config?.embedding_model!) }} ({{
-              useHumanModelService(experiment?.config?.embedding_service!) }})
+            <td>{{ useModelName("indexing", props.experimentsData?.config?.embedding_model!) }} ({{
+              useHumanModelService(props.experimentsData?.config?.embedding_service!) }})
             </td>
           </tr>
           <tr>
             <td class="font-medium">Inferencing LLM</td>
-            <td>{{ useModelName("retrieval", experiment?.config?.retrieval_model!) }} ({{
-              useHumanModelService(experiment?.config?.retrieval_service!) }})
+            <td>{{ useModelName("retrieval", props.experimentsData?.config?.retrieval_model!) }} ({{
+              useHumanModelService(props.experimentsData?.config?.retrieval_service!) }})
+            </td>
+          </tr>
+          <tr v-if="props.experimentsData?.config?.guardrail_id">
+            <td class="font-medium">Guardrails ID</td>
+            <td>{{
+              props.experimentsData?.config?.guardrail_id }}
+            </td>
+          </tr>
+          <tr v-if="props.experimentsData?.config?.guardrail_version">
+            <td class="font-medium">Guardrail Version</td>
+            <td> {{props.experimentsData?.config?.guardrail_version}}
+            </td>
+          </tr>
+          <tr v-if="props.experimentsData?.config?.eval_embedding_model">
+            <td class="font-medium">Evaluations embedding model</td>
+            <td> {{props.experimentsData?.config?.eval_embedding_model}}
+            </td>
+          </tr>
+          <tr v-if="props.experimentsData?.config?.eval_retrieval_model">
+            <td class="font-medium">Evaluations retrieval model</td>
+            <td> {{props.experimentsData?.config?.eval_retrieval_model}}
             </td>
           </tr>
         </tbody>
       </table>
-    </template>
-  </UModal>
+      </UCard>
+    </div>
 </template>

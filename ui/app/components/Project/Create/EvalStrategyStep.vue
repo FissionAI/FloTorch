@@ -15,6 +15,7 @@ const props = withDefaults(
     nextButtonLabel?: string;
     inferenceModel?: string[];
     embeddingModel?: string[];
+    region?: string;
   }>(),
   {
     showBackButton: true,
@@ -46,11 +47,12 @@ const { mutateAsync: getGuardrailsList, isPending: isFetchingGuardrailsList } =
       const response = await useGuardrailsList();
       guardrailsList.value = response?.map((item) => {
         return {
-          label: item.name,
+          label: item.name + ' - ' + item.version,
           value: item.name,
           name: item.name,
           guardrails_id: item.guardrails_id,
           guardrail_version: item.version,
+          guardrail_description : item.description,
           enable_prompt_guardrails: true,
           enable_context_guardrails: true,
           enable_response_guardrails: true,
@@ -82,7 +84,7 @@ onMounted(() => {
       <div class="flex gap-2 my-3">
         <UFormField
           name="guardrails"
-          :label="`Name ${state?.guardrails?.length === 0 || state?.guardrails === undefined ? '' : `(${state?.guardrails?.length})`}  - Applied at Query,Context and Response levels`"
+          :label="`Name ${state?.guardrails?.length === 0 || state?.guardrails === undefined ? '' : `(${state?.guardrails?.length})`}  - Applied at User Query,Context and Model Response levels`"
           class="text-ellipsis overflow-hidden flex-11"
         >
           <USelectMenu
@@ -94,11 +96,16 @@ onMounted(() => {
             class="w-full mt-2"
             placeholder="None"
           >
+          
             <template #item-label="{ item }">
-                {{ item.label + ' - ' + item.guardrail_version }}
+                {{ item.label + `${item.guardrail_description ?  ' - ( ' + item.guardrail_description + ')' : ''}` }}
             </template>
           </USelectMenu>
+         <div class="my-4">
+          <ULink class="text-blue-500 hover:underline" target="_blank" raw :to="`https://${props.region}.console.aws.amazon.com/bedrock/home?region=${props.region}#/guardrails`" active-class="font-bold" inactive-class="text-[var(--ui-text-muted)]">Create guardrails on AWS</ULink>
+        </div>
         </UFormField>
+        
         <UFormField name="refetch_guardrail_list" label=" " class="flex-1">
           <UButton
             class="mt-0"
@@ -128,7 +135,7 @@ onMounted(() => {
     </UFormField>
     <UFormField
       name="ragas_embedding_llm"
-      :label="`Embedding LLM`"
+      :label="`Embedding Model`"
       required
     >
       <USelectMenu
@@ -143,7 +150,7 @@ onMounted(() => {
     </UFormField>
     <UFormField
       name="ragas_inference_llm"
-      :label="`Inference LLM`"
+      :label="`Inference Model`"
       required
     >
       <USelectMenu

@@ -3,7 +3,8 @@ import { useQuery } from '@tanstack/vue-query';
 
 
 const props = defineProps<{
-  projectId: string
+  projectId: string,
+  disabled?: boolean
 }>()
 
 const { data: project, isLoading } = useQuery({
@@ -34,5 +35,5 @@ const handleDownload = () => {
 
 
 <template>
-  <UButton icon="i-lucide-download" label="Download Config" :loading="isLoading" @click="handleDownload" />
+  <UButton icon="i-lucide-download" label="Download Config" :loading="isLoading" :disabled="props.disabled" @click="handleDownload" />
 </template>

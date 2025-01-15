@@ -23,7 +23,7 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
     }
   },
   {
-    header: "Inferencing LLM",
+    header: "Inferencing Model",
     accessorKey: "config.retrieval_model",
     enableHiding: true,
     cell: ({ row }) => {
@@ -52,7 +52,7 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
     enableHiding: true,
   },
   {
-    header: "Inferencing LLM Temperature",
+    header: "Inferencing Model Temperature",
     accessorKey: "config.temp_retrieval_llm",
     enableHiding: true,
   },
@@ -152,7 +152,7 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
     }
   },
   {
-    header: "Re-ranking Model",
+    header: "Reranking Model",
     accessorKey: "rerank_model_id",
     enableHiding: true,
     cell: ({ row }) => {
@@ -219,6 +219,9 @@ const columnVisibility = ref({
           </template>
           {{ useHumanExperimentStatus(row.original.experiment_status) }}
         </UBadge>
+      </template>
+      <template #directional_pricing-cell="{row}">     
+        <ProjectExperimentDirectionalPricing :label="'Directional Pricing'" :pricing-info="row.original.config" :price="row.original.config?.directional_pricing ? row.original.config.directional_pricing : '-'" />
       </template>
     </UTable>
     <div v-if="hasAllExperimentsCompleted" class="flex justify-end">

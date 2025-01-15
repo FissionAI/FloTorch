@@ -130,7 +130,8 @@ useHead({
       <div class="flex justify-end mt-4">
         <div class="flex gap-2">
           <ProjectDownloadConfigButton
-            v-if="selectedExperiments.length < 1"
+            :key="validExperiments?.length"
+            :disabled="validExperiments?.length === 0"
             :project-id="project!.id"
             variant="outline"
           />

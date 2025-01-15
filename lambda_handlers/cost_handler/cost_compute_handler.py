@@ -69,8 +69,8 @@ def lambda_handler(event, context):
 
         if experiment_items:
             experiment = experiment_items[0]
-            total_duration, indexing_time, retrieval_time, eval_time = calculate_experiment_duration(experiment)
-
+            indexing_time, retrieval_time, eval_time = calculate_experiment_duration(experiment)
+            total_duration = indexing_time + retrieval_time + eval_time
             logger.info(f"Experiment {experiment_id} Total Time (in minutes): {total_duration} Indexing Time: {indexing_time}, Retrieval: {retrieval_time}, Evaluation: {eval_time}")
 
             total_index_embed_tokens = experiment.get("index_embed_tokens", 0)
@@ -78,21 +78,19 @@ def lambda_handler(event, context):
             total_answer_input_tokens = experiment.get("retrieval_input_tokens", 0)
             total_answer_output_tokens = experiment.get("retrieval_output_tokens", 0)
 
-        # Compute total ECS time and cost
-        total_ecs_time = indexing_time + retrieval_time + eval_time
-        logger.info(f"Experiment {experiment_id} Total ECS Time : {total_ecs_time}")
-        total_embed_tokens = total_index_embed_tokens + total_query_embed_tokens
-
-        total_cost = compute_actual_price(
+        total_cost, indexing_cost, retrieval_cost, eval_cost = compute_actual_price(
             event,
             input_tokens=total_answer_input_tokens,
             output_tokens=total_answer_output_tokens,
-            embed_tokens=total_embed_tokens,
-            os_time=total_duration,
-            ecs_time=total_ecs_time,
+            index_embed_tokens=total_index_embed_tokens,
+            query_embed_tokens=total_query_embed_tokens,
+            total_time=total_duration,
+            indexing_time=indexing_time,
+            retrieval_time=retrieval_time,
+            eval_time=eval_time
         )
 
-        logger.info(f"Experiment {experiment_id} Actual Cost (in $): {total_cost}")
+        logger.info(f"Experiment {experiment_id} Actual Cost (in $): {total_cost}, Indexing: {indexing_cost}, Retrieval: {retrieval_cost}, Evaluation : {eval_cost}")
 
         # Update DynamoDB with the new cost
         if total_cost is None:
@@ -103,12 +101,16 @@ def lambda_handler(event, context):
             table = dynamodb.Table(experiment_table)
             table.update_item(
                 Key={"id": experiment_id},
-                UpdateExpression="SET cost = :new_cost, indexing_time = :new_indexing_time, retrieval_time = :new_retrieval_time, eval_time = :new_eval_time",
+                UpdateExpression="SET cost = :new_cost, indexing_time = :new_indexing_time, retrieval_time = :new_retrieval_time, eval_time = :new_eval_time, total_time = :new_total_time, indexing_cost = :new_indexing_cost, retrieval_cost = :new_retrieval_cost, eval_cost = :new_eval_cost",
                 ExpressionAttributeValues={
                     ":new_cost": str(total_cost),
+                    ":new_indexing_cost": indexing_cost,
+                    ":new_retrieval_cost": retrieval_cost,
+                    ":new_eval_cost": eval_cost,
                     ":new_indexing_time": indexing_time,
                     ":new_retrieval_time": retrieval_time,
                     ":new_eval_time": eval_time,
+                    ":new_total_time": total_duration,
                 },
             )
         except Exception as e:
