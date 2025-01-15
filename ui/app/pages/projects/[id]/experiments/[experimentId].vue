@@ -122,10 +122,10 @@ const items = ref([
               <template v-else> No Action Taken </template>
             </template>
             <template #guardrail_result_assessment-cell="{ row }">
-              <template v-if="row.original.guardrail_result_assessment">
+              <template v-if="row.original.guardrail_output_assessment">
                 <ProjectExperimentAssessments
                   :label="'Result Assessment'"
-                  :assessments="row.original.guardrail_result_assessment"
+                  :assessments="row.original.guardrail_output_assessment"
                 />
               </template>
               <template v-else> No Action Taken </template>
