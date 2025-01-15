@@ -1,0 +1,7 @@
+class TimeConstants():
+    MILLION = 1_000_000
+    THOUSAND = 1_000
+    SECONDS_IN_MINUTE = 60
+    MINUTES_IN_HOUR = 60
+    HOURS_IN_DAY = 24
+    DAYS_IN_MONTH = 30

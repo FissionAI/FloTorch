@@ -2,6 +2,9 @@ import boto3
 import json
 import os
 from pricing import compute_actual_price, calculate_experiment_duration
+from decimal import Decimal
+from constants.time_constants import TimeConstants
+import math
 
 import logging
 logger = logging.getLogger()
@@ -70,8 +73,12 @@ def lambda_handler(event, context):
         if experiment_items:
             experiment = experiment_items[0]
             indexing_time, retrieval_time, eval_time = calculate_experiment_duration(experiment)
+            indexing_time_in_min = math.ceil(indexing_time / TimeConstants.SECONDS_IN_MINUTE)
+            retrieval_time_in_min = math.ceil(retrieval_time / TimeConstants.SECONDS_IN_MINUTE)
+            eval_time_in_min = math.ceil(eval_time / TimeConstants.SECONDS_IN_MINUTE)
             total_duration = indexing_time + retrieval_time + eval_time
-            logger.info(f"Experiment {experiment_id} Total Time (in minutes): {total_duration} Indexing Time: {indexing_time}, Retrieval: {retrieval_time}, Evaluation: {eval_time}")
+            total_duration_in_min = indexing_time_in_min + retrieval_time_in_min + eval_time_in_min
+            logger.info(f"Experiment {experiment_id} Total Time (in minutes): {total_duration_in_min} Indexing Time: {indexing_time_in_min}, Retrieval: {retrieval_time_in_min}, Evaluation: {eval_time_in_min}")
 
             total_index_embed_tokens = experiment.get("index_embed_tokens", 0)
             total_query_embed_tokens = experiment.get("retrieval_query_embed_tokens", 0)
@@ -84,10 +91,10 @@ def lambda_handler(event, context):
             output_tokens=total_answer_output_tokens,
             index_embed_tokens=total_index_embed_tokens,
             query_embed_tokens=total_query_embed_tokens,
-            total_time=total_duration,
-            indexing_time=indexing_time,
-            retrieval_time=retrieval_time,
-            eval_time=eval_time
+            total_time=total_duration_in_min,
+            indexing_time=indexing_time_in_min,
+            retrieval_time=retrieval_time_in_min,
+            eval_time=eval_time_in_min
         )
 
         logger.info(f"Experiment {experiment_id} Actual Cost (in $): {total_cost}, Indexing: {indexing_cost}, Retrieval: {retrieval_cost}, Evaluation : {eval_cost}")
@@ -104,9 +111,9 @@ def lambda_handler(event, context):
                 UpdateExpression="SET cost = :new_cost, indexing_time = :new_indexing_time, retrieval_time = :new_retrieval_time, eval_time = :new_eval_time, total_time = :new_total_time, indexing_cost = :new_indexing_cost, retrieval_cost = :new_retrieval_cost, eval_cost = :new_eval_cost",
                 ExpressionAttributeValues={
                     ":new_cost": str(total_cost),
-                    ":new_indexing_cost": indexing_cost,
-                    ":new_retrieval_cost": retrieval_cost,
-                    ":new_eval_cost": eval_cost,
+                    ":new_indexing_cost": Decimal(str(indexing_cost)),
+                    ":new_retrieval_cost": Decimal(str(retrieval_cost)),
+                    ":new_eval_cost": Decimal(str(eval_cost)),
                     ":new_indexing_time": indexing_time,
                     ":new_retrieval_time": retrieval_time,
                     ":new_eval_time": eval_time,
@@ -139,3 +146,13 @@ def lambda_handler(event, context):
             "statusCode": 500,
             "body": json.dumps({"error": "Internal server error"}),
         }
+
+
+lambda_handler({
+    'aws_region': 'us-east-1',
+    'experiment_id': '036TQ98Q', 
+    'embedding_model': 'amazon.titan-embed-text-v2:0', 
+    'retrieval_model': 'amazon.titan-text-lite-v1',
+    'embedding_service': 'bedrock',
+    'retrieval_service': 'bedrock'
+    }, None)

@@ -4,6 +4,7 @@ from utils import read_csv_from_s3, parse_datetime
 from datetime import datetime
 import math
 import logging
+from constants.time_constants import TimeConstants
 
 logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO)
@@ -11,14 +12,6 @@ logging.basicConfig(level=logging.INFO)
 s3 = boto3.client("s3")
 S3_BUCKET = os.getenv("s3_bucket")
 BEDROCK_CSV_PATH = os.getenv("bedrock_limit_csv")
-
-# Constants
-MILLION = 1_000_000
-THOUSAND = 1_000
-SECONDS_IN_MINUTE = 60
-MINUTES_IN_HOUR = 60
-HOURS_IN_DAY = 24
-DAYS_IN_MONTH = 30
 
 
 def compute_actual_price(
@@ -81,7 +74,7 @@ def compute_actual_price(
                 logger.error(f"No embedding model {embedding_model} price found.")
                 return None
             embedding_model_price = float(embedding_model_price.values[0])  # Price per 1000 tokens
-            indexing_cost = (embedding_model_price * float(index_embed_tokens)) / THOUSAND
+            indexing_cost = (embedding_model_price * float(index_embed_tokens)) / TimeConstants.THOUSAND
         else:
             indexing_cost = sagemaker_cost(indexing_time)
         
@@ -105,15 +98,15 @@ def compute_actual_price(
             retrieval_model_output_price = float(retrieval_model_output_price.values[0])  # Price per million tokens
             # Calculate costs
             
-            retrieval_model_input_actual_cost = (retrieval_model_input_price * float(input_tokens)) / MILLION
-            retrieval_model_output_actual_cost = (retrieval_model_output_price * float(output_tokens)) / MILLION
+            retrieval_model_input_actual_cost = (retrieval_model_input_price * float(input_tokens)) / TimeConstants.MILLION
+            retrieval_model_output_actual_cost = (retrieval_model_output_price * float(output_tokens)) / TimeConstants.MILLION
             if embedding_service == "bedrock":
-                query_embedding_cost = (embedding_model_price * float(query_embed_tokens)) / THOUSAND
+                query_embedding_cost = (embedding_model_price * float(query_embed_tokens)) / TimeConstants.THOUSAND
             retrieval_cost = retrieval_model_input_actual_cost + retrieval_model_output_actual_cost + query_embedding_cost
         else:
             retrieval_cost = sagemaker_cost(retrieval_time)
             if embedding_service == "bedrock":
-                query_embedding_cost = (embedding_model_price * float(query_embed_tokens)) / THOUSAND
+                query_embedding_cost = (embedding_model_price * float(query_embed_tokens)) / TimeConstants.THOUSAND
                 retrieval_cost += query_embedding_cost
             else:
                 embedding_sagemaker_cost = sagemaker_cost(retrieval_time)
@@ -137,7 +130,7 @@ def compute_actual_price(
 
 def sagemaker_cost(time, number_of_instances = 1):
     instance_cost_per_hour = 1.210 #per hour ml.g5.2xlarge per model
-    overall_cost = instance_cost_per_hour * number_of_instances * (time / MINUTES_IN_HOUR)
+    overall_cost = instance_cost_per_hour * number_of_instances * (time / TimeConstants.MINUTES_IN_HOUR)
     
     return overall_cost
 
@@ -145,17 +138,17 @@ def opensearch_cost(time):
     number_of_instances = 3
 
     instance_cost_per_hour = 0.711 # r7g.2xlarge.search
-    instance_total_cost = (instance_cost_per_hour * number_of_instances * time / MINUTES_IN_HOUR)
+    instance_total_cost = (instance_cost_per_hour * number_of_instances * time / TimeConstants.MINUTES_IN_HOUR)
 
     ebs_volume_size = 10  # 2 GB
     ebs_volume_price_per_month = .122 
-    ebs_total_cost = ebs_volume_price_per_month * ebs_volume_size * number_of_instances * (time / MINUTES_IN_HOUR) / (HOURS_IN_DAY * DAYS_IN_MONTH) # 3 instances for 10GB each
+    ebs_total_cost = ebs_volume_price_per_month * ebs_volume_size * number_of_instances * (time / TimeConstants.MINUTES_IN_HOUR) / (TimeConstants.HOURS_IN_DAY * TimeConstants.DAYS_IN_MONTH) # 3 instances for 10GB each
     
     iops_cost_per_month = .008
     iops_per_instance = 16000  # instances per hour for 16000 IOPS (3000 free)
     free_iops = 3000
     costing_iops_per_instance = iops_per_instance - free_iops
-    iops_total_cost = iops_cost_per_month * costing_iops_per_instance * number_of_instances * (time / MINUTES_IN_HOUR) / (HOURS_IN_DAY * DAYS_IN_MONTH) # 3 instances for 16000 iops each
+    iops_total_cost = iops_cost_per_month * costing_iops_per_instance * number_of_instances * (time / TimeConstants.MINUTES_IN_HOUR) / (TimeConstants.HOURS_IN_DAY * TimeConstants.DAYS_IN_MONTH) # 3 instances for 16000 iops each
 
     overall_cost =  instance_total_cost + ebs_total_cost + iops_total_cost
     
@@ -171,7 +164,7 @@ def ecs_cost(time):
     fargate_cpu_total_cost = fargate_cpu_cost_per_vcpu * vCPU
     fargate_memory_total_cost = fargate_memory_cost_per_gb * memory
 
-    overall_cost = fargate_cpu_total_cost + fargate_memory_total_cost * (time / MINUTES_IN_HOUR)
+    overall_cost = fargate_cpu_total_cost + fargate_memory_total_cost * (time / TimeConstants.MINUTES_IN_HOUR)
     return overall_cost
 
 def calculate_experiment_duration(experiment):
@@ -191,9 +184,12 @@ def calculate_experiment_duration(experiment):
 
         return (
             # math.ceil(total_duration / SECONDS_IN_MINUTE),
-            math.ceil(indexing_duration / SECONDS_IN_MINUTE),
-            math.ceil(retrieval_duration / SECONDS_IN_MINUTE),
-            math.ceil(eval_duration / SECONDS_IN_MINUTE),
+            indexing_duration,
+            retrieval_duration,
+            eval_duration
+            # math.ceil(indexing_duration / SECONDS_IN_MINUTE),
+            # math.ceil(retrieval_duration / SECONDS_IN_MINUTE),
+            # math.ceil(eval_duration / SECONDS_IN_MINUTE),
         )
     except Exception as e:
         logger.error(f"Error occurred during duration computation: {e}")
