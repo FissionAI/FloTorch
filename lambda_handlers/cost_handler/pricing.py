@@ -5,20 +5,19 @@ from datetime import datetime
 import math
 import logging
 
-logger = logging.getLogger()
-logging.basicConfig(level=logging.INFO)
-
-s3 = boto3.client("s3")
-S3_BUCKET = os.getenv("s3_bucket")
-BEDROCK_CSV_PATH = os.getenv("bedrock_limit_csv")
-
-# Constants
 MILLION = 1_000_000
 THOUSAND = 1_000
 SECONDS_IN_MINUTE = 60
 MINUTES_IN_HOUR = 60
 HOURS_IN_DAY = 24
 DAYS_IN_MONTH = 30
+
+logger = logging.getLogger()
+logging.basicConfig(level=logging.INFO)
+
+s3 = boto3.client("s3")
+S3_BUCKET = os.getenv("s3_bucket")
+BEDROCK_CSV_PATH = os.getenv("bedrock_limit_csv")
 
 
 def compute_actual_price(
@@ -191,9 +190,12 @@ def calculate_experiment_duration(experiment):
 
         return (
             # math.ceil(total_duration / SECONDS_IN_MINUTE),
-            math.ceil(indexing_duration / SECONDS_IN_MINUTE),
-            math.ceil(retrieval_duration / SECONDS_IN_MINUTE),
-            math.ceil(eval_duration / SECONDS_IN_MINUTE),
+            indexing_duration,
+            retrieval_duration,
+            eval_duration
+            # math.ceil(indexing_duration / SECONDS_IN_MINUTE),
+            # math.ceil(retrieval_duration / SECONDS_IN_MINUTE),
+            # math.ceil(eval_duration / SECONDS_IN_MINUTE),
         )
     except Exception as e:
         logger.error(f"Error occurred during duration computation: {e}")

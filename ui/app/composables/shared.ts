@@ -204,16 +204,22 @@ export const useProjectCreateMeta = () => {
           label: "BAAI/bge-large-en-v1.5 (ml.g5.2xlarge)",
           value: "huggingface-sentencesimilarity-bge-large-en-v1-5",
           service: "sagemaker",
+          type : "BAAI/bge-large-en-v1.5",
+          model_name: "ml.g5.2xlarge"
         },
         {
           label: "BAAI/bge-m3 (ml.g5.2xlarge)",
           value: "huggingface-sentencesimilarity-bge-m3",
           service: "sagemaker",
+          type: "BAAI/bge-m3",
+          model_name : "ml.g5.2xlarge"
         },
         {
           label: "Alibaba-NLP/gte-Qwen2-7B-instruct (ml.g5.2xlarge)",
           value: "huggingface-textembedding-gte-qwen2-7b-instruct",
           service: "sagemaker",
+          type: "Alibaba-NLP/gte-Qwen2-7B-instruct",
+          model_name: "ml.g5.2xlarge"
         },
       ],
       vectorDimensions: [
@@ -378,16 +384,22 @@ export const useProjectCreateMeta = () => {
           label: "meta-llama/Llama-3.1-8B-Instruct (ml.g5.2xlarge)",
           value: "meta-textgeneration-llama-3-1-8b-instruct",
           service: "sagemaker",
+          type: "meta-llama/Llama-3.1-8B-Instruct",
+          model_name : "ml.g5.2xlarge"
         },
         {
           label: "tiiuae/falcon-7b-instruct (ml.g5.2xlarge)",
           value: "huggingface-llm-falcon-7b-instruct-bf16",
           service: "sagemaker",
+          type: "tiiuae/falcon-7b-instruct",
+          model_name : "ml.g5.2xlarge"
         },
         {
           label: "meta-llama/Meta-Llama-3-70B-Instruct (ml.p4d.24xlarge)",
           value: "meta-textgeneration-llama-3-3-70b-instruct",
           service: "sagemaker",
+          type: "meta-llama/Meta-Llama-3-70B-Instruct",
+          model_name : "ml.p4d.24xlarge"
         },
       ],
       temperature: [
@@ -448,6 +460,11 @@ export const useProjectCreateMeta = () => {
           label: 'ragas',
           value: 'ragas',
         },
+        {
+          label: 'others - coming soon',
+          value: 'others',
+          disabled : true
+        }
       ],
       ragas_embedding_llm: [
         {
@@ -568,7 +585,7 @@ export const useFilteredRagasEmbeddingModels = (embeddingModel: string[]) => {
     if (model.value !== 'none' && embeddingModel.includes(model.value)) {
       return {
         ...model,
-        label : model.label + '( Already selected)',
+        label : model.label + '( already selected)',
         disabled: true
       };
     }
@@ -806,3 +823,16 @@ export const useHumanDuration = (durationInMins: number) => {
   // if more than 60 minutes, return hours and minutes
   return `${Math.floor(durationInMins / 60)}h ${durationInMins % 60}m`;
 };
+
+export const  useConvertSecondsToDHM = (seconds: number): string => {
+  const hours = Math.floor(seconds / 3600); // Calculate hours
+  const minutes = Math.floor((seconds % 3600) / 60); // Calculate minutes
+  const remainingSeconds = seconds % 60; // Calculate remaining seconds
+
+  // Pad hours, minutes, and seconds to always display 2 digits
+  const paddedHours = hours.toString().padStart(2, '0');
+  const paddedMinutes = minutes.toString().padStart(2, '0');
+  const paddedSeconds = remainingSeconds.toString().padStart(2, '0');
+
+  return `${paddedHours}:${paddedMinutes}:${paddedSeconds}`;
+}

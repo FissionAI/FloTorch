@@ -421,7 +421,11 @@ const columnVisibility = ref({
       :loading="isLoading">
       <template #directional_pricing-cell="{ row }">
         <!-- {{ useHumanCurrencyAmount(row.original.directional_pricing) }} -->
-        <ProjectExperimentDirectionalPricing :label="'Directional Pricing'" :pricing-info="row.original.config" :price="row.original.config?.directional_pricing ? row.original.config?.config.directional_pricing : '-'" />
+        <ProjectExperimentDirectionalPricing :label="'Directional Pricing'" :pricing-info="{
+          retrieval_cost_estimate : row.original?.retrieval_cost_estimate,
+          indexing_cost_estimate : row.original?.indexing_cost_estimate,
+          eval_cost_estimate : row.original?.eval_cost_estimate
+        }" :price="row.original?.directional_pricing ? row.original.directional_pricing : '-'" />
       </template>
       <template #chunking_strategy-cell="{ row }">
         {{ useHumanChunkingStrategy(row.original.chunking_strategy) }}

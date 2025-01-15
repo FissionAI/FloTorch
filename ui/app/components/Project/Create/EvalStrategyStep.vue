@@ -35,6 +35,7 @@ const state = reactive<Partial<ProjectCreateEval>>({
 const emits = defineEmits(["next", "previous"]);
 
 const onSubmit = (event: FormSubmitEvent<ProjectCreateEval>) => {
+  event.data['guardrails'] = event.data['guardrails'].filter(guardrail=>guardrail.name!=='None')
   modelValue.value = event.data;
   emits("next");
 };
@@ -58,6 +59,19 @@ const { mutateAsync: getGuardrailsList, isPending: isFetchingGuardrailsList } =
           enable_response_guardrails: true,
         };
       });
+      guardrailsList.value.unshift({
+       
+          label: 'None',
+          value: 'none',
+          name: 'None',
+          guardrails_id: '',
+          guardrail_version: '',
+          guardrail_description : '',
+          enable_prompt_guardrails: false,
+          enable_context_guardrails: false,
+          enable_response_guardrails: false,
+        
+      })
       return response;
     },
   });
@@ -80,11 +94,10 @@ onMounted(() => {
     @submit="onSubmit"
   >
     <UCard class="w-full">
-      <label class="font-bold text-sm">Guardrails</label>
-      <div class="flex gap-2 my-3">
+      <label class="font-bold text-sm -my-4">Guardrails {{ state?.guardrails?.length ? `(${state?.guardrails?.length})` : ''}} - Applied at User Query,Context and Model Response levels</label>
+      <div class="flex gap-2">
         <UFormField
           name="guardrails"
-          :label="`Name ${state?.guardrails?.length === 0 || state?.guardrails === undefined ? '' : `(${state?.guardrails?.length})`}  - Applied at User Query,Context and Model Response levels`"
           class="text-ellipsis overflow-hidden flex-11"
         >
           <USelectMenu
@@ -93,7 +106,7 @@ onMounted(() => {
             :loading="isFetchingGuardrailsList"
             multiple
             :items="guardrailsList"
-            class="w-full mt-2"
+            class="w-full my-7"
             placeholder="None"
           >
           
@@ -101,15 +114,14 @@ onMounted(() => {
                 {{ item.label + `${item.guardrail_description ?  ' - ( ' + item.guardrail_description + ')' : ''}` }}
             </template>
           </USelectMenu>
-         <div class="my-4">
+         <div class="my-0">
           <ULink class="text-blue-500 hover:underline" target="_blank" raw :to="`https://${props.region}.console.aws.amazon.com/bedrock/home?region=${props.region}#/guardrails`" active-class="font-bold" inactive-class="text-[var(--ui-text-muted)]">Create guardrails on AWS</ULink>
         </div>
         </UFormField>
         
         <UFormField name="refetch_guardrail_list" label=" " class="flex-1">
           <UButton
-            class="mt-0"
-            label="Sync Guardrails"
+            label="Fetch Guardrails"
             trailing-icon="i-lucide-repeat-2"
             @click.prevent="fetchGuardrails"
           />

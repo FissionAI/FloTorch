@@ -55,7 +55,7 @@ const meta = useProjectCreateMeta()
       <UCard>
       <label class="font-bold text-sm"> Fixed Chunking Settings </label>
         <UFormField name="chunk_size"
-      :label="`Chunk Size ${state?.chunk_size?.length === 0 || state?.chunk_size === undefined ? '' : `(${state?.chunk_size?.length})`}`"
+      :label="`Chunk Size (Tokens) ${state?.chunk_size?.length === 0 || state?.chunk_size === undefined ? '' : `(${state?.chunk_size?.length})`}`"
       required>
       <USelectMenu v-model="state.chunk_size" value-key="value" multiple :items="meta.indexingStrategy.chunkSize"
         class="w-full" />
@@ -80,7 +80,7 @@ const meta = useProjectCreateMeta()
       <UCard>
        <label class="font-bold text-sm"> Hierarchical Chunking Settings  </label>
       <UFormField name="hierarchical_child_chunk_size"
-        :label="`Child Chunk Size ${state?.hierarchical_child_chunk_size?.length === 0 || state?.hierarchical_child_chunk_size === undefined ? '' : `(${state?.hierarchical_child_chunk_size?.length})`}`"
+        :label="`Child Chunk Size (Tokens) ${state?.hierarchical_child_chunk_size?.length === 0 || state?.hierarchical_child_chunk_size === undefined ? '' : `(${state?.hierarchical_child_chunk_size?.length})`}`"
         required>
         <USelectMenu v-model="state.hierarchical_child_chunk_size" value-key="value" multiple
         :items="meta.indexingStrategy.hierarchical_child_chunk_size" class="w-full" />
@@ -89,7 +89,7 @@ const meta = useProjectCreateMeta()
         </template>
       </UFormField>
        <UFormField name="hierarchical_parent_chunk_size"
-      :label="`Parent Chunk Size ${state?.hierarchical_parent_chunk_size?.length === 0 || state?.hierarchical_parent_chunk_size === undefined ? '' : `(${state?.hierarchical_parent_chunk_size?.length})`}`"
+      :label="`Parent Chunk Size (Tokens) ${state?.hierarchical_parent_chunk_size?.length === 0 || state?.hierarchical_parent_chunk_size === undefined ? '' : `(${state?.hierarchical_parent_chunk_size?.length})`}`"
       required>
         <USelectMenu v-model="state.hierarchical_parent_chunk_size" value-key="value" multiple
           :items="meta.indexingStrategy.hierarchical_parent_chunk_size" class="w-full" />

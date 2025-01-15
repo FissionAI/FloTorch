@@ -34,12 +34,12 @@ MODELS = {
     "sagemaker_meta-Llama/Llama-3.1-70B-Instruct": 50,
     "sagemaker_BAAI/bge-large-en-v1.5": 50,
     "bedrock_mistral.mixtral-8x7b-instruct-v0:1": 25,
-    "sagemaker_huggingface-sentencesimilarity-bge-large-en-v1-5": 20,
-    "sagemaker_huggingface-sentencesimilarity-bge-m3": 20,
-    "sagemaker_huggingface-textembedding-gte-qwen2-7b-instruct": 20,
-    "sagemaker_meta-textgeneration-llama-3-1-8b-instruct": 20,
-    "sagemaker_huggingface-llm-falcon-7b-instruct-bf16": 20,
-    "sagemaker_meta-textgeneration-llama-3-3-70b-instruct": 20
+    "sagemaker_huggingface-sentencesimilarity-bge-large-en-v1-5": 4,
+    "sagemaker_huggingface-sentencesimilarity-bge-m3": 4,
+    "sagemaker_huggingface-textembedding-gte-qwen2-7b-instruct": 2,
+    "sagemaker_meta-textgeneration-llama-3-1-8b-instruct": 2,
+    "sagemaker_huggingface-llm-falcon-7b-instruct-bf16": 2,
+    "sagemaker_meta-textgeneration-llama-3-3-70b-instruct": 4
 }
 
 def seed_models(execution_model_invocations_db) -> int:

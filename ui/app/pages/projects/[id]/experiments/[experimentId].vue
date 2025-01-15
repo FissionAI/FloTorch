@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import type { TableColumn } from "@nuxt/ui";
-import { useQuery } from "@tanstack/vue-query";
+import { useQuery, useMutation } from "@tanstack/vue-query";
 const experimentId = useRouteParams<string>("experimentId");
 
 const project = inject<Ref<Project>>("project");
+const experimentsData = ref([]);
+const experimentsSharedData = useState('experimentsData', () => []);
 
 const { data: questionMetrics, isLoading } = useQuery({
   queryKey: ["projects", project, "question-metrics"],
@@ -11,9 +13,20 @@ const { data: questionMetrics, isLoading } = useQuery({
     useProjectExperimentQuestionMetrics(project!.value?.id, experimentId.value),
 });
 
-const { data: experimentsData , isLoading:isLoadingExperiments } = useQuery({
-  queryKey: ["experiments", experimentId.value, project!.value?.id],
-  queryFn: () => useProjectExperiment(project!.value.id, experimentId.value)
+ const { mutateAsync: fetchExperimentsData, isPending: isLoadingExperiments } = useMutation({
+    mutationFn: async () => {
+      experimentsData.value = await useProjectExperiment(project!.value.id, experimentId.value);
+      experimentsSharedData.value = experimentsData.value;
+      return experimentsData.value
+    }
+    })
+
+onMounted(() => {
+  fetchExperimentsData();
+});
+
+onUnmounted(() => {
+  experimentsSharedData.value = [];
 })
 
 useHead({
@@ -57,7 +70,7 @@ const items = ref([
     slot: "details",
   },
   {
-    label: "Cost Breakdown",
+    label: "Breakdown",
     slot: "cost-breakdown",
   },
 ]);
@@ -72,7 +85,7 @@ const items = ref([
       class="w-full"
       variant="pill"
     >
-      <template #account="{item}">
+      <template #account="{ item }">
         <UCard>
           <template #header>
             <div class="flex justify-between items-center">
@@ -97,7 +110,7 @@ const items = ref([
                   :assessments="row.original.guardrail_input_assessment"
                 />
               </template>
-              <template v-else> NA </template>
+              <template v-else> No Action Taken </template>
             </template>
             <template #guardrail_context_assessment-cell="{ row }">
               <template v-if="row.original.guardrail_context_assessment">
@@ -106,7 +119,7 @@ const items = ref([
                   :assessments="row.original.guardrail_context_assessment"
                 />
               </template>
-              <template v-else> NA </template>
+              <template v-else> No Action Taken </template>
             </template>
             <template #guardrail_result_assessment-cell="{ row }">
               <template v-if="row.original.guardrail_result_assessment">
@@ -115,12 +128,12 @@ const items = ref([
                   :assessments="row.original.guardrail_result_assessment"
                 />
               </template>
-              <template v-else> NA </template>
+              <template v-else> No Action Taken </template>
             </template>
           </UTable>
         </UCard>
       </template>
-      <template #details="{item}">
+      <template #details="{ item }">
         <ProjectExperimentDetailsButton
           :experiments-data="experimentsData"
           :loading="isLoadingExperiments"
@@ -129,36 +142,8 @@ const items = ref([
       <template #cost-breakdown="{ item }">
         <UCard class="my-5">
           <template #header>
-              <h2 class="text-xl font-medium">Cost Breakdown</h2>
+            <h2 class="text-xl font-medium">Breakdown</h2>
           </template>
-          <UCard>
-            <template #header>
-              <h4 class="text-lg font-medium">Tokens</h4>
-            </template>
-            <table class="w-full">
-              <tbody>
-                <tr>
-                  <td class="font-medium w-40">Index Embedded Tokens</td>
-                  <td class="w-40">{{experimentsData?.index_embed_tokens}}
-                  <!-- lkasdgaksjgkasdjfasdlkfasdkfsakdjfklsdaflkdsmfkladsfkljsdlkj -->
-                  </td>
-                </tr>
-                 <tr>
-                  <td class="font-medium">Retrieval Input Tokens</td>
-                  <td>{{experimentsData?.retrieval_input_tokens}}</td>
-                </tr>
-                 <tr>
-                  <td class="font-medium">Retrieval Output Tokens</td>
-                  <td>{{experimentsData?.retrieval_output_tokens}}</td>
-                </tr>
-                 <tr>
-                  <td class="font-medium">Retrieval Query Embedded Tokens</td>
-                  <td>{{experimentsData?.retrieval_query_embed_tokens}}</td>
-                </tr>
-              </tbody>
-            </table>
-          </UCard>
-
           <UCard class="my-5">
             <template #header>
               <h4 class="text-lg font-medium">Price</h4>
@@ -166,20 +151,38 @@ const items = ref([
             <table class="w-full">
               <tbody>
                 <tr>
-                  <td class="font-medium w-40">Directional Pricing</td>
-                  <td class="w-40">{{useHumanCurrencyAmount(experimentsData?.config?.directional_pricing)}}</td>
+                  <td class="font-medium w-40">Indexing Cost Estimate</td>
+                  <td class="w-40">
+                    {{
+                      experimentsData?.config?.indexing_cost_estimate ?
+                      useHumanCurrencyAmount(
+                        experimentsData?.config?.indexing_cost_estimate
+                      ) : 'Unable to fetch data'
+                    }}
+                  </td>
                 </tr>
-                 <tr>
-                  <td class="font-medium">Index Cost Estimate</td>
-                  <td>{{useHumanCurrencyAmount(experimentsData?.config?.indexing_cost_estimate)}}</td>
-                </tr>
-                 <tr>
+                <tr>
                   <td class="font-medium">Retrieval Cost Estimate</td>
-                  <td>{{useHumanCurrencyAmount(experimentsData?.config?.retrieval_cost_estimate)}}</td>
+                  <td>
+                    {{
+                      retrieval_cost_estimate ? 
+                      useHumanCurrencyAmount(
+                        experimentsData?.config?.retrieval_cost_estimate
+                      ) : 'Unable to fetch data'
+                    }}
+                  </td>
                 </tr>
-                 <tr>
-                  <td class="font-medium">Eval Cost Estimate</td>
-                  <td>{{useHumanCurrencyAmount(experimentsData?.config?.eval_cost_estimate)}}</td>
+                <tr>
+                  <td class="font-medium">Evaluation Cost Estimate</td>
+                  <td>
+                  
+                    {{
+                      experimentsData?.config?.eval_cost_estimate ? 
+                      useHumanCurrencyAmount(
+                        experimentsData?.config?.eval_cost_estimate
+                      ) : 'Unable to fetch data'
+                    }}
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -192,21 +195,78 @@ const items = ref([
             <table class="w-full text-left">
               <tbody>
                 <tr>
-                  <td class="font-medium w-40">Eval Time</td>
-                  <td class="font-medium w-40">{{experimentsData?.eval_time}} min</td>
+                  <td class="font-medium w-40">Indexing Time</td>
+                  <td class="w-40">
+                    {{ 
+                      experimentsData?.indexing_time ? 
+                      useConvertSecondsToDHM(experimentsData?.indexing_time) 
+                      : 'Unable to fetch time'
+                    }}
+                  </td>
                 </tr>
-                 <tr>
-                  <td class="font-medium">Indexig Time</td>
-                  <td>{{experimentsData?.indexing_time}} min</td>
-                </tr>
-                 <tr>
+                <tr>
                   <td class="font-medium">Retrieval Time</td>
-                  <td>{{experimentsData?.retrieval_time}} min</td>
+                  <td>
+                    {{
+                      experimentsData?.retrieval_time ? 
+                      useConvertSecondsToDHM(experimentsData?.retrieval_time)
+                      : 'Unable to fetch time'
+                    }}
+                  </td>
+                </tr>
+                <tr>
+                  <td class="font-medium">Evaluation Time</td>
+                  <td >
+                    {{ 
+                      experimentsData?.eval_time ? 
+                      useConvertSecondsToDHM(experimentsData?.eval_time)
+                      :'Unable to fetch time'
+                    }}
+                  </td>
                 </tr>
               </tbody>
             </table>
           </UCard>
 
+          <UCard class="my-4">
+            <template #header>
+              <h4 class="text-lg font-medium">Tokens</h4>
+            </template>
+            <table class="w-full">
+              <tbody>
+                <tr>
+                  <td class="font-medium w-40">Indexing Embedded Tokens</td>
+                  <td class="w-40">
+                    {{ experimentsData?.index_embed_tokens }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <UCard class="my-4">
+              <template #header>
+                <h4 class="font-medium">
+                  Total Tokens for
+                  {{ questionMetrics?.question_metrics?.length }} Questions
+                </h4>
+              </template>
+              <table class="w-full">
+                <tbody>
+                  <tr>
+                    <td class="font-medium w-40">Retrieval Input Tokens</td>
+                    <td class="w-40">{{ experimentsData?.retrieval_input_tokens }}</td>
+                  </tr>
+                  <tr>
+                    <td class="font-medium">Retrieval Output Tokens</td>
+                    <td>{{ experimentsData?.retrieval_output_tokens }}</td>
+                  </tr>
+                  <tr>
+                    <td class="font-medium">Retrieval Query Embedded Tokens</td>
+                    <td>{{ experimentsData?.retrieval_query_embed_tokens }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </UCard>
+          </UCard>
         </UCard>
       </template>
     </UTabs>

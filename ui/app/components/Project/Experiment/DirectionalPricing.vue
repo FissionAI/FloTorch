@@ -16,20 +16,21 @@
   <UModal class="overflow-y-scroll max-h-[50vh]" v-model:open="isOpen" :title="props.label">
     <template #body>
         <UCard>
-           
+           <!-- {{props.pricingInfo  }} -->
             <table class="w-full text-left">
               <tbody>
-                <tr>
-                  <td class="font-medium">Eval Cost Estimate</td>
-                  <td>{{useHumanCurrencyAmount(props?.pricingInfo?.eval_cost_estimate)}}</td>
-                </tr>
+               
                  <tr>
-                  <td class="font-medium">Index Cost Estimate</td>
-                  <td>{{useHumanCurrencyAmount(props?.pricingInfo?.indexing_cost_estimate)}}</td>
+                  <td class="font-medium">Indexing Cost Estimate</td>
+                  <td>{{ props?.pricingInfo?.indexing_cost_estimate ? useHumanCurrencyAmount(props?.pricingInfo?.indexing_cost_estimate) : 'Unable to fetch the data'}}</td>
                 </tr>
                  <tr>
                   <td class="font-medium">Retrieval Cost Estimate</td>
-                  <td>{{useHumanCurrencyAmount(props?.pricingInfo?.retrieval_cost_estimate)}}</td>
+                  <td>{{ props?.pricingInfo?.retrieval_cost_estimate ? useHumanCurrencyAmount(props?.pricingInfo?.retrieval_cost_estimate) : 'Unable to fetch the data'}}</td>
+                </tr>
+                 <tr>
+                  <td class="font-medium">Evaluation Cost Estimate</td>
+                  <td> {{ props?.pricingInfo?.eval_cost_estimate ? useHumanCurrencyAmount(props?.pricingInfo?.eval_cost_estimate) : 'Unable to fetch the data'}}</td>
                 </tr>
               </tbody>
             </table>
