@@ -165,7 +165,7 @@ const items = ref([
                   <td class="font-medium">Retrieval Cost Estimate</td>
                   <td>
                     {{
-                      retrieval_cost_estimate ? 
+                      experimentsData?.config?.retrieval_cost_estimate ? 
                       useHumanCurrencyAmount(
                         experimentsData?.config?.retrieval_cost_estimate
                       ) : 'Unable to fetch data'

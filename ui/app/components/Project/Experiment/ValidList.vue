@@ -98,25 +98,10 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
     label: "Chunk Size"
   },
   {
-    header: ({ column }) => {
-      const isSorted = column.getIsSorted();
-      return h(UButton, {
-        color: "neutral",
-        variant: "ghost",
-        label: "Chunk\nOverlap Percentage",
-        icon: isSorted
-          ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
-        class: "-mx-2.5",
-        style: "white-space: pre !important",
-        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
-    },
+    header: 'Chunk Overlap Percentage',
     enableHiding: true,
     accessorKey: "chunk_overlap",
-    label: "Chunk Overlap Percentage"
+    label: "Chunk Overlap Percentage",
   },
   {
     header: ({ column }) => {
@@ -299,41 +284,13 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
     label: "Evaluation Embedding Model"
   },
   {
-    header: ({ column }) => {
-      const isSorted = column.getIsSorted();
-      return h(UButton, {
-        color: "neutral",
-        variant: "ghost",
-        label: "Evaluation Retrieval Model",
-        icon: isSorted
-          ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
-        class: "-mx-2.5",
-        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
-    },
+    header: 'Evaluation Retrieval Model',
     enableHiding: true,
     accessorKey: "eval_retrieval_model",
     label: "Evaluation Retrieval Model"
   },
   {
-    header: ({ column }) => {
-      const isSorted = column.getIsSorted();
-      return h(UButton, {
-        color: "neutral",
-        variant: "ghost",
-        label: "Directional Pricing",
-        icon: isSorted
-          ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
-        class: "-mx-2.5",
-        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
-    },
+    header: 'Directional Pricing',
     enableHiding: true,
     accessorKey: "directional_pricing",
     label: "Directional Pricing"
@@ -419,22 +376,129 @@ const columnVisibility = ref({
     </div>
     <UTable class="h-100" sticky ref="table" v-model:column-visibility="columnVisibility" :columns="columns" :data="experiments"
       :loading="isLoading">
+      <template #directional_pricing-header="{ column }">
+        <UButton
+          color="neutral"
+          variant="ghost"
+          :icon="column.getIsSorted() 
+            ? column.getIsSorted() === 'asc'
+              ? 'i-lucide-arrow-up-narrow-wide'
+              : 'i-lucide-arrow-down-wide-narrow'
+            : 'i-lucide-arrow-up-down'"
+          class="-mx-2.5"
+          @click="column.toggleSorting(column.getIsSorted() === 'asc')"
+        >
+          <span class="whitespace-pre-wrap">
+          {{ 'Directional\nPricing' }}
+          </span>
+        </UButton>
+      </template>
       <template #directional_pricing-cell="{ row }">
-        <!-- {{ useHumanCurrencyAmount(row.original.directional_pricing) }} -->
-        <ProjectExperimentDirectionalPricing :label="'Directional Pricing'" :pricing-info="{
-          retrieval_cost_estimate : row.original?.retrieval_cost_estimate,
-          indexing_cost_estimate : row.original?.indexing_cost_estimate,
-          eval_cost_estimate : row.original?.eval_cost_estimate
-        }" :price="row.original?.directional_pricing ? row.original.directional_pricing : '-'" />
+        <span class="flex justify-center">
+          <ProjectExperimentDirectionalPricing :label="'Directional Pricing'" :pricing-info="{
+            retrieval_cost_estimate : row.original?.retrieval_cost_estimate,
+            indexing_cost_estimate : row.original?.indexing_cost_estimate,
+            eval_cost_estimate : row.original?.eval_cost_estimate
+          }" :price="row.original?.directional_pricing ? row.original.directional_pricing : '-'" />
+          </span>
+      </template>
+      <template #chunk_overlap-header="{ column }">
+        <UButton
+          color="neutral"
+          variant="ghost"
+          :icon="column.getIsSorted() 
+            ? column.getIsSorted() === 'asc'
+              ? 'i-lucide-arrow-up-narrow-wide'
+              : 'i-lucide-arrow-down-wide-narrow'
+            : 'i-lucide-arrow-up-down'"
+          class="-mx-2.5"
+          @click="column.toggleSorting(column.getIsSorted() === 'asc')"
+        >
+        <template #default>
+          <span class="whitespace-pre-wrap">
+          {{ 'Chunk\nOverlap\nPercentage' }}
+          </span>
+        </template>
+      </UButton>
+      </template>
+      <template #vector_dimension-header="{ column }">
+        <UButton
+          color="neutral"
+          variant="ghost"
+          :icon="column.getIsSorted() 
+            ? column.getIsSorted() === 'asc'
+              ? 'i-lucide-arrow-up-narrow-wide'
+              : 'i-lucide-arrow-down-wide-narrow'
+            : 'i-lucide-arrow-up-down'"
+          class="-mx-2.5"
+          @click="column.toggleSorting(column.getIsSorted() === 'asc')"
+        >
+          <span class="whitespace-pre-wrap">
+          {{ 'Vector\nDimensions' }}
+          </span>
+        </UButton>
+      </template>
+      <template #vector_dimension-cell="{ row }">
+        <span class="flex justify-center">
+          {{ row.original.vector_dimension }}
+        </span>
+      </template>
+      <template #n_shot_prompts-header="{ column }">
+        <UButton
+          color="neutral"
+          variant="ghost"
+          :icon="column.getIsSorted() 
+            ? column.getIsSorted() === 'asc'
+              ? 'i-lucide-arrow-up-narrow-wide'
+              : 'i-lucide-arrow-down-wide-narrow'
+            : 'i-lucide-arrow-up-down'"
+          class="-mx-2.5"
+          @click="column.toggleSorting(column.getIsSorted() === 'asc')"
+        >
+          <span class="whitespace-pre-wrap">
+          {{ 'N\nShot\nPrompts' }}
+          </span>
+        </UButton>
+      </template>
+      <template #n_shot_prompts-cell="{ row }">
+        <span class="flex justify-center">
+          {{ row.original.n_shot_prompts }}
+        </span>
+      </template>
+      <template #temp_retrieval_llm-header="{ column }">
+        <UButton
+          color="neutral"
+          variant="ghost"
+          :icon="column.getIsSorted() 
+            ? column.getIsSorted() === 'asc'
+              ? 'i-lucide-arrow-up-narrow-wide'
+              : 'i-lucide-arrow-down-wide-narrow'
+            : 'i-lucide-arrow-up-down'"
+          class="-mx-2.5"
+          @click="column.toggleSorting(column.getIsSorted() === 'asc')"
+        >
+          <span class="whitespace-pre-wrap">
+          {{ 'Inferencing\nModel\nTemperature' }}
+          </span>
+        </UButton>
+      </template>
+      <template #temp_retrieval_llm-cell="{ row }">
+        <span class="flex justify-center">
+          {{ row.original.temp_retrieval_llm }}
+        </span>
       </template>
       <template #chunking_strategy-cell="{ row }">
         {{ useHumanChunkingStrategy(row.original.chunking_strategy) }}
       </template>
       <template #chunk_size-cell="{ row }">
-        {{ useHumanChunkingStrategy(row.original.chunking_strategy) === 'Fixed' ? row.original.chunk_size : [row.original.hierarchical_child_chunk_size, row.original.hierarchical_parent_chunk_size] }}
+        <span class="flex justify-center">
+          {{ useHumanChunkingStrategy(row.original.chunking_strategy) === 'Fixed' ? row.original.chunk_size : [row.original.hierarchical_child_chunk_size, row.original.hierarchical_parent_chunk_size] }}
+        </span>
       </template>
        <template #chunk_overlap-cell="{ row }">
+       <span class="flex justify-center">
           {{ useHumanChunkingStrategy(row.original.chunking_strategy) === 'Fixed' ? row.original.chunk_overlap : row.original.hierarchical_chunk_overlap_percentage}}
+          </span>
       </template>
       <template #indexing_algorithm-cell="{ row }">
         {{ useHumanIndexingAlgorithm(row.original.indexing_algorithm) }}

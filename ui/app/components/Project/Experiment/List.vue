@@ -26,6 +26,7 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
       });
     },
+    label: "ID",
     accessorKey: "id",
     enableHiding: false,
   },
@@ -45,6 +46,7 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
       });
     },
+    label: "Embedding Model",
     accessorKey: "config.embedding_model",
     enableHiding: true,
     cell: ({ row }) => {
@@ -67,6 +69,7 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
       });
     },
+    label: "Inferencing Model",
     accessorKey: "config.retrieval_model",
     enableHiding: true,
     cell: ({ row }) => {
@@ -89,6 +92,7 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
       });
     },
+    label: "Indexing Algorithm",
     accessorKey: "config.indexing_algorithm",
     enableHiding: true,
     cell: ({ row }) => {
@@ -115,7 +119,8 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
     enableHiding: true,
     cell: ({ row }) => {
       return useHumanChunkingStrategy(row.original.config.chunking_strategy)
-    }
+    },
+    label: "Chunking"
   },
   {
     header: ({ column }) => {
@@ -133,6 +138,7 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
       });
     },
+    label: "Status",
     accessorKey: "experiment_status",
     enableHiding: true,
   },
@@ -152,8 +158,14 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
       });
     },
+    label: "Inferencing Model Temperature",
     accessorKey: "config.temp_retrieval_llm",
     enableHiding: true,
+    sortingFn: (rowA, rowB) => {
+      const a = rowA.original.config?.temp_retrieval_llm ?? 0;
+      const b = rowB.original.config?.temp_retrieval_llm ?? 0;
+      return Number(a) - Number(b);
+    }
   },
   {
     header: ({ column }) => {
@@ -171,8 +183,24 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
       });
     },
+    label: 'Faithfulness',
     accessorKey: "eval_metrics.faithfulness_score",
     enableHiding: true,
+    sortingFn: (rowA, rowB) => {
+      const getScore = (row: any) => {
+        if ("faithfulness_score" in row.original.eval_metrics) {
+          return row.original.eval_metrics.faithfulness_score ?? 0;
+        }
+        if ("M" in row.original.eval_metrics) {
+          return row.original.eval_metrics.M?.faithfulness_score ?? 0;
+        }
+        return 0;
+      };
+      
+      const a = getScore(rowA);
+      const b = getScore(rowB);
+      return Number(a) - Number(b);
+    },
     cell: ({ row }) => {
       if ("faithfulness_score" in row.original.eval_metrics) {
         return row.original.eval_metrics.faithfulness_score ? parseFloat(row.original.eval_metrics.faithfulness_score.toString()).toFixed(2) : "-"
@@ -199,8 +227,14 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
       });
     },
+    label: 'Context Precision',
     accessorKey: "eval_metrics.context_precision_score",
     enableHiding: true,
+    sortingFn: (rowA, rowB) => {
+      const a = rowA.original.eval_metrics?.context_precision_score ?? 0;
+      const b = rowB.original.eval_metrics?.context_precision_score ?? 0;
+      return Number(a) - Number(b);
+    },
     cell: ({ row }) => {
       if ("context_precision_score" in row.original.eval_metrics) {
         return row.original.eval_metrics.context_precision_score ? parseFloat(row.original.eval_metrics.context_precision_score.toString()).toFixed(2) : "-"
@@ -227,8 +261,14 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
       });
     },
+    label: 'Aspect Critic',
     accessorKey: "eval_metrics.aspect_critic_score",
     enableHiding: true,
+    sortingFn: (rowA, rowB) => {
+      const a = rowA.original.eval_metrics?.aspect_critic_score ?? 0;
+      const b = rowB.original.eval_metrics?.aspect_critic_score ?? 0;
+      return Number(a) - Number(b);
+    },
     cell: ({ row }) => {
       if ("aspect_critic_score" in row.original.eval_metrics) {
         return row.original.eval_metrics.aspect_critic_score ? parseFloat(row.original.eval_metrics.aspect_critic_score.toString()).toFixed(2) : "-"
@@ -255,8 +295,14 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
       });
     },
+    label: 'Answers Relevancy',
     accessorKey: "eval_metrics.answers_relevancy_score",
     enableHiding: true,
+    sortingFn: (rowA, rowB) => {
+      const a = rowA.original.eval_metrics?.answers_relevancy_score ?? 0;
+      const b = rowB.original.eval_metrics?.answers_relevancy_score ?? 0;
+      return Number(a) - Number(b);
+    },
     cell: ({ row }) => {
       if ("answers_relevancy_score" in row.original.eval_metrics) {
         return row.original.eval_metrics.answers_relevancy_score ? parseFloat(row.original.eval_metrics.answers_relevancy_score.toString()).toFixed(2) : "-"
@@ -283,8 +329,17 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
       });
     },
+    label: 'Evaluation Service',
     accessorKey: "config.eval_service",
     enableHiding: true,
+    sortingFn: (rowA, rowB) => {
+      const a = rowA.original.config?.eval_service ?? 0;
+      const b = rowB.original.config?.eval_service ?? 0;
+      return a.localeCompare(b);
+    },
+    cell: ({ row }) => {
+      return row.original.config?.eval_service ? row.original.config.eval_service : "-"
+    }
   },
   {
     header: ({ column }) => {
@@ -302,8 +357,17 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
       });
     },
+    label: 'Evaluation Embedding Model',
     accessorKey: "config.eval_embedding_model",
     enableHiding: true,
+    sortingFn: (rowA, rowB) => {
+      const a = rowA.original.config?.eval_embedding_model ?? 0;
+      const b = rowB.original.config?.eval_embedding_model ?? 0;
+      return a.localeCompare(b);
+    },
+    cell: ({ row }) => {
+      return row.original.config?.eval_embedding_model ? row.original.config.eval_embedding_model : "-"
+    }
   },
   {
     header: ({ column }) => {
@@ -321,8 +385,17 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
       });
     },
+    label: 'Evaluation Retrieval Model',
     accessorKey: "config.eval_retrieval_model",
     enableHiding: true,
+    sortingFn: (rowA, rowB) => {
+      const a = rowA.original.config?.eval_retrieval_model ?? 0;
+      const b = rowB.original.config?.eval_retrieval_model ?? 0;
+      return a.localeCompare(b);
+    },
+    cell: ({ row }) => {
+      return row.original.config?.eval_retrieval_model ? row.original.config.eval_retrieval_model : "-"
+    }
   },
   {
     header: ({ column }) => {
@@ -340,8 +413,14 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
       });
     },
+    label: 'Directional Pricing',
     accessorKey: "directional_pricing",
     enableHiding: true,
+    sortingFn: (rowA, rowB) => {
+      const a = rowA.original.config?.directional_pricing ?? 0;
+      const b = rowB.original.config?.directional_pricing ?? 0;
+      return Number(a) - Number(b);
+    },
     cell: ({ row }) => {
       return row.original.config?.directional_pricing ? useHumanCurrencyAmount(row.original.config?.directional_pricing) : "-"
     }
@@ -362,8 +441,14 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
       });
     },
+    label: 'Duration',
     accessorKey: "experiment_duration",
     enableHiding: true,
+    sortingFn: (rowA, rowB) => {
+      const a = rowA.original.total_time ?? 0;
+      const b = rowB.original.total_time ?? 0;
+      return Number(a) - Number(b);
+    },
     cell: ({ row }) => {
       return row.original.total_time && (row.original.experiment_status === 'succeeded' || row.original.experiment_status === 'failed') ? useHumanDuration(row.original.total_time) : "-"
     }
@@ -384,10 +469,16 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
       });
     },
+    label: 'Estimated Cost',
     accessorKey: "experiment_cost",
     enableHiding: true,
+    sortingFn: (rowA, rowB) => {
+      const a = rowA.original.experiment_cost ?? 0;
+      const b = rowB.original.experiment_cost ?? 0;
+      return Number(a) - Number(b);
+    },
     cell: ({ row }) => {
-      return row.original.cost? useHumanCurrencyAmount(row.original.cost) : "-"
+      return row.original.experiment_cost? useHumanCurrencyAmount(row.original.experiment_cost) : "-"
     }
   },
   {
@@ -406,10 +497,16 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
       });
     },
+    label: 'Reranking Model',
     accessorKey: "rerank_model_id",
     enableHiding: true,
+    sortingFn: (rowA, rowB) => {
+      const a = rowA.original.rerank_model_id ?? 0;
+      const b = rowB.original.rerank_model_id ?? 0;
+      return a.localeCompare(b);
+    },
     cell: ({ row }) => {
-      return row.original.config?.rerank_model_id? row.original.config.rerank_model_id : "-"
+      return row.original.rerank_model_id? row.original.rerank_model_id : "-"
     }
   }
 ])
@@ -441,7 +538,7 @@ const columnVisibility = ref({
         ?.getAllColumns()
         .filter((column: any) => column.getCanHide())
         .map((column: any) => ({
-          label: column.columnDef.header,
+          label: column.columnDef.label,
           type: 'checkbox' as const,
           checked: column.getIsVisible(),
           onUpdateChecked(checked: boolean) {
@@ -464,6 +561,9 @@ const columnVisibility = ref({
         >
           {{ row.original.id }}
         </a>
+      </template>
+      <template #temp_retrieval_llm-cell="{ row }">
+        {{ row.original.config?.temp_retrieval_llm ? row.original.config.temp_retrieval_llm : "-" }}
       </template>
       <template #experiment_status-cell="{ row }">
         <UBadge variant="subtle" :color="useExperimentStatusColor(row.original.experiment_status)">
