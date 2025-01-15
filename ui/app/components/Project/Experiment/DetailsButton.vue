@@ -83,12 +83,12 @@ const props = defineProps<{
             </td>
           </tr>
           <tr v-if="props.experimentsData?.config?.eval_embedding_model">
-            <td class="font-medium">Evaluations embedding model</td>
+            <td class="font-medium">Evaluation embedding model</td>
             <td> {{props.experimentsData?.config?.eval_embedding_model}}
             </td>
           </tr>
           <tr v-if="props.experimentsData?.config?.eval_retrieval_model">
-            <td class="font-medium">Evaluations retrieval model</td>
+            <td class="font-medium">Evaluation retrieval model</td>
             <td> {{props.experimentsData?.config?.eval_retrieval_model}}
             </td>
           </tr>

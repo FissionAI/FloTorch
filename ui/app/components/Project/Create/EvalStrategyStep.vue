@@ -60,17 +60,15 @@ const { mutateAsync: getGuardrailsList, isPending: isFetchingGuardrailsList } =
         };
       });
       guardrailsList.value.unshift({
-       
           label: 'None',
           value: 'none',
           name: 'None',
-          guardrails_id: '',
-          guardrail_version: '',
-          guardrail_description : '',
-          enable_prompt_guardrails: false,
-          enable_context_guardrails: false,
-          enable_response_guardrails: false,
-        
+          guardrails_id: null,
+          guardrail_version: null,
+          guardrail_description : null,
+          enable_prompt_guardrails: true,
+          enable_context_guardrails: true,
+          enable_response_guardrails: true,
       })
       return response;
     },
