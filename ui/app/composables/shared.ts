@@ -799,11 +799,13 @@ export const useHumanIndexingAlgorithm = (algorithm: string) => {
   }
 };
 
-export const useHumanCurrencyAmount = (amount: number) => {
+export const useHumanCurrencyAmount = (amount: number, decimalPlaces: number = 2) => {
   
   return Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
+    minimumFractionDigits: decimalPlaces,
+    maximumFractionDigits: decimalPlaces,
   }).format(amount);
 };
 

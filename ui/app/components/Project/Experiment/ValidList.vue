@@ -403,15 +403,15 @@ const columnVisibility = ref({
                       <tbody>
                         <tr>
                           <td>Indexing Cost :</td>
-                          <td>{{useHumanCurrencyAmount(row.original.indexing_cost_estimate)}}</td>
+                          <td>{{useHumanCurrencyAmount(row.original.indexing_cost_estimate,3)}}</td>
                         </tr>
                         <tr>
                           <td>Retrieval Cost :</td>
-                          <td>{{useHumanCurrencyAmount(row.original.retrieval_cost_estimate)}}</td>
+                          <td>{{useHumanCurrencyAmount(row.original.retrieval_cost_estimate,3)}}</td>
                         </tr>
                         <tr>
                           <td>Evaluation Cost :</td>
-                          <td>{{useHumanCurrencyAmount(row.original.eval_cost_estimate)}}</td>
+                          <td>{{useHumanCurrencyAmount(row.original.eval_cost_estimate,3)}}</td>
                         </tr>
                       </tbody>
                     </table>
