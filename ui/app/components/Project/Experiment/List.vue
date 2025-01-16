@@ -583,7 +583,7 @@ const columnVisibility = ref({
       </template>
     </UTable>
     <div v-if="hasAllExperimentsCompleted" class="flex justify-end">
-      <DownloadResultsButton :results="experiments" button-label="Download Results" />
+      <DownloadResultsButton :results="experiments" :question-metrics="false" button-label="Download Results" />
     </div>
   </div>
 </template>

@@ -93,6 +93,7 @@ const items = ref([
               <DownloadResultsButton
                 :results="questionMetrics?.question_metrics"
                 button-label="Download Results"
+                :question-metrics="true"
               />
             </div>
           </template>
