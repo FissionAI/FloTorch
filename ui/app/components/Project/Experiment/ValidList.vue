@@ -394,16 +394,31 @@ const columnVisibility = ref({
         </UButton>
       </template>
       <template #directional_pricing-cell="{ row }">
-        <div class="flex justify-center" v-if="row.original.directional_pricing">
-          <ProjectExperimentDirectionalPricing :label="'Directional Pricing'" :pricing-info="{
-            retrieval_cost_estimate : row.original?.retrieval_cost_estimate,
-            indexing_cost_estimate : row.original?.indexing_cost_estimate,
-            eval_cost_estimate : row.original?.eval_cost_estimate
-          }" :price="row.original.directional_pricing" />
-          </div>
-          <div v-else>
-             - 
-          </div>
+        <div class="w-full">
+              <UTooltip   :content="{side: 'right'}">
+                <a class="text-blue-500 hover:underline" href="#">{{row.original.directional_pricing}}</a>
+                <template #content>
+                  <UCard class="w-full">
+                    <table class="w-full">
+                      <tbody>
+                        <tr>
+                          <td>Indexing Cost :</td>
+                          <td>{{useHumanCurrencyAmount(row.original.indexing_cost_estimate)}}</td>
+                        </tr>
+                        <tr>
+                          <td>Retrieval Cost :</td>
+                          <td>{{useHumanCurrencyAmount(row.original.retrieval_cost_estimate)}}</td>
+                        </tr>
+                        <tr>
+                          <td>Evaluation Cost :</td>
+                          <td>{{useHumanCurrencyAmount(row.original.eval_cost_estimate)}}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </UCard>
+              </template>
+              </UTooltip>
+        </div>
       </template>
       <template #chunk_overlap-header="{ column }">
         <UButton
@@ -512,15 +527,6 @@ const columnVisibility = ref({
       <template #retrieval_model-cell="{ row }">
         {{ useModelName("retrieval", row.original.retrieval_model) }}
       </template>
-       <!-- <template #eval_cost_estimate-cell="{ row }">
-        {{ useHumanCurrencyAmount(row.original.eval_cost_estimate) }}
-      </template>
-       <template #indexing_cost_estimate-cell="{ row }">
-        {{ useHumanCurrencyAmount(row.original.indexing_cost_estimate) }}
-      </template>
-       <template #retrieval_cost_estimate-cell="{ row }">
-        {{ useHumanCurrencyAmount(row.original.retrieval_cost_estimate) }}
-      </template> -->
     </UTable>
   </div>
 </template>
