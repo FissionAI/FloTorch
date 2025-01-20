@@ -40,3 +40,27 @@ tr:nth-child(even) {
 .table-cell {
   @apply p-4 text-gray-600 border-b border-gray-200;
 }
+
+
+.experiment-details-table table thead tr td {
+  vertical-align: top !important;
+}
+
+.experiment-details-table > table > tbody > tr  > td {
+  vertical-align: top !important;
+}
+.experiment-details-table > table > tbody > tr  > td {
+  vertical-align: top !important;
+}
+
+.experiment-details-tabs div button[data-state]:not([data-state='active']) {
+  border : 1px solid lightgray;
+  cursor: pointer;
+  margin:2px;
+}
+
+
+div.divide-y.divide-\[var\(--ui-border\)\].scroll-py-1 div[role='group'] {
+  max-height: 150px;
+  overflow-y:scroll;
+}

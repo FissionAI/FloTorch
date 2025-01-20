@@ -403,7 +403,7 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
       return h(UButton, {
         color: "neutral",
         variant: "ghost",
-        label: "Directional Pricing",
+        label: "Directional Cost",
         icon: isSorted
           ? isSorted === "asc"
             ? "i-lucide-arrow-up-narrow-wide"
@@ -413,7 +413,7 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
       });
     },
-    label: 'Directional Pricing',
+    label: 'Directional Cost',
     accessorKey: "directional_pricing",
     enableHiding: true,
     sortingFn: (rowA, rowB) => {
@@ -576,7 +576,7 @@ const columnVisibility = ref({
       <template #directional_pricing-cell="{row}">     
         <div class="w-full">
             <UTooltip   :content="{side: 'right'}">
-                    <a class="text-blue-500 hover:underline" href="#">{{row.original?.config?.directional_pricing}}</a>
+                    <a class="text-blue-500 hover:underline" href="#">{{useHumanCurrencyAmount(row.original?.config?.directional_pricing)}}</a>
                     <template #content>
                       <UCard class="w-full">
                         <table class="w-full">
