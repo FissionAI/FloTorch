@@ -23,9 +23,13 @@ export const ProjectCreateDataStrategySchema = z.object({
   region: z.string({
     required_error: "Region is required",
   }),
-  kb_data: z.string({
-    required_error: "Knowledge Base data is required",
+  kb_model : z.string({
+    required_error : "Knowledge Base Model is required"
   }),
+  kb_data: z.union([
+    z.string().min(1, { message: "Knowledge Base data is required" }),
+    z.array(z.string()).min(1, { message: "Knowledge Base data is required" })
+  ]),
   gt_data: z.string({
     required_error: "Ground Truth data is required",
   }),
@@ -288,6 +292,7 @@ export interface ProjectListItem {
   date: Date;
   status: ProjectStatus;
   gt_data: string;
+  kb_model: string;
   kb_data: string;
   region: string;
   name: string;
@@ -299,6 +304,7 @@ export interface Project {
   date: Date;
   status: ProjectStatus;
   gt_data: string;
+  kb_model:string;
   kb_data: string;
   region: string;
   config: Config;
@@ -338,6 +344,7 @@ export interface Example {
 export interface Prestep {
   region: string;
   gt_data: string;
+  kb_model: string;
   kb_data: string;
 }
 
@@ -356,6 +363,7 @@ export interface ProjectExperimentConfig {
   n_shot_prompts: number;
   embedding_service: string;
   embedding_model: string;
+  kb_model:string;
   kb_data: string;
   retrieval_service: string;
   chunking_strategy: string;

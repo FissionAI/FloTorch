@@ -45,6 +45,7 @@ const nextStep = () => {
       name: state.prestep?.name,
       prestep: {
         region: state.prestep?.region,
+        kb_model: state.prestep?.kb_model,
         gt_data: state.prestep?.gt_data,
         kb_data: state.prestep?.kb_data
       },
@@ -89,12 +90,22 @@ const nextStep = () => {
     }
     mutate(submitData)
   } else {
+    if(state.prestep.kb_model !== 'default-upload' && currentStep.value == 1){
+      currentStep.value = currentStep.value + 2;
+      kbFilesUploadedData.value = undefined; 
+    }else{
     currentStep.value++
+
+    }
   }
 }
 
 const previousStep = () => {
-  currentStep.value--
+   if(state.prestep.kb_model !== 'default-upload' && currentStep.value == 3){
+      currentStep.value = currentStep.value - 2;
+    }else{
+    currentStep.value--
+    }
 }
 
 const kbFilesUploadedData = ref();
