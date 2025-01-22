@@ -10,7 +10,7 @@
 
 ---
 
-### Dify Version
+### FloTorch Version
 
 ```
 v0.xx.x
