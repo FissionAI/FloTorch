@@ -659,6 +659,7 @@ export const useProjectUploadConfig = () => {
       prestep: {
         ...config.prestep,
         name: config.name,
+        kb_model : undefined,
         kb_data: undefined,
         gt_data: undefined,
       },
@@ -845,3 +846,18 @@ export const useConvertStringToNumber = (value: string | number) => {
   }
   return value;
 } 
+
+export const useKnowledgeBaseModel = ()=>{
+  return {
+    kb_model : [
+      {
+        label: "Bedrock Knowledge Bases",
+        value: "Bedrock-Knowledge-Bases"
+      },
+      {
+        label: "Upload my own data",
+        value: "default-upload"
+      },
+    ]
+  }
+}

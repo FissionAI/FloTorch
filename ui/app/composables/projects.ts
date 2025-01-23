@@ -98,3 +98,8 @@ export const useGuardrailsList = () => {
     method: "GET"
   });
 };
+
+export const useFetchAllKbModels = (id: string) => {
+  console.log(id)
+  return useApi("https://mocki.io/v1/65d24133-0919-4180-a6b6-8185a93b41ba");
+}
