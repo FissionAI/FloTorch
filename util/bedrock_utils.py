@@ -25,7 +25,7 @@ class KnowledgeBaseUtils():
         """
         try:
             # Get list of all knowledge bases with pagination limit of 123
-            response = self.client.list_knowledge_bases(maxResults=123)
+            response = self.client.list_knowledge_bases(maxResults=1000)
             valid_knowledge_bases = []
             print(response)
             # Process each knowledge base
@@ -43,13 +43,14 @@ class KnowledgeBaseUtils():
                     logger.info(f"Found vector knowledge base: {kb_name} ({kb_id})")
                     
                     # Get the first data source ID for the knowledge base
-                    data_sources = self.client.list_data_sources(knowledgeBaseId=kb_id)
+                    data_sources = self.client.list_data_sources(knowledgeBaseId=kb_id, maxResults=1000)
                     data_source_id = data_sources['dataSourceSummaries'][0]['dataSourceId']
                     logger.debug(f"Found data source: {data_source_id} for knowledge base: {kb_name}")
                     
                     # Check if data source contains any documents
                     files = self.client.list_knowledge_base_documents(knowledgeBaseId=kb_id, 
-                                                                      dataSourceId=data_source_id
+                                                                      dataSourceId=data_source_id,
+                                                                      maxResults=1000
                                                                         )
                     if len(files['documentDetails']) > 0:
                         logger.info(f"Found {len(files['documentDetails'])} documents in knowledge base: {kb_name}")
