@@ -23,6 +23,7 @@ useHead({
     <main class="flex-1 flex flex-col items-center justify-center gap-4">
       <h1 class="text-4xl font-bold">FloTorch</h1>
       <p class="text-lg">Manage and run your RAG experiments at scale with ease</p>
+      <img src="/flotorch-hero.gif" alt="hero" class="w-full max-w-7xl" />
       <UButton label="Get Started" trailing-icon="i-lucide-arrow-right" :to="{ name: 'projects' }" size="xl" />
     </main>
     <footer class="bg-gray-800 text-white p-2 text-sm">
