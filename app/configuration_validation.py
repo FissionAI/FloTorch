@@ -23,6 +23,8 @@ bedrock_price_df = S3Util().read_csv_from_s3(configs.bedrock_limit_csv_path, S3_
 def is_valid_combination(config, data):
     # Define your rules here
     regions = ["us-east-1", "us-west-2"]
+    if config['bedrock_knowledge_base']:
+        return True
     if config["region"] not in regions:
         return False
     if config["n_shot_prompts"] > 0 and data["n_shot_prompt_guide"] is None:
@@ -227,6 +229,9 @@ def generate_all_combinations(data):
         parameters_all.update({"guardrails": parsed_data["guardrails"]})
     parameters_all.update(parsed_data["evaluation"])
     parameters_all = {key: value if isinstance(value, list) else [value] for key, value in parameters_all.items()}
+    # Convert single values to lists and replace empty values with [0]
+    parameters_all = {key: value if isinstance(value, list) else [value] for key, value in parameters_all.items()}
+    parameters_all = {key: value if value else [0] for key, value in parameters_all.items()}
 
     keys = parameters_all.keys()
     combinations = [dict(zip(keys, values)) for values in itertools.product(*parameters_all.values())]
@@ -237,7 +242,11 @@ def generate_all_combinations(data):
     [num_prompts, num_chars] = read_gt_data(gt_data)
 
     avg_prompt_length = round(num_chars / num_prompts / 4)
-    num_tokens_kb_data = count_characters_in_file(parameters_all["kb_data"][0]) / 4
+    if parameters_all["bedrock_knowledge_base"][0]:
+        num_tokens_kb_data = 0
+    else:
+        num_tokens_kb_data = count_characters_in_file(parameters_all["kb_data"][0]) / 4
+        
     configurations = []
     valid_configurations = []
 
@@ -251,7 +260,7 @@ def generate_all_combinations(data):
         if is_valid_combination(configuration, data):
             
             configuration = {
-                **{k: v for k, v in configuration.items() if k not in ["embedding", "retrieval", "gt_data", "kb_data", "evaluation"]},
+                **{k: v for k, v in configuration.items() if k not in ["embedding", "retrieval", "gt_data", "evaluation"]},
                 "embedding_service": configuration["embedding"]["service"],
                 "embedding_model": configuration["embedding"]["model"],
                 "retrieval_service": configuration["retrieval"]["service"],
@@ -268,11 +277,16 @@ def generate_all_combinations(data):
             configuration["indexing_cost_estimate"] = 0 
             configuration["retrieval_cost_estimate"] = 0 
             configuration["eval_cost_estimate"] = 0
-            
-            effective_num_tokens_kb_data = estimate_effective_kb_tokens(configuration, num_tokens_kb_data)
-            indexing_time, retrieval_time, eval_time = estimate_times(effective_num_tokens_kb_data, num_prompts, configuration)
 
-            if configuration['embedding_service'] == "bedrock" :
+            if configuration["bedrock_knowledge_base"]:
+                effective_num_tokens_kb_data = 0
+            else:
+                effective_num_tokens_kb_data = estimate_effective_kb_tokens(configuration, num_tokens_kb_data)
+            indexing_time, retrieval_time, eval_time = estimate_times(effective_num_tokens_kb_data, num_prompts, configuration)
+            if configuration["bedrock_knowledge_base"]:
+                configuration["indexing_cost_estimate"] = 0
+
+            elif configuration['embedding_service'] == "bedrock" :
                 embedding_price = estimate_embedding_model_bedrock_price(bedrock_price_df, configuration, num_tokens_kb_data)
                 configuration["indexing_cost_estimate"] += embedding_price
             else:

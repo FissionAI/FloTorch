@@ -60,6 +60,8 @@ def estimate_retrieval_model_bedrock_price(file_path, configuration, avg_prompt_
 
     elif chunking_strategy == 'hierarchical':
         chunk_size = configuration["hierarchical_parent_chunk_size"]
+    else:
+        chunk_size = 0
 
     gen_model = configuration["retrieval_model"]
     n_shot_prompts = configuration["n_shot_prompts"]
@@ -125,7 +127,10 @@ def estimate_times(no_of_kb_tokens, num_prompts, configuration):
     indexing_service = configuration['embedding_service']
     retrieval_service = configuration['retrieval_service']
     
-    indexing_time = (no_of_kb_tokens/ 50000) * estimated_time['indexing'][indexing_service]
+    if indexing_service == "":
+        indexing_time = 0
+    else:
+        indexing_time = (no_of_kb_tokens/ 50000) * estimated_time['indexing'][indexing_service]
     retrieval_time = (num_prompts / 25) * estimated_time['retrieval'][retrieval_service]
     eval_time = (num_prompts / 25) * estimated_time['eval'][retrieval_service]
 
