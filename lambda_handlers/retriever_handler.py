@@ -3,7 +3,6 @@ from typing import Dict, Any
 from retriever.retriever import retrieve
 from config.config import Config
 from config.experimental_config import ExperimentalConfig
-from util.bedrock_utils import KnowledgeBaseUtils
 import logging
 
 

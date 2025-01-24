@@ -108,7 +108,6 @@ async def post_experiment(
             # Generate unique experiment ID
             experiment_id = "".join(random.choices(string.ascii_uppercase + string.digits, k=8))
 
-            #data['kb_data'] = execution['kb_data']
             data['gt_data'] = execution['gt_data']
             data['n_shot_prompt_guide'] = execution['config']['n_shot_prompt_guide']
 
