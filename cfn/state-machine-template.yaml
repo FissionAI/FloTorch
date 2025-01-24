@@ -429,7 +429,7 @@ Resources:
                           "SageMakerRoleArn": "${SageMakerRoleArn}"
                         }
                       },
-                      "Next": "Indexing Model Check"
+                      "Next": "Check if KB data upload"
                     },
                     "Indexing Model Check": {
                       "Next": "Evaluate Indexing Model Check",
@@ -1539,7 +1539,18 @@ Resources:
                           "SageMakerRoleArn": "${SageMakerRoleArn}"
                         }
                       },
-                      "Next": "Indexing Model Check"
+                      "Next": "Check if KB data upload"
+                    },
+                    "Check if KB data upload": {
+                      "Type": "Choice",
+                      "Choices": [
+                        {
+                          "Variable": "$.parsedConfig.parsed_config.bedrock_knowledge_base",
+                          "BooleanEquals": true,
+                          "Next": "Proceed to Retrieval Model Check"
+                        }
+                      ],
+                      "Default": "Indexing Model Check"
                     },
                     "Wait for Indexing Model Update": {
                       "Type": "Wait",
