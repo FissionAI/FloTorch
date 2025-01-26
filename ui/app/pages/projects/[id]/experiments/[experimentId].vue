@@ -35,6 +35,10 @@ useHead({
 
 const columns = ref<TableColumn<ExperimentQuestionMetric>[]>([
   {
+    header: "S.No",
+    accessorKey: "sno"
+   },
+  {
     header: "Question",
     accessorKey: "question",
   },
@@ -82,7 +86,7 @@ const items = ref([
     <UTabs
       :items="items"
       :unmount-on-hide="false"
-      class="w-full"
+      class="w-full experiment-details-tabs"
       variant="pill"
     >
       <template #account="{ item }">
@@ -98,12 +102,15 @@ const items = ref([
             </div>
           </template>
           <UTable
-            class="h-100"
+            class="h-100 experiment-details-table"            
             sticky
             :columns="columns"
             :data="questionMetrics?.question_metrics"
             :loading="isLoading"
           >
+           <template #sno-cell="{ row }">
+            <td>{{ row.index + 1 }}</td>
+          </template>
             <template #guardrail_input_assessment-cell="{ row }">
               <template v-if="row.original.guardrail_input_assessment">
                 <ProjectExperimentAssessments

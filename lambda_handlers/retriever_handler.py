@@ -53,7 +53,8 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             guardrail_version=exp_config_data.get('guardrail_version'),
             enable_prompt_guardrails=exp_config_data.get('enable_prompt_guardrails', False),
             enable_context_guardrails=exp_config_data.get('enable_context_guardrails', False),
-            enable_response_guardrails=exp_config_data.get('enable_response_guardrails', False)
+            enable_response_guardrails=exp_config_data.get('enable_response_guardrails', False),
+            bedrock_knowledge_base=exp_config_data.get('bedrock_knowledge_base', False),
         )
 
         # Load base configuration

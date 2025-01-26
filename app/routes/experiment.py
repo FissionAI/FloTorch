@@ -76,33 +76,38 @@ async def post_experiment(
             
         experiment_ids = []
         for data in experiments:
-            # Abbreviate the chunking strategy
-            chunking_strategy = "fix" if data["chunking_strategy"].lower() == "fixed" else "hi"
-            # Abbreviate the embedding service
-            embedding_service = "b" if data["embedding_service"].lower() == "bedrock" else "s"
-            embedding_model_mapping = {
-                "amazon.titan-embed-text-v1": "amazontitanv1",
-                "amazon.titan-embed-text-v2:0": "amazontitanv2",
-                "amazon.titan-embed-image-v1": "amazontitanimagev1",
-                "cohere.embed-english-v3": "cohereenglishv3",
-                "cohere.embed-multilingual-v3": "coheremultilingualv3",
-                "BAAI/bge-large-en-v1.5": "bgelargeenv1.5"  # Explicit transformation for this specific case
-            }
+            if data["bedrock_knowledge_base"]:
+                # Generate the `index_id` with abbreviations
+                index_id = (
+                    f"{execution_id}_bedrock_knowledge_base"
+                ).lower()
+            else:
+                # Abbreviate the chunking strategy
+                chunking_strategy = "fix" if data["chunking_strategy"].lower() == "fixed" else "hi"
+                # Abbreviate the embedding service
+                embedding_service = "b" if data["embedding_service"].lower() == "bedrock" else "s"
+                embedding_model_mapping = {
+                    "amazon.titan-embed-text-v1": "amazontitanv1",
+                    "amazon.titan-embed-text-v2:0": "amazontitanv2",
+                    "amazon.titan-embed-image-v1": "amazontitanimagev1",
+                    "cohere.embed-english-v3": "cohereenglishv3",
+                    "cohere.embed-multilingual-v3": "coheremultilingualv3",
+                    "BAAI/bge-large-en-v1.5": "bgelargeenv1.5"  # Explicit transformation for this specific case
+                }
 
-            # Normalize the embedding model name
-            embedding_model = embedding_model_mapping.get(data["embedding_model"], data["embedding_model"])
+                # Normalize the embedding model name
+                embedding_model = embedding_model_mapping.get(data["embedding_model"], data["embedding_model"])
 
-            # Generate the `index_id` with abbreviations
-            index_id = (
-                f"{execution_id}_{chunking_strategy}_{data['chunk_size']}_"
-                f"{data['chunk_overlap']}_{embedding_service}_{embedding_model}_"
-                f"{data['vector_dimension']}_{data['indexing_algorithm']}"
-            ).lower()
+                # Generate the `index_id` with abbreviations
+                index_id = (
+                    f"{execution_id}_{chunking_strategy}_{data['chunk_size']}_"
+                    f"{data['chunk_overlap']}_{embedding_service}_{embedding_model}_"
+                    f"{data['vector_dimension']}_{data['indexing_algorithm']}"
+                ).lower()
 
             # Generate unique experiment ID
             experiment_id = "".join(random.choices(string.ascii_uppercase + string.digits, k=8))
 
-            data['kb_data'] = execution['kb_data']
             data['gt_data'] = execution['gt_data']
             data['n_shot_prompt_guide'] = execution['config']['n_shot_prompt_guide']
 

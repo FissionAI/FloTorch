@@ -290,10 +290,10 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
     label: "Evaluation Inferencing Model"
   },
   {
-    header: 'Directional Pricing',
+    header: 'Directional Cost',
     enableHiding: true,
     accessorKey: "directional_pricing",
-    label: "Directional Pricing"
+    label: "Directional Cost"
   },
   {
     header: ({ column }) => {
@@ -394,7 +394,7 @@ const columnVisibility = ref({
       <template #directional_pricing-cell="{ row }">
         <div class="w-full">
               <UTooltip   :content="{side: 'right'}">
-                <a class="text-blue-500 hover:underline" href="#">{{row.original.directional_pricing}}</a>
+                <a class="text-blue-500 hover:underline" href="#">{{useHumanCurrencyAmount(row.original.directional_pricing)}}</a>
                 <template #content>
                   <UCard class="w-full">
                     <table class="w-full">
