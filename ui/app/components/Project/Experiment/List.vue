@@ -553,6 +553,11 @@ const columnVisibility = ref({
       </UDropdownMenu>
     </div>
     <UTable class="h-100" sticky v-model:column-visibility="columnVisibility" ref="table" :columns="columns" :data="experiments">
+       <template #empty>
+        <div  class="flex flex-col items-center justify-center py-6">
+          <p class="text-gray-500">No experiments found...!</p>
+        </div>
+      </template>
       <template #id-cell="{ row }">
         <a 
           href="#"

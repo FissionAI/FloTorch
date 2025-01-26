@@ -99,7 +99,7 @@ const resetKbModel = (event: any) => {
     <UFormField
       id="kb_model"
       name="kb_model"
-      label="Select Knowledge Base Model"
+      label="Select Knowledge Base Type"
       required
     >
       <USelectMenu
@@ -114,6 +114,7 @@ const resetKbModel = (event: any) => {
         <FieldTooltip field-name="kb_model" />
       </template>
     </UFormField>
+      <p class="text-blue-500">[Note]: Indexing Strategy tab will be skipped if you select knowledge base type is bedrock </p>
 
     <template v-if="state.kb_model && state.kb_model === 'default-upload'">
       <UFormField
@@ -129,30 +130,17 @@ const resetKbModel = (event: any) => {
           key="kb_data"
           v-model="state.kb_data"
           accept="application/pdf"
-        />
-        <template #hint>
-          <FieldTooltip field-name="kb_data" />
-        </template>
+        /> 
       </UFormField>
     </template>
     <template v-if="state.kb_model && state.kb_model !== 'default-upload'">
-      <UFormField
-        id="kb_data"
-        name="kb_data"
-        label="Knowledge Base Data"
-        required
-      >
         <FetchKbModels
           @kbModels="updateKbModels"
           v-model="state.kb_data"
           key="kb_data"
           :selectedValue="state.kb_data"
         />
-
-        <template #hint>
-          <FieldTooltip field-name="kb_data" />
-        </template>
-      </UFormField>
+ 
     </template>
     <UFormField id="gt_data" name="gt_data" label="Ground Truth Data" required>
       <FileUpload

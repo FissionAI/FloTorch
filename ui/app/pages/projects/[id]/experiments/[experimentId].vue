@@ -108,6 +108,12 @@ const items = ref([
             :data="questionMetrics?.question_metrics"
             :loading="isLoading"
           >
+           <template #empty>
+            <div  class="flex flex-col items-center justify-center py-6">
+              <p v-if="isLoading" class="text-gray-500">Please wait, we are fetching experiment question metrics...!</p>
+              <p v-else>No valid experiments are found...!</p>
+            </div>
+          </template>
            <template #sno-cell="{ row }">
             <td>{{ row.index + 1 }}</td>
           </template>

@@ -334,6 +334,46 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
     enableHiding: true,
     accessorKey: "rerank_model_id",
     label: "Reranking Model"
+  },
+  {
+    header: ({ column }) => {
+      const isSorted = column.getIsSorted();
+      return h(UButton, {
+        color: "neutral",
+        variant: "ghost",
+        label: "Guardrail Id",
+        icon: isSorted
+          ? isSorted === "asc"
+            ? "i-lucide-arrow-up-narrow-wide"
+            : "i-lucide-arrow-down-wide-narrow"
+          : "i-lucide-arrow-up-down",
+        class: "-mx-2.5",
+        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+      });
+    },
+    enableHiding: true,
+    accessorKey: "guardrail_id",
+    label: "Guardrail Id"
+  },
+  {
+    header: ({ column }) => {
+      const isSorted = column.getIsSorted();
+      return h(UButton, {
+        color: "neutral",
+        variant: "ghost",
+        label: "Kb Data",
+        icon: isSorted
+          ? isSorted === "asc"
+            ? "i-lucide-arrow-up-narrow-wide"
+            : "i-lucide-arrow-down-wide-narrow"
+          : "i-lucide-arrow-up-down",
+        class: "-mx-2.5",
+        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+      });
+    },
+    enableHiding: true,
+    accessorKey: "kb_data",
+    label: "Kb Data"
   }
 ])
 
@@ -374,6 +414,12 @@ const columnVisibility = ref({
     </div>
     <UTable class="h-100" sticky ref="table" v-model:column-visibility="columnVisibility" :columns="columns" :data="experiments"
       :loading="isLoading">
+      <template #empty>
+        <div  class="flex flex-col items-center justify-center py-6">
+          <p v-if="isLoading" class="text-gray-500">Please wait, we are fetching valid experiments...!</p>
+          <p v-else>No valid experiments are found...!</p>
+        </div>
+      </template>
       <template #directional_pricing-header="{ column }">
         <UButton
           color="neutral"
@@ -504,16 +550,16 @@ const columnVisibility = ref({
         </span>
       </template>
       <template #chunking_strategy-cell="{ row }">
-        {{ useHumanChunkingStrategy(row.original.chunking_strategy) }}
+        {{ useHumanChunkingStrategy(row.original.chunking_strategy) || 'NA' }}
       </template>
       <template #chunk_size-cell="{ row }">
         <span class="flex justify-center">
-          {{ useHumanChunkingStrategy(row.original.chunking_strategy) === 'Fixed' ? row.original.chunk_size : [row.original.hierarchical_child_chunk_size, row.original.hierarchical_parent_chunk_size] }}
+          {{ row.original.chunking_strategy ?  useHumanChunkingStrategy(row.original.chunking_strategy) === 'Fixed' ? row.original.chunk_size : [row.original.hierarchical_child_chunk_size, row.original.hierarchical_parent_chunk_size] : 'NA' }}
         </span>
       </template>
        <template #chunk_overlap-cell="{ row }">
        <span class="flex justify-center">
-          {{ useHumanChunkingStrategy(row.original.chunking_strategy) === 'Fixed' ? row.original.chunk_overlap : row.original.hierarchical_chunk_overlap_percentage}}
+          {{ row.original.chunking_strategy ?  useHumanChunkingStrategy(row.original.chunking_strategy) === 'Fixed' ? row.original.chunk_overlap : row.original.hierarchical_chunk_overlap_percentage : 'NA'}}
           </span>
       </template>
       <template #indexing_algorithm-cell="{ row }">
@@ -524,6 +570,9 @@ const columnVisibility = ref({
       </template>
       <template #retrieval_model-cell="{ row }">
         {{ useModelName("retrieval", row.original.retrieval_model) }}
+      </template>
+      <template #kb_data-cell="{row}">
+      {{!row.original.bedrock_knowledge_base ? '' : row.original.kb_data}}
       </template>
     </UTable>
   </div>

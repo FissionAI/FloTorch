@@ -23,4 +23,5 @@ service: "Evaluation service assesses the performance, accuracy, fairness, and r
 ragas_embedding_llm: "Choose whether you want the language model from the Amazon Bedrock or Sagemaker family",
 ragas_inference_llm: "Select the language model used to retrieve and generate responses based on the retrieved chunks from the Amazon family",
 ragas_rerank_llm: "Select the rerank model to use for the evaluation",
+kb_model : "Select Knowledge base type"
 }
