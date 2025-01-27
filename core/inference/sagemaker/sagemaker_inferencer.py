@@ -271,7 +271,9 @@ class SageMakerInferencer(BaseInferencer):
                         huggingface_model = HuggingFaceModel(
                             image_uri=get_huggingface_llm_image_uri("huggingface", version="2.3.1", region=self.region_name),
                             env=hub,
-                            role=self.role, 
+                            role=self.role,
+                            sagemaker_session = self.session
+                            
                         )
 
                         # deploy model to SageMaker Inference

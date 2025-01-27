@@ -39,7 +39,8 @@ MODELS = {
     "sagemaker_huggingface-textembedding-gte-qwen2-7b-instruct": 2,
     "sagemaker_meta-textgeneration-llama-3-1-8b-instruct": 2,
     "sagemaker_huggingface-llm-falcon-7b-instruct-bf16": 2,
-    "sagemaker_meta-textgeneration-llama-3-3-70b-instruct": 4
+    "sagemaker_meta-textgeneration-llama-3-3-70b-instruct": 4,
+    "sagemaker_deepseek-ai/DeepSeek-R1-Distill-Llama-8B": 2
 }
 
 def seed_models(execution_model_invocations_db) -> int:

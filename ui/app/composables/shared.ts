@@ -401,6 +401,13 @@ export const useProjectCreateMeta = () => {
           type: "meta-llama/Meta-Llama-3-70B-Instruct",
           model_name : "ml.p4d.24xlarge"
         },
+        {
+          label: "deepseek-ai/DeepSeek-R1-Distill-Llama-8B (ml.g5.2xlarge)",
+          value: "deepseek-ai/DeepSeek-R1-Distill-Llama-8B",
+          service: "sagemaker",
+          type: "deepseek-ai/DeepSeek-R1-Distill-Llama-8B",
+          model_name : "ml.g5.2xlarge"
+        },
       ],
       temperature: [
         {
