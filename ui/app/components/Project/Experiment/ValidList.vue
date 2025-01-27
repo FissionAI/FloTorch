@@ -341,7 +341,7 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
       return h(UButton, {
         color: "neutral",
         variant: "ghost",
-        label: "Guardrail Id",
+        label: "Guardrail",
         icon: isSorted
           ? isSorted === "asc"
             ? "i-lucide-arrow-up-narrow-wide"
@@ -352,8 +352,8 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
       });
     },
     enableHiding: true,
-    accessorKey: "guardrail_id",
-    label: "Guardrail Id"
+    accessorKey: "guardrail_name",
+    label: "Guardrail"
   },
   {
     header: ({ column }) => {
@@ -361,7 +361,7 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
       return h(UButton, {
         color: "neutral",
         variant: "ghost",
-        label: "Kb Data",
+        label: "Bedrock Kb",
         icon: isSorted
           ? isSorted === "asc"
             ? "i-lucide-arrow-up-narrow-wide"
@@ -373,7 +373,27 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
     },
     enableHiding: true,
     accessorKey: "kb_data",
-    label: "Kb Data"
+    label: "Bedrock Kb"
+  },
+  {
+    header: ({ column }) => {
+      const isSorted = column.getIsSorted();
+      return h(UButton, {
+        color: "neutral",
+        variant: "ghost",
+        label: "Bedrock Kb Name",
+        icon: isSorted
+          ? isSorted === "asc"
+            ? "i-lucide-arrow-up-narrow-wide"
+            : "i-lucide-arrow-down-wide-narrow"
+          : "i-lucide-arrow-up-down",
+        class: "-mx-2.5",
+        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+      });
+    },
+    enableHiding: true,
+    accessorKey: "kb_name",
+    label: "Bedrock Kb Name"
   }
 ])
 
@@ -501,8 +521,8 @@ const columnVisibility = ref({
         </UButton>
       </template>
       <template #vector_dimension-cell="{ row }">
-        <span class="flex justify-center">
-          {{ row.original.vector_dimension }}
+        <span class=" ">
+          {{ row.original.vector_dimension || 'NA' }}
         </span>
       </template>
       <template #n_shot_prompts-header="{ column }">
@@ -523,8 +543,8 @@ const columnVisibility = ref({
         </UButton>
       </template>
       <template #n_shot_prompts-cell="{ row }">
-        <span class="flex justify-center">
-          {{ row.original.n_shot_prompts }}
+        <span class=" ">
+          {{ row.original.n_shot_prompts || 'NA' }}
         </span>
       </template>
       <template #temp_retrieval_llm-header="{ column }">
@@ -545,34 +565,37 @@ const columnVisibility = ref({
         </UButton>
       </template>
       <template #temp_retrieval_llm-cell="{ row }">
-        <span class="flex justify-center">
-          {{ row.original.temp_retrieval_llm }}
+        <span class=" ">
+          {{ row.original.temp_retrieval_llm || 'NA' }}
         </span>
       </template>
       <template #chunking_strategy-cell="{ row }">
         {{ useHumanChunkingStrategy(row.original.chunking_strategy) || 'NA' }}
       </template>
       <template #chunk_size-cell="{ row }">
-        <span class="flex justify-center">
+        <span>
           {{ row.original.chunking_strategy ?  useHumanChunkingStrategy(row.original.chunking_strategy) === 'Fixed' ? row.original.chunk_size : [row.original.hierarchical_child_chunk_size, row.original.hierarchical_parent_chunk_size] : 'NA' }}
         </span>
       </template>
        <template #chunk_overlap-cell="{ row }">
-       <span class="flex justify-center">
+       <span class=" ">
           {{ row.original.chunking_strategy ?  useHumanChunkingStrategy(row.original.chunking_strategy) === 'Fixed' ? row.original.chunk_overlap : row.original.hierarchical_chunk_overlap_percentage : 'NA'}}
           </span>
       </template>
       <template #indexing_algorithm-cell="{ row }">
-        {{ useHumanIndexingAlgorithm(row.original.indexing_algorithm) }}
+        {{ useHumanIndexingAlgorithm(row.original.indexing_algorithm) || 'NA' }}
       </template>
       <template #embedding_model-cell="{ row }">
-        {{ useModelName("indexing", row.original.embedding_model) }}
+        {{ useModelName("indexing", row.original.embedding_model) || 'NA' }}
       </template>
       <template #retrieval_model-cell="{ row }">
-        {{ useModelName("retrieval", row.original.retrieval_model) }}
+        {{ useModelName("retrieval", row.original.retrieval_model) || 'NA' }}
+      </template>
+       <template #kb_name-cell="{row}">
+      {{!row.original.bedrock_knowledge_base ? 'NA' : row.original.kb_name}}
       </template>
       <template #kb_data-cell="{row}">
-      {{!row.original.bedrock_knowledge_base ? '' : row.original.kb_data}}
+      {{!row.original.bedrock_knowledge_base ? 'NA' : row.original.kb_data}}
       </template>
     </UTable>
   </div>

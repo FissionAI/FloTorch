@@ -61,7 +61,7 @@ const state = reactive<Partial<ProjectCreateDataStrategy>>({
 const emits = defineEmits(["next", "previous", "kbFilesUpload"]);
 
 const onSubmit = (event: FormSubmitEvent<ProjectCreateDataStrategy>) => {
-  modelValue.value = event.data;
+    modelValue.value = event.data;
   emits("next");
 };
 
@@ -113,8 +113,11 @@ const resetKbModel = (event: any) => {
       <template #hint>
         <FieldTooltip field-name="kb_model" />
       </template>
+       <div class="my-2">
+          <ULink class="text-blue-500 hover:underline" target="_blank" raw :to="`https://${state.region}.console.aws.amazon.com/bedrock/home?region=${state.region}#/knowledge-bases`" active-class="font-bold" inactive-class="text-[var(--ui-text-muted)]">Create Bedrock knowdege bases</ULink>
+        </div>
     </UFormField>
-      <p class="text-blue-500">[Note]: Indexing Strategy tab will be skipped if you select knowledge base type is bedrock </p>
+      <p v-if="state.kb_model && state.kb_model !== 'default-upload'" class="text-blue-500">[Note]: Indexing Strategy step will be skipped if Bedrock Knowledge Bases is selected </p>
 
     <template v-if="state.kb_model && state.kb_model === 'default-upload'">
       <UFormField
@@ -139,8 +142,9 @@ const resetKbModel = (event: any) => {
           v-model="state.kb_data"
           key="kb_data"
           :selectedValue="state.kb_data"
+          :region="state.region"
         />
- 
+
     </template>
     <UFormField id="gt_data" name="gt_data" label="Ground Truth Data" required>
       <FileUpload

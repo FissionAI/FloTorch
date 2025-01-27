@@ -171,7 +171,7 @@ const items = ref([
                       experimentsData?.indexing_cost ?
                       useHumanCurrencyAmount(
                         experimentsData?.indexing_cost
-                      ) : 'Unable to fetch data'
+                      ) : !experimentsData?.config?.bedrock_knowledge_base ? 'Unable to fetch data ' : 'Bedrock knowledge base pricing not included'
                     }}
                   </td>
                 </tr>
@@ -214,7 +214,7 @@ const items = ref([
                     {{ 
                       experimentsData?.indexing_time ? 
                       useConvertSecondsToDHM(Number(experimentsData?.indexing_time)) 
-                      : 'Unable to fetch time'
+                      : !experimentsData?.config?.bedrock_knowledge_base ? "Unable to fetch time" : 'NA'
                     }}
                   </td>
                 </tr>
