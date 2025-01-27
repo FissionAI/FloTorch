@@ -207,7 +207,6 @@ def unpack_guardrails(combinations):
     for combination in combinations:
         combination["enable_guardrails"] = True if "guardrails" in combination else False
         combination["guardrail_id"] = combination.get("guardrails", {}).get("guardrails_id", "")
-        combination["guardrail_name"] = combination.get("guardrails", {}).get("guardrails_name", "")
         combination["guardrail_version"] = combination.get("guardrails", {}).get("guardrail_version", "")
         combination["enable_prompt_guardrails"] = combination.get("guardrails", {}).get("enable_prompt_guardrails", False)
         combination["enable_context_guardrails"] = combination.get("guardrails", {}).get("enable_context_guardrails", False)
@@ -218,21 +217,6 @@ def unpack_guardrails(combinations):
 
     return combinations
 
-def unpack_knowledebases(combinations):
-    for combination in combinations:
-        kb_data = combination.get('kb_data')
-        
-        if isinstance(kb_data, dict):
-            combination["kb_name"] = kb_data.get("name", "")
-            combination["kb_data"] = kb_data.get("id", "")
-            
-        elif isinstance(kb_data, str):
-            combination["kb_data"] = kb_data
-            combination["kb_name"] = ""
-            
-    return combinations
-
-            
 def generate_all_combinations(data):
     # Parse the DynamoDB-style JSON
     parsed_data = {k: parse_dynamodb(v) for k, v in data.items()}
@@ -252,7 +236,6 @@ def generate_all_combinations(data):
     combinations = [dict(zip(keys, values)) for values in itertools.product(*parameters_all.values())]
     combinations = remove_invalid_combinations_keys(combinations)
     combinations = unpack_guardrails(combinations)
-    combinations = unpack_knowledebases(combinations)
 
     gt_data = parameters_all["gt_data"][0]
     [num_prompts, num_chars] = read_gt_data(gt_data)

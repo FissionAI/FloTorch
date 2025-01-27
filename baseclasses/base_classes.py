@@ -390,7 +390,7 @@ class Execution(BaseModel):
     config: Dict[str, Any]
     status: str = "not_started"
     gt_data: str
-    kb_data: Union[str, List[Dict]]
+    kb_data: Union[str, List[str]]
     region: str
     name: str
 
