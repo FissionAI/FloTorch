@@ -224,13 +224,11 @@ def unpack_knowledebases(combinations):
         
         if isinstance(kb_data, dict):
             combination["kb_name"] = kb_data.get("name", "")
-            combination["kb_id"] = kb_data.get("id", "")
+            combination["kb_data"] = kb_data.get("id", "")
             
         elif isinstance(kb_data, str):
-            combination["kb_name"] = kb_data
-            
-        if "kb_data" in combination:
-            del combination["kb_data"]
+            combination["kb_data"] = kb_data
+            combination["kb_name"] = ""
             
     return combinations
 
