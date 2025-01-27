@@ -9,7 +9,8 @@ model_list = [
                 "meta-textgeneration-llama-3-1-8b-instruct", # Model for text generation (Llama)
                 "huggingface-llm-falcon-7b-instruct-bf16", # Model for text generation (Falcon)
 
-                "meta-textgeneration-llama-3-3-70b-instruct" #Llama model with more parameters for text generation
+                "meta-textgeneration-llama-3-3-70b-instruct", #Llama model with more parameters for text generation
+                "deepseek-ai/DeepSeek-R1-Distill-Llama-8B"
              ]
 
 # Registering each model from the list into the InferencerFactory under 'sagemaker'.
