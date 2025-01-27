@@ -26,7 +26,7 @@ class KnowledgeBaseUtils():
         try:
             # Get list of all knowledge bases with pagination limit of 123
             response = self.client.list_knowledge_bases(maxResults=1000)
-            print(response)
+            logger.debug(f"Knowledge bases list response: {response}")
             valid_knowledge_bases = []
             # Process each knowledge base
             for item in response.get('knowledgeBaseSummaries'):
