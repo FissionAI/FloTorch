@@ -422,6 +422,7 @@ Resources:
                           "eval_embedding_model.$": "$.Item.Item.config.M.eval_embedding_model.S",
                           "eval_retrieval_model.$": "$.Item.Item.config.M.eval_retrieval_model.S",
                           "rerank_model_id.$": "$.Item.Item.config.M.rerank_model_id.S",
+                          "bedrock_knowledge_base.$": "$.Item.Item.config.M.bedrock_knowledge_base.Bool",
                           "ClusterArn": "${EcsClusterArn}",
                           "IndexingTaskDefinitionArn": "${IndexingTaskDefinitionArn}",
                           "RetrieverTaskDefinitionArn": "${RetrieverTaskDefinitionArn}",
@@ -429,7 +430,7 @@ Resources:
                           "SageMakerRoleArn": "${SageMakerRoleArn}"
                         }
                       },
-                      "Next": "Indexing Model Check"
+                      "Next": "Check if KB data upload"
                     },
                     "Indexing Model Check": {
                       "Next": "Evaluate Indexing Model Check",
@@ -1529,6 +1530,7 @@ Resources:
                           "eval_embedding_model.$": "$.Item.Item.config.M.eval_embedding_model.S",
                           "eval_retrieval_model.$": "$.Item.Item.config.M.eval_retrieval_model.S",
                           "rerank_model_id.$": "$.Item.Item.config.M.rerank_model_id.S",
+                          "bedrock_knowledge_base.$": "$.Item.Item.config.M.bedrock_knowledge_base.Bool",
                           "hierarchical_parent_chunk_size.$": "$.Item.Item.config.M.hierarchical_parent_chunk_size.N",
                           "hierarchical_child_chunk_size.$": "$.Item.Item.config.M.hierarchical_child_chunk_size.N",
                           "hierarchical_chunk_overlap_percentage.$": "$.Item.Item.config.M.hierarchical_chunk_overlap_percentage.N",
@@ -1539,7 +1541,18 @@ Resources:
                           "SageMakerRoleArn": "${SageMakerRoleArn}"
                         }
                       },
-                      "Next": "Indexing Model Check"
+                      "Next": "Check if KB data upload"
+                    },
+                    "Check if KB data upload": {
+                      "Type": "Choice",
+                      "Choices": [
+                        {
+                          "Variable": "$.parsedConfig.parsed_config.bedrock_knowledge_base",
+                          "BooleanEquals": true,
+                          "Next": "Proceed to Retrieval Model Check"
+                        }
+                      ],
+                      "Default": "Indexing Model Check"
                     },
                     "Wait for Indexing Model Update": {
                       "Type": "Wait",

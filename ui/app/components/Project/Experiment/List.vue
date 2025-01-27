@@ -403,7 +403,7 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
       return h(UButton, {
         color: "neutral",
         variant: "ghost",
-        label: "Directional Pricing",
+        label: "Directional Cost",
         icon: isSorted
           ? isSorted === "asc"
             ? "i-lucide-arrow-up-narrow-wide"
@@ -413,7 +413,7 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
       });
     },
-    label: 'Directional Pricing',
+    label: 'Directional Cost',
     accessorKey: "directional_pricing",
     enableHiding: true,
     sortingFn: (rowA, rowB) => {
@@ -553,6 +553,11 @@ const columnVisibility = ref({
       </UDropdownMenu>
     </div>
     <UTable class="h-100" sticky v-model:column-visibility="columnVisibility" ref="table" :columns="columns" :data="experiments">
+       <template #empty>
+        <div  class="flex flex-col items-center justify-center py-6">
+          <p class="text-gray-500">No experiments found...!</p>
+        </div>
+      </template>
       <template #id-cell="{ row }">
         <a 
           href="#"
@@ -576,7 +581,7 @@ const columnVisibility = ref({
       <template #directional_pricing-cell="{row}">     
         <div class="w-full">
             <UTooltip   :content="{side: 'right'}">
-                    <a class="text-blue-500 hover:underline" href="#">{{row.original?.config?.directional_pricing}}</a>
+                    <a class="text-blue-500 hover:underline" href="#">{{useHumanCurrencyAmount(row.original?.config?.directional_pricing)}}</a>
                     <template #content>
                       <UCard class="w-full">
                         <table class="w-full">

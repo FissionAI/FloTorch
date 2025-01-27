@@ -98,3 +98,7 @@ export const useGuardrailsList = () => {
     method: "GET"
   });
 };
+
+export const useFetchAllKbModels = () => {
+  return useApi("/bedrock/knowledge_bases");
+}

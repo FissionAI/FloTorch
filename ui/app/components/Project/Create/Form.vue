@@ -46,21 +46,30 @@ const nextStep = () => {
       prestep: {
         region: state.prestep?.region,
         gt_data: state.prestep?.gt_data,
-        kb_data: state.prestep?.kb_data
+        kb_data: state.prestep?.kb_data,
+        bedrock_knowledge_base : state.prestep?.kb_model === 'default-upload' ? false : true
       },
       indexing: {
-        chunking_strategy: state.indexing?.chunking_strategy,
-        ...(state.indexing?.chunking_strategy.includes('fixed') ? { chunk_size: state.indexing?.chunk_size, chunk_overlap: state.indexing?.chunk_overlap } : {}),
-        ...(state.indexing?.chunking_strategy.includes('hierarchical') ? { hierarchical_parent_chunk_size: state.indexing?.hierarchical_parent_chunk_size, hierarchical_child_chunk_size: state.indexing?.hierarchical_child_chunk_size, hierarchical_chunk_overlap_percentage: state.indexing?.hierarchical_chunk_overlap_percentage } : {}),
-        vector_dimension: state.indexing?.vector_dimension,
-        indexing_algorithm: state.indexing?.indexing_algorithm,
+        chunking_strategy: state.indexing?.chunking_strategy || '',
+        ...(state.indexing?.chunking_strategy.includes('fixed') ? { chunk_size: state.indexing?.chunk_size, chunk_overlap: state.indexing?.chunk_overlap } : {chunk_size:[],chunk_overlap:[]}),
+        ...(state.indexing?.chunking_strategy.includes('hierarchical') ? { hierarchical_parent_chunk_size: state.indexing?.hierarchical_parent_chunk_size, hierarchical_child_chunk_size: state.indexing?.hierarchical_child_chunk_size, hierarchical_chunk_overlap_percentage: state.indexing?.hierarchical_chunk_overlap_percentage } : {
+          hierarchical_parent_chunk_size : [],
+          hierarchical_child_chunk_size : [],
+          hierarchical_chunk_overlap_percentage : []
+        }),
+        vector_dimension: state.indexing?.vector_dimension || [],
+        indexing_algorithm: state.indexing?.indexing_algorithm || '',
         embedding: state.indexing?.embedding?.map((pc) => {
           return {
             model: pc.value,
             service: pc.service,
             label: pc.label
           }
-        })
+        }) || [{
+                "model": "",
+                "service": "",
+                "label": ""
+            }]
       },
       retrieval: {
         n_shot_prompts: state.retrieval?.n_shot_prompts,
@@ -89,12 +98,22 @@ const nextStep = () => {
     }
     mutate(submitData)
   } else {
+    if(state.prestep.kb_model !== 'default-upload' && currentStep.value == 1){
+      currentStep.value = currentStep.value + 2;
+      kbFilesUploadedData.value = undefined; 
+    }else{
     currentStep.value++
+
+    }
   }
 }
 
 const previousStep = () => {
-  currentStep.value--
+   if(state.prestep.kb_model !== 'default-upload' && currentStep.value == 3){
+      currentStep.value = currentStep.value - 2;
+    }else{
+    currentStep.value--
+    }
 }
 
 const kbFilesUploadedData = ref();

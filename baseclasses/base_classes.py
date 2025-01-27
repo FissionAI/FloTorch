@@ -42,7 +42,7 @@ class VectorDatabase(ABC):
         pass
 
     @abstractmethod
-    def search(self, index_name: str, query_vector: List[float], k: int) -> List[Dict[str, Any]]:
+    def search(self, query_vector: List[float], index_name: str=None, k: int=None, kb_data: str = None) -> List[Dict[str, Any]]:
         """Perform a vector search on the specified index."""
         pass
 
@@ -390,7 +390,7 @@ class Execution(BaseModel):
     config: Dict[str, Any]
     status: str = "not_started"
     gt_data: str
-    kb_data: str
+    kb_data: Union[str, List[str]]
     region: str
     name: str
 

@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List, Union
 from pydantic import BaseModel, Field
 import json 
 import re
@@ -11,8 +11,8 @@ class ExperimentalConfig(BaseModel):
     kb_data: str = Field(alias="kb_data")
     gt_data: str = Field(alias="gt_data")
     chunking_strategy: str = Field(alias="chunking_strategy")
-    chunk_size: int = Field(alias="chunk_size")
-    chunk_overlap: int = Field(alias="chunk_overlap")
+    chunk_size: Union[int, List] = Field(alias="chunk_size")
+    chunk_overlap: Union[int, List] = Field(alias="chunk_overlap")
     hierarchical_parent_chunk_size: int = Field(alias="hierarchical_parent_chunk_size")
     hierarchical_child_chunk_size: int = Field(alias="hierarchical_child_chunk_size")
     hierarchical_chunk_overlap_percentage: int = Field(alias="hierarchical_chunk_overlap_percentage")
@@ -29,7 +29,7 @@ class ExperimentalConfig(BaseModel):
     retrieval_service: str = Field(alias="retrieval_service")
     retrieval_model: str = Field(alias="retrieval_model")
     retrieval_model_endpoint: str = None
-    vector_dimension: int = Field(alias="vector_dimension")
+    vector_dimension: Union[int, List] = Field(alias="vector_dimension")
     enable_guardrails: bool = False
     guardrail_id: Optional[str] = None
     guardrail_version: Optional[str] = None
@@ -44,6 +44,7 @@ class ExperimentalConfig(BaseModel):
     eval_retrieval_temperature: float = float(0.4)
     # Rerank model id
     rerank_model_id: str = Field(alias="rerank_model_id", default="none")
+    bedrock_knowledge_base: bool = False
     class Config:
         alias_generator = lambda string: string.replace("-", "_")
         populate_by_name = True

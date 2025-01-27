@@ -9,6 +9,7 @@ from config.config import Config, get_config
 from core.processors import EmbedProcessor
 from core.processors import InferenceProcessor
 from core.rerank.rerank import DocumentReranker
+from core.knowledgebase_vectorstore import KnowledgeBaseVectorDatabase
 import time
 
 import boto3, json, uuid
@@ -86,23 +87,33 @@ def retrieve(config: Config, experimentalConfig: ExperimentalConfig) -> None:
 def initialize_components(config: Config, experimentalConfig: ExperimentalConfig) -> Dict[str, Any]:
     """Initialize all required components for the retrieval process."""
     try:
-        # Initialize embedding processor
-        logger.info("Initializing embedding processor")
-        embed_processor = EmbedProcessor(experimentalConfig)
-        
+        # Initialize embedding processor if required
+        if experimentalConfig.bedrock_knowledge_base:
+            logger.info("Setting up knowledge base retriever")
+            embed_processor = None
+            
+        else:
+            logger.info("Initializing embedding processor")
+            embed_processor = EmbedProcessor(experimentalConfig)
+            
         # Initialize inference processor
         logger.info("Initializing inference processor")
         inference_processor = InferenceProcessor(experimentalConfig)
         
         # Initialize vector database
-        logger.info(f"Connecting to OpenSearch at {config.opensearch_host}")
-        vector_database = OpenSearchVectorDatabase(
-            host=config.opensearch_host,
-            is_serverless=config.opensearch_serverless,
-            region=config.aws_region,
-            username=config.opensearch_username,
-            password=config.opensearch_password
-        )
+        
+        if experimentalConfig.bedrock_knowledge_base:
+            logger.info("Connecting to Knowledge base")
+            vector_database = KnowledgeBaseVectorDatabase()
+        else:
+            logger.info(f"Connecting to OpenSearch at {config.opensearch_host}")
+            vector_database = OpenSearchVectorDatabase(
+                host=config.opensearch_host,
+                is_serverless=config.opensearch_serverless,
+                region=config.aws_region,
+                username=config.opensearch_username,
+                password=config.opensearch_password
+            )
         
         # Initialize DynamoDB connections
         logger.info("Initializing DynamoDB connections")
@@ -183,9 +194,15 @@ def process_questions(
             logger.debug(f"Processing question {idx+1}: {question}")
 
             # Generate embeddings
-            query_metadata, query_embedding = components["embed_processor"].embed_text(
-                question
-            )
+            if not experimentalConfig.bedrock_knowledge_base:
+                logger.info("Generating embeddings for the question using provided embedder")
+                query_metadata, query_embedding = components["embed_processor"].embed_text(
+                    question
+                )
+            else:
+                query_metadata, query_embedding = {'inputTokens': '0', 'latencyMs': '0'}, None
+            
+                
             query_results=None
             guardrail_input_assessment = None
             guardrail_output_assessment = None
@@ -196,7 +213,8 @@ def process_questions(
             answer_metadata = {}
             answer = ""
 
-            retrieval_query_embed_tokens += int(query_metadata["inputTokens"])
+            # Retrieval query embed is not provided by knowledge base
+            retrieval_query_embed_tokens += int(query_metadata.get("inputTokens", 0) if query_embedding else 0)
 
             #Apply Guardrails
             if experimentalConfig.enable_guardrails:
@@ -221,9 +239,14 @@ def process_questions(
                 # Apply CONTEXT guardrails if not already blocked
                 if experimentalConfig.enable_context_guardrails and guardrail_blocked == 'NONE':
                     # Search for relevant context once
-                    query_results = components["vector_database"].search(
-                        experimentalConfig.index_id, query_embedding, experimentalConfig.knn_num
-                    )
+                    if isinstance(components["vector_database"], OpenSearchVectorDatabase):
+                        query_results = components["vector_database"].search(
+                            experimentalConfig.index_id, query_embedding, experimentalConfig.knn_num
+                        )
+                    elif isinstance(components["vector_database"], KnowledgeBaseVectorDatabase):
+                        query_results = components["vector_database"].search(
+                            question, experimentalConfig.kb_data, experimentalConfig.knn_num
+                        )
 
                     if experimentalConfig.chunking_strategy.lower() == 'hierarchical':
                         query_results = __duplicate_removal_for_heirarchical_config(query_results)
@@ -250,10 +273,13 @@ def process_questions(
                 if guardrail_blocked == 'NONE':
                     # Fetch context if not already done
                     if query_results is None:
-                        query_results = components['vector_database'].search(
-                            experimentalConfig.index_id,
-                            query_embedding,
-                            experimentalConfig.knn_num
+                        if isinstance(components["vector_database"], OpenSearchVectorDatabase):
+                            query_results = components["vector_database"].search(
+                                experimentalConfig.index_id, query_embedding, experimentalConfig.knn_num
+                        )
+                    elif isinstance(components["vector_database"], KnowledgeBaseVectorDatabase):
+                        query_results = components["vector_database"].search(
+                            question, experimentalConfig.kb_data, experimentalConfig.knn_num
                         )
 
                         if experimentalConfig.chunking_strategy.lower() == 'hierarchical':
@@ -286,9 +312,14 @@ def process_questions(
                             guardrail_blocked = 'OUTPUT'
             else:
                 # Search for relevant context
-                query_results = components["vector_database"].search(
-                    experimentalConfig.index_id, query_embedding, experimentalConfig.knn_num
-                )
+                if isinstance(components["vector_database"], OpenSearchVectorDatabase):
+                        query_results = components["vector_database"].search(
+                            experimentalConfig.index_id, query_embedding, experimentalConfig.knn_num
+                        )
+                elif isinstance(components["vector_database"], KnowledgeBaseVectorDatabase):
+                    query_results = components["vector_database"].search(
+                        question, experimentalConfig.kb_data, experimentalConfig.knn_num
+                    )
 
                 if experimentalConfig.chunking_strategy.lower() == 'hierarchical':
                     query_results = __duplicate_removal_for_heirarchical_config(query_results)

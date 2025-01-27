@@ -1,0 +1,66 @@
+Name: Build_Deploy_Dev
+SchemaVersion: "1.0"
+
+# Only trigger when started manually.
+Triggers:
+  - Type: Manual
+
+Actions:
+  Build_a8:
+    Identifier: aws/build@v1.0.0
+
+    Inputs:
+      Sources:
+        - WorkflowSource
+      Variables:
+        # Dev environment details
+        - Name: DEV_ENV
+          Value: "paimon"
+        - Name: DEV_URL
+          Value: "https://6q8a6emu8q.us-east-1.awsapprunner.com"
+        - Name: DEV_USERNAME
+          Value: "admin"
+        - Name: DEV_PASSWORD
+          Value: "usidhfIYG6*(43HBJ"
+
+    Outputs:
+      AutoDiscoverReports:
+        Enabled: true
+        ReportNamePrefix: rpt
+
+    Configuration:
+      Steps:
+        - Run: |
+            echo "Deploying to Dev environment: $DEV_ENV"
+            
+            # 1) Log in to Amazon ECR
+            aws ecr get-login-password --region us-east-1 \
+              | docker login --username AWS --password-stdin 677276078734.dkr.ecr.us-east-1.amazonaws.com
+
+            # 2) Build & push Docker images for Dev (paimon)
+            docker build -t 677276078734.dkr.ecr.us-east-1.amazonaws.com/flotorch-app-$DEV_ENV:latest \
+                         -f app/Dockerfile --push .
+            docker build -t 677276078734.dkr.ecr.us-east-1.amazonaws.com/flotorch-indexing-$DEV_ENV:latest \
+                         -f indexing/fargate_indexing.Dockerfile --push .
+            docker build -t 677276078734.dkr.ecr.us-east-1.amazonaws.com/flotorch-retriever-$DEV_ENV:latest \
+                         -f retriever/fargate_retriever.Dockerfile --push .
+            docker build -t 677276078734.dkr.ecr.us-east-1.amazonaws.com/flotorch-evaluation-$DEV_ENV:latest \
+                         -f evaluation/fargate_evaluation.Dockerfile --push .
+            docker build -t 677276078734.dkr.ecr.us-east-1.amazonaws.com/flotorch-runtime-$DEV_ENV:latest \
+                         -f opensearch/opensearch.Dockerfile --push .
+            cd lambda_handlers
+            docker build -t 677276078734.dkr.ecr.us-east-1.amazonaws.com/flotorch-costcompute-$DEV_ENV:latest \
+                         -f cost_handler/Dockerfile --push .
+            cd ..
+
+            echo "Docker images for Dev ($DEV_ENV) have been pushed."
+
+      Container:
+        Registry: CODECATALYST
+        Image: CodeCatalystLinux_x86_64:2024_03
+
+    Compute:
+      Type: EC2
+
+    Environment:
+      Name: Dev
