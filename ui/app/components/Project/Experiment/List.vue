@@ -532,7 +532,63 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
     cell: ({ row }) => {
       return row.original.rerank_model_id? row.original.rerank_model_id : "-"
     }
-  }
+  },
+   {
+    header: ({ column }) => {
+      const isSorted = column.getIsSorted();
+      return h(UButton, {
+        color: "neutral",
+        variant: "ghost",
+        label: "Guardrail",
+        icon: isSorted
+          ? isSorted === "asc"
+            ? "i-lucide-arrow-up-narrow-wide"
+            : "i-lucide-arrow-down-wide-narrow"
+          : "i-lucide-arrow-up-down",
+        class: "-mx-2.5",
+        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+      });
+    },
+    label: 'Guardrail',
+    accessorKey: "config.guardrail_name",
+    enableHiding: true,
+    sortingFn: (rowA, rowB) => {
+      const a = rowA.original.config?.guardrail_name ?? 0;
+      const b = rowB.original.config?.guardrail_name ?? 0;
+      return a.localeCompare(b);
+    },
+    cell: ({ row }) => {
+      return row.original.config?.guardrail_name ? row.original.config.guardrail_name : "-"
+    }
+  },
+  {
+    header: ({ column }) => {
+      const isSorted = column.getIsSorted();
+      return h(UButton, {
+        color: "neutral",
+        variant: "ghost",
+        label: "Bedrock Kb Name",
+        icon: isSorted
+          ? isSorted === "asc"
+            ? "i-lucide-arrow-up-narrow-wide"
+            : "i-lucide-arrow-down-wide-narrow"
+          : "i-lucide-arrow-up-down",
+        class: "-mx-2.5",
+        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+      });
+    },
+    label: 'Bedrock Kb Name',
+    accessorKey: "config.kb_name",
+    enableHiding: true,
+    sortingFn: (rowA, rowB) => {
+      const a = rowA.original.config?.kb_name ?? 0;
+      const b = rowB.original.config?.kb_name ?? 0;
+      return a.localeCompare(b);
+    },
+    cell: ({ row }) => {
+      return row.original.config?.kb_name ? row.original.config.kb_name : "-"
+    }
+  },
 ])
 
 const navigateToExperiment = (experimentId: string) => {

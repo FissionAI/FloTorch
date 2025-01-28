@@ -10,6 +10,7 @@ const props = defineProps<{
   selectable?: boolean
   experiments?: ValidExperiment[]
   loading?: boolean
+  error?:any
 }>()
 
 const isLoading = computed(() => props.loading ?? false)
@@ -485,9 +486,12 @@ const columnVisibility = ref({
     <UTable class="h-100" sticky ref="table" v-model:column-visibility="columnVisibility" :columns="columns" :data="experiments"
       :loading="isLoading">
       <template #empty>
-        <div  class="flex flex-col items-center justify-center py-6">
+        <div v-if="!error" class="flex flex-col items-center justify-center py-6">
           <p v-if="isLoading" class="text-gray-500">Please wait, we are fetching valid experiments...!</p>
           <p v-else>No valid experiments are found...!</p>
+        </div>
+        <div v-else class="flex flex-col items-center justify-center py-6">
+          <p class="text-red-500">{{error.message || 'Error while fetching valid experiments' }}</p>
         </div>
       </template>
       <template #directional_pricing-header="{ column }">
