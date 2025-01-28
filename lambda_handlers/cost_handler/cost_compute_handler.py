@@ -91,6 +91,7 @@ def lambda_handler(event, context):
             total_answer_input_tokens = experiment.get("retrieval_input_tokens", 0)
             total_answer_output_tokens = experiment.get("retrieval_output_tokens", 0)
 
+        event['bedrock_knowledge_base'] = experiment.get("bedrock_knowledge_base", False)
         total_cost, indexing_cost, retrieval_cost, eval_cost = compute_actual_price(
             event,
             input_tokens=total_answer_input_tokens,

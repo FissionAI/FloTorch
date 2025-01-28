@@ -297,7 +297,10 @@ def generate_all_combinations(data):
             else:
                 configuration["retrieval_cost_estimate"] += estimate_sagemaker_price(retrieval_time)
             
-            configuration["indexing_cost_estimate"] += estimate_opensearch_price(indexing_time) + estimate_fargate_price(indexing_time)
+            if configuration["bedrock_knowledge_base"]:
+                configuration["indexing_cost_estimate"] = 0
+            else:
+                configuration["indexing_cost_estimate"] += estimate_opensearch_price(indexing_time) + estimate_fargate_price(indexing_time)
             configuration["retrieval_cost_estimate"] += estimate_opensearch_price(retrieval_time) + estimate_fargate_price(retrieval_time)
 
             # Neglecting the evaluation tokens at this point of time

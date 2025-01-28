@@ -54,13 +54,15 @@ def compute_actual_price(
         retrieval_model = configuration.get("retrieval_model")
         embedding_service = configuration.get("embedding_service")
         retrieval_service = configuration.get("retrieval_service")
+        bedrock_knowledge_base = configuration.get("bedrock_knowledge_base")
 
         is_config_valid, config_missing = validate_params(
             aws_region=aws_region,
             embedding_model=embedding_model,
             retrieval_model=retrieval_model,
             embedding_service=embedding_service,
-            retrieval_service=retrieval_service
+            retrieval_service=retrieval_service,
+            bedrock_knowledge_base=bedrock_knowledge_base
         )
         if not is_config_valid:
             logger.error(
@@ -74,15 +76,16 @@ def compute_actual_price(
         total_cost = 0
 
         query_embedding_cost = 0
-        if embedding_service == "bedrock" :
-            embedding_model_price = df[(df["model"] == embedding_model) & (df["Region"] == aws_region)]["input_price"]
-            if embedding_model_price.empty:
-                logger.error(f"No embedding model {embedding_model} price found.")
-                return None
-            embedding_model_price = float(embedding_model_price.values[0])  # Price per 1000 tokens
-            indexing_cost = (embedding_model_price * float(index_embed_tokens)) / THOUSAND
-        else:
-            indexing_cost = sagemaker_cost(indexing_time)
+        if not bedrock_knowledge_base:
+            if embedding_service == "bedrock" :
+                embedding_model_price = df[(df["model"] == embedding_model) & (df["Region"] == aws_region)]["input_price"]
+                if embedding_model_price.empty:
+                    logger.error(f"No embedding model {embedding_model} price found.")
+                    return None
+                embedding_model_price = float(embedding_model_price.values[0])  # Price per 1000 tokens
+                indexing_cost = (embedding_model_price * float(index_embed_tokens)) / THOUSAND
+            else:
+                indexing_cost = sagemaker_cost(indexing_time)
         
         if retrieval_service == "bedrock" :
             retrieval_model_input_price = df[
@@ -106,19 +109,22 @@ def compute_actual_price(
             
             retrieval_model_input_actual_cost = (retrieval_model_input_price * float(input_tokens)) / MILLION
             retrieval_model_output_actual_cost = (retrieval_model_output_price * float(output_tokens)) / MILLION
-            if embedding_service == "bedrock":
+            if not bedrock_knowledge_base and embedding_service == "bedrock":
                 query_embedding_cost = (embedding_model_price * float(query_embed_tokens)) / THOUSAND
             retrieval_cost = retrieval_model_input_actual_cost + retrieval_model_output_actual_cost + query_embedding_cost
         else:
             retrieval_cost = sagemaker_cost(retrieval_time)
-            if embedding_service == "bedrock":
-                query_embedding_cost = (embedding_model_price * float(query_embed_tokens)) / THOUSAND
-                retrieval_cost += query_embedding_cost
-            else:
-                embedding_sagemaker_cost = sagemaker_cost(retrieval_time)
-                retrieval_time += embedding_sagemaker_cost
+            if not bedrock_knowledge_base:
+                if embedding_service == "bedrock":
+                    query_embedding_cost = (embedding_model_price * float(query_embed_tokens)) / THOUSAND
+                    retrieval_cost += query_embedding_cost
+                else:
+                    embedding_sagemaker_cost = sagemaker_cost(retrieval_time)
+                    retrieval_time += embedding_sagemaker_cost
+
+        if not bedrock_knowledge_base:   
+            indexing_cost += opensearch_cost(indexing_time) + ecs_cost(indexing_time)
             
-        indexing_cost += opensearch_cost(indexing_time) + ecs_cost(indexing_time)
         retrieval_cost += opensearch_cost(retrieval_time) + ecs_cost(retrieval_time)
 
         eval_cost += opensearch_cost(eval_time) + ecs_cost(eval_time)
@@ -184,7 +190,11 @@ def calculate_experiment_duration(experiment):
             return 0
 
         # total_duration = calculate_difference("start_datetime", "end_datetime")
-        indexing_duration = calculate_difference("indexing_start", "indexing_end")
+        bedrock_knowledge_base = experiment.get('bedrock_knowledge_base')
+        if bedrock_knowledge_base:
+            indexing_duration = 0
+        else:
+            indexing_duration = calculate_difference("indexing_start", "indexing_end")
         retrieval_duration = calculate_difference("retrieval_start", "retrieval_end")
         eval_duration = calculate_difference("eval_start", "eval_end")
 
