@@ -91,8 +91,8 @@ def lambda_handler(event, context):
             total_answer_input_tokens = experiment.get("retrieval_input_tokens", 0)
             total_answer_output_tokens = experiment.get("retrieval_output_tokens", 0)
 
-        total_cost, indexing_cost, retrieval_cost, eval_cost = compute_actual_price(
-            event,
+        total_cost, indexing_cost, retrieval_cost, inferencing_cost, eval_cost = compute_actual_price(
+            experiment,
             input_tokens=total_answer_input_tokens,
             output_tokens=total_answer_output_tokens,
             index_embed_tokens=total_index_embed_tokens,
@@ -103,7 +103,7 @@ def lambda_handler(event, context):
             eval_time=eval_time_in_min
         )
 
-        logger.info(f"Experiment {experiment_id} Actual Cost (in $): {total_cost}, Indexing: {indexing_cost}, Retrieval: {retrieval_cost}, Evaluation : {eval_cost}")
+        logger.info(f"Experiment {experiment_id} Actual Cost (in $): {total_cost}, Indexing: {indexing_cost}, Retrieval: {retrieval_cost}, Inferencing: {inferencing_cost}, Evaluation : {eval_cost}")
 
         # Update DynamoDB with the new cost
         if total_cost is None:
@@ -114,11 +114,12 @@ def lambda_handler(event, context):
             table = dynamodb.Table(experiment_table)
             table.update_item(
                 Key={"id": experiment_id},
-                UpdateExpression="SET cost = :new_cost, indexing_time = :new_indexing_time, retrieval_time = :new_retrieval_time, eval_time = :new_eval_time, total_time = :new_total_time, indexing_cost = :new_indexing_cost, retrieval_cost = :new_retrieval_cost, eval_cost = :new_eval_cost",
+                UpdateExpression="SET cost = :new_cost, indexing_time = :new_indexing_time, retrieval_time = :new_retrieval_time, eval_time = :new_eval_time, total_time = :new_total_time, indexing_cost = :new_indexing_cost, retrieval_cost = :new_retrieval_cost, inferencing_cost = :new_inferencing_cost, eval_cost = :new_eval_cost",
                 ExpressionAttributeValues={
                     ":new_cost": str(total_cost),
                     ":new_indexing_cost": str(indexing_cost),
                     ":new_retrieval_cost": str(retrieval_cost),
+                    ":new_inferencing_cost": str(inferencing_cost),
                     ":new_eval_cost": str(eval_cost),
                     ":new_indexing_time": str(indexing_time),
                     ":new_retrieval_time": str(retrieval_time),

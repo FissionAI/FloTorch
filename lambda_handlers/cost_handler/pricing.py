@@ -26,15 +26,7 @@ def compute_actual_price(
     """Compute the actual price based on the given configuration and token/time inputs."""
 
     is_input_valid, input_missing = validate_params(
-        configuration=configuration,
-        input_tokens=input_tokens,
-        output_tokens=output_tokens,
-        index_embed_tokens=index_embed_tokens,
-        query_embed_tokens=query_embed_tokens,
-        total_time=total_time,
-        indexing_time=indexing_time,
-        retrieval_time=retrieval_time,
-        eval_time=eval_time
+        configuration=configuration
     )
 
     if not is_input_valid:
@@ -49,17 +41,16 @@ def compute_actual_price(
         return None
 
     try:
-        aws_region = configuration.get("aws_region")
-        embedding_model = configuration.get("embedding_model")
-        retrieval_model = configuration.get("retrieval_model")
-        embedding_service = configuration.get("embedding_service")
-        retrieval_service = configuration.get("retrieval_service")
+        aws_region = configuration.get("config", {}).get("region", "")
+        embedding_model = configuration.get("config", {}).get("embedding_model", "")
+        retrieval_model = configuration.get("config", {}).get("retrieval_model", "")
+        embedding_service = configuration.get("config", {}).get("embedding_service", "")
+        retrieval_service = configuration.get("config", {}).get("retrieval_service", "")
+        bedrock_knowledge_base = configuration.get("config", {}).get("bedrock_knowledge_base", False)
 
         is_config_valid, config_missing = validate_params(
             aws_region=aws_region,
-            embedding_model=embedding_model,
             retrieval_model=retrieval_model,
-            embedding_service=embedding_service,
             retrieval_service=retrieval_service
         )
         if not is_config_valid:
@@ -70,19 +61,24 @@ def compute_actual_price(
 
         indexing_cost = 0
         retrieval_cost = 0
+        inferencing_cost = 0
         eval_cost = 0
         total_cost = 0
 
         query_embedding_cost = 0
-        if embedding_service == "bedrock" :
-            embedding_model_price = df[(df["model"] == embedding_model) & (df["Region"] == aws_region)]["input_price"]
-            if embedding_model_price.empty:
-                logger.error(f"No embedding model {embedding_model} price found.")
-                return None
-            embedding_model_price = float(embedding_model_price.values[0])  # Price per 1000 tokens
-            indexing_cost = (embedding_model_price * float(index_embed_tokens)) / THOUSAND
-        else:
-            indexing_cost = sagemaker_cost(indexing_time)
+        embedding_model_price = 0
+
+        # Calculating indexing, inferencing and evaluation costs for bedrock/Sagemaker
+        if not bedrock_knowledge_base:
+            if embedding_service == "bedrock" :
+                embedding_model_price = df[(df["model"] == embedding_model) & (df["Region"] == aws_region)]["input_price"]
+                if embedding_model_price.empty:
+                    logger.error(f"No embedding model {embedding_model} price found.")
+                    return None
+                embedding_model_price = float(embedding_model_price.values[0])  # Price per 1000 tokens
+                indexing_cost = (embedding_model_price * float(index_embed_tokens)) / THOUSAND
+            else:
+                indexing_cost = sagemaker_cost(indexing_time)
         
         if retrieval_service == "bedrock" :
             retrieval_model_input_price = df[
@@ -106,29 +102,39 @@ def compute_actual_price(
             
             retrieval_model_input_actual_cost = (retrieval_model_input_price * float(input_tokens)) / MILLION
             retrieval_model_output_actual_cost = (retrieval_model_output_price * float(output_tokens)) / MILLION
-            if embedding_service == "bedrock":
+            if (not bedrock_knowledge_base) and embedding_service == "bedrock":
                 query_embedding_cost = (embedding_model_price * float(query_embed_tokens)) / THOUSAND
-            retrieval_cost = retrieval_model_input_actual_cost + retrieval_model_output_actual_cost + query_embedding_cost
+            inferencing_cost = retrieval_model_input_actual_cost + retrieval_model_output_actual_cost + query_embedding_cost
         else:
-            retrieval_cost = sagemaker_cost(retrieval_time)
-            if embedding_service == "bedrock":
-                query_embedding_cost = (embedding_model_price * float(query_embed_tokens)) / THOUSAND
-                retrieval_cost += query_embedding_cost
-            else:
-                embedding_sagemaker_cost = sagemaker_cost(retrieval_time)
-                retrieval_time += embedding_sagemaker_cost
-            
-        indexing_cost += opensearch_cost(indexing_time) + ecs_cost(indexing_time)
-        retrieval_cost += opensearch_cost(retrieval_time) + ecs_cost(retrieval_time)
+            inferencing_cost = sagemaker_cost(retrieval_time)
+            if not bedrock_knowledge_base:
+                if embedding_service == "bedrock":
+                    query_embedding_cost = (embedding_model_price * float(query_embed_tokens)) / THOUSAND
+                    inferencing_cost += query_embedding_cost
+                else:
+                    embedding_sagemaker_cost = sagemaker_cost(retrieval_time)
+                    inferencing_cost += embedding_sagemaker_cost
 
-        eval_cost += opensearch_cost(eval_time) + ecs_cost(eval_time)
+        # Eval costs doesn't include ragas at the moment
+        # Only adding sagemaker endpoint costs considering it is still running
         if embedding_service == "sagemaker":
             eval_cost += sagemaker_cost(eval_time)
         if retrieval_service == "sagemaker":
             eval_cost += sagemaker_cost(eval_time)
+            
+        #Calculating fargate container costs
+        indexing_cost += ecs_cost(indexing_time)
+        retrieval_cost += ecs_cost(retrieval_time)
+        eval_cost += ecs_cost(eval_time)
 
-        total_cost = indexing_cost + retrieval_cost + eval_cost
-        return total_cost, indexing_cost, retrieval_cost, eval_cost
+        # Adding opensearch provisioned costs
+        if not bedrock_knowledge_base:
+            indexing_cost += opensearch_cost(indexing_time)
+            retrieval_cost += opensearch_cost(retrieval_time)
+            eval_cost += opensearch_cost(eval_time)
+
+        total_cost = indexing_cost + retrieval_cost + inferencing_cost + eval_cost
+        return total_cost, indexing_cost, retrieval_cost, inferencing_cost, eval_cost
     
     except Exception as e:
         logger.error(f"Error during price computation: {e}")

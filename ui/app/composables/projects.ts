@@ -91,14 +91,14 @@ export const useProjectExperimentQuestionMetrics = (
   );
 };
 
-export const useGuardrailsList = () => {
+export const useGuardrailsList = (region:string) => {
   return useApi<{
     data : Guardrail[]
-  }>("/bedrock/guardrails", {
+  }>("/bedrock/guardrails?region="+region, {
     method: "GET"
   });
 };
 
-export const useFetchAllKbModels = () => {
-  return useApi("/bedrock/knowledge_bases");
+export const useFetchAllKbModels = (region:string) => {
+  return useApi("/bedrock/knowledge_bases?region="+region);
 }

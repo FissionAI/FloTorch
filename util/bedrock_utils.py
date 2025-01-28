@@ -1,6 +1,7 @@
 import boto3
 from config.config import Config
 import logging
+import functools
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -66,3 +67,14 @@ class KnowledgeBaseUtils():
             raise e
         
         return valid_knowledge_bases
+    
+    @functools.lru_cache(maxsize=128)
+    def get_kb_name(self, kb_id):
+        """Get the name of a knowledge base given its ID"""
+        try:
+            response = self.client.get_knowledge_base(knowledgeBaseId=kb_id)
+            name = response['knowledgeBase']['name']
+            return name
+        except Exception as e:
+            logger.error(f"Failed to get knowledge base name: {str(e)}")
+            raise e

@@ -7,11 +7,11 @@ from typing import Optional
 router = APIRouter()
 
 @router.get("/bedrock/guardrails", tags=["bedrock"])
-async def health_check():
+async def health_check(region: Optional[str] = Query('us-east-1', description="AWS region to list guardrails from")):
     "Endpoint to list Bedrock guardrails."
 
     try:
-        response = GuardRailsUtils.get_bedrock_guardrails()
+        response = GuardRailsUtils.get_bedrock_guardrails(region)
         return response
     except Exception as e:
         raise HTTPException(status_code=StatusCodes.INTERNAL_SERVER_ERROR, detail=str(e))
