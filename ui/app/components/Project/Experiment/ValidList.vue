@@ -76,7 +76,20 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
     },
     enableHiding: true,
     accessorKey: "chunking_strategy",
-    label: "Chunking"
+    label: "Chunking",
+    sortingFn: (rowA, rowB) => {
+      const getChunkingValue = (row: any) => {
+        const strategy = useHumanChunkingStrategy(row.chunking_strategy);
+        if (strategy === 'Hierarchical') {
+          return `${row.hierarchical_child_chunk_size}-${row.hierarchical_parent_chunk_size}`;
+        }
+        return strategy;
+      };
+      
+      const a = getChunkingValue(rowA.original);
+      const b = getChunkingValue(rowB.original);
+      return a.localeCompare(b);
+    }
   },
   {
     header: ({ column }) => {
@@ -96,13 +109,56 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
     },
     enableHiding: true,
     accessorKey: "chunk_size",
-    label: "Chunk Size"
+    label: "Chunk Size",
+    sortingFn: (rowA, rowB) => {
+      const getChunkSizeValue = (row: any) => {
+        const strategy = useHumanChunkingStrategy(row.chunking_strategy);
+        if (strategy === 'Hierarchical') {
+          // For hierarchical, create a composite value using both sizes
+          const childSize = Number(row.hierarchical_child_chunk_size ?? 0);
+          const parentSize = Number(row.hierarchical_parent_chunk_size ?? 0);
+          // Multiply parent by 1000 to ensure it takes precedence in sorting
+          return (parentSize * 1000) + childSize;
+        }
+        return Number(row.chunk_size ?? 0);
+      };
+
+      const a = getChunkSizeValue(rowA.original);
+      const b = getChunkSizeValue(rowB.original);
+      return a - b;
+    }
   },
   {
-    header: 'Chunk Overlap Percentage',
+    header: ({ column }) => {
+      const isSorted = column.getIsSorted();
+      return h(UButton, {
+        color: "neutral",
+        variant: "ghost",
+        label: "Chunk Overlap Percentage",
+        icon: isSorted
+          ? isSorted === "asc"
+            ? "i-lucide-arrow-up-narrow-wide"
+            : "i-lucide-arrow-down-wide-narrow"
+          : "i-lucide-arrow-up-down",
+        class: "-mx-2.5",
+        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+      });
+    },
     enableHiding: true,
     accessorKey: "chunk_overlap",
     label: "Chunk Overlap Percentage",
+    sortingFn: (rowA, rowB) => {
+      const getOverlapValue = (row: any) => {
+        const strategy = useHumanChunkingStrategy(row.chunking_strategy);
+        return strategy === 'Fixed' 
+          ? Number(row.chunk_overlap ?? 0)
+          : Number(row.hierarchical_chunk_overlap_percentage ?? 0);
+      };
+      
+      const a = getOverlapValue(rowA.original);
+      const b = getOverlapValue(rowB.original);
+      return a - b;
+    }
   },
   {
     header: ({ column }) => {
@@ -285,7 +341,21 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
     label: "Evaluation Embedding Model"
   },
   {
-    header: 'Evaluation Inferencing Model',
+    header: ({ column }) => {
+      const isSorted = column.getIsSorted();
+      return h(UButton, {
+        color: "neutral",
+        variant: "ghost",
+        label: "Evaluation Inferencing Model",
+        icon: isSorted
+          ? isSorted === "asc"
+            ? "i-lucide-arrow-up-narrow-wide"
+            : "i-lucide-arrow-down-wide-narrow"
+          : "i-lucide-arrow-up-down",
+        class: "-mx-2.5",
+        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+      });
+    },
     enableHiding: true,
     accessorKey: "eval_retrieval_model",
     label: "Evaluation Inferencing Model"
@@ -354,7 +424,10 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
     },
     enableHiding: true,
     accessorKey: "guardrail_name",
-    label: "Guardrail"
+    label: "Guardrail",
+    cell: ({ row }) => {
+      return row.original.guardrail_name || 'NA';
+    }
   },
   {
     header: ({ column }) => {
@@ -473,7 +546,7 @@ const columnVisibility = ref({
               </UTooltip>
         </div>
       </template>
-      <template #chunk_overlap-header="{ column }">
+      <!-- <template #chunk_overlap-header="{ column }">
         <UButton
           color="neutral"
           variant="ghost"
@@ -491,7 +564,7 @@ const columnVisibility = ref({
           </span>
         </template>
       </UButton>
-      </template>
+      </template> -->
       <template #vector_dimension-header="{ column }">
         <UButton
           color="neutral"
