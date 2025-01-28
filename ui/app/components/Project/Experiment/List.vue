@@ -231,9 +231,17 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
     accessorKey: "eval_metrics.context_precision_score",
     enableHiding: true,
     sortingFn: (rowA, rowB) => {
-      const a = rowA.original.eval_metrics?.context_precision_score ?? 0;
-      const b = rowB.original.eval_metrics?.context_precision_score ?? 0;
-      return Number(a) - Number(b);
+      if ("M" in rowA.original.eval_metrics) {
+        const a = rowA.original.eval_metrics?.M?.context_precision_score;
+        const b = rowB.original.eval_metrics?.M?.context_precision_score;
+        return Number(a) - Number(b);
+      }
+      if ("context_precision_score" in rowA.original.eval_metrics) {
+        const a = rowA.original.eval_metrics?.context_precision_score;
+        const b = rowB.original.eval_metrics?.context_precision_score;
+        return Number(a) - Number(b);
+      }
+      return 0;
     },
     cell: ({ row }) => {
       if ("context_precision_score" in row.original.eval_metrics) {
@@ -265,9 +273,17 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
     accessorKey: "eval_metrics.aspect_critic_score",
     enableHiding: true,
     sortingFn: (rowA, rowB) => {
-      const a = rowA.original.eval_metrics?.aspect_critic_score ?? 0;
-      const b = rowB.original.eval_metrics?.aspect_critic_score ?? 0;
-      return Number(a) - Number(b);
+      if ("M" in rowA.original.eval_metrics) {
+        const a = rowA.original.eval_metrics?.M?.aspect_critic_score ?? 0;
+        const b = rowB.original.eval_metrics?.M?.aspect_critic_score ?? 0;
+        return Number(a) - Number(b);
+      }
+      if ("aspect_critic_score" in rowA.original.eval_metrics) {
+        const a = rowA.original.eval_metrics?.aspect_critic_score ?? 0;
+        const b = rowB.original.eval_metrics?.aspect_critic_score ?? 0;
+        return Number(a) - Number(b);
+      }
+      return 0;
     },
     cell: ({ row }) => {
       if ("aspect_critic_score" in row.original.eval_metrics) {
@@ -299,9 +315,17 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
     accessorKey: "eval_metrics.answers_relevancy_score",
     enableHiding: true,
     sortingFn: (rowA, rowB) => {
-      const a = rowA.original.eval_metrics?.answers_relevancy_score ?? 0;
-      const b = rowB.original.eval_metrics?.answers_relevancy_score ?? 0;
-      return Number(a) - Number(b);
+      if ("M" in rowA.original.eval_metrics) {
+        const a = rowA.original.eval_metrics?.M?.answers_relevancy_score ?? 0;
+        const b = rowB.original.eval_metrics?.M?.answers_relevancy_score ?? 0;
+        return Number(a) - Number(b);
+      }
+      if ("answers_relevancy_score" in rowA.original.eval_metrics) {
+        const a = rowA.original.eval_metrics?.answers_relevancy_score ?? 0;
+        const b = rowB.original.eval_metrics?.answers_relevancy_score ?? 0;
+        return Number(a) - Number(b);
+      }
+      return 0;
     },
     cell: ({ row }) => {
       if ("answers_relevancy_score" in row.original.eval_metrics) {

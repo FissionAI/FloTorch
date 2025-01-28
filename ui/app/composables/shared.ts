@@ -668,11 +668,6 @@ export const useProjectUploadConfig = () => {
         embedding: config.indexing?.embedding?.map((pc: any) => {
           return useGetModelData("indexing", pc.model);
         }),
-        chunk_overlap: undefined,
-        chunk_size: undefined,
-        hierarchical_parent_chunk_size: undefined,
-        hierarchical_child_chunk_size: undefined,
-        hierarchical_chunk_overlap_percentage: undefined,
       },
       retrieval: {
         ...config.retrieval,
