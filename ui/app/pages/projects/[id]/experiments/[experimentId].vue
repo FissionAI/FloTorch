@@ -187,18 +187,6 @@ const items = ref([
                   </td>
                 </tr>
                 <tr>
-                  <td class="font-medium">Evaluation Cost</td>
-                  <td>
-                  
-                    {{
-                      experimentsData?.eval_cost ? 
-                      useHumanCurrencyAmount(
-                        experimentsData?.eval_cost
-                      ) : 'Unable to fetch data'
-                    }}
-                  </td>
-                </tr>
-                 <tr>
                   <td class="font-medium">Inferencing Cost</td>
                   <td>
                   
@@ -210,6 +198,19 @@ const items = ref([
                     }}
                   </td>
                 </tr>
+                <tr>
+                  <td class="font-medium">Evaluation Cost</td>
+                  <td>
+                  
+                    {{
+                      experimentsData?.eval_cost ? 
+                      useHumanCurrencyAmount(
+                        experimentsData?.eval_cost
+                      ) : 'Unable to fetch data'
+                    }}
+                  </td>
+                </tr>
+                 
               </tbody>
             </table>
           </UCard>

@@ -454,13 +454,14 @@ const columnVisibility = ref({
                           <td>{{useHumanCurrencyAmount(row.original.retrieval_cost_estimate,3)}}</td>
                         </tr>
                         <tr>
-                          <td>Evaluation Cost Estimate:</td>
-                          <td>{{useHumanCurrencyAmount(row.original.eval_cost_estimate,3)}}</td>
-                        </tr>
-                         <tr>
                           <td>Inferencing Cost Estimate:</td>
                           <td>{{useHumanCurrencyAmount(row.original.inferencing_cost_estimate,3)}}</td>
                         </tr>
+                        <tr>
+                          <td>Evaluation Cost Estimate:</td>
+                          <td>{{useHumanCurrencyAmount(row.original.eval_cost_estimate,3)}}</td>
+                        </tr>
+                         
                       </tbody>
                     </table>
                   </UCard>
