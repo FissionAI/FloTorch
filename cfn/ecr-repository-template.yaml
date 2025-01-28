@@ -38,10 +38,10 @@ Resources:
     Properties:
       RepositoryName: !Sub "flotorch-runtime-${TableSuffix}"
 
-  AIRepository:
+  CostComputeRepository:
     Type: AWS::ECR::Repository
     Properties:
-      RepositoryName: !Sub "flotorch-ai-${TableSuffix}"
+      RepositoryName: !Sub "flotorch-costcompute-${TableSuffix}"
 
 Outputs:
   AppRepositoryURI:
@@ -64,6 +64,6 @@ Outputs:
     Value: !GetAtt RuntimeRepository.RepositoryUri
     Description: URI of the runtime repository
 
-  AIRepositoryURI:
-    Value: !GetAtt AIRepository.RepositoryUri
+  CostComputeRepositoryURI:
+    Value: !GetAtt CostComputeRepository.RepositoryUri
     Description: URI of the AI repository
