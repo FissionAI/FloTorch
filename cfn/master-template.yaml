@@ -141,7 +141,7 @@ Resources:
         PrivateSubnet1: !GetAtt VPCStack.Outputs.PrivateSubnet1
         IndexingImageTag: "2.0.1"
         RetrieverImageTag: "2.0.1"
-        AppImageTag: "2.0.1"
+        AppImageTag: "2.0.1.1"
         EvaluationImageTag: "2.0.1"
         RuntimeImageTag: "2.0.1"
         CostComputeImageTag: "2.0.1"
@@ -212,7 +212,7 @@ Resources:
         VpcConnectorArn: !GetAtt VPCStack.Outputs.VpcConnectorArn
         BedrockRoleArn: !GetAtt VPCStack.Outputs.BedrockRoleArn
         EcrRepositoryUri: !GetAtt ECRRepositoryStack.Outputs.AppRepositoryURI
-        AppImageTag: "2.0.1"
+        AppImageTag: "2.0.1.1"
 
 Outputs:
   AppRunnerServiceUrl:
