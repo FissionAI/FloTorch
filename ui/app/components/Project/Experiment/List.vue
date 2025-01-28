@@ -50,7 +50,7 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
     accessorKey: "config.embedding_model",
     enableHiding: true,
     cell: ({ row }) => {
-      return getModelName("indexing", row.original.config.embedding_model)
+      return getModelName("indexing", row.original.config.embedding_model) || 'NA'
     }
   },
   {
@@ -73,7 +73,7 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
     accessorKey: "config.retrieval_model",
     enableHiding: true,
     cell: ({ row }) => {
-      return getModelName("retrieval", row.original.config.retrieval_model)
+      return getModelName("retrieval", row.original.config.retrieval_model) || 'NA'
     }
   },
   {
@@ -96,7 +96,7 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
     accessorKey: "config.indexing_algorithm",
     enableHiding: true,
     cell: ({ row }) => {
-      return useHumanIndexingAlgorithm(row.original.config.indexing_algorithm)
+      return useHumanIndexingAlgorithm(row.original.config.indexing_algorithm) || 'NA'
     }
   },
   {
@@ -118,7 +118,7 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
     accessorKey: "config.chunking_strategy",
     enableHiding: true,
     cell: ({ row }) => {
-      return useHumanChunkingStrategy(row.original.config.chunking_strategy)
+      return useHumanChunkingStrategy(row.original.config.chunking_strategy) || 'NA'
     },
     label: "Chunking"
   },

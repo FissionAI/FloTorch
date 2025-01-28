@@ -7,11 +7,11 @@ logger.setLevel(logging.INFO)
 
 class GuardRailsUtils:
     @staticmethod
-    def get_bedrock_guardrails() -> List[Dict]:
+    def get_bedrock_guardrails(region) -> List[Dict]:
         "Static method to fetch AWS Bedrock guardrails."
 
         try:
-            client = boto3.client('bedrock')
+            client = boto3.client('bedrock', region_name=region)
 
             logger.info("Fetching guardrails.")            
             response = client.list_guardrails()

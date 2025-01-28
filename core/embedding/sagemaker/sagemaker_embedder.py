@@ -7,6 +7,7 @@ from sagemaker.predictor import Predictor
 from sagemaker.serializers import JSONSerializer
 from sagemaker.deserializers import JSONDeserializer
 from sagemaker.jumpstart.model import JumpStartModel
+from sagemaker.huggingface import HuggingFaceModel, get_huggingface_llm_image_uri
 import sagemaker
 import logging
 import numpy as np
@@ -20,18 +21,21 @@ logger.setLevel(logging.INFO)
 EMBEDDING_MODELS = {
     "huggingface-sentencesimilarity-bge-large-en-v1-5": {
         "model_name": "bge-large",
+        "model_source": "jumpstart",
         "dimension": 1024,
         "instance_type": "ml.g5.2xlarge",
         "input_key": "text_inputs"
     },
     "huggingface-sentencesimilarity-bge-m3": {
         "model_name": "bge-m3",
+        "model_source": "jumpstart",
         "dimension": 1024,
         "instance_type": "ml.g5.2xlarge",
         "input_key": "text_inputs"
     },
     "huggingface-textembedding-gte-qwen2-7b-instruct": {
         "model_name": "qwen",
+        "model_source": "jumpstart",
         "dimension": 3584,
         "instance_type": "ml.g5.2xlarge",
         "input_key": "inputs"
@@ -39,13 +43,21 @@ EMBEDDING_MODELS = {
 }
 INFERENCER_MODELS = {
     "meta-textgeneration-llama-3-1-8b-instruct": {
+        "model_source": "jumpstart",
         "instance_type": "ml.g5.2xlarge"
     },
     "huggingface-llm-falcon-7b-instruct-bf16": {
+        "model_source": "jumpstart",
         "instance_type": "ml.g5.2xlarge"
     },
     "meta-textgeneration-llama-3-3-70b-instruct": {
+        "model_source": "jumpstart",
         "instance_type": "ml.p4d.24xlarge"
+    }
+    ,
+    "deepseek-ai/DeepSeek-R1-Distill-Llama-8B": {
+        "model_source": "huggingface",
+        "instance_type": "ml.g5.2xlarge"
     }
 }
 
@@ -80,7 +92,7 @@ class SageMakerEmbedder(BaseEmbedder):
         # Initialize additional embedding-related attributes
         self.embedding_model_id = model_id
         # self.embedding_model_endpoint_name = 'flotorch-embedding-endpoint'
-        self.embedding_model_endpoint_name = f"{model_id[:44]}-embedding-endpoint"
+        self.embedding_model_endpoint_name = f"{self._sanitize_name(model_id)[:44]}-embedding-endpoint"
         
         self.embedding_dimension = EMBEDDING_MODELS.get(model_id, {}).get('dimension', 1024)
         
@@ -213,6 +225,7 @@ class SageMakerEmbedder(BaseEmbedder):
 
         # Look up the appropriate instance type from model configurations
         instance_type = (EMBEDDING_MODELS.get(model_id, INFERENCER_MODELS.get(model_id)))['instance_type']
+        model_source = (EMBEDDING_MODELS.get(model_id, INFERENCER_MODELS.get(model_id)))['model_source']
         
         try:
             # First check if a working endpoint already exists to avoid duplicate creation
@@ -233,28 +246,49 @@ class SageMakerEmbedder(BaseEmbedder):
             # Handle case where endpoint doesn't exist yet
             if e.response['Error']['Code'] == 'ValidationException':
                 try:
-                    # Initialize a new JumpStart model with the specified configuration
-                    model = JumpStartModel(
-                        role = self.role,
-                        model_id=model_id,
-                        sagemaker_session=sagemaker_session
-                    )
-                    
-                    # Deploy the model to a new endpoint with the specified configuration
-                    predictor = model.deploy(
-                        initial_instance_count=1,
-                        instance_type=instance_type,
-                        endpoint_name=endpoint_name,
-                        accept_eula=True  # Required for JumpStart models
-                    )
+                    if model_source == "jumpstart":
+                        # Initialize a new JumpStart model with the specified configuration
+                        model = JumpStartModel(
+                            role = self.role,
+                            model_id=model_id,
+                            sagemaker_session=sagemaker_session
+                        )
+                        
+                        # Deploy the model to a new endpoint with the specified configuration
+                        predictor = model.deploy(
+                            initial_instance_count=1,
+                            instance_type=instance_type,
+                            endpoint_name=endpoint_name,
+                            accept_eula=True  # Required for JumpStart models
+                        )
+                    # Check if the model source is huggingface    
+                    elif model_source == "huggingface":
+                        hub = {
+                            'HF_MODEL_ID': model_id,
+                            'SM_NUM_GPUS': json.dumps(1)
+                        }
+                        huggingface_model = HuggingFaceModel(
+                            image_uri=get_huggingface_llm_image_uri("huggingface", version="2.3.1", region=self.region_name),
+                            env=hub,
+                            role=self.role, 
+                        )
+
+                        # deploy model to SageMaker Inference
+                        predictor = huggingface_model.deploy(
+                            initial_instance_count=1,
+                            instance_type=instance_type,
+                            endpoint_name=endpoint_name,
+                            container_startup_health_check_timeout=300,
+                        )
                     
                     # Register the new predictor with the appropriate model type handler
                     self._assign_predictor(predictor, model_id)
                     return predictor
                 
-                except  self.sagemaker_client.exceptions.ClientError as e:
+                except self.sagemaker_client.exceptions.ClientError as e:
                     # Handle race condition where another process started creating the endpoint
                     # between our existence check and creation attempt
+                    logger.info(f"Error creating endpoint: {e}")
                     if e.response['Error']['Code'] == 'ValidationException':
                         
                         logger.info(f"A new endpoint creation intercepted while attempting to create new endpoint, waiting.")
@@ -446,3 +480,15 @@ class SageMakerEmbedder(BaseEmbedder):
             payload["mode"] = "embedding"
                 
         return payload
+    
+    @staticmethod
+    def _sanitize_name(name: str) -> str:
+        """Sanitize the endpoint name to follow AWS naming conventions"""
+        # Replace any character that's not alphanumeric or hyphen with hyphen
+        import re
+        name = re.sub(r'[^a-zA-Z0-9-]', '-', name)
+        # Ensure it starts with a letter
+        if not name[0].isalpha(): 
+            name = 'n' + name
+        # Truncate to 63 characters (AWS limit)
+        return name[:63]

@@ -104,7 +104,7 @@ def initialize_components(config: Config, experimentalConfig: ExperimentalConfig
         
         if experimentalConfig.bedrock_knowledge_base:
             logger.info("Connecting to Knowledge base")
-            vector_database = KnowledgeBaseVectorDatabase()
+            vector_database = KnowledgeBaseVectorDatabase(region=experimentalConfig.aws_region)
         else:
             logger.info(f"Connecting to OpenSearch at {config.opensearch_host}")
             vector_database = OpenSearchVectorDatabase(
@@ -369,13 +369,6 @@ def process_questions(
                 )
 
             batch_items.append(metrics.to_dynamo_item())
-
-            # batch_items.append(metrics.__dict__)
-
-            # Write batch if size reaches threshold
-            if len(batch_items) >= 25:
-                write_batch_to_dynamodb(batch_items, components["metrics_dynamodb"])
-                batch_items = []
         except Exception as e:
             logger.error(f"Error processing question {idx+1}: {str(e)}")
             metrics = metrics = _create_metrics(
@@ -388,7 +381,11 @@ def process_questions(
                 answer_metadata={},
             )
             batch_items.append(metrics.to_dynamo_item())
-            continue
+    
+        # Write batch if size reaches threshold
+        if len(batch_items) >= 25:
+            write_batch_to_dynamodb(batch_items, components["metrics_dynamodb"])
+            batch_items = []
 
     # Write remaining items
     if batch_items:

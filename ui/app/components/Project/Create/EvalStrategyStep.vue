@@ -45,7 +45,7 @@ const guardrailsList = ref([]);
 const { mutateAsync: getGuardrailsList, isPending: isFetchingGuardrailsList } =
   useMutation({
     mutationFn: async () => {
-      const response = await useGuardrailsList();
+      const response = await useGuardrailsList(props.region);
       guardrailsList.value = response?.map((item) => {
         return {
           label: item.name + ' - ' + item.version,

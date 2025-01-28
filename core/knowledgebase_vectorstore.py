@@ -8,9 +8,8 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 class KnowledgeBaseVectorDatabase(VectorDatabase):
-    def __init__(self):
-        self.config = Config.load_config()
-        self.client = boto3.client("bedrock-agent-runtime", region_name=self.config.aws_region)
+    def __init__(self, region: str = 'us-east-1'):
+        self.client = boto3.client("bedrock-agent-runtime", region_name=region)
         
     def create_index(self, index_name: str, mapping: Dict[str, Any], algorithm: str) -> None:
         raise NotImplementedError("This method is not implemented in this minimal version.")

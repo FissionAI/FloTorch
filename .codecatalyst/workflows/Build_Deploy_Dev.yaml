@@ -15,13 +15,13 @@ Actions:
       Variables:
         # Dev environment details
         - Name: DEV_ENV
-          Value: "paimon"
+          Value: "dampen"
         - Name: DEV_URL
-          Value: "https://6q8a6emu8q.us-east-1.awsapprunner.com"
+          Value: "https://radd4urst2.us-east-1.awsapprunner.com"
         - Name: DEV_USERNAME
           Value: "admin"
         - Name: DEV_PASSWORD
-          Value: "usidhfIYG6*(43HBJ"
+          Value: "jkhg78BKUYBKGUY7*nhiH"
 
     Outputs:
       AutoDiscoverReports:

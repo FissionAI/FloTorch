@@ -171,7 +171,7 @@ const items = ref([
                       experimentsData?.indexing_cost ?
                       useHumanCurrencyAmount(
                         experimentsData?.indexing_cost
-                      ) : 'Unable to fetch data'
+                      ) : !experimentsData?.config?.bedrock_knowledge_base ? 'Unable to fetch data ' : 'Bedrock knowledge base pricing not included'
                     }}
                   </td>
                 </tr>
@@ -182,6 +182,18 @@ const items = ref([
                       experimentsData?.retrieval_cost ? 
                       useHumanCurrencyAmount(
                         experimentsData?.retrieval_cost
+                      ) : 'Unable to fetch data'
+                    }}
+                  </td>
+                </tr>
+                <tr>
+                  <td class="font-medium">Inferencing Cost</td>
+                  <td>
+                  
+                    {{
+                      experimentsData?.inferencing_cost ? 
+                      useHumanCurrencyAmount(
+                        experimentsData?.inferencing_cost
                       ) : 'Unable to fetch data'
                     }}
                   </td>
@@ -198,6 +210,7 @@ const items = ref([
                     }}
                   </td>
                 </tr>
+                 
               </tbody>
             </table>
           </UCard>
@@ -214,7 +227,7 @@ const items = ref([
                     {{ 
                       experimentsData?.indexing_time ? 
                       useConvertSecondsToDHM(Number(experimentsData?.indexing_time)) 
-                      : 'Unable to fetch time'
+                      : !experimentsData?.config?.bedrock_knowledge_base ? "Unable to fetch time" : 'NA'
                     }}
                   </td>
                 </tr>
@@ -251,7 +264,7 @@ const items = ref([
                 <tr>
                   <td class="font-medium w-40">Indexing Embedded Tokens</td>
                   <td class="w-40">
-                    {{ experimentsData?.index_embed_tokens }}
+                    {{ experimentsData?.index_embed_tokens || 'NA' }}
                   </td>
                 </tr>
               </tbody>
