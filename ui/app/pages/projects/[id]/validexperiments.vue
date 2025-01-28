@@ -35,7 +35,7 @@ const { isSuccess: isExperimentFetchSuccess, isLoading: experimentLoading } =
   });
 
 // Start Polling for  Valid-experiments with interval 10 seconds
-const { data: validExperiments, error:validError } = useQuery<ValidExperiment[]>({
+const { data: validExperiments } = useQuery<ValidExperiment[]>({
   queryKey: ["projects", project, "valid-experiments", "poll"],
   queryFn: async () => {
     try {
@@ -126,7 +126,6 @@ useHead({
         selectable
         :experiments="validExperiments"
         :loading="loadValidExperiments"
-        :error="validError"
       />
       <div class="flex justify-end mt-4">
         <div class="flex gap-2">
