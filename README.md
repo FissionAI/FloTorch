@@ -1,17 +1,19 @@
-# What is FloTorch.ai?
+# What is FloTorch?
 
-FloTorch.ai is an innovative product poised to transform the field of Generative AI by simplifying and optimizing the decision-making process for leveraging Large Language Models (LLMs) in Retrieval Augmented Generation (RAG) systems. In today’s fast-paced digital landscape, selecting the right LLM setup is critical for achieving efficiency, accuracy, and cost-effectiveness. However, this process often involves extensive trial-and-error, significant resource expenditure, and complex comparisons of performance metrics. Our solution addresses these challenges with a streamlined, user-friendly approach.
+FloTorch is an innovative product poised to transform the field of Generative AI by simplifying and optimizing the decision-making process for leveraging Large Language Models (LLMs) in Retrieval Augmented Generation (RAG) systems. In today’s fast-paced digital landscape, selecting the right LLM setup is critical for achieving efficiency, accuracy, and cost-effectiveness. However, this process often involves extensive trial-and-error, significant resource expenditure, and complex comparisons of performance metrics. Our solution addresses these challenges with a streamlined, user-friendly approach.
+
+**Latest Update**: FloTorch now supports Bedrock knowledge bases and DeepSeek-R1-Distill-Llama-8B model on Sagemaker.
 
 ## Key Features
 
-- **Automated Evaluation of LLMs**: FloTorch.ai evaluates multiple LLMs by analyzing combinations of hyperparameters defined by the end user.
+- **Automated Evaluation of LLMs**: FloTorch evaluates multiple LLMs by analyzing combinations of hyperparameters defined by the end user.
 - **Performance Metrics**: Produces detailed performance scores, including relevance, fluency, and robustness.
 - **Cost and Time Insights**: Provides actionable insights into the pricing and execution times for each LLM configuration.
 - **Data-Driven Decision-Making**: Empowers users to align LLM configurations with specific goals and budget constraints.
 
-## Who Benefits from FloTorch.ai?
+## Who Benefits from FloTorch?
 
-FloTorch.ai caters to a broad spectrum of users, including:
+FloTorch caters to a broad spectrum of users, including:
 
 - **Startups**: Optimize AI-driven systems for rapid growth.
 - **Data Scientists**: Simplify model selection and evaluation.
@@ -19,24 +21,26 @@ FloTorch.ai caters to a broad spectrum of users, including:
 - **Researchers**: Gain insights into LLM performance metrics effortlessly.
 - **Enterprises**: Enhance customer experiences, improve content generation, and refine data retrieval processes.
 
-## Why Choose FloTorch.ai?
-
+## Why Choose FloTorch?
+- **Well-Architected framework**: Focuses on five pillars of service architecture: Operational Excellence, Security, Reliability, Performance Efficiency, Cost Optimization.
+- **Maximizes Efficiency**: Ensures users achieve the best performance from their chosen LLMs in less time as multiple experiments can run parallelly.
 - **Eliminates Complexity**: No more manual evaluations or tedious trial-and-error processes.
 - **Accelerates Selection**: Streamlines the evaluation and decision-making process.
-- **Maximizes Efficiency**: Ensures users achieve the best performance from their chosen LLMs.
 - **Focus on Innovation**: Allows users to dedicate resources to innovation and deployment rather than experimentation.
+
+![FloTorch Architecture](./flotorch-arch.png)
 
 ## Vision
 
-By combining advanced evaluation capabilities with a focus on cost and time efficiency, FloTorch.ai provides a holistic solution for navigating the evolving RAG landscape. It empowers users to focus on innovation and deployment, setting a new standard for intelligent decision-making in AI-driven applications.
+By combining advanced evaluation capabilities with a focus on cost and time efficiency, FloTorch provides a holistic solution for navigating the evolving RAG landscape. It empowers users to focus on innovation and deployment, setting a new standard for intelligent decision-making in AI-driven applications.
 
-With FloTorch.ai, we aim to be a pivotal enabler of progress in the generative AI ecosystem, helping our users achieve excellence in their projects.
+With FloTorch, we aim to be a pivotal enabler of progress in the generative AI ecosystem, helping our users achieve excellence in their projects.
 
 # Using FloTorch
 
 ## Demo
 
-[![FloTorch.ai Demo](./cover-image.png?raw=true)](https://fissiontorch-public.s3.us-east-1.amazonaws.com/demo.mp4)
+[![FloTorch Demo](./cover-image.png?raw=true)](https://fissiontorch-public.s3.us-east-1.amazonaws.com/demo.mp4)
 
 ## Installation guide
 
