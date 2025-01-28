@@ -424,7 +424,10 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
     },
     enableHiding: true,
     accessorKey: "guardrail_name",
-    label: "Guardrail"
+    label: "Guardrail",
+    cell: ({ row }) => {
+      return row.original.guardrail_name || 'NA';
+    }
   },
   {
     header: ({ column }) => {

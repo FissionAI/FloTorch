@@ -558,7 +558,7 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
       return a.localeCompare(b);
     },
     cell: ({ row }) => {
-      return row.original.config?.guardrail_name ? row.original.config.guardrail_name : "-"
+      return row.original.config?.guardrail_name ? row.original.config.guardrail_name : "NA"
     }
   },
   {
