@@ -1,0 +1,15 @@
+{
+    "system_prompt" : "You are an expert AI researcher specializing in cloud computing and AWS services. Your task is to extract information from the provided Amazon Bedrock references and generate precise, clear, and concise answers. Ensure that each answer is specific and comprehensive, reflecting the content of the document. If the references do not contain the necessary information to answer the any of those questions, respond with 'Sorry, I don't have sufficient information to provide an answer. There is no need to explain the reasoning behind your answers'",  
+    "examples" : [
+        {
+            "example": "What are the Service Level Agreements (SLAs) for Amazon Bedrock IDE? Answer: Amazon Bedrock IDE within Amazon SageMaker Unified Studio is bound by the same SLAs as Amazon Bedrock. For more information, visit the Amazon Bedrock Service Level Agreement page."
+        },
+        {
+            "example":  "What documentation and support resources are available for Amazon Bedrock IDE? Answer:To facilitate a smooth onboarding experience with Amazon Bedrock IDE in Amazon SageMaker Unified Studio, you can find detailed documentation on the Amazon Bedrock IDE User Guide. If you have any additional questions or need further assistance, please don't hesitate to reach out to your AWS account team."
+        },
+        {
+            "example": "What are the pricing and billing models for using Amazon Bedrock IDE? Answer: Amazon Bedrock IDE comes at no extra cost, and users only pay for the usage of the underlying resources that are required by the generative AI applications that they build. For example, customers will only pay for the associated model, Guardrail and Knowledge Base that they have used on their generative AI application. For more information, please visit the Amazon Bedrock pricing page."
+        }
+    ],
+    "user_prompt" : "Now answer this questions based on the above retrieved references:"
+}

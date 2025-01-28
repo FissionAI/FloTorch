@@ -43,7 +43,7 @@ def retrieve(config: Config, experimentalConfig: ExperimentalConfig) -> None:
         # Initialize guardrails if enabled
         if experimentalConfig.enable_guardrails:
             logger.info("Initializing guardrails")
-            guardrails = BedrockGuardrails()
+            guardrails = BedrockGuardrails(region=experimentalConfig.aws_region)
 
             # Add guardrails component for use in processing
             components['guardrails'] = {

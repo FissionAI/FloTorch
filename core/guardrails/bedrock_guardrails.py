@@ -3,9 +3,9 @@ import boto3, yaml, uuid
 from botocore.exceptions import ClientError
 
 class BedrockGuardrails:
-    def __init__(self):
-        self.bedrock_client = boto3.client('bedrock')
-        self.runtime_client = boto3.client('bedrock-runtime')
+    def __init__(self, region: str = 'us-east-1'):
+        self.bedrock_client = boto3.client('bedrock', region_name = region)
+        self.runtime_client = boto3.client('bedrock-runtime', region_name = region)
 
     def create_guardrail(
         self,
