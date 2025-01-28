@@ -305,42 +305,56 @@ def generate_all_combinations(data):
 
     if len(valid_configurations) > 0:
         for configuration in valid_configurations:
+            #TODO: Organize the pricing code, break into static methods
             configuration["directional_pricing"] = 0
             configuration["indexing_cost_estimate"] = 0 
-            configuration["retrieval_cost_estimate"] = 0 
+            configuration["retrieval_cost_estimate"] = 0
+            configuration["inferencing_cost_estimate"] = 0 
             configuration["eval_cost_estimate"] = 0
 
-            if configuration["bedrock_knowledge_base"]:
-                effective_num_tokens_kb_data = 0
-            else:
-                effective_num_tokens_kb_data = estimate_effective_kb_tokens(configuration, num_tokens_kb_data)
+            # kb data tokens would be zero if it is Bedrock knowledge bases
+            effective_num_tokens_kb_data = 0 if configuration["bedrock_knowledge_base"] else estimate_effective_kb_tokens(configuration, num_tokens_kb_data)
+
             indexing_time, retrieval_time, eval_time = estimate_times(effective_num_tokens_kb_data, num_prompts, configuration)
+
+            # Bedrock knowledge bases price not supported at the moment
             if configuration["bedrock_knowledge_base"]:
                 configuration["indexing_cost_estimate"] = 0
-
             elif configuration['embedding_service'] == "bedrock" :
                 embedding_price = estimate_embedding_model_bedrock_price(bedrock_price_df, configuration, num_tokens_kb_data)
                 configuration["indexing_cost_estimate"] += embedding_price
             else:
                 configuration["indexing_cost_estimate"] += estimate_sagemaker_price(indexing_time)
 
+            #Calculate the inferencing price - doesn't include OpenSearch pricing
             if configuration["retrieval_service"] == "bedrock":
-                retrieval_price = estimate_retrieval_model_bedrock_price(bedrock_price_df, configuration, avg_prompt_length, num_prompts)
-                configuration["retrieval_cost_estimate"] += retrieval_price
+                inferencing_price = estimate_retrieval_model_bedrock_price(bedrock_price_df, configuration, avg_prompt_length, num_prompts)
+                configuration["inferencing_cost_estimate"] += inferencing_price
             else:
-                configuration["retrieval_cost_estimate"] += estimate_sagemaker_price(retrieval_time)
-            
-            configuration["indexing_cost_estimate"] += estimate_opensearch_price(indexing_time) + estimate_fargate_price(indexing_time)
-            configuration["retrieval_cost_estimate"] += estimate_opensearch_price(retrieval_time) + estimate_fargate_price(retrieval_time)
+                configuration["inferencing_cost_estimate"] += estimate_sagemaker_price(retrieval_time)
 
-            # Neglecting the evaluation tokens at this point of time
-            configuration["eval_cost_estimate"] += estimate_opensearch_price(eval_time) + estimate_fargate_price(eval_time)
+            # evaluation price for ragas not added at the moment considering 
+            # tokens information is not being returned
+            # Adding sagemaker endpoint cost as it would be still running for 
+            # the duration of the experiment
             if configuration['embedding_service'] == "sagemaker":
                 configuration["eval_cost_estimate"] += estimate_sagemaker_price(eval_time)
             if configuration["retrieval_service"] == "sagemaker":
                 configuration["eval_cost_estimate"] += estimate_sagemaker_price(eval_time)
+            
+            # adding fargate container costs
+            if not configuration["bedrock_knowledge_base"]:
+                configuration["indexing_cost_estimate"] += estimate_fargate_price(indexing_time)
+            configuration["retrieval_cost_estimate"] += estimate_fargate_price(retrieval_time)
+            configuration["eval_cost_estimate"] += estimate_fargate_price(eval_time)
 
-            configuration["directional_pricing"] = configuration["indexing_cost_estimate"] + configuration["retrieval_cost_estimate"] + configuration["eval_cost_estimate"]
+            # add opensearch provisioned costs
+            if not configuration["bedrock_knowledge_base"]:
+                configuration["indexing_cost_estimate"] += estimate_opensearch_price(indexing_time)
+                configuration["retrieval_cost_estimate"] += estimate_opensearch_price(retrieval_time)
+                configuration["eval_cost_estimate"] += estimate_opensearch_price(eval_time)
+
+            configuration["directional_pricing"] = configuration["indexing_cost_estimate"] + configuration["retrieval_cost_estimate"] + configuration["inferencing_cost_estimate"] + configuration["eval_cost_estimate"]
             configuration["directional_pricing"] +=configuration["directional_pricing"]*0.05 #extra
             configuration["directional_pricing"] = round(configuration["directional_pricing"],2)    
 
