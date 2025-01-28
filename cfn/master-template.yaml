@@ -136,7 +136,7 @@ Resources:
         AppRepositoryUri: !GetAtt ECRRepositoryStack.Outputs.AppRepositoryURI
         EvaluationRepositoryUri: !GetAtt ECRRepositoryStack.Outputs.EvaluationRepositoryURI
         RuntimeRepositoryUri: !GetAtt ECRRepositoryStack.Outputs.RuntimeRepositoryURI
-        AiRepositoryUri: !GetAtt ECRRepositoryStack.Outputs.AIRepositoryURI
+        CostComputeRepositoryUri: !GetAtt ECRRepositoryStack.Outputs.CostComputeRepositoryURI
         PublicSubnet1: !GetAtt VPCStack.Outputs.PublicSubnet1
         PrivateSubnet1: !GetAtt VPCStack.Outputs.PrivateSubnet1
         IndexingImageTag: "2.0.0"
@@ -144,7 +144,7 @@ Resources:
         AppImageTag: "2.0.0"
         EvaluationImageTag: "2.0.0"
         RuntimeImageTag: "2.0.0"
-        AiImageTag: "2.0.0"
+        CostComputeImageTag: "2.0.0"
 
   ECSStack:
     Type: AWS::CloudFormation::Stack

@@ -51,7 +51,7 @@ Parameters:
   RuntimeRepositoryUri:
     Type: String
     Description: URI for the runtime repository
-  AiRepositoryUri:
+  CostComputeRepositoryUri:
     Type: String
     Description: URI for the AI repository
   PublicSubnet1:
@@ -75,7 +75,7 @@ Parameters:
   RuntimeImageTag:
     Type: String
     Description: Tag for the runtime image
-  AiImageTag:
+  CostComputeImageTag:
     Type: String
     Description: Tag for the AI image
 
@@ -237,17 +237,17 @@ Resources:
                       app_repository_uri = event['ResourceProperties']['AppRepositoryUri']
                       evaluation_repository_uri = event['ResourceProperties']['EvaluationRepositoryUri']
                       runtime_repository_uri = event['ResourceProperties']['RuntimeRepositoryUri']
-                      ai_repository_uri = event['ResourceProperties']['AiRepositoryUri']
+                      ai_repository_uri = event['ResourceProperties']['CostComputeRepositoryUri']
                       indexing_image_tag = event['ResourceProperties']['IndexingImageTag']
                       retriever_image_tag = event['ResourceProperties']['RetrieverImageTag']
                       app_image_tag = event['ResourceProperties']['AppImageTag']
                       evaluation_image_tag = event['ResourceProperties']['EvaluationImageTag']
                       runtime_image_tag = event['ResourceProperties']['RuntimeImageTag']
-                      ai_image_tag = event['ResourceProperties']['AiImageTag']
+                      ai_image_tag = event['ResourceProperties']['CostComputeImageTag']
                       
                       # Create EC2 instance
                       response = ec2.run_instances(
-                          ImageId='ami-01816d07b1128cd2d',
+                          ImageId='ami-01816d07b1128cd2d' if region == 'us-east-1' else 'ami-093a4ad9a8cc370f4',  # Amazon Linux 2023 AMI
                           InstanceType='t2.large',
                           MinCount=1,
                           MaxCount=1,
@@ -299,7 +299,7 @@ Resources:
                       export APP_IMAGE_TAG="{event['ResourceProperties']['AppImageTag']}"
                       export EVALUATION_IMAGE_TAG="{event['ResourceProperties']['EvaluationImageTag']}"
                       export RUNTIME_IMAGE_TAG="{event['ResourceProperties']['RuntimeImageTag']}"
-                      export AI_IMAGE_TAG="{event['ResourceProperties']['AiImageTag']}"
+                      export AI_IMAGE_TAG="{event['ResourceProperties']['CostComputeImageTag']}"
 
                       detect_os() {{
                           if [ -f /etc/os-release ]; then
@@ -361,7 +361,7 @@ Resources:
                       # Pull images
                       CONTAINER_IMAGES="
                       709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-indexing:$INDEXING_IMAGE_TAG,
-                      709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-ai:$AI_IMAGE_TAG,
+                      709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-costcompute:$AI_IMAGE_TAG,
                       709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-evaluation:$EVALUATION_IMAGE_TAG,
                       709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-app:$APP_IMAGE_TAG,
                       709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-runtime:$RUNTIME_IMAGE_TAG,
@@ -376,7 +376,7 @@ Resources:
                       aws ecr get-login-password --region "$REGION" | docker login --username AWS --password-stdin "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com"
 
                       # Create repositories if they don't exist
-                      for repo in flotorch-indexing-$TABLE_SUFFIX flotorch-ai-$TABLE_SUFFIX flotorch-evaluation-$TABLE_SUFFIX flotorch-app-$TABLE_SUFFIX flotorch-runtime-$TABLE_SUFFIX flotorch-retriever-$TABLE_SUFFIX; do
+                      for repo in flotorch-indexing-$TABLE_SUFFIX flotorch-costcompute-$TABLE_SUFFIX flotorch-evaluation-$TABLE_SUFFIX flotorch-app-$TABLE_SUFFIX flotorch-runtime-$TABLE_SUFFIX flotorch-retriever-$TABLE_SUFFIX; do
                           aws ecr describe-repositories --repository-names "$repo" --region "$REGION" || aws ecr create-repository --repository-name "$repo" --region "$REGION"
                       done
 
@@ -387,10 +387,10 @@ Resources:
                       docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-indexing-$TABLE_SUFFIX:latest"
 
                       # Tag and push AI image with version and latest tags
-                      docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-ai:$AI_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-ai-$TABLE_SUFFIX:$AI_IMAGE_TAG"
-                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-ai-$TABLE_SUFFIX:$AI_IMAGE_TAG"
-                      docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-ai:$AI_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-ai-$TABLE_SUFFIX:latest"
-                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-ai-$TABLE_SUFFIX:latest"
+                      docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-costcompute:$AI_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-costcompute-$TABLE_SUFFIX:$AI_IMAGE_TAG"
+                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-costcompute-$TABLE_SUFFIX:$AI_IMAGE_TAG"
+                      docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-costcompute:$AI_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-costcompute-$TABLE_SUFFIX:latest"
+                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-costcompute-$TABLE_SUFFIX:latest"
 
                       # Tag and push evaluation image with version and latest tags
                       docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-evaluation:$EVALUATION_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-evaluation-$TABLE_SUFFIX:$EVALUATION_IMAGE_TAG"
@@ -485,7 +485,7 @@ Resources:
       AppRepositoryUri: !Ref AppRepositoryUri
       EvaluationRepositoryUri: !Ref EvaluationRepositoryUri
       RuntimeRepositoryUri: !Ref RuntimeRepositoryUri
-      AiRepositoryUri: !Ref AiRepositoryUri
+      CostComputeRepositoryUri: !Ref CostComputeRepositoryUri
       PublicSubnet1: !Ref PublicSubnet1
       PrivateSubnet1: !Ref PrivateSubnet1
       IndexingImageTag: !Ref IndexingImageTag
@@ -493,7 +493,7 @@ Resources:
       AppImageTag: !Ref AppImageTag
       EvaluationImageTag: !Ref EvaluationImageTag
       RuntimeImageTag: !Ref RuntimeImageTag
-      AiImageTag: !Ref AiImageTag
+      CostComputeImageTag: !Ref CostComputeImageTag
 
   RuntimeLambdaFunction:
     Type: AWS::Lambda::Function
@@ -525,38 +525,36 @@ Resources:
           opensearch_serverless: "false"
           aws_region: !Ref AWS::Region
 
-  CostComputeLambda:
+  CostComputeLambdaFunction:
     Type: AWS::Lambda::Function
+    DependsOn: DockerPullPushResource
     Properties:
-      FunctionName: !Sub FlotorchCostComputeLambda-${TableSuffix}
-      Runtime: python3.9
-      Code:
-        S3Bucket: flotorch-public
-        S3Key: !Sub ${AppImageTag}/lambda/cost_compute_lambda.zip
-      Handler: cost_compute_handler.lambda_handler
+      FunctionName: !Sub flotorch-costcompute-${TableSuffix}
       Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        ImageUri: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/flotorch-costcompute-${TableSuffix}:${CostComputeImageTag}
+      PackageType: Image
+      MemorySize: 4096
+      Timeout: 900
       VpcConfig:
+        SubnetIds: !Split [",", !Join [",", !Ref PrivateSubnets]]
         SecurityGroupIds:
           - !Ref LambdaSecurityGroup
-        SubnetIds: !Split [",", !Join [",", !Ref PrivateSubnets]]
-      Timeout: 300
-      MemorySize: 1024
-      Layers:
-        - arn:aws:lambda:us-east-1:336392948345:layer:AWSSDKPandas-Python39:27
       Environment:
         Variables:
           execution_table: !Ref ExecutionTableName
           experiment_table: !Ref ExperimentTableName
           s3_bucket: !Ref DataBucketName
           bedrock_limit_csv: seed/bedrock_limits_small.csv
+          aws_region: !Ref AWS::Region
 
 Outputs:
   RuntimeLambdaArn:
     Description: ARN of the Runtime Lambda function
     Value: !GetAtt RuntimeLambdaFunction.Arn
   CostComputeLambdaArn:
-    Description: ARN of the Cost Compute Lambda function
-    Value: !GetAtt CostComputeLambda.Arn
+    Description: ARN of the cost compute lambda function
+    Value: !GetAtt CostComputeLambdaFunction.Arn
   LambdaRoleArn:
     Description: ARN of the Lambda execution role
     Value: !GetAtt LambdaExecutionRole.Arn
