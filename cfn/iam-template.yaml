@@ -1,0 +1,227 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'CloudFormation template for FloTorch Stack Management IAM Roles'
+
+Parameters:
+  TableSuffix:
+    Type: String
+    Description: Suffix to append to resource names
+
+Resources:
+  # VPC Stack Role
+  VPCStackRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub flotorch-vpc-stack-role-${TableSuffix}
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: cloudformation.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: VPCManagementPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ec2:*
+                  - elasticloadbalancing:*
+                  - application-autoscaling:*
+                  - autoscaling:*
+                  - route53:*
+                Resource: '*'
+
+  # ECR Stack Role
+  ECRStackRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub flotorch-ecr-stack-role-${TableSuffix}
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: cloudformation.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: ECRManagementPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ecr:*
+                Resource: '*'
+
+  # DynamoDB Stack Role
+  DynamoDBStackRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub flotorch-dynamodb-stack-role-${TableSuffix}
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: cloudformation.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: DynamoDBManagementPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:*
+                  - s3:*
+                Resource: '*'
+
+  # OpenSearch Stack Role
+  OpenSearchStackRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub flotorch-opensearch-stack-role-${TableSuffix}
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: cloudformation.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: OpenSearchManagementPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - es:*
+                  - opensearch:*
+                  - ec2:*
+                Resource: '*'
+
+  # Lambda Stack Role
+  LambdaStackRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub flotorch-lambda-stack-role-${TableSuffix}
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: cloudformation.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: LambdaManagementPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:*
+                  - iam:*
+                  - ec2:*
+                Resource: '*'
+
+  # ECS Stack Role
+  ECSStackRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub flotorch-ecs-stack-role-${TableSuffix}
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: cloudformation.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: ECSManagementPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ecs:*
+                  - ec2:*
+                  - elasticloadbalancing:*
+                  - iam:*
+                Resource: '*'
+
+  # State Machine Stack Role
+  StateMachineStackRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub flotorch-state-machine-stack-role-${TableSuffix}
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: cloudformation.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: StateMachineManagementPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - states:*
+                  - iam:*
+                  - lambda:*
+                  - events:*
+                Resource: '*'
+
+  # AppRunner Stack Role
+  AppRunnerStackRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub flotorch-apprunner-stack-role-${TableSuffix}
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: cloudformation.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: AppRunnerManagementPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - apprunner:*
+                  - iam:*
+                  - ec2:*
+                Resource: '*'
+
+Outputs:
+  VPCStackRoleArn:
+    Description: ARN of the VPC Stack Role
+    Value: !GetAtt VPCStackRole.Arn
+  ECRStackRoleArn:
+    Description: ARN of the ECR Stack Role
+    Value: !GetAtt ECRStackRole.Arn
+  DynamoDBStackRoleArn:
+    Description: ARN of the DynamoDB Stack Role
+    Value: !GetAtt DynamoDBStackRole.Arn
+  OpenSearchStackRoleArn:
+    Description: ARN of the OpenSearch Stack Role
+    Value: !GetAtt OpenSearchStackRole.Arn
+  LambdaStackRoleArn:
+    Description: ARN of the Lambda Stack Role
+    Value: !GetAtt LambdaStackRole.Arn
+  ECSStackRoleArn:
+    Description: ARN of the ECS Stack Role
+    Value: !GetAtt ECSStackRole.Arn
+  StateMachineStackRoleArn:
+    Description: ARN of the State Machine Stack Role
+    Value: !GetAtt StateMachineStackRole.Arn
+  AppRunnerStackRoleArn:
+    Description: ARN of the AppRunner Stack Role
+    Value: !GetAtt AppRunnerStackRole.Arn

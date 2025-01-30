@@ -62,20 +62,29 @@ Resources:
         ClientName: !Ref ClientName
         CreatedBy: !Ref CreatedBy
         TableSuffix: !Ref TableSuffix
+      RoleARN: !GetAtt IAMStack.Outputs.VPCStackRoleArn
+
+  IAMStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/templates/iam-template.yaml
+      Parameters:
+        TableSuffix: !Ref TableSuffix
 
   ECRRepositoryStack:
     Type: AWS::CloudFormation::Stack
-    DependsOn: [VPCStack]
+    DependsOn: [VPCStack, IAMStack]
     Properties:
       TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/templates/ecr-repository-template.yaml
       Parameters:
         ProjectName: !Ref ProjectName
         CreatedBy: !Ref CreatedBy
         TableSuffix: !Ref TableSuffix
+      RoleARN: !GetAtt IAMStack.Outputs.ECRStackRoleArn
 
   VPCEndpointStack:
     Type: AWS::CloudFormation::Stack
-    DependsOn: VPCStack
+    DependsOn: [VPCStack, IAMStack]
     Properties:
       TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/templates/vpc-endpoint-template.yaml
       Parameters:
@@ -86,10 +95,11 @@ Resources:
         ClientName: !Ref ClientName
         CreatedBy: !Ref CreatedBy
         TableSuffix: !Ref TableSuffix
+      RoleARN: !GetAtt IAMStack.Outputs.VPCStackRoleArn
 
   DynamoDBStack:
     Type: AWS::CloudFormation::Stack
-    DependsOn: [VPCStack]
+    DependsOn: [VPCStack, IAMStack]
     Properties:
       TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/templates/dynamodb-template.yaml
       Parameters:
@@ -97,10 +107,11 @@ Resources:
         TableSuffix: !Ref TableSuffix
         ClientName: !Ref ClientName
         CreatedBy: !Ref CreatedBy
+      RoleARN: !GetAtt IAMStack.Outputs.DynamoDBStackRoleArn
 
   OpenSearchStack:
     Type: AWS::CloudFormation::Stack
-    DependsOn: [VPCStack]
+    DependsOn: [VPCStack, IAMStack]
     Properties:
       TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/templates/opensearch-template.yaml
       Parameters:
@@ -113,10 +124,11 @@ Resources:
         TableSuffix: !Ref TableSuffix
         OpenSearchAdminUser: !Ref OpenSearchAdminUser
         OpenSearchAdminPassword: !Ref OpenSearchAdminPassword
+      RoleARN: !GetAtt IAMStack.Outputs.OpenSearchStackRoleArn
 
   LambdaStack:
     Type: AWS::CloudFormation::Stack
-    DependsOn: [VPCStack, DynamoDBStack, OpenSearchStack, ECRRepositoryStack]
+    DependsOn: [VPCStack, DynamoDBStack, OpenSearchStack, ECRRepositoryStack, IAMStack]
     Properties:
       TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/templates/lambda-template.yaml
       Parameters:
@@ -145,10 +157,11 @@ Resources:
         EvaluationImageTag: "2.0.1"
         RuntimeImageTag: "2.0.1"
         CostComputeImageTag: "2.0.1"
+      RoleARN: !GetAtt IAMStack.Outputs.LambdaStackRoleArn
 
   ECSStack:
     Type: AWS::CloudFormation::Stack
-    DependsOn: [VPCStack, DynamoDBStack, OpenSearchStack, ECRRepositoryStack]
+    DependsOn: [VPCStack, DynamoDBStack, OpenSearchStack, ECRRepositoryStack, IAMStack]
     Properties:
       TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/templates/ecs-template.yaml
       Parameters:
@@ -166,10 +179,11 @@ Resources:
         IndexingRepositoryUri: !GetAtt ECRRepositoryStack.Outputs.IndexingRepositoryURI
         RetrieverRepositoryUri: !GetAtt ECRRepositoryStack.Outputs.RetrieverRepositoryURI
         EvaluationRepositoryUri: !GetAtt ECRRepositoryStack.Outputs.EvaluationRepositoryURI
+      RoleARN: !GetAtt IAMStack.Outputs.ECSStackRoleArn
 
   StateMachineStack:
     Type: AWS::CloudFormation::Stack
-    DependsOn: [VPCStack, ECSStack, LambdaStack, DynamoDBStack, OpenSearchStack]
+    DependsOn: [VPCStack, ECSStack, LambdaStack, DynamoDBStack, OpenSearchStack, IAMStack]
     Properties:
       TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/templates/state-machine-template.yaml
       Parameters:
@@ -192,10 +206,11 @@ Resources:
         OpenSearchAdminUser: !Ref OpenSearchAdminUser
         OpenSearchAdminPassword: !Ref OpenSearchAdminPassword
         SageMakerRoleArn: !GetAtt VPCStack.Outputs.BedrockRoleArn
+      RoleARN: !GetAtt IAMStack.Outputs.StateMachineStackRoleArn
 
   AppRunnerStack:
     Type: AWS::CloudFormation::Stack
-    DependsOn: [ECRRepositoryStack, DynamoDBStack, OpenSearchStack, StateMachineStack]
+    DependsOn: [ECRRepositoryStack, DynamoDBStack, OpenSearchStack, StateMachineStack, IAMStack]
     Properties:
       TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/templates/app-runner-template.yaml
       Parameters:
@@ -213,6 +228,7 @@ Resources:
         BedrockRoleArn: !GetAtt VPCStack.Outputs.BedrockRoleArn
         EcrRepositoryUri: !GetAtt ECRRepositoryStack.Outputs.AppRepositoryURI
         AppImageTag: "2.0.1.1"
+      RoleARN: !GetAtt IAMStack.Outputs.AppRunnerStackRoleArn
 
 Outputs:
   AppRunnerServiceUrl:
