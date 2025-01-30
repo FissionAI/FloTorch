@@ -111,14 +111,20 @@ Resources:
                   - ec2:CreateNetworkInterface
                   - ec2:DescribeNetworkInterfaces
                   - ec2:DeleteNetworkInterface
-                Resource: '*'
+                Resource: 
+                  - !Sub arn:aws:ec2:${Region}:${AccountId}:network-interface/*
+                  - !Sub arn:aws:ec2:${Region}:${AccountId}:security-group/*
               - Effect: Allow
                 Action:
                   - ecr:GetAuthorizationToken
                   - ecr:BatchCheckLayerAvailability
                   - ecr:GetDownloadUrlForLayer
                   - ecr:BatchGetImage
-                Resource: '*'
+                Resource: !Sub arn:aws:ecr:${Region}:${AccountId}:repository/*
+              - Effect: Allow
+                Action:
+                  - bedrock:*
+                Resource: !Ref BedrockRoleArn
               - Effect: Allow
                 Action:
                   - bedrock:*
@@ -153,7 +159,7 @@ Resources:
               - Effect: Allow
                 Action:
                   - states:*
-                Resource: '*'
+                Resource: !Ref EcsStepFunctionArn
               - Effect: Allow
                 Action:
                   - s3:*
@@ -163,15 +169,27 @@ Resources:
               - Effect: Allow
                 Action:
                   - dynamodb:*
+                Resource: 
+                  - !Sub arn:aws:dynamodb:${Region}:${AccountId}:table/Execution_${TableSuffix}
+                  - !Sub arn:aws:dynamodb:${Region}:${AccountId}:table/Execution_${TableSuffix}/index/*
+                  - !Sub arn:aws:dynamodb:${Region}:${AccountId}:table/ExecutionModelInvocations_${TableSuffix}
+                  - !Sub arn:aws:dynamodb:${Region}:${AccountId}:table/ExecutionModelInvocations_${TableSuffix}/index/*
+                  - !Sub arn:aws:dynamodb:${Region}:${AccountId}:table/Experiment_${TableSuffix}
+                  - !Sub arn:aws:dynamodb:${Region}:${AccountId}:table/Experiment_${TableSuffix}/index/*
+                  - !Sub arn:aws:dynamodb:${Region}:${AccountId}:table/ExperimentQuestionMetrics_${TableSuffix}
+                  - !Sub arn:aws:dynamodb:${Region}:${AccountId}:table/ExperimentQuestionMetrics_${TableSuffix}/index/*
+              - Effect: Allow
+                Action:
+                  - ecr:GetAuthorizationToken
                 Resource: '*'
               - Effect: Allow
                 Action:
                   - ecr:*
-                Resource: '*'
+                Resource: !Sub arn:aws:ecr:${Region}:${AccountId}:repository/*
               - Effect: Allow
                 Action:
                   - logs:*
-                Resource: '*'
+                Resource: !Sub arn:aws:logs:${Region}:${AccountId}:log-group:/aws/apprunner/*
 
   FlotorchWebApp:
     Type: AWS::AppRunner::Service

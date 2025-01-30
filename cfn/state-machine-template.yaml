@@ -77,6 +77,11 @@ Resources:
             Principal:
               Service: states.amazonaws.com
             Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
+        - arn:aws:iam::aws:policy/AmazonECS_FullAccess
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
       Policies:
         - PolicyName: !Sub states-execution-policy-${TableSuffix}
           PolicyDocument:
@@ -84,60 +89,15 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
-                  - "events:PutRule"
-                  - "events:PutTargets"
-                  - "events:DeleteRule"
-                  - "events:RemoveTargets"
-                  - "events:DescribeRule"
-                  - "events:ListTargetsByRule"
-                Resource: "*"
-              - Effect: Allow
-                Action:
-                  - "ecs:RunTask"
-                  - "ecs:StopTask"
-                  - "ecs:DescribeTasks"
-                Resource: "*"
-              - Effect: Allow
-                Action:
-                  - "iam:PassRole"
-                Resource: "*"
-              - Effect: Allow
-                Action:
-                  - "lambda:InvokeFunction"
-                Resource: "*"
-              - Effect: Allow
-                Action:
+                  - "events:*"
+                  - "ecs:*"
+                  - "iam:*"
+                  - "lambda:*"
                   - "states:*"
                   - "sagemaker:*"
+                  - "dynamodb:*"
+                  - "logs:*"
                 Resource: "*"
-              - Effect: Allow
-                Action:
-                  - dynamodb:Scan
-                  - dynamodb:PutItem
-                  - dynamodb:GetItem
-                  - dynamodb:UpdateItem
-                  - dynamodb:DeleteItem
-                  - dynamodb:Query
-                Resource:
-                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ExecutionTableName}
-                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ExperimentTableName}
-                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${MetricsTableName}
-                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ModelInvocationsTableName}
-                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ExecutionTableName}/index/*
-                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ExperimentTableName}/index/*
-                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${MetricsTableName}/index/*
-                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ModelInvocationsTableName}/index/*
-              - Effect: Allow
-                Action:
-                  - logs:CreateLogDelivery
-                  - logs:GetLogDelivery
-                  - logs:UpdateLogDelivery
-                  - logs:DeleteLogDelivery
-                  - logs:ListLogDeliveries
-                  - logs:PutResourcePolicy
-                  - logs:DescribeResourcePolicies
-                  - logs:DescribeLogGroups
-                Resource: '*'
 
   StateMachineLogGroup:
     Type: AWS::Logs::LogGroup
