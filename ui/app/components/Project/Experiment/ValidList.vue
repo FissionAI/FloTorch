@@ -452,7 +452,6 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
 
 const columnVisibility = ref({
   select: props.selectable ?? false,
-  directional_pricing: false,
   region: false,
   rerank_model_id: false,
   eval_retrieval_model: false,
@@ -460,6 +459,10 @@ const columnVisibility = ref({
   eval_service:false,
   indexing_algorithm: false,
   temp_retrieval_llm: false,
+  chunk_overlap : false,
+  kb_name : false,
+  guardrail_name: false,
+  vector_dimension : false
 })
 </script>
 
@@ -602,7 +605,7 @@ const columnVisibility = ref({
       </template>
       <template #n_shot_prompts-cell="{ row }">
         <span class=" ">
-          {{ row.original.n_shot_prompts || 'NA' }}
+          {{ row.original.n_shot_prompts !=='' ? row.original.n_shot_prompts : 'NA' }}
         </span>
       </template>
       <template #temp_retrieval_llm-header="{ column }">

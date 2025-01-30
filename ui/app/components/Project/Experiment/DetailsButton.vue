@@ -72,6 +72,12 @@ const props = defineProps<{
               useHumanModelService(props.experimentsData?.config?.retrieval_service!) }})
             </td>
           </tr>
+          <tr>
+            <td class="font-medium">Reranking Model</td>
+            <td>{{ 
+             props.experimentsData?.config?.rerank_model_id! }}
+            </td>
+          </tr>
            <tr v-if="props.experimentsData?.config?.guardrail_name">
             <td class="font-medium">Guardrails</td>
             <td>{{

@@ -522,15 +522,15 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
       });
     },
     label: 'Reranking Model',
-    accessorKey: "rerank_model_id",
+    accessorKey: "config.rerank_model_id",
     enableHiding: true,
     sortingFn: (rowA, rowB) => {
-      const a = rowA.original.rerank_model_id ?? 0;
-      const b = rowB.original.rerank_model_id ?? 0;
+      const a = rowA.original.config.rerank_model_id ?? 0;
+      const b = rowB.original.config.rerank_model_id ?? 0;
       return a.localeCompare(b);
     },
     cell: ({ row }) => {
-      return row.original.rerank_model_id? row.original.rerank_model_id : "-"
+      return row.original.config.rerank_model_id? row.original.config.rerank_model_id : "-"
     }
   },
    {

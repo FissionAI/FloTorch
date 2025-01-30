@@ -26,7 +26,7 @@ const props = withDefaults(
 );
 
 const state = reactive<Partial<ProjectCreateEval>>({
-  service: modelValue.value?.service || undefined,
+  service: modelValue.value?.service || 'ragas',
   ragas_embedding_llm: modelValue.value?.ragas_embedding_llm || undefined,
   ragas_inference_llm: modelValue.value?.ragas_inference_llm || undefined,
   guardrails: modelValue.value?.guardrails || [],

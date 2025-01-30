@@ -279,16 +279,16 @@ const items = ref([
               <table class="w-full">
                 <tbody>
                   <tr>
-                    <td class="font-medium w-40">Retrieval Input Tokens</td>
-                    <td class="w-40">{{ experimentsData?.retrieval_input_tokens }}</td>
+                    <td class="font-medium w-40">Inferecing Input Tokens</td>
+                    <td class="w-40">{{ experimentsData?.retrieval_input_tokens || 'NA' }}</td>
                   </tr>
                   <tr>
-                    <td class="font-medium">Retrieval Output Tokens</td>
-                    <td>{{ experimentsData?.retrieval_output_tokens }}</td>
+                    <td class="font-medium">Inferencing Output Tokens</td>
+                    <td>{{ experimentsData?.retrieval_output_tokens || 'NA' }}</td>
                   </tr>
                   <tr>
                     <td class="font-medium">Retrieval Query Embedded Tokens</td>
-                    <td>{{ experimentsData?.retrieval_query_embed_tokens }}</td>
+                    <td>{{ experimentsData?.retrieval_query_embed_tokens || 'NA' }}</td>
                   </tr>
                 </tbody>
               </table>
