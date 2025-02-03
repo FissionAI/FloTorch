@@ -57,8 +57,6 @@ const handlePromptGuideError = (error?: FormError) => {
 }
 </script>
 
-
-
 <template>
   <UForm ref="retForm" :state="state" :schema="ProjectCreateRetrievalStrategySchema" :validate-on="['input']"
     @error="console.log" @submit="onSubmit">

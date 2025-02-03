@@ -301,7 +301,7 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
       return h(UButton, {
         color: "neutral",
         variant: "ghost",
-        label: "Answers Relevancy",
+        label: "Answer Relevancy",
         icon: isSorted
           ? isSorted === "asc"
             ? "i-lucide-arrow-up-narrow-wide"
@@ -606,7 +606,15 @@ const hasAllExperimentsCompleted = computed(() => {
 })
 
 const columnVisibility = ref({
-  directional_pricing: false,
+  // directional_pricing: false,
+  config_kb_name: false,
+  config_guardrail_name: false,
+  config_eval_service: false,
+  config_eval_embedding_model: false,
+  config_eval_retrieval_model: false,
+  config_rerank_model_id: false,
+  config_temp_retrieval_llm: false,
+  config_indexing_algorithm: false,
 })
 </script>
 

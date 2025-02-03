@@ -9,7 +9,7 @@ useHead({
 <template>
   <div class="flex flex-col min-h-screen bg-gray-100">
     <header class="bg-gray-800 text-white p-2 sticky top-0 z-50">
-      <div class="container max-w-7xl mx-auto flex justify-between items-center">
+      <div class="container mx-auto flex justify-between items-center">
         <div>
           <NuxtLink :to="{ name: 'index' }">
             <img src="/logo.png" alt="logo" class="w-32" />
@@ -19,7 +19,7 @@ useHead({
           target="_blank" />
       </div>
     </header>
-    <main class="flex-1 container max-w-7xl mx-auto py-4">
+    <main class="flex-1 container mx-auto py-4">
       <slot />
     </main>
     <footer class="bg-gray-800 text-white p-2 text-sm">
