@@ -49,6 +49,11 @@ const columns = ref<TableColumn<ProjectListItem>[]>([
         onClick: () => column.toggleSorting(),
       });
     },
+    sortingFn: (rowA, rowB) => {
+      const a = rowA.original.name ?? 0;
+      const b = rowB.original.name ?? 0;
+      return a.localeCompare(b);
+    },
   },
   {
     accessorKey: "region",

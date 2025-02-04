@@ -160,6 +160,27 @@ const items = ref([
           </template>
           <UCard class="my-5">
             <template #header>
+              <h4 class="text-lg font-medium">Overall</h4>
+            </template>
+            <table class="w-full">
+              <tbody>
+                <tr>
+                  <td class="font-medium">Total time</td>
+                  <td>
+                    {{ experimentsData?.total_time ? useConvertSecondsToDHM(Number(experimentsData?.total_time)) : 'Unable to fetch data' }}
+                  </td>
+                </tr>
+                <tr>
+                  <td class="font-medium w-40">Total Cost</td>
+                  <td class="w-40">
+                    {{ experimentsData?.cost ? useHumanCurrencyAmount(experimentsData?.cost) : 'Unable to fetch data' }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </UCard>
+          <UCard class="my-5">
+            <template #header>
               <h4 class="text-lg font-medium">Price</h4>
             </template>
             <table class="w-full">

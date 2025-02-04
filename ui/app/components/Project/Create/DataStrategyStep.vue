@@ -126,6 +126,9 @@ const resetKbModel = (event: any) => {
         label="Knowledge Base Data"
         required
       >
+      <template #hint>
+          <FieldTooltip field-name="kb_data" />
+        </template>
         <FileUploadKb
           @kbFiles="fetchKbFiles"
           :kbFilesUploaded="props.kbFilesUploadedData"
