@@ -453,7 +453,7 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
 const columnVisibility = ref({
   select: props.selectable ?? false,
   region: false,
-  rerank_model_id: false,
+  // rerank_model_id: false,
   eval_retrieval_model: false,
   eval_embedding_model: false,
   eval_service:false,
@@ -461,8 +461,11 @@ const columnVisibility = ref({
   temp_retrieval_llm: false,
   chunk_overlap : false,
   kb_name : false,
-  guardrail_name: false,
-  vector_dimension : false
+  // guardrail_name: false,
+  knn_num : false,
+  n_shot_prompts : false,
+  vector_dimension : false,
+  chunk_size : false
 })
 </script>
 

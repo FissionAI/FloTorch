@@ -19,7 +19,7 @@ export const ProjectCreateModelSchema = z.object({
 export const ProjectCreateDataStrategySchema = z.object({
   name: z.string({
     required_error: "Name is required",
-  }),
+  }).trim().min(1, { message: "Name cannot be empty" }),
   region: z.string({
     required_error: "Region is required",
   }),
@@ -241,10 +241,10 @@ export const ProjectCreateEvalSchema = z.object({
     required_error: "Service is required",
   }),
   ragas_embedding_llm: z.string({
-    required_error: "Ragas embedding model is required",
+    required_error: "RAGAS embedding model is required",
   }),
   ragas_inference_llm: z.string({
-    required_error: "Ragas inference model is required",
+    required_error: "RAGAS inferencing model is required",
   }),
   guardrails : z.array(
       z.object({
