@@ -1,65 +1,13 @@
-# FloTorch CloudFormation Templates
+# FloTorch Installation guide
 
-Welcome to FloTorch! This guide will help you set up FloTorch's infrastructure on AWS. Whether you're new to cloud computing or an experienced developer, we'll guide you through each step.
+
+Welcome to FloTorch! This guide will help you set up FloTorch's infrastructure on AWS. We will guide you through the steps.
 
 ## Before You Begin (Prerequisites)
 
 ### 1. AWS Account and Tools
-1. AWS Account with administrative access
-2. AWS CLI installed and configured on your computer
-3. AWS Marketplace Subscription (see next section)
 
-### 2. AWS Marketplace Subscription
-Before starting the installation, subscribe to FloTorch:
-
-1. Visit the [FloTorch AWS Marketplace page](https://aws.amazon.com/marketplace/pp/prodview-z5zcvloh7l3ky?ref_=aws-mp-console-subscription-detail-payg)
-2. Click on the "View Purchase options" button
-3. After subscribing, click on 'Continue to Configuration'
-4. Select your preferred fulfillment option and Software Version
-
-The CloudFormation templates will automatically use your FloTorch subscription to set up all required resources.
-
-### 3. Required AWS Service Quotas
-Your AWS account needs sufficient quotas for these services:
-- VPC and related networking resources
-- Lambda functions
-- EventBridge rules
-- SageMaker endpoints
-- OpenSearch domains
-- DynamoDB tables
-- ECR repositories
-- AppRunner services
-
-### 4. Required AI Model Access
-Your AWS account needs access to these Bedrock models:
-
-**For Embedding:**
-- Amazon/amazon.titan-embed-text-v2:0
-- Amazon/amazon.titan-embed-image-v1
-- Cohere/cohere.embed-english-v3
-- Cohere/cohere.embed-multilingual-v3
-
-**For Retrieval:**
-- Amazon/amazon.titan-text-lite-v1
-- Amazon/amazon.titan-text-express-v1
-- Amazon/amazon.nova-lite-v1:0
-- Amazon/amazon.nova-micro-v1:0
-- Amazon/amazon.nova-pro-v1:0
-- Anthropic/anthropic.claude-3-5-sonnet-20241022-v2:0
-- Anthropic/anthropic.claude-3-5-sonnet-20240620-v1:0
-- Cohere/cohere.command-r-plus-v1:0
-- Cohere/cohere.command-r-v1:0
-- Meta/meta.llama3-2-1b-instruct-v1:0
-- Meta/meta.llama3-2-3b-instruct-v1:0
-- Meta/meta.llama3-2-11b-instruct-v1:0
-- Meta/meta.llama3-2-90b-instruct-v1:0
-- Mistral AI/mistral.mistral-7b-instruct-v0:2
-- Mistral AI/mistral.mistral-large-2402-v1:0
-
-### 5. Required AWS Permissions
-You'll need either:
-- Administrative access (recommended), or
-- The following specific permissions:
+1. AWS Account and a user with the following permissions in AWS
 
 ```json
 {
@@ -82,13 +30,104 @@ You'll need either:
                 "cloudwatch:*",
                 "logs:*",
                 "ssm:*",
-                "es:*"
+                "es:*",
+                "bedrock:*",
+                "sts:*",
+                "kms:*",
+                "secretsmanager:*",
+                "ecs:*",
+                "states:*",
+                "elasticloadbalancing:*",
+                "application-autoscaling:*",
+                "acm:*",
+                "sns:*",
+                "vpc-lattice:*"
             ],
             "Resource": "*"
         }
     ]
-}
-```
+   }
+   ```
+2. AWS CLI installed and configured on your computer
+3. AWS Marketplace Subscription (see next section)
+
+### 2. AWS Marketplace Subscription
+Before starting the installation, subscribe to FloTorch:
+
+1. Visit the [FloTorch AWS Marketplace page](https://aws.amazon.com/marketplace/pp/prodview-z5zcvloh7l3ky?ref_=aws-mp-console-subscription-detail-payg)
+2. Click on the "View Purchase options" button
+3. After subscribing, click on 'Continue to Configuration'
+4. Select your preferred fulfillment option and Software Version
+
+### 3. Required AWS Service Quotas
+
+| Service | Resource Type |
+|---------|--------------|
+| VPC | Networking resources |
+| Lambda | Functions |
+| EventBridge | Rules |
+| SageMaker | Endpoints |
+| OpenSearch | Domains |
+| DynamoDB | Tables |
+| ECR | Repositories |
+| AppRunner | Services |
+
+### 4. Required Bedrock Model Access
+
+| Purpose | Model Name |
+|---------|------------|
+| **Embedding** | Amazon/amazon.titan-embed-text-v2:0 |
+| | Amazon/amazon.titan-embed-image-v1 |
+| | Cohere/cohere.embed-english-v3 |
+| | Cohere/cohere.embed-multilingual-v3 |
+| **Retrieval** | Amazon/amazon.titan-text-lite-v1 |
+| | Amazon/amazon.titan-text-express-v1 |
+| | Amazon/amazon.nova-lite-v1:0 |
+| | Amazon/amazon.nova-micro-v1:0 |
+| | Amazon/amazon.nova-pro-v1:0 |
+| | Anthropic/anthropic.claude-3-5-sonnet-20241022-v2:0 |
+| | Anthropic/anthropic.claude-3-5-sonnet-20240620-v1:0 |
+| | Cohere/cohere.command-r-plus-v1:0 |
+| | Cohere/cohere.command-r-v1:0 |
+| | Meta/meta.llama3-2-1b-instruct-v1:0 |
+| | Meta/meta.llama3-2-3b-instruct-v1:0 |
+| | Meta/meta.llama3-2-11b-instruct-v1:0 |
+| | Meta/meta.llama3-2-90b-instruct-v1:0 |
+| | Mistral AI/mistral.mistral-7b-instruct-v0:2 |
+| | Mistral AI/mistral.mistral-large-2402-v1:0 |
+
+
+## What You're Installing
+
+### Core Infrastructure Components
+
+| Component | Purpose |
+|-----------|----------|
+| VPC Stack | Private network infrastructure |
+| VPC Endpoint Stack | Secure access to AWS services within VPC |
+| DynamoDB Stack | Database tables and S3 bucket for data storage |
+| OpenSearch Stack | Search functionality |
+| ECR Repository Stack | Container image repositories |
+| ECS Stack | Running containerized applications |
+| Lambda Stack | Serverless functions |
+| State Machine Stack | Step Functions for orchestration |
+| AppRunner Stack | Application hosting and management |
+
+
+## Installation Guide
+
+### Option 1: Quick Install Parameters
+
+| Parameter | Example | Requirements |
+|-----------|----------|--------------|
+| ProjectName | "flotorch" | Your project name |
+| TableSuffix | "abc123" | 6 lowercase characters |
+| ClientName | "acmecorp" | Must be lowercase |
+| OpenSearchAdminUser | "admin" | Admin username |
+| OpenSearchAdminPassword | "YourSecurePassword123!" | 8-41 chars with letters, numbers, symbols |
+| NginxAuthPassword | "YourNginxPassword123!" | 8-41 chars with letters, numbers, symbols |
+
+### Option 2: Command Line Installation
 
 ## What You're Installing
 
@@ -154,154 +193,56 @@ aws cloudformation create-stack \
         ParameterKey=NginxAuthPassword,ParameterValue=YourNginxPassword123!
 ```
 
-## Understanding the Templates
-
-Each template serves a specific purpose in your FloTorch infrastructure:
-
-### master-template.yaml
-- Main template that controls everything
-- Manages dependencies between stacks
-- Handles global parameters
-
-### lambda-template.yaml
-- Contains Lambda functions for:
-  - SageMaker endpoint cleanup
-  - Docker image management
-  - Runtime operations
-  - Cost computation
-
-### vpc-template.yaml
-- Creates VPC and associated networking resources
-- Sets up public and private subnets
-- Configures route tables and internet gateway
-
-### dynamodb-template.yaml
-- Sets up DynamoDB tables for data storage
-- Configures auto-scaling for tables
-- Implements backup and recovery options
-
-### opensearch-template.yaml
-- Deploys OpenSearch domain
-- Configures access policies and encryption
-- Sets up index templates and mappings
-
-### ecr-template.yaml
-- Creates Elastic Container Registry repositories
-- Sets up lifecycle policies for images
-- Configures cross-account access if needed
-
-### apprunner-template.yaml
-- Deploys AppRunner services
-- Configures auto-scaling and health checks
-- Sets up custom domains and SSL certificates
-
 ## Cost Overview
 
-Here's what you can expect to pay per day in the US East 1 region:
+| Service | Daily Cost Range | Details |
+|---------|-----------------|----------|
+| Lambda Functions | $0.50-$2.00 | • Free tier: 1M requests/month<br>• 400,000 GB-seconds included |
+| SageMaker Endpoints | $1.40-$2.80 | • ml.t3.medium instances<br>• 1-2 endpoints running |
+| OpenSearch | $41.81 | • r7g.2xlarge: $0.5184/hour<br>• IOPS (16000): $1.152/hour<br>• Throughput: $0.072/hour |
+| DynamoDB | $2-$5 | • Write: $1.25/million<br>• Read: $0.25/million<br>• Storage: $0.25/GB/month |
+| AppRunner | $1.54-$3.08 | • 1 vCPU, 2GB memory: $0.064/hour<br>• 1-2 instances |
+| ECR | $0.20-$0.50 | • Storage: $0.10/GB/month<br>• Transfer: $0.09/GB |
+| VPC and Networking | $1.08-$2.00 | • NAT Gateway: $0.045/hour<br>• Processing: $0.045/GB |
+| CloudWatch | $0.50-$1.50 | • Log ingestion: $0.30/GB<br>• Metrics: $0.01/1,000 requests |
+| Step Functions | $0.50-$2.00 | • $0.025/1,000 state transitions |
+| ECS (Fargate) | $2.00-$5.00 | • vCPU: $0.04048/hour<br>• Memory: $0.004445/GB-hour |
+| Bedrock | $5.00-$10.00 | • Input: $0.0001/1K tokens<br>• Output: $0.0002/1K tokens |
 
-1. **Lambda Functions**: $0.50-$2.00/day
-   - Free tier: 1M requests/month
-   - 400,000 GB-seconds of compute time included
-
-2. **SageMaker Endpoints**: $1.40-$2.80/day
-   - Using ml.t3.medium instances
-   - Based on 1-2 endpoints running
-
-3. **OpenSearch**: $41.81/day
-   - r7g.2xlarge instance: $0.5184/hour
-   - Provisioned IOPS (16000): $1.152/hour
-   - Provisioned Throughput: $0.072/hour
-
-4. **DynamoDB**: $2-$5/day
-   - Write requests: $1.25 per million
-   - Read requests: $0.25 per million
-   - Storage: $0.25 per GB per month
-
-5. **AppRunner**: $1.54-$3.08/day
-   - 1 vCPU, 2GB memory: $0.064/hour
-   - Based on 1-2 instances
-
-6. **ECR**: $0.20-$0.50/day
-   - Storage: $0.10/GB/month
-   - Data transfer: $0.09/GB
-
-7. **VPC and Networking**: $1.08-$2.00/day
-   - NAT Gateway: $0.045/hour
-   - Data processing: $0.045/GB
-
-8. **CloudWatch**: $0.50-$1.50/day
-   - Log ingestion: $0.30 per GB
-   - Metrics: $0.01 per 1,000 requests
-
-9. **Step Functions**: $0.50-$2.00/day
-   - $0.025 per 1,000 state transitions
-
-10. **ECS (Fargate)**: $2.00-$5.00/day
-    - vCPU: $0.04048 per hour
-    - Memory: $0.004445 per GB-hour
-
-11. **Bedrock**: $5.00-$10.00/day
-    - Input tokens: $0.0001 per 1K
-    - Output tokens: $0.0002 per 1K
-
-**Total Estimated Cost**: $56.53-$75.69/day
-(Note: Actual costs depend on your usage)
+**Total Estimated Cost**: $56.53-$75.69/day (varies with usage)
 
 ## Monitoring Your Installation
 
-### 1. CloudWatch Metrics
-Monitor:
-- Lambda execution
-- SageMaker endpoint usage
-- AppRunner service metrics
-
-### 2. Logs
-Check:
-- Lambda function logs
-- AppRunner application logs
-- OpenSearch logs
-
-### 3. Alerts
-Set up for:
-- Cost thresholds
-- Error rates
-- Service health
+| Component | What to Monitor |
+|-----------|----------------|
+| CloudWatch Metrics | • Lambda execution<br>• SageMaker endpoint usage<br>• AppRunner service metrics |
+| Logs | • Lambda function logs<br>• AppRunner application logs<br>• OpenSearch logs |
+| Alerts | • Cost thresholds<br>• Error rates<br>• Service health |
 
 ## Security Features
 
-Your FloTorch installation includes:
-1. VPC isolation
-2. IAM role-based access
-3. Encryption at rest
-4. Network security groups
-5. NGINX basic authentication
-6. OpenSearch access control
+| Feature | Description |
+|---------|-------------|
+| VPC Isolation | Private network infrastructure |
+| IAM Access | Role-based access control |
+| Encryption | Data encryption at rest |
+| Security Groups | Network access control |
+| Authentication | NGINX basic auth |
+| Access Control | OpenSearch security |
 
 ## Troubleshooting Guide
 
-### Installation Issues
-If your stack creation fails:
-1. Check CloudFormation events
-2. Verify IAM permissions
-3. Validate parameter values
-
-### Runtime Problems
-If you encounter issues after installation:
-1. Check CloudWatch logs
-2. Verify network connectivity
-3. Check service quotas
+| Issue Type | Resolution Steps |
+|------------|-----------------|
+| Installation Issues | 1. Check CloudFormation events<br>2. Verify IAM permissions<br>3. Validate parameter values |
+| Runtime Problems | 1. Check CloudWatch logs<br>2. Verify network connectivity<br>3. Check service quotas |
 
 ## Getting Help
 
-Need assistance? Here's how to get help:
-1. Check CloudWatch logs
-2. Review stack events
-3. Contact our DevOps team
-4. Email us at info@flotorch.ai
+| Method | Contact |
+|--------|---------|
+| Logs | Check CloudWatch |
+| Stack Events | Review in Console |
+| DevOps Team | Contact support |
+| Email | info@flotorch.ai |
 
-## Contributing
-
-Want to help improve FloTorch?
-1. Fork the repository
-2. Create a feature branch
-3. Submit a pull request
