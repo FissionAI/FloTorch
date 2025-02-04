@@ -575,6 +575,10 @@ class SageMakerInferencer(BaseInferencer):
 
         # Remove multiple consecutive spaces and newlines, replace them with a single space
         cleaned_text = ' '.join(cleaned_text.split())
+        
+        think_end_index = cleaned_text.find('</think>')
+        if think_end_index != -1:
+            cleaned_text = cleaned_text[think_end_index + len('</think>'):]
 
         # Return the cleaned text, ensuring no extra spaces around it
         return cleaned_text.strip()

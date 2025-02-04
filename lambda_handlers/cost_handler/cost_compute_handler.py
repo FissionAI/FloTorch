@@ -1,7 +1,7 @@
 import boto3
 import json
 import os
-from pricing import compute_actual_price, calculate_experiment_duration
+from pricing import compute_actual_price_breakdown, calculate_experiment_duration
 from decimal import Decimal
 import math
 
@@ -20,14 +20,14 @@ DAYS_IN_MONTH = 30
 dynamodb = boto3.resource("dynamodb")
 
 
-def fetch_from_dynamodb(experiment_id, table_name):
+def fetch_data_from_dynamodb(table_name, key, value):
     """
-    Fetch items with the specified experiment_id from DynamoDB.
+    Fetch items with the specified key and value from DynamoDB.
     """
     try:
         table = dynamodb.Table(table_name)
         response = table.query(
-            KeyConditionExpression=boto3.dynamodb.conditions.Key("id").eq(experiment_id)
+            KeyConditionExpression=boto3.dynamodb.conditions.Key(key).eq(value)
         )
         return response.get("Items", [])
     except Exception as e:
@@ -60,16 +60,21 @@ def lambda_handler(event, context):
 
         experiment_id = event["experiment_id"]
         experiment_table = os.getenv("experiment_table")
+        experiment_question_metrics_table = os.getenv("experiment_question_metrics_table")
 
         if not experiment_table:
             raise EnvironmentError("Environment variable 'experiment_table' is not set")
-
+        
+        if not experiment_question_metrics_table:
+            raise EnvironmentError("Environment variable 'experiment_question_metrics_table' is not set")
+        
         # Initialize variables
         total_query_embed_tokens = 0
         total_answer_input_tokens = 0
         total_answer_output_tokens = 0
 
-        experiment_items = fetch_from_dynamodb(experiment_id, experiment_table)
+        experiment_items = fetch_data_from_dynamodb(experiment_table, 'id', experiment_id)
+        experiment_question_metrics_items = fetch_data_from_dynamodb(experiment_question_metrics_table, 'experiment_id', experiment_id)
         total_duration = 0
         indexing_time = 0
         retrieval_time = 0
@@ -91,7 +96,7 @@ def lambda_handler(event, context):
             total_answer_input_tokens = experiment.get("retrieval_input_tokens", 0)
             total_answer_output_tokens = experiment.get("retrieval_output_tokens", 0)
 
-        total_cost, indexing_cost, retrieval_cost, inferencing_cost, eval_cost = compute_actual_price(
+        overall_metadata, indexing_metadata, retriever_metadata, inferencer_metadata, eval_metadata = compute_actual_price_breakdown(
             experiment,
             input_tokens=total_answer_input_tokens,
             output_tokens=total_answer_output_tokens,
@@ -100,10 +105,16 @@ def lambda_handler(event, context):
             total_time=total_duration_in_min,
             indexing_time=indexing_time_in_min,
             retrieval_time=retrieval_time_in_min,
-            eval_time=eval_time_in_min
+            eval_time=eval_time_in_min,
+            experiment_question_metrics_items=experiment_question_metrics_items
         )
 
-        logger.info(f"Experiment {experiment_id} Actual Cost (in $): {total_cost}, Indexing: {indexing_cost}, Retrieval: {retrieval_cost}, Inferencing: {inferencing_cost}, Evaluation : {eval_cost}")
+        total_cost = overall_metadata['total_cost']
+        indexing_cost = indexing_metadata['total_cost']
+        retriever_cost = retriever_metadata['total_cost']
+        inferencer_cost = inferencer_metadata['total_cost']
+        eval_cost = eval_metadata['total_cost']
+        logger.info(f"Experiment {experiment_id} Actual Cost (in $): {total_cost}, Indexing: {indexing_cost}, Retrieval: {retriever_cost}, Inferencing: {inferencer_cost}, Evaluation : {eval_cost}")
 
         # Update DynamoDB with the new cost
         if total_cost is None:
@@ -114,17 +125,22 @@ def lambda_handler(event, context):
             table = dynamodb.Table(experiment_table)
             table.update_item(
                 Key={"id": experiment_id},
-                UpdateExpression="SET cost = :new_cost, indexing_time = :new_indexing_time, retrieval_time = :new_retrieval_time, eval_time = :new_eval_time, total_time = :new_total_time, indexing_cost = :new_indexing_cost, retrieval_cost = :new_retrieval_cost, inferencing_cost = :new_inferencing_cost, eval_cost = :new_eval_cost",
+                UpdateExpression="SET cost = :new_cost, indexing_time = :new_indexing_time, retrieval_time = :new_retrieval_time, eval_time = :new_eval_time, total_time = :new_total_time, indexing_cost = :new_indexing_cost, retrieval_cost = :new_retrieval_cost, inferencing_cost = :new_inferencing_cost, eval_cost = :new_eval_cost, indexing_metadata = :new_indexing_metadata, retriever_metadata = :new_retriever_metadata, inferencer_metadata = :new_inferencer_metadata, eval_metadata = :new_eval_metadata, overall_metadata = :new_overall_metadata",
                 ExpressionAttributeValues={
                     ":new_cost": str(total_cost),
                     ":new_indexing_cost": str(indexing_cost),
-                    ":new_retrieval_cost": str(retrieval_cost),
-                    ":new_inferencing_cost": str(inferencing_cost),
+                    ":new_retrieval_cost": str(retriever_cost),
+                    ":new_inferencing_cost": str(inferencer_cost),
                     ":new_eval_cost": str(eval_cost),
                     ":new_indexing_time": str(indexing_time),
                     ":new_retrieval_time": str(retrieval_time),
                     ":new_eval_time": str(eval_time),
                     ":new_total_time": str(total_duration),
+                    ":new_indexing_metadata": indexing_metadata,
+                    ":new_retriever_metadata": retriever_metadata,
+                    ":new_inferencer_metadata": inferencer_metadata,
+                    ":new_eval_metadata": eval_metadata,
+                    ":new_overall_metadata": overall_metadata
                 },
             )
         except Exception as e:
