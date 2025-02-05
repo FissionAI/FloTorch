@@ -2,6 +2,7 @@ import boto3
 import json
 import os
 from pricing import compute_actual_price_breakdown, calculate_experiment_duration
+from utils import convert_floats_to_decimal
 from decimal import Decimal
 import math
 
@@ -140,11 +141,11 @@ def lambda_handler(event, context):
                     ":new_retrieval_time": str(retrieval_time),
                     ":new_eval_time": str(eval_time),
                     ":new_total_time": str(total_duration),
-                    ":new_indexing_metadata": indexing_metadata,
-                    ":new_retriever_metadata": retriever_metadata,
-                    ":new_inferencer_metadata": inferencer_metadata,
-                    ":new_eval_metadata": eval_metadata,
-                    ":new_overall_metadata": overall_metadata
+                    ":new_indexing_metadata": convert_floats_to_decimal(indexing_metadata),
+                    ":new_retriever_metadata": convert_floats_to_decimal(retriever_metadata),
+                    ":new_inferencer_metadata": convert_floats_to_decimal(inferencer_metadata),
+                    ":new_eval_metadata": convert_floats_to_decimal(eval_metadata),
+                    ":new_overall_metadata": convert_floats_to_decimal(overall_metadata)
                 },
             )
         except Exception as e:

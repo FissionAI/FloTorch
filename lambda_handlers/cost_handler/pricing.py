@@ -47,7 +47,7 @@ def compute_actual_price_breakdown(
         embedding_service = configuration.get("config", {}).get("embedding_service", "")
         retrieval_service = configuration.get("config", {}).get("retrieval_service", "")
         bedrock_knowledge_base = configuration.get("config", {}).get("bedrock_knowledge_base", False)
-        reranker_model_id = configuration.get("config", {}).get("reranker_model_id", None)
+        rerank_model_id = configuration.get("config", {}).get("rerank_model_id", None)
 
         is_config_valid, config_missing = validate_params(
             aws_region=aws_region,
@@ -134,12 +134,12 @@ def compute_actual_price_breakdown(
                 query_embedding_cost = (embedding_model_price * float(query_embed_tokens)) / THOUSAND
                 inferencer_metadata['query_embed_tokens'] = query_embed_tokens
                 inferencer_metadata['query_embed_tokens_cost'] = query_embedding_cost
-            if reranker_model_id:
-                inferencer_metadata['reranker_model'] = reranker_model_id
+            if rerank_model_id:
+                inferencer_metadata['rerank_model'] = rerank_model_id
                 inferencer_metadata['reranker_queries'] = question_details["reranker_queries"]
-                reranker_model_price = df[(df["model"] == reranker_model_id) & (df["Region"] == aws_region)]["input_price"]
+                reranker_model_price = df[(df["model"] == rerank_model_id) & (df["Region"] == aws_region)]["input_price"]
                 if reranker_model_price.empty:
-                    logger.error(f"No reranker model {reranker_model_id} price found.")
+                    logger.error(f"No reranker model {rerank_model_id} price found.")
                     return None
                 reranker_model_price = float(reranker_model_price.values[0])  # Price per 1000 queries
                 reranking_cost = (reranker_model_price * float(question_details['reranker_queries'])) / THOUSAND
@@ -208,7 +208,7 @@ def compute_actual_price_breakdown(
         total_cost = indexing_cost + retrieval_cost + inferencing_cost + eval_cost
         overall_metadata['total_cost'] = total_cost
         overall_metadata['total_time'] = total_time
-        return overall_metadata, indexing_metadata, retriever_metadata, evaluator_metadata
+        return overall_metadata, indexing_metadata, retriever_metadata, inferencer_metadata, evaluator_metadata
     
     except Exception as e:
         logger.error(f"Error during price computation: {e}")
@@ -279,7 +279,7 @@ def calculate_experiment_duration(experiment):
         )
     except Exception as e:
         logger.error(f"Error occurred during duration computation: {e}")
-        return 0, 0, 0, 0
+        return 0, 0, 0
 
 def calculate_experiment_question_details(experiment_question_metrics_items):
     total_questions = len(experiment_question_metrics_items)
@@ -291,7 +291,7 @@ def calculate_experiment_question_details(experiment_question_metrics_items):
         if answer_metadata:
             latency = answer_metadata.get("latencyMs", 0)
             inputTokens = answer_metadata.get('inputTokens', 0)
-            overall_inferencer_time += latency
+            overall_inferencer_time += (latency / THOUSAND)
             if math.ceil(inputTokens / 500) >= 100:
                 reranker_queries += (math.ceil(inputTokens / 500) / 100)
             else:
