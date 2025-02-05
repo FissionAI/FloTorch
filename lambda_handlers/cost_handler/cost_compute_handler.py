@@ -2,6 +2,7 @@ import boto3
 import json
 import os
 from pricing import compute_actual_price_breakdown, calculate_experiment_duration
+from utils import convert_floats_to_decimal
 from decimal import Decimal
 import math
 
@@ -20,15 +21,18 @@ DAYS_IN_MONTH = 30
 dynamodb = boto3.resource("dynamodb")
 
 
-def fetch_data_from_dynamodb(table_name, key, value):
+def fetch_data_from_dynamodb(table_name, key, value, index_name=None):
     """
     Fetch items with the specified key and value from DynamoDB.
     """
     try:
         table = dynamodb.Table(table_name)
-        response = table.query(
-            KeyConditionExpression=boto3.dynamodb.conditions.Key(key).eq(value)
-        )
+        query_params = {
+            "KeyConditionExpression": boto3.dynamodb.conditions.Key(key).eq(value)
+        }
+        if index_name:
+            query_params["IndexName"] = index_name
+        response = table.query(**query_params)
         return response.get("Items", [])
     except Exception as e:
         logger.error(f"Error fetching data from DynamoDB: {e}")
@@ -61,6 +65,7 @@ def lambda_handler(event, context):
         experiment_id = event["experiment_id"]
         experiment_table = os.getenv("experiment_table")
         experiment_question_metrics_table = os.getenv("experiment_question_metrics_table")
+        experiment_question_metrics_index = os.getenv("experiment_question_metrics_index")
 
         if not experiment_table:
             raise EnvironmentError("Environment variable 'experiment_table' is not set")
@@ -74,7 +79,7 @@ def lambda_handler(event, context):
         total_answer_output_tokens = 0
 
         experiment_items = fetch_data_from_dynamodb(experiment_table, 'id', experiment_id)
-        experiment_question_metrics_items = fetch_data_from_dynamodb(experiment_question_metrics_table, 'experiment_id', experiment_id)
+        experiment_question_metrics_items = fetch_data_from_dynamodb(experiment_question_metrics_table, 'experiment_id', experiment_id, experiment_question_metrics_index)
         total_duration = 0
         indexing_time = 0
         retrieval_time = 0
@@ -136,11 +141,11 @@ def lambda_handler(event, context):
                     ":new_retrieval_time": str(retrieval_time),
                     ":new_eval_time": str(eval_time),
                     ":new_total_time": str(total_duration),
-                    ":new_indexing_metadata": indexing_metadata,
-                    ":new_retriever_metadata": retriever_metadata,
-                    ":new_inferencer_metadata": inferencer_metadata,
-                    ":new_eval_metadata": eval_metadata,
-                    ":new_overall_metadata": overall_metadata
+                    ":new_indexing_metadata": convert_floats_to_decimal(indexing_metadata),
+                    ":new_retriever_metadata": convert_floats_to_decimal(retriever_metadata),
+                    ":new_inferencer_metadata": convert_floats_to_decimal(inferencer_metadata),
+                    ":new_eval_metadata": convert_floats_to_decimal(eval_metadata),
+                    ":new_overall_metadata": convert_floats_to_decimal(overall_metadata)
                 },
             )
         except Exception as e:

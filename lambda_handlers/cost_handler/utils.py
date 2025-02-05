@@ -6,6 +6,7 @@ from botocore.exceptions import ClientError
 from typing import Optional
 import pandas as pd
 from datetime import datetime, timezone
+from decimal import Decimal
 
 def read_csv_from_s3(object_key: str, bucket_name: str, as_dataframe: bool = True) -> Optional[object]:
     """
@@ -70,3 +71,14 @@ def parse_datetime(datetime_str):
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=timezone.utc)
     return dt
+
+# Convert all float values in the dictionary to Decimal
+def convert_floats_to_decimal(obj):
+    if isinstance(obj, float):
+        return Decimal(str(obj))  # Convert float to string first to prevent precision loss
+    elif isinstance(obj, dict):
+        return {k: convert_floats_to_decimal(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_floats_to_decimal(i) for i in obj]
+    else:
+        return obj
