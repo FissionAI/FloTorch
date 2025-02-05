@@ -15,7 +15,7 @@ on:
 
 jobs:
   validate-and-approve:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Validate suffix format
         run: |
@@ -29,7 +29,7 @@ jobs:
 
   cleanup:
     needs: validate-and-approve
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     environment: production
     permissions:
       id-token: write
@@ -38,13 +38,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ${{ needs.validate-and-approve.outputs.region }}
-
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
