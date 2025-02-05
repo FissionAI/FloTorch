@@ -15,7 +15,7 @@ on:
 
 jobs:
   validate-and-approve:
-    runs-on: self-hosted
+    runs-on: [self-hosted, FloTorch, FissionAI]
     steps:
       - name: Validate suffix format
         run: |
@@ -29,7 +29,7 @@ jobs:
 
   cleanup:
     needs: validate-and-approve
-    runs-on: self-hosted
+    runs-on: [self-hosted, FloTorch, FissionAI]
     environment: production
     permissions:
       id-token: write

@@ -8,7 +8,7 @@ on:
 
 jobs:
   sast-checkov:
-    runs-on: self-hosted
+    runs-on: [self-hosted, FloTorch, FissionAI]
     steps:
     - name: Checkout Code
       uses: actions/checkout@v3
