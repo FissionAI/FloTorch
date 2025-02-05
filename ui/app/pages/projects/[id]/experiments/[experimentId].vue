@@ -113,7 +113,7 @@ const items = ref([
         <UCard>
           <template #header>
             <div class="flex justify-between items-center">
-              <h2 class="text-xl font-medium">Experiment Question Metrics</h2>
+              <h2 class="text-xl font-medium">Experiment Question Metrics ({{ questionMetrics?.question_metrics?.length }})</h2>
               <DownloadResultsButton
                 :results="questionMetrics?.question_metrics"
                 button-label="Download Results"
@@ -189,10 +189,10 @@ const items = ref([
                     <table class="w-full">
                       <tbody>
                         <tr v-for="(value, key) in overall_metadata" :key="key">
-                          <td class="font-medium w-40">{{ key.split('_').join(' ').replace(/\w\S*/g, (w) => (w.replace(/^\w/, (c) => c.toUpperCase()))) }}</td>
-                          <td v-if="key.includes('time')" class="w-40">{{ useConvertSecondsToDHM(Number(value)) }}</td>
-                          <td v-else-if="key.includes('cost')" class="w-40">{{ useHumanCurrencyAmount(Number(value)) }}</td>
-                          <td v-else class="w-40">{{ value }}</td> 
+                          <td class="font-medium w-40 break-all">{{ key.split('_').join(' ').replace(/\w\S*/g, (w) => (w.replace(/^\w/, (c) => c.toUpperCase()))) }}</td>
+                          <td v-if="key.includes('time')" class="w-40 break-all">{{ useConvertSecondsToDHM(Number(value)) }}</td>
+                          <td v-else-if="key.includes('cost')" class="w-40 break-all">{{ useHumanCurrencyAmount(Number(value)) }}</td>
+                          <td v-else class="w-40 break-all">{{ value }}</td> 
                         </tr>
                       </tbody>
                     </table>
@@ -212,10 +212,10 @@ const items = ref([
                     <table class="w-full">
                       <tbody>
                         <tr v-for="(value, key) in indexing_metadata" :key="key">
-                          <td class="font-medium w-40">{{ key.split('_').join(' ').replace(/\w\S*/g, (w) => (w.replace(/^\w/, (c) => c.toUpperCase()))) }}</td>
-                          <td v-if="key.includes('time')" class="w-40">{{ useConvertSecondsToDHM(Number(value)) }}</td>
-                          <td v-else-if="key.includes('cost')" class="w-40">{{ useHumanCurrencyAmount(Number(value)) }}</td>
-                          <td v-else class="w-40">{{ value }}</td> 
+                          <td class="font-medium w-40 break-all">{{ key.split('_').join(' ').replace(/\w\S*/g, (w) => (w.replace(/^\w/, (c) => c.toUpperCase()))) }}</td>
+                          <td v-if="key.includes('time')" class="w-40 break-all">{{ useConvertSecondsToDHM(Number(value)) }}</td>
+                          <td v-else-if="key.includes('cost')" class="w-40 break-all">{{ useHumanCurrencyAmount(Number(value)) }}</td>
+                          <td v-else class="w-40 break-all">{{ value }}</td> 
                         </tr>
                       </tbody>
                     </table>
@@ -236,10 +236,10 @@ const items = ref([
                     <table class="w-full">
                       <tbody>
                         <tr v-for="(value, key) in retriever_metadata" :key="key">
-                          <td class="font-medium w-40">{{ key.split('_').join(' ').replace(/\w\S*/g, (w) => (w.replace(/^\w/, (c) => c.toUpperCase()))) }}</td>
-                          <td v-if="key.includes('time')" class="w-40">{{ useConvertSecondsToDHM(Number(value)) }}</td>
-                          <td v-else-if="key.includes('cost')" class="w-40">{{ useHumanCurrencyAmount(Number(value)) }}</td>
-                          <td v-else class="w-40">{{ value }}</td> 
+                          <td class="font-medium w-40 break-all">{{ key.split('_').join(' ').replace(/\w\S*/g, (w) => (w.replace(/^\w/, (c) => c.toUpperCase()))) }}</td>
+                          <td v-if="key.includes('time')" class="w-40 break-all">{{ useConvertSecondsToDHM(Number(value)) }}</td>
+                          <td v-else-if="key.includes('cost')" class="w-40 break-all">{{ useHumanCurrencyAmount(Number(value)) }}</td>
+                          <td v-else class="w-40 break-all">{{ value }}</td> 
                         </tr>
                       </tbody>
                     </table>
@@ -260,10 +260,10 @@ const items = ref([
                     <table class="w-full">
                       <tbody>
                         <tr v-for="(value, key) in evaluation_metadata" :key="key">
-                          <td class="font-medium w-40">{{ key.split('_').join(' ').replace(/\w\S*/g, (w) => (w.replace(/^\w/, (c) => c.toUpperCase()))) }}</td>
-                          <td v-if="key.includes('time')" class="w-40">{{ useConvertSecondsToDHM(Number(value)) }}</td>
-                          <td v-else-if="key.includes('cost')" class="w-40">{{ useHumanCurrencyAmount(Number(value)) }}</td>
-                          <td v-else class="w-40">{{ value }}</td> 
+                          <td class="font-medium w-40 break-all">{{ key.split('_').join(' ').replace(/\w\S*/g, (w) => (w.replace(/^\w/, (c) => c.toUpperCase()))) }}</td>
+                          <td v-if="key.includes('time')" class="w-40 break-all">{{ useConvertSecondsToDHM(Number(value)) }}</td>
+                          <td v-else-if="key.includes('cost')" class="w-40 break-all">{{ useHumanCurrencyAmount(Number(value)) }}</td>
+                          <td v-else class="w-40 break-all">{{ value }}</td> 
                         </tr>
                       </tbody>
                     </table>
@@ -284,10 +284,10 @@ const items = ref([
                     <table class="w-full">
                       <tbody>
                         <tr v-for="(value, key) in inferencer_metadata" :key="key">
-                          <td class="font-medium w-40">{{ key.split('_').join(' ').replace(/\w\S*/g, (w) => (w.replace(/^\w/, (c) => c.toUpperCase()))) }}</td>
-                          <td v-if="key.includes('time')" class="w-40">{{ useConvertSecondsToDHM(Number(value)) }}</td>
-                          <td v-else-if="key.includes('cost')" class="w-40">{{ useHumanCurrencyAmount(Number(value)) }}</td>
-                          <td v-else class="w-40">{{ value }}</td> 
+                          <td class="font-medium w-40 break-all">{{ key.split('_').join(' ').replace(/\w\S*/g, (w) => (w.replace(/^\w/, (c) => c.toUpperCase()))) }}</td>
+                          <td v-if="key.includes('time')" class="w-40 break-all">{{ useConvertSecondsToDHM(Number(value)) }}</td>
+                          <td v-else-if="key.includes('cost')" class="w-40 break-all">{{ useHumanCurrencyAmount(Number(value)) }}</td>
+                          <td v-else class="w-40 break-all">{{ value }}</td> 
                         </tr>
                       </tbody>
                     </table>
@@ -308,10 +308,10 @@ const items = ref([
                     <table class="w-full">
                       <tbody>
                         <tr v-for="(value, key) in evaluation_metadata" :key="key">
-                          <td class="font-medium w-40">{{ key.split('_').join(' ').replace(/\w\S*/g, (w) => (w.replace(/^\w/, (c) => c.toUpperCase()))) }}</td>
-                          <td v-if="key.includes('time')" class="w-40">{{ useConvertSecondsToDHM(Number(value)) }}</td>
-                          <td v-else-if="key.includes('cost')" class="w-40">{{ useHumanCurrencyAmount(Number(value)) }}</td>
-                          <td v-else class="w-40">{{ value }}</td> 
+                          <td class="font-medium w-40 break-all">{{ key.split('_').join(' ').replace(/\w\S*/g, (w) => (w.replace(/^\w/, (c) => c.toUpperCase()))) }}</td>
+                          <td v-if="key.includes('time')" class="w-40 break-all">{{ useConvertSecondsToDHM(Number(value)) }}</td>
+                          <td v-else-if="key.includes('cost')" class="w-40 break-all">{{ useHumanCurrencyAmount(Number(value)) }}</td>
+                          <td v-else class="w-40 break-all">{{ value }}</td> 
                         </tr>
                       </tbody>
                     </table>
