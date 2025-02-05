@@ -1,0 +1,32 @@
+name: Checkov Security Scan
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'cfn/**'
+
+jobs:
+  sast-checkov:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Install Checkov
+      run: pip install checkov
+
+    - name: Scan CF Templates
+      run: |
+        pwd
+        ls -lrt
+        checkov -d cfn/ --output json --quiet --compact > checkov_output.json || true
+
+    - name: Display JSON content
+      run: cat checkov_output.json
+
+    - name: Upload JSON as Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: checkov-output-json
+        path: checkov_output.json
