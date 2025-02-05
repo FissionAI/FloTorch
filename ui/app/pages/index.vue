@@ -42,9 +42,10 @@ useHead({
 
 <style>
 
-@media (min-width: 1280px) {
-  .container {
-    max-width: 72rem;
-  }
+main.container {
+  width: 100% !important;
+  max-width: unset !important;
+  min-width: unset !important;
+  padding: 50px !important;
 }
 </style>

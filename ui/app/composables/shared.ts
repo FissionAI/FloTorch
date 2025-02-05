@@ -681,12 +681,12 @@ export const useProjectUploadConfig = () => {
         retrieval: config.retrieval?.retrieval?.map((pc: any) => {
           return useGetModelData("retrieval", pc.model);
         }),
-        rerank_model_id: undefined,
+        // rerank_model_id: undefined,
       },
       eval: {
-        ...config.eval,
-        ragas_embedding_llm: undefined,
-        ragas_inference_llm: undefined,
+        ...config.evaluation.evaluation[0],
+        ragas_embedding_llm: config.evaluation?.evaluation[0]?.embedding_model,
+        ragas_inference_llm: config.evaluation?.evaluation[0]?.retrieval_model,
       },
     
     };

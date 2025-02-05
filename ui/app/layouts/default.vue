@@ -19,7 +19,7 @@ useHead({
           target="_blank" />
       </div>
     </header>
-    <main class="flex-1 container max-w-6xl mx-auto py-4">
+    <main class="flex-1 container mx-auto py-4">
       <slot />
     </main>
     <footer class="bg-gray-800 text-white p-2 text-sm">
@@ -38,9 +38,10 @@ useHead({
 
 <style>
 
-@media (min-width: 1280px) {
-  .container {
-    max-width: 72rem;
-  }
+main.container {
+  width: 100% !important;
+  max-width: unset !important;
+  min-width: unset !important;
+  padding: 50px !important;
 }
 </style>

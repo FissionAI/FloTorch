@@ -64,11 +64,16 @@ const columns = ref<TableColumn<ExperimentQuestionMetric>[]>([
   },
 ]);
 
+const indexing_order = ref(['model', 'service', 'knowledge_base_tokens', 'bedrock_cost', 'runtime', 'ecs_cost', 'opensearch_cost', 'total_cost'])
+
 const overall_metadata = computed(() => {
   return experimentsData.value.overall_metadata;
 })
 
 const indexing_metadata = computed(() => {
+    // return {...experimentsData.value.indexing_metadata,
+    //   order: ['model', 'service', 'knowledge_base_tokens', 'bedrock_cost', 'runtime', 'ecs_cost', 'opensearch_cost', 'total_cost']
+    // }
   return experimentsData.value.indexing_metadata;
 })
 
@@ -188,14 +193,21 @@ const items = ref([
                   <td colspan="2">
                     <table class="w-full">
                       <tbody>
-                        <tr v-for="(value, key) in overall_metadata" :key="key">
-                          <td class="font-medium w-40 break-all">{{ key.split('_').join(' ').replace(/\w\S*/g, (w) => (w.replace(/^\w/, (c) => c.toUpperCase()))) }}</td>
-                          <td v-if="key.includes('time')" class="w-40 break-all">{{ useConvertSecondsToDHM(Number(value)) }}</td>
-                          <td v-else-if="key.includes('cost')" class="w-40 break-all">{{ useHumanCurrencyAmount(Number(value)) }}</td>
-                          <td v-else class="w-40 break-all">{{ value }}</td> 
+                        <tr v-for="key in overall_metadata.order" :key="key">
+                          <td class="font-medium w-40 break-all">{{ key === 'ecs_cost' ? 'ECS Cost' : key.split('_').join(' ').replace(/\w\S*/g, (w) => (w.replace(/^\w/, (c) => c.toUpperCase()))) }}</td>
+                          <td v-if="key.includes('time')" class="w-40 break-all">{{ useConvertSecondsToDHM(Number(overall_metadata[key])) }}</td>
+                          <td v-else-if="key.includes('cost')" class="w-40 break-all">{{ useHumanCurrencyAmount(Number(overall_metadata[key])) }}</td>
+                          <td v-else class="w-40 break-all">{{ overall_metadata[key] }}</td> 
                         </tr>
                       </tbody>
                     </table>
+                  </td>
+                </tr>
+                <tr v-else>
+                  <td colspan="2">
+                    <div class="flex flex-col items-center justify-center py-6">
+                      <p>No valid metrics are found...!</p>
+                    </div>
                   </td>
                 </tr>
               </tbody>
@@ -211,14 +223,25 @@ const items = ref([
                   <td colspan="2">
                     <table class="w-full">
                       <tbody>
-                        <tr v-for="(value, key) in indexing_metadata" :key="key">
-                          <td class="font-medium w-40 break-all">{{ key.split('_').join(' ').replace(/\w\S*/g, (w) => (w.replace(/^\w/, (c) => c.toUpperCase()))) }}</td>
-                          <td v-if="key.includes('time')" class="w-40 break-all">{{ useConvertSecondsToDHM(Number(value)) }}</td>
-                          <td v-else-if="key.includes('cost')" class="w-40 break-all">{{ useHumanCurrencyAmount(Number(value)) }}</td>
-                          <td v-else class="w-40 break-all">{{ value }}</td> 
+                        <tr v-for="key in indexing_metadata.order" :key="key">
+                          <td class="font-medium w-40 break-all">{{ 
+                            key === 'ecs_cost' 
+                              ? 'ECS Cost' 
+                              : key.split('_').join(' ').replace(/\w\S*/g, (w) => (w.replace(/^\w/, (c) => c.toUpperCase())))
+                          }}</td>
+                          <td v-if="key.includes('time') || key.includes('latency')" class="w-40 break-all">{{ useConvertSecondsToDHM(Number(indexing_metadata[key])) }}</td>
+                          <td v-else-if="key.includes('cost')" class="w-40 break-all">{{ useHumanCurrencyAmount(Number(indexing_metadata[key])) }}</td>
+                          <td v-else class="w-40 break-all">{{ indexing_metadata[key] }}</td> 
                         </tr>
                       </tbody>
                     </table>
+                  </td>
+                </tr>
+                <tr v-else>
+                  <td colspan="2">
+                    <div class="flex flex-col items-center justify-center py-6">
+                      <p>No valid metrics are found...!</p>
+                    </div>
                   </td>
                 </tr>
               </tbody>
@@ -235,14 +258,21 @@ const items = ref([
                   <td colspan="2">
                     <table class="w-full">
                       <tbody>
-                        <tr v-for="(value, key) in retriever_metadata" :key="key">
-                          <td class="font-medium w-40 break-all">{{ key.split('_').join(' ').replace(/\w\S*/g, (w) => (w.replace(/^\w/, (c) => c.toUpperCase()))) }}</td>
-                          <td v-if="key.includes('time')" class="w-40 break-all">{{ useConvertSecondsToDHM(Number(value)) }}</td>
-                          <td v-else-if="key.includes('cost')" class="w-40 break-all">{{ useHumanCurrencyAmount(Number(value)) }}</td>
-                          <td v-else class="w-40 break-all">{{ value }}</td> 
+                        <tr v-for="key in retriever_metadata.order" :key="key">
+                          <td class="font-medium w-40 break-all">{{ key === 'ecs_cost' ? 'ECS Cost' : key.split('_').join(' ').replace(/\w\S*/g, (w) => (w.replace(/^\w/, (c) => c.toUpperCase()))) }}</td>
+                          <td v-if="key.includes('time') || key.includes('latency')" class="w-40 break-all">{{ useConvertSecondsToDHM(Number(retriever_metadata[key])) }}</td>
+                          <td v-else-if="key.includes('cost')" class="w-40 break-all">{{ useHumanCurrencyAmount(Number(retriever_metadata[key])) }}</td>
+                          <td v-else class="w-40 break-all">{{ retriever_metadata[key] }}</td> 
                         </tr>
                       </tbody>
                     </table>
+                  </td>
+                </tr>
+                <tr v-else>
+                  <td colspan="2">
+                    <div class="flex flex-col items-center justify-center py-6">
+                      <p>No valid metrics are found...!</p>
+                    </div>
                   </td>
                 </tr>
               </tbody>
@@ -259,14 +289,21 @@ const items = ref([
                   <td colspan="2">
                     <table class="w-full">
                       <tbody>
-                        <tr v-for="(value, key) in inferencer_metadata" :key="key">
-                          <td class="font-medium w-40 break-all">{{ key.split('_').join(' ').replace(/\w\S*/g, (w) => (w.replace(/^\w/, (c) => c.toUpperCase()))) }}</td>
-                          <td v-if="key.includes('time')" class="w-40 break-all">{{ useConvertSecondsToDHM(Number(value)) }}</td>
-                          <td v-else-if="key.includes('cost')" class="w-40 break-all">{{ useHumanCurrencyAmount(Number(value)) }}</td>
-                          <td v-else class="w-40 break-all">{{ value }}</td> 
+                        <tr v-for="key in inferencer_metadata.order" :key="key">
+                          <td class="font-medium w-40 break-all">{{ key === 'ecs_cost' ? 'ECS Cost' : key.split('_').join(' ').replace(/\w\S*/g, (w) => (w.replace(/^\w/, (c) => c.toUpperCase()))) }}</td>
+                          <td v-if="key.includes('time') || key.includes('latency')" class="w-40 break-all">{{ useConvertSecondsToDHM(Number(inferencer_metadata[key])) }}</td>
+                          <td v-else-if="key.includes('cost')" class="w-40 break-all">{{ useHumanCurrencyAmount(Number(inferencer_metadata[key])) }}</td>
+                          <td v-else class="w-40 break-all">{{ inferencer_metadata[key] }}</td> 
                         </tr>
                       </tbody>
                     </table>
+                  </td>
+                </tr>
+                <tr v-else>
+                  <td colspan="2">
+                    <div class="flex flex-col items-center justify-center py-6">
+                      <p>No valid metrics are found...!</p>
+                    </div>
                   </td>
                 </tr>
               </tbody>
@@ -283,14 +320,21 @@ const items = ref([
                   <td colspan="2">
                     <table class="w-full">
                       <tbody>
-                        <tr v-for="(value, key) in evaluation_metadata" :key="key">
-                          <td class="font-medium w-40 break-all">{{ key.split('_').join(' ').replace(/\w\S*/g, (w) => (w.replace(/^\w/, (c) => c.toUpperCase()))) }}</td>
-                          <td v-if="key.includes('time')" class="w-40 break-all">{{ useConvertSecondsToDHM(Number(value)) }}</td>
-                          <td v-else-if="key.includes('cost')" class="w-40 break-all">{{ useHumanCurrencyAmount(Number(value)) }}</td>
-                          <td v-else class="w-40 break-all">{{ value }}</td> 
+                        <tr v-for="key in evaluation_metadata.order" :key="key">
+                          <td class="font-medium w-40 break-all">{{ key === 'ecs_cost' ? 'ECS Cost' : key.split('_').join(' ').replace(/\w\S*/g, (w) => (w.replace(/^\w/, (c) => c.toUpperCase()))) }}</td>
+                          <td v-if="key.includes('time') || key.includes('latency')" class="w-40 break-all">{{ useConvertSecondsToDHM(Number(evaluation_metadata[key])) }}</td>
+                          <td v-else-if="key.includes('cost')" class="w-40 break-all">{{ useHumanCurrencyAmount(Number(evaluation_metadata[key])) }}</td>
+                          <td v-else class="w-40 break-all">{{ evaluation_metadata[key] }}</td> 
                         </tr>
                       </tbody>
                     </table>
+                  </td>
+                </tr>
+                <tr v-else>
+                  <td colspan="2">
+                    <div class="flex flex-col items-center justify-center py-6">
+                      <p>No valid metrics are found...!</p>
+                    </div>
                   </td>
                 </tr>
               </tbody>
