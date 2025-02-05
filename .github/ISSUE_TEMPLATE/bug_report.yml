@@ -1,0 +1,68 @@
+name: Bug Report
+description: Report errors or unexpected behavior
+title: "[Bug]: "
+labels: ["bug"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report! Please ensure you've checked existing issues first.
+        
+  - type: input
+    id: version
+    attributes:
+      label: FloTorch Version
+      description: What version of our project are you running?
+      placeholder: e.g., v2.0.1
+    validations:
+      required: true
+
+  - type: textarea
+    id: bug-description
+    attributes:
+      label: Bug Description
+      description: What happened and what did you expect to happen?
+      placeholder: Describe the bug clearly and concisely
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce this issue?
+      placeholder: |
+        1. Go to '...'
+        2. Click on '....'
+        3. Scroll down to '....'
+        4. See error
+    validations:
+      required: true
+
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and Version
+      description: Which browser are you using (if applicable)?
+      placeholder: e.g., Chrome 120.0.6099.129
+
+  - type: input
+    id: runtime
+    attributes:
+      label: Runtime Version
+      description: Which runtime version are you using?
+      placeholder: e.g., Python 3.9.7
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error Messages
+      description: Please copy and paste any relevant error messages or stack traces
+      render: shell
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Add any other context about the problem here (screenshots, related issues, suggestions for fixing)
