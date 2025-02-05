@@ -9,7 +9,7 @@ useHead({
 <template>
   <div class="flex flex-col min-h-screen bg-gray-100">
     <header class="bg-gray-800 text-white p-2 sticky top-0 z-50">
-      <div class="container max-w-6xl mx-auto flex justify-between items-center">
+      <div class="container mx-auto flex justify-between items-center">
         <div>
           <NuxtLink :to="{ name: 'index' }">
             <img src="/logo.png" alt="logo" class="w-32" />
@@ -23,7 +23,7 @@ useHead({
       <slot />
     </main>
     <footer class="bg-gray-800 text-white p-2 text-sm">
-      <div class="container max-w-6xl mx-auto flex justify-center items-center">
+      <div class="container mx-auto flex justify-center items-center">
         <div>
           Powered by <a href="https://flotorch.ai?utm_source=flowtorch-repo" target="_blank"
             class="text-white underline">FloTorch.ai</a>. For
@@ -34,3 +34,13 @@ useHead({
     </footer>
   </div>
 </template>
+
+
+<style>
+
+@media (min-width: 1280px) {
+  .container {
+    max-width: 72rem;
+  }
+}
+</style>
