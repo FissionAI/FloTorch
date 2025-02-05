@@ -251,30 +251,6 @@ const items = ref([
 
           <UCard class="my-5">
             <template #header>
-              <h4 class="text-lg font-medium">Evaluation</h4>
-            </template>
-            <table class="w-full text-left">
-              <tbody>
-                <tr v-if="evaluation_metadata">
-                  <td colspan="2">
-                    <table class="w-full">
-                      <tbody>
-                        <tr v-for="(value, key) in evaluation_metadata" :key="key">
-                          <td class="font-medium w-40 break-all">{{ key.split('_').join(' ').replace(/\w\S*/g, (w) => (w.replace(/^\w/, (c) => c.toUpperCase()))) }}</td>
-                          <td v-if="key.includes('time')" class="w-40 break-all">{{ useConvertSecondsToDHM(Number(value)) }}</td>
-                          <td v-else-if="key.includes('cost')" class="w-40 break-all">{{ useHumanCurrencyAmount(Number(value)) }}</td>
-                          <td v-else class="w-40 break-all">{{ value }}</td> 
-                        </tr>
-                      </tbody>
-                    </table>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </UCard>
-
-          <UCard class="my-5">
-            <template #header>
               <h4 class="text-lg font-medium">Inferencer</h4>
             </template>
             <table class="w-full text-left">
