@@ -64,6 +64,26 @@ const columns = ref<TableColumn<ExperimentQuestionMetric>[]>([
   },
 ]);
 
+const overall_metadata = computed(() => {
+  return experimentsData.value.overall_metadata;
+})
+
+const indexing_metadata = computed(() => {
+  return experimentsData.value.indexing_metadata;
+})
+
+const retriever_metadata = computed(() => {
+  return experimentsData.value.retriever_metadata;
+})
+
+const inferencer_metadata = computed(() => {
+  return experimentsData.value.inferencer_metadata;
+})
+
+const evaluation_metadata = computed(() => {
+  return experimentsData.value.eval_metadata;
+})
+
 const items = ref([
   {
     label: "Question Metrics",
@@ -164,16 +184,18 @@ const items = ref([
             </template>
             <table class="w-full">
               <tbody>
-                <tr>
-                  <td class="font-medium">Total time</td>
-                  <td>
-                    {{ experimentsData?.total_time ? useConvertSecondsToDHM(Number(experimentsData?.total_time)) : 'Unable to fetch data' }}
-                  </td>
-                </tr>
-                <tr>
-                  <td class="font-medium w-40">Total Cost</td>
-                  <td class="w-40">
-                    {{ experimentsData?.cost ? useHumanCurrencyAmount(experimentsData?.cost) : 'Unable to fetch data' }}
+                <tr v-if="overall_metadata">
+                  <td colspan="2">
+                    <table class="w-full">
+                      <tbody>
+                        <tr v-for="(value, key) in overall_metadata" :key="key">
+                          <td class="font-medium w-40">{{ key.split('_').join(' ').replace(/\w\S*/g, (w) => (w.replace(/^\w/, (c) => c.toUpperCase()))) }}</td>
+                          <td v-if="key.includes('time')" class="w-40">{{ useConvertSecondsToDHM(Number(value)) }}</td>
+                          <td v-else-if="key.includes('cost')" class="w-40">{{ useHumanCurrencyAmount(Number(value)) }}</td>
+                          <td v-else class="w-40">{{ value }}</td> 
+                        </tr>
+                      </tbody>
+                    </table>
                   </td>
                 </tr>
               </tbody>
@@ -181,139 +203,122 @@ const items = ref([
           </UCard>
           <UCard class="my-5">
             <template #header>
-              <h4 class="text-lg font-medium">Price</h4>
+              <h4 class="text-lg font-medium">Indexing</h4>
             </template>
             <table class="w-full">
               <tbody>
-                <tr>
-                  <td class="font-medium w-40">Indexing Cost</td>
-                  <td class="w-40">
-                    {{
-                      experimentsData?.indexing_cost ?
-                      useHumanCurrencyAmount(
-                        experimentsData?.indexing_cost
-                      ) : !experimentsData?.config?.bedrock_knowledge_base ? 'Unable to fetch data ' : 'Bedrock knowledge base pricing not included'
-                    }}
+                <tr v-if="indexing_metadata">
+                  <td colspan="2">
+                    <table class="w-full">
+                      <tbody>
+                        <tr v-for="(value, key) in indexing_metadata" :key="key">
+                          <td class="font-medium w-40">{{ key.split('_').join(' ').replace(/\w\S*/g, (w) => (w.replace(/^\w/, (c) => c.toUpperCase()))) }}</td>
+                          <td v-if="key.includes('time')" class="w-40">{{ useConvertSecondsToDHM(Number(value)) }}</td>
+                          <td v-else-if="key.includes('cost')" class="w-40">{{ useHumanCurrencyAmount(Number(value)) }}</td>
+                          <td v-else class="w-40">{{ value }}</td> 
+                        </tr>
+                      </tbody>
+                    </table>
                   </td>
                 </tr>
-                <tr>
-                  <td class="font-medium">Retrieval Cost</td>
-                  <td>
-                    {{
-                      experimentsData?.retrieval_cost ? 
-                      useHumanCurrencyAmount(
-                        experimentsData?.retrieval_cost
-                      ) : 'Unable to fetch data'
-                    }}
-                  </td>
-                </tr>
-                <tr>
-                  <td class="font-medium">Inferencing Cost</td>
-                  <td>
-                  
-                    {{
-                      experimentsData?.inferencing_cost ? 
-                      useHumanCurrencyAmount(
-                        experimentsData?.inferencing_cost
-                      ) : 'Unable to fetch data'
-                    }}
-                  </td>
-                </tr>
-                <tr>
-                  <td class="font-medium">Evaluation Cost</td>
-                  <td>
-                  
-                    {{
-                      experimentsData?.eval_cost ? 
-                      useHumanCurrencyAmount(
-                        experimentsData?.eval_cost
-                      ) : 'Unable to fetch data'
-                    }}
-                  </td>
-                </tr>
-                 
               </tbody>
             </table>
           </UCard>
 
-          <UCard>
+          <UCard class="my-5">
             <template #header>
-              <h4 class="text-lg font-medium">Time</h4>
+              <h4 class="text-lg font-medium">Retrieval</h4>
             </template>
             <table class="w-full text-left">
               <tbody>
-                <tr>
-                  <td class="font-medium w-40">Indexing Time</td>
-                  <td class="w-40">
-                    {{ 
-                      experimentsData?.indexing_time ? 
-                      useConvertSecondsToDHM(Number(experimentsData?.indexing_time)) 
-                      : !experimentsData?.config?.bedrock_knowledge_base ? "Unable to fetch time" : 'NA'
-                    }}
-                  </td>
-                </tr>
-                <tr>
-                  <td class="font-medium">Retrieval Time</td>
-                  <td>
-                    {{
-                      experimentsData?.retrieval_time ? 
-                      useConvertSecondsToDHM(Number(experimentsData?.retrieval_time))
-                      : 'Unable to fetch time'
-                    }}
-                  </td>
-                </tr>
-                <tr>
-                  <td class="font-medium">Evaluation Time</td>
-                  <td >
-                    {{ 
-                      experimentsData?.eval_time ? 
-                      useConvertSecondsToDHM(Number(experimentsData?.eval_time))
-                      :'Unable to fetch time'
-                    }}
+                <tr v-if="retriever_metadata">
+                  <td colspan="2">
+                    <table class="w-full">
+                      <tbody>
+                        <tr v-for="(value, key) in retriever_metadata" :key="key">
+                          <td class="font-medium w-40">{{ key.split('_').join(' ').replace(/\w\S*/g, (w) => (w.replace(/^\w/, (c) => c.toUpperCase()))) }}</td>
+                          <td v-if="key.includes('time')" class="w-40">{{ useConvertSecondsToDHM(Number(value)) }}</td>
+                          <td v-else-if="key.includes('cost')" class="w-40">{{ useHumanCurrencyAmount(Number(value)) }}</td>
+                          <td v-else class="w-40">{{ value }}</td> 
+                        </tr>
+                      </tbody>
+                    </table>
                   </td>
                 </tr>
               </tbody>
             </table>
           </UCard>
 
-          <UCard class="my-4">
+          <UCard class="my-5">
             <template #header>
-              <h4 class="text-lg font-medium">Tokens</h4>
+              <h4 class="text-lg font-medium">Evaluation</h4>
             </template>
-            <table class="w-full">
+            <table class="w-full text-left">
               <tbody>
-                <tr>
-                  <td class="font-medium w-40">Indexing Embedded Tokens</td>
-                  <td class="w-40">
-                    {{ experimentsData?.index_embed_tokens || 'NA' }}
+                <tr v-if="evaluation_metadata">
+                  <td colspan="2">
+                    <table class="w-full">
+                      <tbody>
+                        <tr v-for="(value, key) in evaluation_metadata" :key="key">
+                          <td class="font-medium w-40">{{ key.split('_').join(' ').replace(/\w\S*/g, (w) => (w.replace(/^\w/, (c) => c.toUpperCase()))) }}</td>
+                          <td v-if="key.includes('time')" class="w-40">{{ useConvertSecondsToDHM(Number(value)) }}</td>
+                          <td v-else-if="key.includes('cost')" class="w-40">{{ useHumanCurrencyAmount(Number(value)) }}</td>
+                          <td v-else class="w-40">{{ value }}</td> 
+                        </tr>
+                      </tbody>
+                    </table>
                   </td>
                 </tr>
               </tbody>
             </table>
-            <UCard class="my-4">
-              <template #header>
-                <h4 class="font-medium">
-                  Total Tokens for
-                  {{ questionMetrics?.question_metrics?.length }} Questions
-                </h4>
-              </template>
-              <table class="w-full">
-                <tbody>
-                  <tr>
-                    <td class="font-medium w-40">Inferecing Input Tokens</td>
-                    <td class="w-40">{{ experimentsData?.retrieval_input_tokens || 'NA' }}</td>
-                  </tr>
-                  <tr>
-                    <td class="font-medium">Inferencing Output Tokens</td>
-                    <td>{{ experimentsData?.retrieval_output_tokens || 'NA' }}</td>
-                  </tr>
-                  <tr>
-                    <td class="font-medium">Retrieval Query Embedded Tokens</td>
-                    <td>{{ experimentsData?.retrieval_query_embed_tokens || 'NA' }}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </UCard>
+          </UCard>
+
+          <UCard class="my-5">
+            <template #header>
+              <h4 class="text-lg font-medium">Inferencer</h4>
+            </template>
+            <table class="w-full text-left">
+              <tbody>
+                <tr v-if="inferencer_metadata">
+                  <td colspan="2">
+                    <table class="w-full">
+                      <tbody>
+                        <tr v-for="(value, key) in inferencer_metadata" :key="key">
+                          <td class="font-medium w-40">{{ key.split('_').join(' ').replace(/\w\S*/g, (w) => (w.replace(/^\w/, (c) => c.toUpperCase()))) }}</td>
+                          <td v-if="key.includes('time')" class="w-40">{{ useConvertSecondsToDHM(Number(value)) }}</td>
+                          <td v-else-if="key.includes('cost')" class="w-40">{{ useHumanCurrencyAmount(Number(value)) }}</td>
+                          <td v-else class="w-40">{{ value }}</td> 
+                        </tr>
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </UCard>
+
+          <UCard class="my-5">
+            <template #header>
+              <h4 class="text-lg font-medium">Evaluation</h4>
+            </template>
+            <table class="w-full text-left">
+              <tbody>
+                <tr v-if="evaluation_metadata">
+                  <td colspan="2">
+                    <table class="w-full">
+                      <tbody>
+                        <tr v-for="(value, key) in evaluation_metadata" :key="key">
+                          <td class="font-medium w-40">{{ key.split('_').join(' ').replace(/\w\S*/g, (w) => (w.replace(/^\w/, (c) => c.toUpperCase()))) }}</td>
+                          <td v-if="key.includes('time')" class="w-40">{{ useConvertSecondsToDHM(Number(value)) }}</td>
+                          <td v-else-if="key.includes('cost')" class="w-40">{{ useHumanCurrencyAmount(Number(value)) }}</td>
+                          <td v-else class="w-40">{{ value }}</td> 
+                        </tr>
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </UCard>
         </UCard>
       </template>

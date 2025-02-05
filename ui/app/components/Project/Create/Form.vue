@@ -50,14 +50,10 @@ const nextStep = () => {
         bedrock_knowledge_base : state.prestep?.kb_model === 'default-upload' ? false : true
       },
       indexing: {
-        chunking_strategy: state.indexing?.chunking_strategy || '',
-        ...(state.indexing?.chunking_strategy.includes('fixed') ? { chunk_size: state.indexing?.chunk_size, chunk_overlap: state.indexing?.chunk_overlap } : {chunk_size:[],chunk_overlap:[]}),
-        ...(state.indexing?.chunking_strategy.includes('hierarchical') ? { hierarchical_parent_chunk_size: state.indexing?.hierarchical_parent_chunk_size, hierarchical_child_chunk_size: state.indexing?.hierarchical_child_chunk_size, hierarchical_chunk_overlap_percentage: state.indexing?.hierarchical_chunk_overlap_percentage } : {
-          hierarchical_parent_chunk_size : [],
-          hierarchical_child_chunk_size : [],
-          hierarchical_chunk_overlap_percentage : []
-        }),
-        vector_dimension: state.indexing?.vector_dimension || [],
+        chunking_strategy: state.indexing?.chunking_strategy || [],
+        ...(state.indexing?.chunking_strategy.includes('fixed') ? { chunk_size: state.indexing?.chunk_size, chunk_overlap: state.indexing?.chunk_overlap } : null),
+        ...(state.indexing?.chunking_strategy.includes('hierarchical') ? { hierarchical_parent_chunk_size: state.indexing?.hierarchical_parent_chunk_size, hierarchical_child_chunk_size: state.indexing?.hierarchical_child_chunk_size, hierarchical_chunk_overlap_percentage: state.indexing?.hierarchical_chunk_overlap_percentage } : null),
+        vector_dimension: state.indexing?.vector_dimension,
         indexing_algorithm: state.indexing?.indexing_algorithm || '',
         embedding: state.indexing?.embedding?.map((pc) => {
           return {
@@ -65,11 +61,7 @@ const nextStep = () => {
             service: pc.service,
             label: pc.label
           }
-        }) || [{
-                "model": "",
-                "service": "",
-                "label": ""
-            }]
+        }) || []
       },
       retrieval: {
         n_shot_prompts: state.retrieval?.n_shot_prompts,

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-const modelValue = defineModel<string>()
+const modelValue = defineModel<string | string[]>()
 
 const props = defineProps<{
 //   data: {
@@ -24,7 +24,7 @@ const closeModal = () => {
   openModal.value = false
 }
 
-const filepath = ref(modelValue)
+const filepath = ref<string | string[]>(modelValue)
 const isUploading = ref(false)
 
 const persistentFiles = ref([])

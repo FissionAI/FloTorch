@@ -114,7 +114,7 @@ const resetKbModel = (event: any) => {
         <FieldTooltip field-name="kb_model" />
       </template>
        <div v-if="state.kb_model && state.kb_model !== 'default-upload'" class="my-2" >
-          <ULink class="text-blue-500 hover:underline" target="_blank" raw :to="`https://${state.region}.console.aws.amazon.com/bedrock/home?region=${state.region}#/knowledge-bases`" active-class="font-bold" inactive-class="text-[var(--ui-text-muted)]">Create Bedrock Knowledege Bases</ULink>
+          <ULink class="text-blue-500 hover:underline" target="_blank" raw :to="`https://${state.region}.console.aws.amazon.com/bedrock/home?region=${state.region}#/knowledge-bases`" active-class="font-bold" inactive-class="text-[var(--ui-text-muted)]">Create Bedrock Knowledge Bases</ULink>
         </div>
     </UFormField>
       <p v-if="state.kb_model && state.kb_model !== 'default-upload'" class="text-blue-500">[Note]: Indexing Strategy step will be skipped if Bedrock Knowledge Bases is selected </p>
@@ -124,7 +124,6 @@ const resetKbModel = (event: any) => {
         id="kb_data"
         name="kb_data"
         label="Knowledge Base Data"
-        required
       >
       <template #hint>
           <FieldTooltip field-name="kb_data" />

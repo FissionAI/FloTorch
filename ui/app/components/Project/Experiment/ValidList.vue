@@ -79,8 +79,11 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
     sortingFn: (rowA, rowB) => {
       const getChunkingValue = (row: any) => {
         const strategy = useHumanChunkingStrategy(row.chunking_strategy);
+        if (!strategy) return 'NA';
         if (strategy === 'Hierarchical') {
-          return `${row.hierarchical_child_chunk_size}-${row.hierarchical_parent_chunk_size}`;
+          return row.hierarchical_child_chunk_size && row.hierarchical_parent_chunk_size
+            ? `${row.hierarchical_child_chunk_size}-${row.hierarchical_parent_chunk_size}`
+            : 'NA';
         }
         return strategy;
       };
@@ -446,7 +449,10 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
     },
     enableHiding: true,
     accessorKey: "kb_name",
-    label: "Bedrock Kb Name"
+    label: "Bedrock Kb Name",
+    cell: ({ row }) => {
+      return row.original.kb_name ? row.original.kb_name : 'NA';
+    }
   }
 ])
 
@@ -512,7 +518,7 @@ const columnVisibility = ref({
           @click="column.toggleSorting(column.getIsSorted() === 'asc')"
         >
           <span class="whitespace-pre-wrap">
-          {{ 'Directional\nPricing' }}
+          {{ 'Directional\nCost' }}
           </span>
         </UButton>
       </template>
