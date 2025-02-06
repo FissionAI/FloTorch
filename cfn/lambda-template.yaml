@@ -547,6 +547,8 @@ Resources:
           s3_bucket: !Ref DataBucketName
           bedrock_limit_csv: seed/bedrock_limits_small.csv
           aws_region: !Ref AWS::Region
+          experiment_question_metrics_index: experiment_id-index
+          experiment_question_metrics_table: !Ref MetricsTableName
 
 Outputs:
   RuntimeLambdaArn:
