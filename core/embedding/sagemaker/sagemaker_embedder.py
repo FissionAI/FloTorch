@@ -59,6 +59,21 @@ INFERENCER_MODELS = {
         "model_source": "huggingface",
         "instance_type": "ml.g5.2xlarge"
     }
+    ,
+    "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B": {
+        "model_source": "huggingface",
+        "instance_type": "ml.g5.2xlarge"
+    }
+    ,
+    "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B": {
+        "model_source": "huggingface",
+        "instance_type": "ml.g5.2xlarge"
+    }
+    ,
+    "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B": {
+        "model_source": "huggingface",
+        "instance_type": "ml.p4d.24xlarge"
+    }
 }
 
 # Sagemaker Base Embedder

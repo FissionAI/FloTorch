@@ -60,6 +60,21 @@ INFERENCER_MODELS = {
         "model_source": "huggingface",
         "instance_type": "ml.g5.2xlarge"
     }
+    ,
+    "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B": {
+        "model_source": "huggingface",
+        "instance_type": "ml.g5.2xlarge"
+    }
+    ,
+    "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B": {
+        "model_source": "huggingface",
+        "instance_type": "ml.g5.2xlarge"
+    }
+    ,
+    "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B": {
+        "model_source": "huggingface",
+        "instance_type": "ml.p4d.24xlarge"
+    }
 }
 
 # Sagemaker Base Inferencer
@@ -220,10 +235,6 @@ class SageMakerInferencer(BaseInferencer):
         if model_id not in EMBEDDING_MODELS and model_id not in INFERENCER_MODELS:
             raise ValueError(f"Unsupported model ID: {model_id}")
 
-        # Create AWS and SageMaker sessions for API interactions
-        boto_session = boto3.Session(region_name=self.region_name)
-        sagemaker_session = sagemaker.Session(boto_session=boto_session)
-
         # Look up the appropriate instance type from model configurations
         instance_type = (EMBEDDING_MODELS.get(model_id, INFERENCER_MODELS.get(model_id)))['instance_type']
         model_source = (EMBEDDING_MODELS.get(model_id, INFERENCER_MODELS.get(model_id)))['model_source']
@@ -235,7 +246,7 @@ class SageMakerInferencer(BaseInferencer):
                 # Endpoint exists and is healthy - create and return a predictor for it
                 predictor = sagemaker.predictor.Predictor(
                     endpoint_name=endpoint_name,
-                    sagemaker_session=sagemaker_session,
+                    sagemaker_session=self.session,
                     serializer=sagemaker.serializers.JSONSerializer(),
                     deserializer=sagemaker.deserializers.JSONDeserializer()
                 )
@@ -252,7 +263,7 @@ class SageMakerInferencer(BaseInferencer):
                         model = JumpStartModel(
                             role = self.role,
                             model_id=model_id,
-                            sagemaker_session=sagemaker_session
+                            sagemaker_session=self.session
                         )
                         
                         # Deploy the model to a new endpoint with the specified configuration
@@ -305,7 +316,7 @@ class SageMakerInferencer(BaseInferencer):
                             # Create predictor for the endpoint that the other process created
                             predictor = sagemaker.predictor.Predictor(
                                 endpoint_name=endpoint_name,
-                                sagemaker_session=sagemaker_session,
+                                sagemaker_session=self.session,
                                 serializer=sagemaker.serializers.JSONSerializer(),
                                 deserializer=sagemaker.deserializers.JSONDeserializer()
                             )
