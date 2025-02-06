@@ -41,40 +41,6 @@ EMBEDDING_MODELS = {
         "input_key": "inputs"
     }
 }
-INFERENCER_MODELS = {
-    "meta-textgeneration-llama-3-1-8b-instruct": {
-        "model_source": "jumpstart",
-        "instance_type": "ml.g5.2xlarge"
-    },
-    "huggingface-llm-falcon-7b-instruct-bf16": {
-        "model_source": "jumpstart",
-        "instance_type": "ml.g5.2xlarge"
-    },
-    "meta-textgeneration-llama-3-3-70b-instruct": {
-        "model_source": "jumpstart",
-        "instance_type": "ml.p4d.24xlarge"
-    }
-    ,
-    "deepseek-ai/DeepSeek-R1-Distill-Llama-8B": {
-        "model_source": "huggingface",
-        "instance_type": "ml.g5.2xlarge"
-    }
-    ,
-    "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B": {
-        "model_source": "huggingface",
-        "instance_type": "ml.g5.2xlarge"
-    }
-    ,
-    "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B": {
-        "model_source": "huggingface",
-        "instance_type": "ml.g5.2xlarge"
-    }
-    ,
-    "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B": {
-        "model_source": "huggingface",
-        "instance_type": "ml.p4d.24xlarge"
-    }
-}
 
 # Sagemaker Base Embedder
 class SageMakerEmbedder(BaseEmbedder):
@@ -231,7 +197,7 @@ class SageMakerEmbedder(BaseEmbedder):
         """
         
         # Validate that model_id exists in our supported model configurations
-        if model_id not in EMBEDDING_MODELS and model_id not in INFERENCER_MODELS:
+        if model_id not in EMBEDDING_MODELS:
             raise ValueError(f"Unsupported model ID: {model_id}")
 
         # Create AWS and SageMaker sessions for API interactions
@@ -239,8 +205,8 @@ class SageMakerEmbedder(BaseEmbedder):
         sagemaker_session = sagemaker.Session(boto_session=boto_session)
 
         # Look up the appropriate instance type from model configurations
-        instance_type = (EMBEDDING_MODELS.get(model_id, INFERENCER_MODELS.get(model_id)))['instance_type']
-        model_source = (EMBEDDING_MODELS.get(model_id, INFERENCER_MODELS.get(model_id)))['model_source']
+        instance_type = (EMBEDDING_MODELS.get(model_id))['instance_type']
+        model_source = (EMBEDDING_MODELS.get(model_id))['model_source']
         
         try:
             # First check if a working endpoint already exists to avoid duplicate creation
@@ -350,15 +316,9 @@ class SageMakerEmbedder(BaseEmbedder):
             self.embedding_model_id = model_id
             logger.info(f"Assigned embedding predictor for model: {model_id}")
         
-        # Assign predictor for inferencing models
-        elif model_id in INFERENCER_MODELS:
-            self.inferencing_predictor = predictor
-            self.inferencing_model_id = model_id
-            logger.info(f"Assigned inferencing predictor for model: {model_id}")
-        
         # Log an error if the model_id doesn't match any known type
         else:
-            logger.error(f"Model ID {model_id} is not recognized as an embedding or inferencing model.")
+            logger.error(f"Model ID {model_id} is not recognized as an embedding model.")
 
     def embed(self, text: str, dimensions: int = 256, normalize: bool = True) -> List[float]:
         """

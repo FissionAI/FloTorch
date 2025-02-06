@@ -19,29 +19,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 # Model configurations
-EMBEDDING_MODELS = {
-    "huggingface-sentencesimilarity-bge-large-en-v1-5": {
-        "model_name": "bge-large",
-        "model_source": "jumpstart",
-        "dimension": 1024,
-        "instance_type": "ml.g5.2xlarge",
-        "input_key": "text_inputs"
-    },
-    "huggingface-sentencesimilarity-bge-m3": {
-        "model_name": "bge-m3",
-        "model_source": "jumpstart",
-        "dimension": 1024,
-        "instance_type": "ml.g5.2xlarge",
-        "input_key": "text_inputs"
-    },
-    "huggingface-textembedding-gte-qwen2-7b-instruct": {
-        "model_name": "qwen",
-        "model_source": "jumpstart",
-        "dimension": 3584,
-        "instance_type": "ml.g5.2xlarge",
-        "input_key": "inputs"
-    }
-}
+
 INFERENCER_MODELS = {
     "meta-textgeneration-llama-3-1-8b-instruct": {
         "model_source": "jumpstart",
@@ -73,7 +51,7 @@ INFERENCER_MODELS = {
     ,
     "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B": {
         "model_source": "huggingface",
-        "instance_type": "ml.p4d.24xlarge"
+        "instance_type": "ml.g6e.12xlarge"
     }
 }
 
@@ -232,12 +210,12 @@ class SageMakerInferencer(BaseInferencer):
         """
         
         # Validate that model_id exists in our supported model configurations
-        if model_id not in EMBEDDING_MODELS and model_id not in INFERENCER_MODELS:
+        if model_id not in INFERENCER_MODELS:
             raise ValueError(f"Unsupported model ID: {model_id}")
 
         # Look up the appropriate instance type from model configurations
-        instance_type = (EMBEDDING_MODELS.get(model_id, INFERENCER_MODELS.get(model_id)))['instance_type']
-        model_source = (EMBEDDING_MODELS.get(model_id, INFERENCER_MODELS.get(model_id)))['model_source']
+        instance_type = INFERENCER_MODELS.get(model_id)['instance_type']
+        model_source = INFERENCER_MODELS.get(model_id)['model_source']
         
         try:
             # First check if a working endpoint already exists to avoid duplicate creation
@@ -343,22 +321,15 @@ class SageMakerInferencer(BaseInferencer):
             model_id (str): The model ID which determines whether the predictor is for embedding or inferencing.
         
         """
-        # Assign predictor for embedding models
-        if model_id in EMBEDDING_MODELS:
-            self.embedding_predictor = predictor
-            self.embedding_dimension = EMBEDDING_MODELS[model_id]['dimension']
-            self.embedding_model_id = model_id
-            logger.info(f"Assigned embedding predictor for model: {model_id}")
-        
         # Assign predictor for inferencing models
-        elif model_id in INFERENCER_MODELS:
+        if model_id in INFERENCER_MODELS:
             self.inferencing_predictor = predictor
             self.inferencing_model_id = model_id
             logger.info(f"Assigned inferencing predictor for model: {model_id}")
         
         # Log an error if the model_id doesn't match any known type
         else:
-            logger.error(f"Model ID {model_id} is not recognized as an embedding or inferencing model.")
+            logger.error(f"Model ID {model_id} is not recognized as an inferencing model.")
             
     def generate_prompt(self, experiment_config: ExperimentalConfig, default_prompt: str, user_query: str, context: List[Dict]):
         n_shot_prompt_guide = experiment_config.n_shot_prompt_guide_obj
