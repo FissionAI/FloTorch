@@ -51,7 +51,7 @@ Welcome to FloTorch! This guide will help you set up FloTorch's infrastructure o
 2. AWS CLI installed and configured on your computer
 3. AWS Marketplace Subscription (see next section)
 
-### 2. AWS Marketplace Subscription
+### 2. AWS Marketplace Subscription ‼️
 Before starting the installation, subscribe to FloTorch:
 
 1. Visit the [FloTorch AWS Marketplace page](https://aws.amazon.com/marketplace/pp/prodview-z5zcvloh7l3ky?ref_=aws-mp-console-subscription-detail-payg)
@@ -96,94 +96,25 @@ Before starting the installation, subscribe to FloTorch:
 | | Mistral AI/mistral.mistral-7b-instruct-v0:2 |
 | | Mistral AI/mistral.mistral-large-2402-v1:0 |
 
-
-## What You're Installing
-
-### Core Infrastructure Components
-
-| Component | Purpose |
-|-----------|----------|
-| VPC Stack | Private network infrastructure |
-| VPC Endpoint Stack | Secure access to AWS services within VPC |
-| DynamoDB Stack | Database tables and S3 bucket for data storage |
-| OpenSearch Stack | Search functionality |
-| ECR Repository Stack | Container image repositories |
-| ECS Stack | Running containerized applications |
-| Lambda Stack | Serverless functions |
-| State Machine Stack | Step Functions for orchestration |
-| AppRunner Stack | Application hosting and management |
-
-
 ## Installation Guide
 
-### Option 1: Quick Install Parameters
+## Required Parameters that to be met in both approaches.
 
 | Parameter | Example | Requirements |
 |-----------|----------|--------------|
 | PrerequisitesMet | "yes" | Set this to 'yes' only after completing above steps. |
 | ProjectName | "flotorch" | Your project name |
-| TableSuffix | "abc123" | 6 lowercase characters |
+| TableSuffix | "abctry" | 6 lowercase characters only alphabets allowed |
 | ClientName | "acmecorp" | Must be lowercase |
 | OpenSearchAdminUser | "admin" | Admin username |
 | OpenSearchAdminPassword | "YourSecurePassword123!" | 8-41 chars with letters, numbers, symbols |
 | NginxAuthPassword | "YourNginxPassword123!" | 8-41 chars with letters, numbers, symbols |
 
-### Option 2: Command Line Installation
+### Approach #1: Using AWS Cloudformation Template (<mark> Ensure the above Parameter conditions are met </mark>).
 
-## What You're Installing
+Click this link: [Install FloTorch (US East 1)](https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/create?stackName=flotorch-stack&templateURL=https://flotorch-public.s3.us-east-1.amazonaws.com/2.0.1/templates/master-template.yaml)
 
-FloTorch creates a comprehensive architecture for managing and deploying machine learning models, combining serverless components with managed services like OpenSearch. Here's what you get:
-
-### Core Infrastructure Components
-
-- **VPC Stack**: Your private network infrastructure
-- **VPC Endpoint Stack**: Secure access to AWS services within the VPC
-- **DynamoDB Stack**: Database tables and S3 bucket for data storage
-- **OpenSearch Stack**: Search functionality
-- **ECR Repository Stack**: Container image repositories
-- **ECS Stack**: Elastic Container Service for running containerized applications
-- **Lambda Stack**: Serverless functions for various operations
-- **State Machine Stack**: Step Functions for orchestration
-- **AppRunner Stack**: Application hosting and management
-
-### Key Features
-
-1. Automated deployment and management
-2. Serverless architecture for cost optimization
-3. Secure VPC configuration
-4. Integrated monitoring and logging
-5. Automated container image management
-
-## Installation Guide
-
-### Option 1: Quick Install (Recommended for Beginners)
-
-1. Click this link: [Install FloTorch (US East 1)](https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/create?stackName=flotorch-stack&templateURL=https://flotorch-public.s3.us-east-1.amazonaws.com/2.0.1/templates/master-template.yaml)
-
-2. Fill in these details in the CloudFormation console:
-
-   - **PrerequisitesMet**: Confirms that you have completed all prerequisites including:
-     - Reading this installation guide
-     - Subscribing to FloTorch.ai from AWS Marketplace
-     Set this to 'yes' only after completing these steps.
-   - **ProjectName**: your-project-name
-     (Example: "flotorch")
-   - **TableSuffix**: unique-suffix
-     (Example: "abc123" - must be 6 lowercase characters)
-   - **ClientName**: your-client-name
-     (Example: "acmecorp" - must be lowercase)
-   - **OpenSearchAdminUser**: admin
-     (Example: "admin")
-   - **OpenSearchAdminPassword**: YourSecurePassword123!
-     (Must be 8-41 characters with letters, numbers, and symbols)
-   - **NginxAuthPassword**: YourNginxPassword123!
-     (Must be 8-41 characters with letters, numbers, and symbols)
-
-3. Click "Review and create" and acknowledge that the stack will create IAM resources
-
-### Option 2: Command Line Installation
-
-For advanced users, you can deploy using the AWS CLI:
+### Approach #2: AWS Command Line Installation (<mark> Ensure the above Parameter conditions are met </mark>).
 
 ```bash
 aws cloudformation create-stack \
@@ -191,6 +122,7 @@ aws cloudformation create-stack \
     --template-url https://flotorch-public.s3.us-east-1.amazonaws.com/templates/master-template.yaml \
     --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
     --parameters \
+        ParameterKey=PrerequisitesMet,ParameterValue=yes \
         ParameterKey=ProjectName,ParameterValue=your-project-name \
         ParameterKey=TableSuffix,ParameterValue=unique-suffix \
         ParameterKey=ClientName,ParameterValue=your-client-name \
@@ -199,9 +131,16 @@ aws cloudformation create-stack \
         ParameterKey=NginxAuthPassword,ParameterValue=YourNginxPassword123!
 ```
 
+## Monitor your setup
+
+| AWS Service | You can view |
+|-----------|----------------|
+| CloudWatch Metrics | • Lambda execution<br>• SageMaker endpoint usage<br>• AppRunner service metrics |
+| CloudWatch Logs | • Lambda function logs<br>• AppRunner application logs<br>• OpenSearch logs |
+
 ## Cost Overview
 
-| Service | Daily Cost Range | Details |
+| Service | Daily Cost Range (Approx) | Details |
 |---------|-----------------|----------|
 | Lambda Functions | $0.50-$2.00 | • Free tier: 1M requests/month<br>• 400,000 GB-seconds included |
 | SageMaker Endpoints | $1.40-$2.80 | • ml.t3.medium instances<br>• 1-2 endpoints running |
@@ -215,39 +154,21 @@ aws cloudformation create-stack \
 | ECS (Fargate) | $2.00-$5.00 | • vCPU: $0.04048/hour<br>• Memory: $0.004445/GB-hour |
 | Bedrock | $5.00-$10.00 | • Input: $0.0001/1K tokens<br>• Output: $0.0002/1K tokens |
 
-**Total Estimated Cost**: $56.53-$75.69/day (varies with usage)
-
-## Monitoring Your Installation
-
-| Component | What to Monitor |
-|-----------|----------------|
-| CloudWatch Metrics | • Lambda execution<br>• SageMaker endpoint usage<br>• AppRunner service metrics |
-| Logs | • Lambda function logs<br>• AppRunner application logs<br>• OpenSearch logs |
-| Alerts | • Cost thresholds<br>• Error rates<br>• Service health |
+**Total Estimated Cost (Approx)**: $56.53-$75.69/day (varies with usage)
 
 ## Security Features
 
 | Feature | Description |
 |---------|-------------|
 | VPC Isolation | Private network infrastructure |
-| IAM Access | Role-based access control |
-| Encryption | Data encryption at rest |
+| IAM Permissions | Role-based access control |
 | Security Groups | Network access control |
 | Authentication | NGINX basic auth |
-| Access Control | OpenSearch security |
+| Access Control | OpenSearch Security |
 
-## Troubleshooting Guide
-
-| Issue Type | Resolution Steps |
-|------------|-----------------|
-| Installation Issues | 1. Check CloudFormation events<br>2. Verify IAM permissions<br>3. Validate parameter values |
-| Runtime Problems | 1. Check CloudWatch logs<br>2. Verify network connectivity<br>3. Check service quotas |
-
-## Getting Help
+## Getting Help 
 
 | Method | Contact |
 |--------|---------|
-| Logs | Check CloudWatch |
-| Stack Events | Review in Console |
-| DevOps Team | Contact support |
-| Email | info@flotorch.ai |
+| Email | [info@flotorch.ai](mailto:info@flotorch.ai) |
+| Issues | [FloTorch GitHub Issues](https://github.com/FissionAI/FloTorch/issues) |
