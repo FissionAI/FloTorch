@@ -284,185 +284,76 @@ Resources:
                       # Wait for instance to be running and SSM agent to be ready
                       waiter = ec2.get_waiter('instance_running')
                       waiter.wait(InstanceIds=[instance_id])
-                      time.sleep(60)  # Give the SSM agent extra time to start
                       
-                      # Create the script with environment variables
-                      script = f'''#!/bin/bash
-                      set -e  # Exit on error
-
-                      # Set environment variables
-                      export ACCOUNT_ID="{context.invoked_function_arn.split(':')[4]}"
-                      export REGION="{os.environ['AWS_REGION']}"
-                      export TABLE_SUFFIX="{event['ResourceProperties']['TableSuffix']}"
-                      export INDEXING_IMAGE_TAG="{event['ResourceProperties']['IndexingImageTag']}"
-                      export RETRIEVER_IMAGE_TAG="{event['ResourceProperties']['RetrieverImageTag']}"
-                      export APP_IMAGE_TAG="{event['ResourceProperties']['AppImageTag']}"
-                      export EVALUATION_IMAGE_TAG="{event['ResourceProperties']['EvaluationImageTag']}"
-                      export RUNTIME_IMAGE_TAG="{event['ResourceProperties']['RuntimeImageTag']}"
-                      export AI_IMAGE_TAG="{event['ResourceProperties']['CostComputeImageTag']}"
-
-                      detect_os() {{
-                          if [ -f /etc/os-release ]; then
-                              . /etc/os-release
-                              OS=$NAME
-                              VERSION=$VERSION_ID
-                          else
-                              echo "Cannot detect OS"
-                              exit 1
-                          fi
-                      }}
-
-                      command_exists() {{
-                          command -v "$1" >/dev/null 2>&1
-                      }}
-
-                      install_docker() {{
-                          if command_exists docker; then
-                              echo "Docker is already installed"
-                              docker --version
-                          else
-                              echo "Installing Docker..."
-                              if [[ "$OS" == "Amazon Linux" ]]; then
-                                  sudo yum update -y
-                                  sudo yum install -y docker
-                                  sudo systemctl start docker
-                                  sudo systemctl enable docker
-                                  sudo usermod -aG docker ec2-user
-                                  newgrp docker
-                              fi
-                          fi
-                      }}
-
-                      install_awscli() {{
-                          if command_exists aws; then
-                              echo "AWS CLI is already installed"
-                              aws --version
-                          else
-                              echo "Installing AWS CLI..."
-                              curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-                              sudo yum install -y unzip
-                              unzip awscliv2.zip
-                              sudo ./aws/install
-                              rm -rf aws awscliv2.zip
-                          fi
-                      }}
-
-                      # Detect OS and install requirements
-                      detect_os
-                      install_docker
-                      install_awscli
-
-                      # Configure Docker to use non-interactive mode
-                      export DOCKER_CLI_NO_INTERACTIVE=1
-
-                      # Login to source ECR
-                      aws ecr get-login-password --region "us-east-1" | docker login --username AWS --password-stdin "709825985650.dkr.ecr.us-east-1.amazonaws.com"
-
-                      # Pull images
-                      CONTAINER_IMAGES="
-                      709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-indexing:$INDEXING_IMAGE_TAG,
-                      709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-costcompute:$AI_IMAGE_TAG,
-                      709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-evaluation:$EVALUATION_IMAGE_TAG,
-                      709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-app:$APP_IMAGE_TAG,
-                      709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-runtime:$RUNTIME_IMAGE_TAG,
-                      709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-retriever:$RETRIEVER_IMAGE_TAG
-                      "
-
-                      for i in $(echo "$CONTAINER_IMAGES" | sed "s/,/ /g"); do 
-                          docker pull "$i"
-                      done
-
-                      # Login to target ECR
-                      aws ecr get-login-password --region "$REGION" | docker login --username AWS --password-stdin "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com"
+                      # Run commands to authenticate with ECR and pull/push images
+                      command = f'''#!/bin/bash
+                      # Login to ECR
+                      aws ecr get-login-password --region {region} | docker login --username AWS --password-stdin {account_id}.dkr.ecr.{region}.amazonaws.com
 
                       # Create repositories if they don't exist
-                      for repo in flotorch-indexing-$TABLE_SUFFIX flotorch-costcompute-$TABLE_SUFFIX flotorch-evaluation-$TABLE_SUFFIX flotorch-app-$TABLE_SUFFIX flotorch-runtime-$TABLE_SUFFIX flotorch-retriever-$TABLE_SUFFIX; do
-                          aws ecr describe-repositories --repository-names "$repo" --region "$REGION" || aws ecr create-repository --repository-name "$repo" --region "$REGION"
+                      for repo in flotorch-indexing-{table_suffix} flotorch-costcompute-{table_suffix} flotorch-evaluation-{table_suffix} flotorch-app-{table_suffix} flotorch-runtime-{table_suffix} flotorch-retriever-{table_suffix}; do
+                          aws ecr describe-repositories --repository-names "$repo" --region "{region}" || aws ecr create-repository --repository-name "$repo" --region "{region}"
                       done
 
-                      # Tag and push indexing image with version and latest tags
-                      docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-indexing:$INDEXING_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-indexing-$TABLE_SUFFIX:$INDEXING_IMAGE_TAG"
-                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-indexing-$TABLE_SUFFIX:$INDEXING_IMAGE_TAG"
-                      docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-indexing:$INDEXING_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-indexing-$TABLE_SUFFIX:latest"
-                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-indexing-$TABLE_SUFFIX:latest"
+                      # Clone and build from FloTorch repository
+                      git clone https://github.com/FissionAI/FloTorch.git
+                      cd FloTorch
 
-                      # Tag and push AI image with version and latest tags
-                      docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-costcompute:$AI_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-costcompute-$TABLE_SUFFIX:$AI_IMAGE_TAG"
-                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-costcompute-$TABLE_SUFFIX:$AI_IMAGE_TAG"
-                      docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-costcompute:$AI_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-costcompute-$TABLE_SUFFIX:latest"
-                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-costcompute-$TABLE_SUFFIX:latest"
+                      # Build and push Docker images
+                      docker build -t "{account_id}.dkr.ecr.{region}.amazonaws.com/flotorch-app-{table_suffix}:{AppImageTag}" -f app/Dockerfile --push .
+                      docker tag "{account_id}.dkr.ecr.{region}.amazonaws.com/flotorch-app-{table_suffix}:{AppImageTag}" "{account_id}.dkr.ecr.{region}.amazonaws.com/flotorch-app-{table_suffix}:latest"
+                      docker push "{account_id}.dkr.ecr.{region}.amazonaws.com/flotorch-app-{table_suffix}:latest"
 
-                      # Tag and push evaluation image with version and latest tags
-                      docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-evaluation:$EVALUATION_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-evaluation-$TABLE_SUFFIX:$EVALUATION_IMAGE_TAG"
-                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-evaluation-$TABLE_SUFFIX:$EVALUATION_IMAGE_TAG"
-                      docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-evaluation:$EVALUATION_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-evaluation-$TABLE_SUFFIX:latest"
-                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-evaluation-$TABLE_SUFFIX:latest"
+                      docker build -t "{account_id}.dkr.ecr.{region}.amazonaws.com/flotorch-indexing-{table_suffix}:{IndexingImageTag}" -f indexing/fargate_indexing.Dockerfile --push .
+                      docker tag "{account_id}.dkr.ecr.{region}.amazonaws.com/flotorch-indexing-{table_suffix}:{IndexingImageTag}" "{account_id}.dkr.ecr.{region}.amazonaws.com/flotorch-indexing-{table_suffix}:latest"
+                      docker push "{account_id}.dkr.ecr.{region}.amazonaws.com/flotorch-indexing-{table_suffix}:latest"
 
-                      # Tag and push app image with version and latest tags
-                      docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-app:$APP_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-app-$TABLE_SUFFIX:$APP_IMAGE_TAG"
-                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-app-$TABLE_SUFFIX:$APP_IMAGE_TAG"
-                      docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-app:$APP_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-app-$TABLE_SUFFIX:latest"
-                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-app-$TABLE_SUFFIX:latest"
+                      docker build -t "{account_id}.dkr.ecr.{region}.amazonaws.com/flotorch-retriever-{table_suffix}:{RetrieverImageTag}" -f retriever/fargate_retriever.Dockerfile --push .
+                      docker tag "{account_id}.dkr.ecr.{region}.amazonaws.com/flotorch-retriever-{table_suffix}:{RetrieverImageTag}" "{account_id}.dkr.ecr.{region}.amazonaws.com/flotorch-retriever-{table_suffix}:latest"
+                      docker push "{account_id}.dkr.ecr.{region}.amazonaws.com/flotorch-retriever-{table_suffix}:latest"
 
-                      # Tag and push runtime image with version and latest tags
-                      docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-runtime:$RUNTIME_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-runtime-$TABLE_SUFFIX:$RUNTIME_IMAGE_TAG"
-                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-runtime-$TABLE_SUFFIX:$RUNTIME_IMAGE_TAG"
-                      docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-runtime:$RUNTIME_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-runtime-$TABLE_SUFFIX:latest"
-                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-runtime-$TABLE_SUFFIX:latest"
+                      docker build -t "{account_id}.dkr.ecr.{region}.amazonaws.com/flotorch-evaluation-{table_suffix}:{EvaluationImageTag}" -f evaluation/fargate_evaluation.Dockerfile --push .
+                      docker tag "{account_id}.dkr.ecr.{region}.amazonaws.com/flotorch-evaluation-{table_suffix}:{EvaluationImageTag}" "{account_id}.dkr.ecr.{region}.amazonaws.com/flotorch-evaluation-{table_suffix}:latest"
+                      docker push "{account_id}.dkr.ecr.{region}.amazonaws.com/flotorch-evaluation-{table_suffix}:latest"
 
-                      # Tag and push retriever image with version and latest tags
-                      docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-retriever:$RETRIEVER_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-retriever-$TABLE_SUFFIX:$RETRIEVER_IMAGE_TAG"
-                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-retriever-$TABLE_SUFFIX:$RETRIEVER_IMAGE_TAG"
-                      docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-retriever:$RETRIEVER_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-retriever-$TABLE_SUFFIX:latest"
-                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-retriever-$TABLE_SUFFIX:latest"
+                      docker build -t "{account_id}.dkr.ecr.{region}.amazonaws.com/flotorch-runtime-{table_suffix}:{RuntimeImageTag}" -f opensearch/opensearch.Dockerfile --push .
+                      docker tag "{account_id}.dkr.ecr.{region}.amazonaws.com/flotorch-runtime-{table_suffix}:{RuntimeImageTag}" "{account_id}.dkr.ecr.{region}.amazonaws.com/flotorch-runtime-{table_suffix}:latest"
+                      docker push "{account_id}.dkr.ecr.{region}.amazonaws.com/flotorch-runtime-{table_suffix}:latest"
 
+                      cd lambda_handlers
+                      docker build -t "{account_id}.dkr.ecr.{region}.amazonaws.com/flotorch-costcompute-{table_suffix}:{CostComputeImageTag}" -f cost_handler/Dockerfile --push .
+                      docker tag "{account_id}.dkr.ecr.{region}.amazonaws.com/flotorch-costcompute-{table_suffix}:{CostComputeImageTag}" "{account_id}.dkr.ecr.{region}.amazonaws.com/flotorch-costcompute-{table_suffix}:latest"
+                      docker push "{account_id}.dkr.ecr.{region}.amazonaws.com/flotorch-costcompute-{table_suffix}:latest"
+
+                      cd ..
                       echo "Docker operations completed successfully"
                       '''
                       
-                      # Run script using SSM
-                      command = ssm.send_command(
+                      command_id = ssm.send_command(
                           InstanceIds=[instance_id],
                           DocumentName='AWS-RunShellScript',
-                          Parameters={
-                              'commands': [script]
-                          }
-                      )
+                          Parameters={'commands': [command]}
+                      )['Command']['CommandId']
                       
-                      command_id = command['Command']['CommandId']
-                      
-                      # First, wait until the Command Invocation actually exists
-                      import botocore
+                      # Wait for command completion
                       while True:
                           try:
                               result = ssm.get_command_invocation(
                                   CommandId=command_id,
                                   InstanceId=instance_id
                               )
-                              break  # If we got here, the invocation exists
-                          except botocore.exceptions.ClientError as e:
-                              # If it doesn't exist yet, keep trying
-                              if "InvocationDoesNotExist" in str(e):
-                                  time.sleep(5)
-                                  continue
-                              else:
-                                  raise
+                              if result['Status'] in ['Success', 'Failed', 'Cancelled', 'TimedOut']:
+                                  if result['Status'] != 'Success':
+                                      raise Exception(f"Command failed with status: {result['Status']}")
+                                  break
+                              time.sleep(10)
+                          except ssm.exceptions.InvocationDoesNotExist:
+                              time.sleep(10)
                       
-                      # Now keep polling until the command is finished
-                      while result['Status'] not in ['Success', 'Failed', 'Cancelled']:
-                          time.sleep(10)
-                          result = ssm.get_command_invocation(
-                              CommandId=command_id,
-                              InstanceId=instance_id
-                          )
-
-                      if result['Status'] != 'Success':
-                          raise Exception(f"Command failed: {result.get('StandardErrorContent', '')}")
-                      
-                      # Terminate instance
+                      # Terminate the instance
                       ec2.terminate_instances(InstanceIds=[instance_id])
                       
-                      response_data = {'Message': f'EC2 instance {instance_id} completed Docker operations'}
-                      cfnresponse.send(event, context, cfnresponse.SUCCESS, response_data)
+                      cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
                   else:
                       cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
               except Exception as e:
