@@ -120,6 +120,7 @@ Before starting the installation, subscribe to FloTorch:
 
 | Parameter | Example | Requirements |
 |-----------|----------|--------------|
+| PrerequisitesMet | "yes" | Set this to 'yes' only after completing above steps. |
 | ProjectName | "flotorch" | Your project name |
 | TableSuffix | "abc123" | 6 lowercase characters |
 | ClientName | "acmecorp" | Must be lowercase |
@@ -157,30 +158,14 @@ FloTorch creates a comprehensive architecture for managing and deploying machine
 
 ### Option 1: Quick Install (Recommended for Beginners)
 
-FloTorch is deployed using AWS CloudFormation templates. The main template (`cfn/master-template.yaml`) includes several important parameters:
-
-### Key Parameters
-
-- **PrerequisitesMet**: Confirms that you have completed all prerequisites including:
-  - Reading this installation guide
-  - Subscribing to FloTorch.ai from AWS Marketplace
-  Set this to 'yes' only after completing these steps.
-- **ProjectName**: your-project-name
-     (Example: "flotorch")
-- **TableSuffix**: unique-suffix
-     (Example: "abc123" - must be 6 lowercase characters)
-- **ClientName**: your-client-name
-     (Example: "acmecorp" - must be lowercase)
-- **OpenSearchAdminUser**: admin
-     (Example: "admin")
-- **OpenSearchAdminPassword**: YourSecurePassword123!
-     (Must be 8-41 characters with letters, numbers, and symbols)
-- **NginxAuthPassword**: YourNginxPassword123!
-     (Must be 8-41 characters with letters, numbers, and symbols)
-
 1. Click this link: [Install FloTorch (US East 1)](https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/create?stackName=flotorch-stack&templateURL=https://flotorch-public.s3.us-east-1.amazonaws.com/2.0.1/templates/master-template.yaml)
 
 2. Fill in these details in the CloudFormation console:
+
+   - **PrerequisitesMet**: Confirms that you have completed all prerequisites including:
+     - Reading this installation guide
+     - Subscribing to FloTorch.ai from AWS Marketplace
+     Set this to 'yes' only after completing these steps.
    - **ProjectName**: your-project-name
      (Example: "flotorch")
    - **TableSuffix**: unique-suffix
