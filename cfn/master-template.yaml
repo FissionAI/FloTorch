@@ -24,12 +24,16 @@ Metadata:
 
 Parameters:
   PrerequisitesMet:
-    Type: Boolean
-    Default: false
-    Description: "You must complete these prerequisites before proceeding:
+    Type: String
+    AllowedPattern: "^(yes|no)$"
+    AllowedValues: 
+      - "yes"
+      - "no"
+    Description: "REQUIRED: You must complete these prerequisites before proceeding:
       1. Read the installation guide at https://github.com/2.0.2/FissionAI/FloTorch/blob/main/install.md
       2. Subscribe to FloTorch.ai from AWS Marketplace at https://aws.amazon.com/2.0.2/marketplace/pp/prodview-z5zcvloh7l3ky
-      Check this box to confirm you have completed these steps."
+      Select 'Yes' only if you have completed all prerequisites."
+    ConstraintDescription: "You must select either 'yes' or 'no'. The field cannot be empty."
 
   ProjectName:
     Type: String
@@ -82,7 +86,7 @@ Parameters:
     ConstraintDescription: "Must be between 8 and 41 characters containing letters, numbers and symbols."
 
 Conditions:
-  PrerequisitesMet: !Equals [!Ref PrerequisitesMet, true]
+  PrerequisitesMet: !Equals [!Ref PrerequisitesMet, "yes"]
 
 Resources:
   VPCStack:
