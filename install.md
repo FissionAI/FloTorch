@@ -107,8 +107,8 @@ Before starting the installation, subscribe to FloTorch:
 | TableSuffix | "abctry" | 6 lowercase characters only alphabets allowed |
 | ClientName | "acmecorp" | Must be lowercase |
 | OpenSearchAdminUser | "admin" | Admin username |
-| OpenSearchAdminPassword | "YourSecurePassword123!" | 8-41 chars with letters, numbers, symbols |
-| NginxAuthPassword | "YourNginxPassword123!" | 8-41 chars with letters, numbers, symbols |
+| OpenSearchAdminPassword | "YourSecurePassword123!" | 12-41 chars with letters, numbers, symbols |
+| NginxAuthPassword | "YourNginxPassword123!" | 12-41 chars with letters, numbers, symbols |
 
 ### Approach #1: Using AWS Cloudformation Template (<mark> Ensure the above Parameter conditions are met </mark>).
 

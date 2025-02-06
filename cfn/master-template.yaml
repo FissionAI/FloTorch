@@ -29,10 +29,7 @@ Parameters:
     AllowedValues: 
       - "yes"
       - "no"
-    Description: "REQUIRED: You must complete these prerequisites before proceeding:
-      1. Read the installation guide at https://github.com/2.0.2/FissionAI/FloTorch/blob/main/install.md
-      2. Subscribe to FloTorch.ai from AWS Marketplace at https://aws.amazon.com/2.0.2/marketplace/pp/prodview-z5zcvloh7l3ky
-      Select 'Yes' only if you have completed all prerequisites."
+    Description: "REQUIRED: You must complete all prerequisites given here https://github.com/2.0.2/FissionAI/FloTorch/blob/main/install.md before proceeding"
     ConstraintDescription: "You must select either 'yes' or 'no'. The field cannot be empty."
 
   ProjectName:
@@ -42,7 +39,7 @@ Parameters:
     
   TableSuffix:
     Type: String
-    Description: "A unique suffix to append to resource names in this Environment. This ensures uniqueness across deployments."
+    Description: "A unique suffix to append to resource names in this Environment. Must contain only lowercase letters, exactly 6 characters long."
     AllowedPattern: "^[a-z]+$"
     ConstraintDescription: "Must contain only lowercase letters, exactly 6 characters long."
     MaxLength: 6
@@ -51,7 +48,7 @@ Parameters:
   ClientName:
     Type: String
     Default: "flotorch"
-    Description: "Client Name (must be lowercase). Used for tagging and naming resources specific to a client."
+    Description: "Client Name (must be lowercase, can include numbers and hyphens, between 3 and 20 characters.). Used for tagging and naming resources specific to a client."
     ConstraintDescription: "Must be lowercase, can include numbers and hyphens, between 3 and 20 characters."
     AllowedPattern: "^[a-z0-9-]+$"
     MaxLength: 20
@@ -70,20 +67,21 @@ Parameters:
 
   OpenSearchAdminPassword:
     Type: String
-    Default: "Flotorch@123"
     NoEcho: true
-    Description: "Password for the OpenSearch admin account. Must be strong and secure as it provides full access to the OpenSearch cluster."
-    MinLength: 8
+    Description: "Password for the OpenSearch admin account(Must be between 12 and 41 characters, containing at least one uppercase letter, one lowercase letter, one number, and one special character). Must be strong and secure as it provides full access to the OpenSearch cluster."
+    MinLength: 12
     MaxLength: 41
-    ConstraintDescription: "Must be between 8 and 41 characters containing letters, numbers and symbols."
+    AllowedPattern: "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{12,41}$"
+    ConstraintDescription: "Must be between 12 and 41 characters, containing at least one uppercase letter, one lowercase letter, one number, and one special character."
 
   NginxAuthPassword:
     Type: String
     NoEcho: true
-    Description: "Password for NGINX basic authentication. This secures access to the application's web interface."
-    MinLength: 8
+    Description: "Password for NGINX basic authentication(Must be between 12 and 41 characters, containing at least one uppercase letter, one lowercase letter, one number, and one special character). This secures access to the application's web interface."
+    MinLength: 12
     MaxLength: 41
-    ConstraintDescription: "Must be between 8 and 41 characters containing letters, numbers and symbols."
+    AllowedPattern: "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{12,41}$"
+    ConstraintDescription: "Must be between 12 and 41 characters, containing at least one uppercase letter, one lowercase letter, one number, and one special character."
 
 Conditions:
   PrerequisitesMet: !Equals [!Ref PrerequisitesMet, "yes"]
