@@ -85,15 +85,9 @@ const props = defineProps<{
             </td>
           </tr>
            <tr v-if="props.experimentsData?.config?.kb_data">
-            <td class="font-medium">Bedrock Kb data</td>
+            <td class="font-medium">Knowledge Base Data</td>
             <td>{{
-              props.experimentsData?.config?.kb_data }}
-            </td>
-          </tr>
-          <tr v-if="props.experimentsData?.config?.kb_name">
-            <td class="font-medium">Bedrock Kb Name</td>
-            <td>{{
-              props.experimentsData?.config?.kb_name }}
+             props.experimentsData?.config?.bedrock_knowledge_base === true ? props.experimentsData?.config?.kb_name : props.experimentsData?.config?.kb_data }}
             </td>
           </tr>
           <tr v-if="props.experimentsData?.config?.guardrail_id">

@@ -119,7 +119,7 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
       return h(UButton, {
         color: "neutral",
         variant: "ghost",
-        label: "Inferencing Model",
+        label: "N Shot Prompts",
         icon: isSorted
           ? isSorted === "asc"
             ? "i-lucide-arrow-up-narrow-wide"
@@ -130,8 +130,28 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
       });
     },
     enableHiding: true,
-    accessorKey: "retrieval_model",
-    label: "Inferencing Model"
+    accessorKey: "n_shot_prompts",
+    label: "N Shot Prompts"
+  },
+  {
+    header: ({ column }) => {
+      const isSorted = column.getIsSorted();
+      return h(UButton, {
+        color: "neutral",
+        variant: "ghost",
+        label: "KNN",
+        icon: isSorted
+          ? isSorted === "asc"
+            ? "i-lucide-arrow-up-narrow-wide"
+            : "i-lucide-arrow-down-wide-narrow"
+          : "i-lucide-arrow-up-down",
+        class: "-mx-2.5",
+        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+      });
+    },
+    enableHiding: true,
+    accessorKey: "knn_num",
+    label: "KNN"
   },
   {
     header: ({ column }) => {
@@ -152,6 +172,26 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
     enableHiding: true,
     accessorKey: "rerank_model_id",
     label: "Reranking Model"
+  },
+  {
+    header: ({ column }) => {
+      const isSorted = column.getIsSorted();
+      return h(UButton, {
+        color: "neutral",
+        variant: "ghost",
+        label: "Inferencing Model",
+        icon: isSorted
+          ? isSorted === "asc"
+            ? "i-lucide-arrow-up-narrow-wide"
+            : "i-lucide-arrow-down-wide-narrow"
+          : "i-lucide-arrow-up-down",
+        class: "-mx-2.5",
+        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+      });
+    },
+    enableHiding: true,
+    accessorKey: "retrieval_model",
+    label: "Inferencing Model"
   },
   {
     header: ({ column }) => {
@@ -297,46 +337,6 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
       return h(UButton, {
         color: "neutral",
         variant: "ghost",
-        label: "N Shot Prompts",
-        icon: isSorted
-          ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
-        class: "-mx-2.5",
-        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
-    },
-    enableHiding: true,
-    accessorKey: "n_shot_prompts",
-    label: "N Shot Prompts"
-  },
-  {
-    header: ({ column }) => {
-      const isSorted = column.getIsSorted();
-      return h(UButton, {
-        color: "neutral",
-        variant: "ghost",
-        label: "KNN",
-        icon: isSorted
-          ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
-        class: "-mx-2.5",
-        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
-    },
-    enableHiding: true,
-    accessorKey: "knn_num",
-    label: "KNN"
-  },
-  {
-    header: ({ column }) => {
-      const isSorted = column.getIsSorted();
-      return h(UButton, {
-        color: "neutral",
-        variant: "ghost",
         label: "Inferencing Model Temperature",
         icon: isSorted
           ? isSorted === "asc"
@@ -468,8 +468,8 @@ const columnVisibility = ref({
   chunk_overlap : false,
   kb_name : false,
   // guardrail_name: false,
-  knn_num : false,
-  n_shot_prompts : false,
+  // knn_num : false,
+  // n_shot_prompts : false,
   vector_dimension : false,
   chunk_size : false
 })
