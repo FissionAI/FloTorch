@@ -102,6 +102,8 @@ def compute_actual_price_breakdown(
             inferencer_metadata['output_tokens'] = output_tokens
             question_details = calculate_experiment_question_details(experiment_question_metrics_items)
             retriever_metadata['no_of_questions'] = question_details["total_questions"]
+
+            inferencer_metadata['no_of_questions'] = question_details["total_questions"]
             inferencer_metadata['inference_time'] = question_details["overall_inferencer_time"]
             inferencer_metadata['average_latency'] = question_details["average_inferencer_time"]
 
@@ -177,11 +179,13 @@ def compute_actual_price_breakdown(
         retriever_ecs_cost = ecs_cost(retrieval_time)
         eval_ecs_cost = ecs_cost(eval_time)
 
-        indexing_metadata['ecs_cost'] = indexing_ecs_cost
+        if not bedrock_knowledge_base:
+            indexing_cost += indexing_ecs_cost
+            indexing_metadata['ecs_cost'] = indexing_ecs_cost
+
         retriever_metadata['ecs_cost'] = retriever_ecs_cost
         evaluator_metadata['ecs_cost'] = eval_ecs_cost
 
-        indexing_cost += indexing_ecs_cost
         retrieval_cost += retriever_ecs_cost
         eval_cost += eval_ecs_cost
         
@@ -211,7 +215,7 @@ def compute_actual_price_breakdown(
         overall_metadata['order'] = ['total_time', 'total_cost']
         indexing_metadata['order'] = ['model', 'service', 'knowledge_base_tokens', 'bedrock_cost', 'runtime', 'sagemaker_cost', 'ecs_cost', 'opensearch_cost', 'total_cost']
         retriever_metadata['order'] = ['no_of_questions', 'rerank_model', 'reranker_queries', 'reranking_cost', 'runtime', 'ecs_cost', 'opensearch_cost', 'total_cost']
-        inferencer_metadata['order'] = ['model', 'service', 'input_tokens', 'output_tokens', 'query_embed_tokens', 'input_tokens_cost', 'output_tokens_cost', 'query_embed_tokens_cost', 'runtime', 'sagemaker_embedding_cost', 'sagemaker_cost', 'ecs_cost', 'opensearch_cost', 'total_cost']
+        inferencer_metadata['order'] = ['model', 'service', 'no_of_questions', 'input_tokens', 'output_tokens', 'query_embed_tokens', 'input_tokens_cost', 'output_tokens_cost', 'query_embed_tokens_cost', 'average_latency', 'runtime', 'sagemaker_embedding_cost', 'sagemaker_cost', 'total_cost']
         evaluator_metadata['order'] = ['runtime', 'ecs_cost', 'opensearch_cost', 'sagemaker_embedding_cost', 'sagemaker_inferencer_cost', 'total_cost']
         return overall_metadata, indexing_metadata, retriever_metadata, inferencer_metadata, evaluator_metadata
     
