@@ -64,3 +64,8 @@ div.divide-y.divide-\[var\(--ui-border\)\].scroll-py-1 div[role='group'] {
   max-height: 150px;
   overflow-y:scroll;
 }
+
+div.divide-y.divide-\[var\(--ui-border\)\].scroll-py-1 div[role='group'] {
+  max-height: 165px;
+  overflow-y:scroll;
+}

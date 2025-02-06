@@ -63,7 +63,8 @@ const props = defineProps<{
             <td class="font-medium">Embedding Model</td>
             <td>{{ useModelName("indexing", props.experimentsData?.config?.embedding_model!) }} {{
               props.experimentsData?.config?.bedrock_knowledge_base ? 'NA' :
-              (useHumanModelService(props.experimentsData?.config?.embedding_service!)) }}
+              `(${useHumanModelService(props.experimentsData?.config?.embedding_service!)})`
+            }}
             </td>
           </tr>
           <tr>

@@ -305,6 +305,29 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
       return h(UButton, {
         color: "neutral",
         variant: "ghost",
+        label: "N Shot Prompts",
+        icon: isSorted
+          ? isSorted === "asc"
+            ? "i-lucide-arrow-up-narrow-wide"
+            : "i-lucide-arrow-down-wide-narrow"
+          : "i-lucide-arrow-up-down",
+        class: "-mx-2.5",
+        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+      });
+    },
+    label: "N Shot Prompts",
+    accessorKey: "config.n_shot_prompts",
+    enableHiding: true,
+    cell: ({ row }) => {
+      return row.original.config?.n_shot_prompts !== undefined || row.original.config?.n_shot_prompts !== null ? row.original.config.n_shot_prompts : "-"
+    }
+  },
+  {
+    header: ({ column }) => {
+      const isSorted = column.getIsSorted();
+      return h(UButton, {
+        color: "neutral",
+        variant: "ghost",
         label: "Embedding Model",
         icon: isSorted
           ? isSorted === "asc"
@@ -617,6 +640,7 @@ const columnVisibility = ref({
   config_indexing_algorithm: false,
   config_chunking_strategy: false,
   config_embedding_model: false,
+  config_n_shot_prompts: false,
 })
 </script>
 
@@ -685,12 +709,12 @@ const columnVisibility = ref({
                               <td>{{useHumanCurrencyAmount(row.original?.config?.retrieval_cost_estimate,3)}}</td>
                             </tr>
                             <tr>
-                              <td>Evaluation Cost Estimate:</td>
-                              <td>{{useHumanCurrencyAmount(row.original?.config?.eval_cost_estimate,3)}}</td>
-                            </tr>
-                            <tr>
                               <td>Inferencing Cost Estimate:</td>
                               <td>{{useHumanCurrencyAmount(row.original?.config?.inferencing_cost_estimate,3)}}</td>
+                            </tr>
+                            <tr>
+                              <td>Evaluation Cost Estimate:</td>
+                              <td>{{useHumanCurrencyAmount(row.original?.config?.eval_cost_estimate,3)}}</td>
                             </tr>
                           </tbody>
                         </table>
