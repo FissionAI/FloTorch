@@ -2,6 +2,14 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: Master template for FloTorch deployment
 
 Parameters:
+  PrerequisitesMet:
+    Type: String
+    Default: "no"
+    AllowedValues: 
+      - "yes"
+      - "no"
+    Description: "Have you completed the prerequisites? Choose 'yes' if you have read the installation guide (https://github.com/2.0.2/FissionAI/FloTorch/blob/main/install.md) and subscribed to FloTorch.ai from AWS Marketplace (https://aws.amazon.com/2.0.2/marketplace/pp/prodview-z5zcvloh7l3ky). Choose 'no' if you haven't completed these steps yet."
+
   ProjectName:
     Type: String
     Default: flotorch
@@ -52,11 +60,15 @@ Parameters:
     MaxLength: 41
     ConstraintDescription: "Must be between 8 and 41 characters containing letters, numbers and symbols."
 
+Conditions:
+  PrerequisitesMet: !Equals [!Ref PrerequisitesMet, "yes"]
+
 Resources:
   VPCStack:
     Type: AWS::CloudFormation::Stack
+    Condition: PrerequisitesMet
     Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/templates/vpc-template.yaml
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/2.0.2/templates/vpc-template.yaml
       Parameters:
         ProjectName: !Ref ProjectName
         ClientName: !Ref ClientName
@@ -67,7 +79,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     DependsOn: [VPCStack]
     Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/templates/ecr-repository-template.yaml
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/2.0.2/templates/ecr-repository-template.yaml
       Parameters:
         ProjectName: !Ref ProjectName
         CreatedBy: !Ref CreatedBy
@@ -77,7 +89,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     DependsOn: VPCStack
     Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/templates/vpc-endpoint-template.yaml
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/2.0.2/templates/vpc-endpoint-template.yaml
       Parameters:
         VPCId: !GetAtt VPCStack.Outputs.VpcId
         PrivateRouteTableId: !GetAtt VPCStack.Outputs.PrivateRouteTableId
@@ -91,7 +103,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     DependsOn: [VPCStack]
     Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/templates/dynamodb-template.yaml
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/2.0.2/templates/dynamodb-template.yaml
       Parameters:
         ProjectName: !Ref ProjectName
         TableSuffix: !Ref TableSuffix
@@ -102,7 +114,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     DependsOn: [VPCStack]
     Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/templates/opensearch-template.yaml
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/2.0.2/templates/opensearch-template.yaml
       Parameters:
         VpcId: !GetAtt VPCStack.Outputs.VpcId
         PrivateSubnetId: !GetAtt VPCStack.Outputs.PrivateSubnet1
@@ -118,7 +130,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     DependsOn: [VPCStack, DynamoDBStack, OpenSearchStack, ECRRepositoryStack]
     Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/templates/lambda-template.yaml
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/2.0.2/templates/lambda-template.yaml
       Parameters:
         TableSuffix: !Ref TableSuffix
         VpcId: !GetAtt VPCStack.Outputs.VpcId
@@ -139,18 +151,18 @@ Resources:
         CostComputeRepositoryUri: !GetAtt ECRRepositoryStack.Outputs.CostComputeRepositoryURI
         PublicSubnet1: !GetAtt VPCStack.Outputs.PublicSubnet1
         PrivateSubnet1: !GetAtt VPCStack.Outputs.PrivateSubnet1
-        IndexingImageTag: "2.0.1"
-        RetrieverImageTag: "2.0.1"
-        AppImageTag: "2.0.1.1"
-        EvaluationImageTag: "2.0.1"
-        RuntimeImageTag: "2.0.1"
-        CostComputeImageTag: "2.0.1"
+        IndexingImageTag: "2.0.2"
+        RetrieverImageTag: "2.0.2"
+        AppImageTag: "2.0.2"
+        EvaluationImageTag: "2.0.2"
+        RuntimeImageTag: "2.0.2"
+        CostComputeImageTag: "2.0.2"
 
   ECSStack:
     Type: AWS::CloudFormation::Stack
     DependsOn: [VPCStack, DynamoDBStack, OpenSearchStack, ECRRepositoryStack]
     Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/templates/ecs-template.yaml
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/2.0.2/templates/ecs-template.yaml
       Parameters:
         TableSuffix: !Ref TableSuffix
         VpcId: !GetAtt VPCStack.Outputs.VpcId
@@ -171,7 +183,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     DependsOn: [VPCStack, ECSStack, LambdaStack, DynamoDBStack, OpenSearchStack]
     Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/templates/state-machine-template.yaml
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/2.0.2/templates/state-machine-template.yaml
       Parameters:
         TableSuffix: !Ref TableSuffix
         VpcId: !GetAtt VPCStack.Outputs.VpcId
@@ -197,7 +209,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     DependsOn: [ECRRepositoryStack, DynamoDBStack, OpenSearchStack, StateMachineStack]
     Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/templates/app-runner-template.yaml
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/2.0.2/templates/app-runner-template.yaml
       Parameters:
         TableSuffix: !Ref TableSuffix
         Region: !Ref AWS::Region
@@ -212,7 +224,7 @@ Resources:
         VpcConnectorArn: !GetAtt VPCStack.Outputs.VpcConnectorArn
         BedrockRoleArn: !GetAtt VPCStack.Outputs.BedrockRoleArn
         EcrRepositoryUri: !GetAtt ECRRepositoryStack.Outputs.AppRepositoryURI
-        AppImageTag: "2.0.1.1"
+        AppImageTag: "2.0.2"
 
 Outputs:
   AppRunnerServiceUrl:
