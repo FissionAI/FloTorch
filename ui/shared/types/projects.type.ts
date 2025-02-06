@@ -27,9 +27,17 @@ export const ProjectCreateDataStrategySchema = z.object({
     required_error : "Knowledge Base Model is required"
   }),
   kb_data: z.union([
-    z.string().min(1, { message: "Knowledge Base data is required" }),
-    z.array(z.string()).min(1, { message: "Knowledge Base data is required" })
-  ]),
+    z.string({
+      required_error : "Knowledge Base data is required",
+      invalid_type_error : "Knowledge Base data is required"
+    }).min(1, { message: "Knowledge Base data is required" }),
+    z.array(z.string({
+      required_error : "Knowledge Base data is required",
+      invalid_type_error : "Knowledge Base data is required"
+    })).min(1, { message: "Knowledge Base data is required" })
+  ], {
+    errorMap: (issue, ctx) => ({ message: "Knowledge Base data is required" }),
+  }),
   gt_data: z.string({
     required_error: "Ground Truth data is required",
   }),

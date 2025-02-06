@@ -64,6 +64,31 @@ const columns = ref<TableColumn<ExperimentQuestionMetric>[]>([
   },
 ]);
 
+const indexing_order = ref(['model', 'service', 'knowledge_base_tokens', 'bedrock_cost', 'runtime', 'ecs_cost', 'opensearch_cost', 'total_cost'])
+
+const overall_metadata = computed(() => {
+  return experimentsData.value.overall_metadata;
+})
+
+const indexing_metadata = computed(() => {
+    // return {...experimentsData.value.indexing_metadata,
+    //   order: ['model', 'service', 'knowledge_base_tokens', 'bedrock_cost', 'runtime', 'ecs_cost', 'opensearch_cost', 'total_cost']
+    // }
+  return experimentsData.value.indexing_metadata;
+})
+
+const retriever_metadata = computed(() => {
+  return experimentsData.value.retriever_metadata;
+})
+
+const inferencer_metadata = computed(() => {
+  return experimentsData.value.inferencer_metadata;
+})
+
+const evaluation_metadata = computed(() => {
+  return experimentsData.value.eval_metadata;
+})
+
 const items = ref([
   {
     label: "Question Metrics",
@@ -93,7 +118,7 @@ const items = ref([
         <UCard>
           <template #header>
             <div class="flex justify-between items-center">
-              <h2 class="text-xl font-medium">Experiment Question Metrics</h2>
+              <h2 class="text-xl font-medium">Experiment Question Metrics ({{ questionMetrics?.question_metrics?.length }})</h2>
               <DownloadResultsButton
                 :results="questionMetrics?.question_metrics"
                 button-label="Download Results"
@@ -160,139 +185,160 @@ const items = ref([
           </template>
           <UCard class="my-5">
             <template #header>
-              <h4 class="text-lg font-medium">Price</h4>
+              <h4 class="text-lg font-medium">Overall</h4>
             </template>
             <table class="w-full">
               <tbody>
-                <tr>
-                  <td class="font-medium w-40">Indexing Cost</td>
-                  <td class="w-40">
-                    {{
-                      experimentsData?.indexing_cost ?
-                      useHumanCurrencyAmount(
-                        experimentsData?.indexing_cost
-                      ) : !experimentsData?.config?.bedrock_knowledge_base ? 'Unable to fetch data ' : 'Bedrock knowledge base pricing not included'
-                    }}
+                <tr v-if="overall_metadata">
+                  <td colspan="2">
+                    <table class="w-full">
+                      <tbody>
+                        <tr v-for="key in overall_metadata.order" :key="key">
+                          <td class="font-medium w-40 break-all">{{ key === 'ecs_cost' ? 'ECS Cost' : key.split('_').join(' ').replace(/\w\S*/g, (w) => (w.replace(/^\w/, (c) => c.toUpperCase()))) }}</td>
+                          <td v-if="key.includes('time')" class="w-40 break-all">{{ useConvertSecondsToDHM(Number(overall_metadata[key])) }}</td>
+                          <td v-else-if="key.includes('cost')" class="w-40 break-all">{{ useHumanCurrencyAmount(Number(overall_metadata[key])) }}</td>
+                          <td v-else class="w-40 break-all">{{ overall_metadata[key] }}</td> 
+                        </tr>
+                      </tbody>
+                    </table>
                   </td>
                 </tr>
-                <tr>
-                  <td class="font-medium">Retrieval Cost</td>
-                  <td>
-                    {{
-                      experimentsData?.retrieval_cost ? 
-                      useHumanCurrencyAmount(
-                        experimentsData?.retrieval_cost
-                      ) : 'Unable to fetch data'
-                    }}
+                <tr v-else>
+                  <td colspan="2">
+                    <div class="flex flex-col items-center justify-center py-6">
+                      <p>No valid metrics are found...!</p>
+                    </div>
                   </td>
                 </tr>
-                <tr>
-                  <td class="font-medium">Inferencing Cost</td>
-                  <td>
-                  
-                    {{
-                      experimentsData?.inferencing_cost ? 
-                      useHumanCurrencyAmount(
-                        experimentsData?.inferencing_cost
-                      ) : 'Unable to fetch data'
-                    }}
+              </tbody>
+            </table>
+          </UCard>
+          <UCard class="my-5">
+            <template #header>
+              <h4 class="text-lg font-medium">Indexing</h4>
+            </template>
+            <table class="w-full">
+              <tbody>
+                <tr v-if="indexing_metadata">
+                  <td colspan="2">
+                    <table class="w-full">
+                      <tbody>
+                        <tr v-for="key in indexing_metadata.order" :key="key">
+                          <td class="font-medium w-40 break-all">{{ 
+                            key === 'ecs_cost' 
+                              ? 'ECS Cost' 
+                              : key.split('_').join(' ').replace(/\w\S*/g, (w) => (w.replace(/^\w/, (c) => c.toUpperCase())))
+                          }}</td>
+                          <td v-if="key.includes('time') || key.includes('latency')" class="w-40 break-all">{{ useConvertSecondsToDHM(Number(indexing_metadata[key])) }}</td>
+                          <td v-else-if="key.includes('cost')" class="w-40 break-all">{{ useHumanCurrencyAmount(Number(indexing_metadata[key])) }}</td>
+                          <td v-else class="w-40 break-all">{{ indexing_metadata[key] }}</td> 
+                        </tr>
+                      </tbody>
+                    </table>
                   </td>
                 </tr>
-                <tr>
-                  <td class="font-medium">Evaluation Cost</td>
-                  <td>
-                  
-                    {{
-                      experimentsData?.eval_cost ? 
-                      useHumanCurrencyAmount(
-                        experimentsData?.eval_cost
-                      ) : 'Unable to fetch data'
-                    }}
+                <tr v-else>
+                  <td colspan="2">
+                    <div class="flex flex-col items-center justify-center py-6">
+                      <p>No valid metrics are found...!</p>
+                    </div>
                   </td>
                 </tr>
-                 
               </tbody>
             </table>
           </UCard>
 
-          <UCard>
+          <UCard class="my-5">
             <template #header>
-              <h4 class="text-lg font-medium">Time</h4>
+              <h4 class="text-lg font-medium">Retrieval</h4>
             </template>
             <table class="w-full text-left">
               <tbody>
-                <tr>
-                  <td class="font-medium w-40">Indexing Time</td>
-                  <td class="w-40">
-                    {{ 
-                      experimentsData?.indexing_time ? 
-                      useConvertSecondsToDHM(Number(experimentsData?.indexing_time)) 
-                      : !experimentsData?.config?.bedrock_knowledge_base ? "Unable to fetch time" : 'NA'
-                    }}
+                <tr v-if="retriever_metadata">
+                  <td colspan="2">
+                    <table class="w-full">
+                      <tbody>
+                        <tr v-for="key in retriever_metadata.order" :key="key">
+                          <td class="font-medium w-40 break-all">{{ key === 'ecs_cost' ? 'ECS Cost' : key.split('_').join(' ').replace(/\w\S*/g, (w) => (w.replace(/^\w/, (c) => c.toUpperCase()))) }}</td>
+                          <td v-if="key.includes('time') || key.includes('latency')" class="w-40 break-all">{{ useConvertSecondsToDHM(Number(retriever_metadata[key])) }}</td>
+                          <td v-else-if="key.includes('cost')" class="w-40 break-all">{{ useHumanCurrencyAmount(Number(retriever_metadata[key])) }}</td>
+                          <td v-else class="w-40 break-all">{{ retriever_metadata[key] }}</td> 
+                        </tr>
+                      </tbody>
+                    </table>
                   </td>
                 </tr>
-                <tr>
-                  <td class="font-medium">Retrieval Time</td>
-                  <td>
-                    {{
-                      experimentsData?.retrieval_time ? 
-                      useConvertSecondsToDHM(Number(experimentsData?.retrieval_time))
-                      : 'Unable to fetch time'
-                    }}
-                  </td>
-                </tr>
-                <tr>
-                  <td class="font-medium">Evaluation Time</td>
-                  <td >
-                    {{ 
-                      experimentsData?.eval_time ? 
-                      useConvertSecondsToDHM(Number(experimentsData?.eval_time))
-                      :'Unable to fetch time'
-                    }}
+                <tr v-else>
+                  <td colspan="2">
+                    <div class="flex flex-col items-center justify-center py-6">
+                      <p>No valid metrics are found...!</p>
+                    </div>
                   </td>
                 </tr>
               </tbody>
             </table>
           </UCard>
 
-          <UCard class="my-4">
+          <UCard class="my-5">
             <template #header>
-              <h4 class="text-lg font-medium">Tokens</h4>
+              <h4 class="text-lg font-medium">Inferencer</h4>
             </template>
-            <table class="w-full">
+            <table class="w-full text-left">
               <tbody>
-                <tr>
-                  <td class="font-medium w-40">Indexing Embedded Tokens</td>
-                  <td class="w-40">
-                    {{ experimentsData?.index_embed_tokens || 'NA' }}
+                <tr v-if="inferencer_metadata">
+                  <td colspan="2">
+                    <table class="w-full">
+                      <tbody>
+                        <tr v-for="key in inferencer_metadata.order" :key="key">
+                          <td class="font-medium w-40 break-all">{{ key === 'ecs_cost' ? 'ECS Cost' : key.split('_').join(' ').replace(/\w\S*/g, (w) => (w.replace(/^\w/, (c) => c.toUpperCase()))) }}</td>
+                          <td v-if="key.includes('time') || key.includes('latency')" class="w-40 break-all">{{ useConvertSecondsToDHM(Number(inferencer_metadata[key])) }}</td>
+                          <td v-else-if="key.includes('cost')" class="w-40 break-all">{{ useHumanCurrencyAmount(Number(inferencer_metadata[key])) }}</td>
+                          <td v-else class="w-40 break-all">{{ inferencer_metadata[key] }}</td> 
+                        </tr>
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+                <tr v-else>
+                  <td colspan="2">
+                    <div class="flex flex-col items-center justify-center py-6">
+                      <p>No valid metrics are found...!</p>
+                    </div>
                   </td>
                 </tr>
               </tbody>
             </table>
-            <UCard class="my-4">
-              <template #header>
-                <h4 class="font-medium">
-                  Total Tokens for
-                  {{ questionMetrics?.question_metrics?.length }} Questions
-                </h4>
-              </template>
-              <table class="w-full">
-                <tbody>
-                  <tr>
-                    <td class="font-medium w-40">Inferecing Input Tokens</td>
-                    <td class="w-40">{{ experimentsData?.retrieval_input_tokens || 'NA' }}</td>
-                  </tr>
-                  <tr>
-                    <td class="font-medium">Inferencing Output Tokens</td>
-                    <td>{{ experimentsData?.retrieval_output_tokens || 'NA' }}</td>
-                  </tr>
-                  <tr>
-                    <td class="font-medium">Retrieval Query Embedded Tokens</td>
-                    <td>{{ experimentsData?.retrieval_query_embed_tokens || 'NA' }}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </UCard>
+          </UCard>
+
+          <UCard class="my-5">
+            <template #header>
+              <h4 class="text-lg font-medium">Evaluation</h4>
+            </template>
+            <table class="w-full text-left">
+              <tbody>
+                <tr v-if="evaluation_metadata">
+                  <td colspan="2">
+                    <table class="w-full">
+                      <tbody>
+                        <tr v-for="key in evaluation_metadata.order" :key="key">
+                          <td class="font-medium w-40 break-all">{{ key === 'ecs_cost' ? 'ECS Cost' : key.split('_').join(' ').replace(/\w\S*/g, (w) => (w.replace(/^\w/, (c) => c.toUpperCase()))) }}</td>
+                          <td v-if="key.includes('time') || key.includes('latency')" class="w-40 break-all">{{ useConvertSecondsToDHM(Number(evaluation_metadata[key])) }}</td>
+                          <td v-else-if="key.includes('cost')" class="w-40 break-all">{{ useHumanCurrencyAmount(Number(evaluation_metadata[key])) }}</td>
+                          <td v-else class="w-40 break-all">{{ evaluation_metadata[key] }}</td> 
+                        </tr>
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+                <tr v-else>
+                  <td colspan="2">
+                    <div class="flex flex-col items-center justify-center py-6">
+                      <p>No valid metrics are found...!</p>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </UCard>
         </UCard>
       </template>

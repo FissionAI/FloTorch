@@ -23,7 +23,7 @@ useHead({
       <slot />
     </main>
     <footer class="bg-gray-800 text-white p-2 text-sm">
-      <div class="container max-w-7xl mx-auto flex justify-center items-center">
+      <div class="container mx-auto flex justify-center items-center">
         <div>
           Powered by <a href="https://flotorch.ai?utm_source=flowtorch-repo" target="_blank"
             class="text-white underline">FloTorch.ai</a>. For
@@ -34,3 +34,14 @@ useHead({
     </footer>
   </div>
 </template>
+
+
+<style>
+
+main.container {
+  width: 100% !important;
+  max-width: unset !important;
+  min-width: unset !important;
+  padding: 50px !important;
+}
+</style>

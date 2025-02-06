@@ -79,8 +79,11 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
     sortingFn: (rowA, rowB) => {
       const getChunkingValue = (row: any) => {
         const strategy = useHumanChunkingStrategy(row.chunking_strategy);
+        if (!strategy) return 'NA';
         if (strategy === 'Hierarchical') {
-          return `${row.hierarchical_child_chunk_size}-${row.hierarchical_parent_chunk_size}`;
+          return row.hierarchical_child_chunk_size && row.hierarchical_parent_chunk_size
+            ? `${row.hierarchical_child_chunk_size}-${row.hierarchical_parent_chunk_size}`
+            : 'NA';
         }
         return strategy;
       };
@@ -89,6 +92,95 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
       const b = getChunkingValue(rowB.original);
       return a.localeCompare(b);
     }
+  },
+  {
+    header: ({ column }) => {
+      const isSorted = column.getIsSorted();
+      return h(UButton, {
+        color: "neutral",
+        variant: "ghost",
+        label: "Embedding Model",
+        icon: isSorted
+          ? isSorted === "asc"
+            ? "i-lucide-arrow-up-narrow-wide"
+            : "i-lucide-arrow-down-wide-narrow"
+          : "i-lucide-arrow-up-down",
+        class: "-mx-2.5",
+        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+      });
+    },
+    enableHiding: true,
+    accessorKey: "embedding_model",
+    label: "Embedding Model"
+  },
+  {
+    header: ({ column }) => {
+      const isSorted = column.getIsSorted();
+      return h(UButton, {
+        color: "neutral",
+        variant: "ghost",
+        label: "Inferencing Model",
+        icon: isSorted
+          ? isSorted === "asc"
+            ? "i-lucide-arrow-up-narrow-wide"
+            : "i-lucide-arrow-down-wide-narrow"
+          : "i-lucide-arrow-up-down",
+        class: "-mx-2.5",
+        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+      });
+    },
+    enableHiding: true,
+    accessorKey: "retrieval_model",
+    label: "Inferencing Model"
+  },
+  {
+    header: ({ column }) => {
+      const isSorted = column.getIsSorted();
+      return h(UButton, {
+        color: "neutral",
+        variant: "ghost",
+        label: "Reranking Model",
+        icon: isSorted
+          ? isSorted === "asc"
+            ? "i-lucide-arrow-up-narrow-wide"
+            : "i-lucide-arrow-down-wide-narrow"
+          : "i-lucide-arrow-up-down",
+        class: "-mx-2.5",
+        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+      });
+    },
+    enableHiding: true,
+    accessorKey: "rerank_model_id",
+    label: "Reranking Model"
+  },
+  {
+    header: ({ column }) => {
+      const isSorted = column.getIsSorted();
+      return h(UButton, {
+        color: "neutral",
+        variant: "ghost",
+        label: "Guardrail",
+        icon: isSorted
+          ? isSorted === "asc"
+            ? "i-lucide-arrow-up-narrow-wide"
+            : "i-lucide-arrow-down-wide-narrow"
+          : "i-lucide-arrow-up-down",
+        class: "-mx-2.5",
+        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+      });
+    },
+    enableHiding: true,
+    accessorKey: "guardrail_name",
+    label: "Guardrail",
+    cell: ({ row }) => {
+      return row.original.guardrail_name || 'NA';
+    }
+  },
+  {
+    header: 'Directional Cost',
+    enableHiding: true,
+    accessorKey: "directional_pricing",
+    label: "Directional Cost"
   },
   {
     header: ({ column }) => {
@@ -158,26 +250,6 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
       const b = getOverlapValue(rowB.original);
       return a - b;
     }
-  },
-  {
-    header: ({ column }) => {
-      const isSorted = column.getIsSorted();
-      return h(UButton, {
-        color: "neutral",
-        variant: "ghost",
-        label: "Embedding Model",
-        icon: isSorted
-          ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
-        class: "-mx-2.5",
-        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
-    },
-    enableHiding: true,
-    accessorKey: "embedding_model",
-    label: "Embedding Model"
   },
   {
     header: ({ column }) => {
@@ -265,26 +337,6 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
       return h(UButton, {
         color: "neutral",
         variant: "ghost",
-        label: "Inferencing Model",
-        icon: isSorted
-          ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
-        class: "-mx-2.5",
-        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
-    },
-    enableHiding: true,
-    accessorKey: "retrieval_model",
-    label: "Inferencing Model"
-  },
-  {
-    header: ({ column }) => {
-      const isSorted = column.getIsSorted();
-      return h(UButton, {
-        color: "neutral",
-        variant: "ghost",
         label: "Inferencing Model Temperature",
         icon: isSorted
           ? isSorted === "asc"
@@ -360,12 +412,6 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
     label: "Evaluation Inferencing Model"
   },
   {
-    header: 'Directional Cost',
-    enableHiding: true,
-    accessorKey: "directional_pricing",
-    label: "Directional Cost"
-  },
-  {
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
       return h(UButton, {
@@ -391,49 +437,6 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
       return h(UButton, {
         color: "neutral",
         variant: "ghost",
-        label: "Reranking Model",
-        icon: isSorted
-          ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
-        class: "-mx-2.5",
-        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
-    },
-    enableHiding: true,
-    accessorKey: "rerank_model_id",
-    label: "Reranking Model"
-  },
-  {
-    header: ({ column }) => {
-      const isSorted = column.getIsSorted();
-      return h(UButton, {
-        color: "neutral",
-        variant: "ghost",
-        label: "Guardrail",
-        icon: isSorted
-          ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
-        class: "-mx-2.5",
-        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
-    },
-    enableHiding: true,
-    accessorKey: "guardrail_name",
-    label: "Guardrail",
-    cell: ({ row }) => {
-      return row.original.guardrail_name || 'NA';
-    }
-  },
-  {
-    header: ({ column }) => {
-      const isSorted = column.getIsSorted();
-      return h(UButton, {
-        color: "neutral",
-        variant: "ghost",
         label: "Bedrock Kb Name",
         icon: isSorted
           ? isSorted === "asc"
@@ -446,7 +449,10 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
     },
     enableHiding: true,
     accessorKey: "kb_name",
-    label: "Bedrock Kb Name"
+    label: "Bedrock Kb Name",
+    cell: ({ row }) => {
+      return row.original.kb_name ? row.original.kb_name : 'NA';
+    }
   }
 ])
 
@@ -512,7 +518,7 @@ const columnVisibility = ref({
           @click="column.toggleSorting(column.getIsSorted() === 'asc')"
         >
           <span class="whitespace-pre-wrap">
-          {{ 'Directional\nPricing' }}
+          {{ 'Directional\nCost' }}
           </span>
         </UButton>
       </template>
