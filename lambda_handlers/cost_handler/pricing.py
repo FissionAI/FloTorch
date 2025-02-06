@@ -101,7 +101,7 @@ def compute_actual_price_breakdown(
             inferencer_metadata['input_tokens'] = input_tokens
             inferencer_metadata['output_tokens'] = output_tokens
             question_details = calculate_experiment_question_details(experiment_question_metrics_items)
-            inferencer_metadata['no_of_questions'] = question_details["total_questions"]
+            retriever_metadata['no_of_questions'] = question_details["total_questions"]
             inferencer_metadata['inference_time'] = question_details["overall_inferencer_time"]
             inferencer_metadata['average_latency'] = question_details["average_inferencer_time"]
 
@@ -135,17 +135,17 @@ def compute_actual_price_breakdown(
                 inferencer_metadata['query_embed_tokens'] = query_embed_tokens
                 inferencer_metadata['query_embed_tokens_cost'] = query_embedding_cost
             if rerank_model_id:
-                inferencer_metadata['rerank_model'] = rerank_model_id
-                inferencer_metadata['reranker_queries'] = question_details["reranker_queries"]
+                retriever_metadata['rerank_model'] = rerank_model_id
+                retriever_metadata['reranker_queries'] = question_details["reranker_queries"]
                 reranker_model_price = df[(df["model"] == rerank_model_id) & (df["Region"] == aws_region)]["input_price"]
                 if reranker_model_price.empty:
                     logger.error(f"No reranker model {rerank_model_id} price found.")
                     return None
                 reranker_model_price = float(reranker_model_price.values[0])  # Price per 1000 queries
                 reranking_cost = (reranker_model_price * float(question_details['reranker_queries'])) / THOUSAND
-                inferencer_metadata['reranking_cost'] = reranking_cost
-
-            inferencing_cost = retrieval_model_input_actual_cost + retrieval_model_output_actual_cost + query_embedding_cost + reranking_cost
+                retriever_metadata['reranking_cost'] = reranking_cost
+                retrieval_cost += reranking_cost
+            inferencing_cost = retrieval_model_input_actual_cost + retrieval_model_output_actual_cost + query_embedding_cost
         else:
             inferencer_metadata['runtime'] = retrieval_time
             inferencing_cost = sagemaker_cost(retrieval_time)
@@ -208,6 +208,11 @@ def compute_actual_price_breakdown(
         total_cost = indexing_cost + retrieval_cost + inferencing_cost + eval_cost
         overall_metadata['total_cost'] = total_cost
         overall_metadata['total_time'] = total_time
+        overall_metadata['order'] = ['total_time', 'total_cost']
+        indexing_metadata['order'] = ['model', 'service', 'knowledge_base_tokens', 'bedrock_cost', 'runtime', 'sagemaker_cost', 'ecs_cost', 'opensearch_cost', 'total_cost']
+        retriever_metadata['order'] = ['no_of_questions', 'rerank_model', 'reranker_queries', 'reranking_cost', 'runtime', 'ecs_cost', 'opensearch_cost', 'total_cost']
+        inferencer_metadata['order'] = ['model', 'service', 'input_tokens', 'output_tokens', 'query_embed_tokens', 'input_tokens_cost', 'output_tokens_cost', 'query_embed_tokens_cost', 'runtime', 'sagemaker_embedding_cost', 'sagemaker_cost', 'ecs_cost', 'opensearch_cost', 'total_cost']
+        evaluator_metadata['order'] = ['runtime', 'ecs_cost', 'opensearch_cost', 'sagemaker_embedding_cost', 'sagemaker_inferencer_cost', 'total_cost']
         return overall_metadata, indexing_metadata, retriever_metadata, inferencer_metadata, evaluator_metadata
     
     except Exception as e:
@@ -216,7 +221,7 @@ def compute_actual_price_breakdown(
 
 def sagemaker_cost(time, number_of_instances = 1):
     instance_cost_per_hour = 1.210 #per hour ml.g5.2xlarge per model
-    overall_cost = instance_cost_per_hour * number_of_instances * (time / MINUTES_IN_HOUR)
+    overall_cost = instance_cost_per_hour * number_of_instances * ((time / SECONDS_IN_MINUTE) / MINUTES_IN_HOUR)
     
     return overall_cost
 
@@ -224,17 +229,17 @@ def opensearch_cost(time):
     number_of_instances = 3
 
     instance_cost_per_hour = 0.711 # r7g.2xlarge.search
-    instance_total_cost = (instance_cost_per_hour * number_of_instances * time / MINUTES_IN_HOUR)
+    instance_total_cost = (instance_cost_per_hour * number_of_instances * (time / SECONDS_IN_MINUTE) / MINUTES_IN_HOUR)
 
     ebs_volume_size = 10  # 2 GB
     ebs_volume_price_per_month = .122 
-    ebs_total_cost = ebs_volume_price_per_month * ebs_volume_size * number_of_instances * (time / MINUTES_IN_HOUR) / (HOURS_IN_DAY * DAYS_IN_MONTH) # 3 instances for 10GB each
+    ebs_total_cost = ebs_volume_price_per_month * ebs_volume_size * number_of_instances * ((time / SECONDS_IN_MINUTE) / MINUTES_IN_HOUR) / (HOURS_IN_DAY * DAYS_IN_MONTH) # 3 instances for 10GB each
     
     iops_cost_per_month = .008
     iops_per_instance = 16000  # instances per hour for 16000 IOPS (3000 free)
     free_iops = 3000
     costing_iops_per_instance = iops_per_instance - free_iops
-    iops_total_cost = iops_cost_per_month * costing_iops_per_instance * number_of_instances * (time / MINUTES_IN_HOUR) / (HOURS_IN_DAY * DAYS_IN_MONTH) # 3 instances for 16000 iops each
+    iops_total_cost = iops_cost_per_month * costing_iops_per_instance * number_of_instances * ((time / SECONDS_IN_MINUTE) / MINUTES_IN_HOUR) / (HOURS_IN_DAY * DAYS_IN_MONTH) # 3 instances for 16000 iops each
 
     overall_cost =  instance_total_cost + ebs_total_cost + iops_total_cost
     
@@ -250,7 +255,7 @@ def ecs_cost(time):
     fargate_cpu_total_cost = fargate_cpu_cost_per_vcpu * vCPU
     fargate_memory_total_cost = fargate_memory_cost_per_gb * memory
 
-    overall_cost = (fargate_cpu_total_cost + fargate_memory_total_cost) * (time / MINUTES_IN_HOUR)
+    overall_cost = (fargate_cpu_total_cost + fargate_memory_total_cost) * ((time / SECONDS_IN_MINUTE) / MINUTES_IN_HOUR)
     return overall_cost
 
 def calculate_experiment_duration(experiment):

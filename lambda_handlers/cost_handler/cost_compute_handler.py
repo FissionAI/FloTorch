@@ -107,10 +107,10 @@ def lambda_handler(event, context):
             output_tokens=total_answer_output_tokens,
             index_embed_tokens=total_index_embed_tokens,
             query_embed_tokens=total_query_embed_tokens,
-            total_time=total_duration_in_min,
-            indexing_time=indexing_time_in_min,
-            retrieval_time=retrieval_time_in_min,
-            eval_time=eval_time_in_min,
+            total_time=total_duration,
+            indexing_time=indexing_time,
+            retrieval_time=retrieval_time,
+            eval_time=eval_time,
             experiment_question_metrics_items=experiment_question_metrics_items
         )
 
