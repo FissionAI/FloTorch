@@ -586,7 +586,7 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
       return a.localeCompare(b);
     },
     cell: ({ row }) => {
-      return row.original.config?.kb_name ? row.original.config.kb_name : "-"
+      return row.original.config?.kb_name ? row.original.config.kb_name : "NA"
     }
   },
 ])
@@ -687,6 +687,10 @@ const columnVisibility = ref({
                             <tr>
                               <td>Evaluation Cost Estimate:</td>
                               <td>{{useHumanCurrencyAmount(row.original?.config?.eval_cost_estimate,3)}}</td>
+                            </tr>
+                            <tr>
+                              <td>Inferencing Cost Estimate:</td>
+                              <td>{{useHumanCurrencyAmount(row.original?.config?.inferencing_cost_estimate,3)}}</td>
                             </tr>
                           </tbody>
                         </table>

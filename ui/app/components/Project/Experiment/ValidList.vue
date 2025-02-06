@@ -411,26 +411,26 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
     accessorKey: "eval_retrieval_model",
     label: "Evaluation Inferencing Model"
   },
-  {
-    header: ({ column }) => {
-      const isSorted = column.getIsSorted();
-      return h(UButton, {
-        color: "neutral",
-        variant: "ghost",
-        label: "Region",
-        icon: isSorted
-          ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
-        class: "-mx-2.5",
-        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
-    },
-    enableHiding: true,
-    accessorKey: "region",
-    label: "Region"
-  },
+  // {
+  //   header: ({ column }) => {
+  //     const isSorted = column.getIsSorted();
+  //     return h(UButton, {
+  //       color: "neutral",
+  //       variant: "ghost",
+  //       label: "Region",
+  //       icon: isSorted
+  //         ? isSorted === "asc"
+  //           ? "i-lucide-arrow-up-narrow-wide"
+  //           : "i-lucide-arrow-down-wide-narrow"
+  //         : "i-lucide-arrow-up-down",
+  //       class: "-mx-2.5",
+  //       onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+  //     });
+  //   },
+  //   enableHiding: true,
+  //   accessorKey: "region",
+  //   label: "Region"
+  // },
   {
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
@@ -458,7 +458,7 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
 
 const columnVisibility = ref({
   select: props.selectable ?? false,
-  region: false,
+  // region: false,
   // rerank_model_id: false,
   eval_retrieval_model: false,
   eval_embedding_model: false,
@@ -518,7 +518,7 @@ const columnVisibility = ref({
           @click="column.toggleSorting(column.getIsSorted() === 'asc')"
         >
           <span class="whitespace-pre-wrap">
-          {{ 'Directional\nCost' }}
+          {{ 'Directional Cost' }}
           </span>
         </UButton>
       </template>
