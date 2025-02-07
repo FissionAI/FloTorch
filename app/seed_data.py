@@ -15,6 +15,7 @@ MODELS = {
     "bedrock_amazon.titan-text-express-v1": 14,
     "bedrock_us.anthropic.claude-3-5-sonnet-20241022-v2:0": 5,
     "bedrock_anthropic.claude-3-5-sonnet-20240620-v1:0": 5,
+    "bedrock_us.anthropic.claude-3-5-haiku-20241022-v1:0": 5,
     "bedrock_cohere.command-r-plus-v1:0": 25,
     "bedrock_cohere.command-r-v1:0": 14,
     "bedrock_us.meta.llama3-2-1b-instruct-v1:0": 14,
@@ -40,7 +41,10 @@ MODELS = {
     "sagemaker_meta-textgeneration-llama-3-1-8b-instruct": 2,
     "sagemaker_huggingface-llm-falcon-7b-instruct-bf16": 2,
     "sagemaker_meta-textgeneration-llama-3-3-70b-instruct": 4,
-    "sagemaker_deepseek-ai/DeepSeek-R1-Distill-Llama-8B": 2
+    "sagemaker_deepseek-ai/DeepSeek-R1-Distill-Llama-8B": 2,
+    "sagemaker_deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B": 4,
+    "sagemaker_deepseek-ai/DeepSeek-R1-Distill-Qwen-7B": 2,
+    "sagemaker_deepseek-ai/DeepSeek-R1-Distill-Qwen-14B": 2
 }
 
 def seed_models(execution_model_invocations_db) -> int:

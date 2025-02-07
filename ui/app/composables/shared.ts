@@ -432,7 +432,7 @@ export const useProjectCreateMeta = () => {
           value: "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B",
           service: "sagemaker",
           type: "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B",
-          model_name : "ml.g5.2xlarge"
+          model_name : "ml.p4d.24xlarge"
         },
       ],
       temperature: [
