@@ -334,7 +334,6 @@ class SageMakerInferencer(BaseInferencer):
     def generate_prompt(self, experiment_config: ExperimentalConfig, default_prompt: str, user_query: str, context: List[Dict]):
         n_shot_prompt_guide = experiment_config.n_shot_prompt_guide_obj
         n_shot_prompt = experiment_config.n_shot_prompts
-        print(user_query)
         # Input validation
         if n_shot_prompt < 0:
             raise ValueError("n_shot_prompt must be non-negative")
