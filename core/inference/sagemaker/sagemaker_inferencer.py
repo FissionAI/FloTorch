@@ -51,7 +51,7 @@ INFERENCER_MODELS = {
     ,
     "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B": {
         "model_source": "huggingface",
-        "instance_type": "ml.g6e.12xlarge"
+        "instance_type": "ml.p4d.24xlarge"
     }
 }
 
