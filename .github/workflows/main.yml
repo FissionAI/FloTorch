@@ -1,0 +1,70 @@
+name: Deploy FloTorch Stack
+
+on:
+  workflow_dispatch:
+    inputs:
+      AWS_REGION:
+        description: "AWS Region (e.g., us-east-1)"
+        required: true
+        default: "us-east-1"
+
+      PROJECT_NAME:
+        description: "Project Name (e.g., flotorch)"
+        required: true
+        default: "flotorch"
+
+      TABLE_SUFFIX:
+        description: "Unique Table Suffix (6 lowercase letters)"
+        required: true
+
+      CLIENT_NAME:
+        description: "Client Name (e.g., flotorch)"
+        required: true
+        default: "flotorch"
+
+      CREATED_BY:
+        description: "Created by (e.g., DevOpsTeam)"
+        required: true
+        default: "DevOpsTeam"
+
+      OPENSEARCH_ADMIN_USER:
+        description: "OpenSearch Admin Username"
+        required: true
+        default: "admin"
+
+      OPENSEARCH_ADMIN_PASSWORD:
+        description: "OpenSearch Admin Password"
+        required: true
+
+      NGINX_AUTH_PASSWORD:
+        description: "Nginx Auth Password"
+        required: true
+
+      TEMPLATE_VERSION:
+        description: "FloTorch Template Version"
+        required: true
+
+jobs:
+
+  deploy:
+    runs-on: [self-hosted, FloTorch] 
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Deploy FloTorch Master Stack
+        run: |
+          aws cloudformation create-stack \
+            --region ${{ inputs.AWS_REGION }} \
+            --stack-name flotorch-stack \
+            --template-url https://flotorch-public.s3.amazonaws.com/${{ inputs.TEMPLATE_VERSION }}/templates/master-template.yaml \
+            --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
+            --parameters \
+                ParameterKey=ProjectName,ParameterValue=${{ inputs.PROJECT_NAME }} \
+                ParameterKey=TableSuffix,ParameterValue=${{ inputs.TABLE_SUFFIX }} \
+                ParameterKey=ClientName,ParameterValue=${{ inputs.CLIENT_NAME }} \
+                ParameterKey=CreatedBy,ParameterValue=${{ inputs.CREATED_BY }} \
+                ParameterKey=OpenSearchAdminUser,ParameterValue=${{ inputs.OPENSEARCH_ADMIN_USER }} \
+                ParameterKey=OpenSearchAdminPassword,ParameterValue=${{ inputs.OPENSEARCH_ADMIN_PASSWORD }} \
+                ParameterKey=NginxAuthPassword,ParameterValue=${{ inputs.NGINX_AUTH_PASSWORD }}
