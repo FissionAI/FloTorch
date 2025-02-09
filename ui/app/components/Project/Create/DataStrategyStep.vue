@@ -72,7 +72,11 @@ const updateKbModels = (event: any) => {
 };
 
 const resetKbModel = (event: any) => {
+  if(state.kb_model === 'none'){
+    state.kb_data = "none"
+  }else{
   state.kb_data = [];
+  }
 };
 </script>
 
@@ -113,13 +117,15 @@ const resetKbModel = (event: any) => {
       <template #hint>
         <FieldTooltip field-name="kb_model" />
       </template>
-       <div v-if="state.kb_model && state.kb_model !== 'default-upload'" class="my-2" >
+       <div v-if="state.kb_model && state.kb_model !== 'default-upload' &&  state.kb_model !=='none'" class="my-2" >
           <ULink class="text-blue-500 hover:underline" target="_blank" raw :to="`https://${state.region}.console.aws.amazon.com/bedrock/home?region=${state.region}#/knowledge-bases`" active-class="font-bold" inactive-class="text-[var(--ui-text-muted)]">Create Bedrock Knowledge Bases</ULink>
         </div>
     </UFormField>
-      <p v-if="state.kb_model && state.kb_model !== 'default-upload'" class="text-blue-500">[Note]: Indexing Strategy step will be skipped if Bedrock Knowledge Bases is selected </p>
+      <p v-if="state.kb_model && state.kb_model !== 'default-upload' &&  state.kb_model !=='none'" class="text-blue-500">[Note]: Indexing Strategy step will be skipped if Bedrock Knowledge Bases is selected </p>
+      <p v-if="state.kb_model && state.kb_model !== 'default-upload' &&  state.kb_model ==='none'" class="text-blue-500">[Note]: Indexing Strategy step will be skipped if Don't select any Knowledge Base Type </p>
 
-    <template v-if="state.kb_model && state.kb_model === 'default-upload'">
+
+    <template v-if="state.kb_model && state.kb_model === 'default-upload' && state.kb_model !== 'none'">
       <UFormField
         id="kb_data"
         name="kb_data"
@@ -138,7 +144,7 @@ const resetKbModel = (event: any) => {
         /> 
       </UFormField>
     </template>
-    <template v-if="state.kb_model && state.kb_model !== 'default-upload'">
+    <template v-if="state.kb_model && state.kb_model !== 'default-upload' && state.kb_model !== 'none'">
         <FetchKbModels
           @kbModels="updateKbModels"
           v-model="state.kb_data"
