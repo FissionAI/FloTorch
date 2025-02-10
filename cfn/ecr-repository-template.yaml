@@ -17,31 +17,37 @@ Resources:
     Type: AWS::ECR::Repository
     Properties:
       RepositoryName: !Sub "flotorch-indexing-${TableSuffix}"
+      EmptyOnDelete: true
   
   RetrieverRepository:
     Type: AWS::ECR::Repository
     Properties:
       RepositoryName: !Sub "flotorch-retriever-${TableSuffix}"
+      EmptyOnDelete: true
 
   AppRepository:
     Type: AWS::ECR::Repository
     Properties:
       RepositoryName: !Sub "flotorch-app-${TableSuffix}"
+      EmptyOnDelete: true
   
   EvaluationRepository:
     Type: AWS::ECR::Repository
     Properties:
       RepositoryName: !Sub "flotorch-evaluation-${TableSuffix}"
+      EmptyOnDelete: true
   
   RuntimeRepository:
     Type: AWS::ECR::Repository
     Properties:
       RepositoryName: !Sub "flotorch-runtime-${TableSuffix}"
+      EmptyOnDelete: true
 
   CostComputeRepository:
     Type: AWS::ECR::Repository
     Properties:
       RepositoryName: !Sub "flotorch-costcompute-${TableSuffix}"
+      EmptyOnDelete: true
 
 Outputs:
   AppRepositoryURI:

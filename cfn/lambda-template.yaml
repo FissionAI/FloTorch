@@ -347,10 +347,21 @@ Resources:
                           fi
                       }}
 
+                      install_git() {{
+                          if command_exists git; then
+                              echo "Git is already installed"
+                              git --version
+                          else
+                              echo "Installing Git..."
+                              sudo yum install -y git
+                          fi
+                      }}
+
                       # Detect OS and install requirements
                       detect_os
                       install_docker
                       install_awscli
+                      install_git
 
                       # Configure Docker to use non-interactive mode
                       export DOCKER_CLI_NO_INTERACTIVE=1
