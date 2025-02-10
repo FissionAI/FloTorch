@@ -79,7 +79,7 @@ Parameters:
     Description: "Password for the OpenSearch admin account(Must be between 12 and 41 characters, containing at least one uppercase letter, one lowercase letter, one number, and one special character). Must be strong and secure as it provides full access to the OpenSearch cluster."
     MinLength: 12
     MaxLength: 41
-    AllowedPattern: "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[!@#$%^&*()_+\\-=\\[\\]{};:'\",.<>/?])[A-Za-z\\d!@#$%^&*()_+\\-=\\[\\]{};:'\",.<>/?]{12,41}$"
+    AllowedPattern: "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{12,41}$"
     ConstraintDescription: "Must be between 12 and 41 characters, containing at least one uppercase letter, one lowercase letter, one number, and one special character."
 
   NginxAuthPassword:
@@ -88,7 +88,7 @@ Parameters:
     Description: "Password for NGINX basic authentication(Must be between 12 and 41 characters, containing at least one uppercase letter, one lowercase letter, one number, and one special character). This secures access to the application's web interface."
     MinLength: 12
     MaxLength: 41
-    AllowedPattern: "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[!@#$%^&*()_+\\-=\\[\\]{};:'\",.<>/?])[A-Za-z\\d!@#$%^&*()_+\\-=\\[\\]{};:'\",.<>/?]{12,41}$"
+    AllowedPattern: "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{12,41}$"
     ConstraintDescription: "Must be between 12 and 41 characters, containing at least one uppercase letter, one lowercase letter, one number, and one special character."
 
 Conditions:
@@ -112,7 +112,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     DependsOn: [VPCStack]
     Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/test-cfn/templates/ecr-repository-template.yaml
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/2.0.2/templates/ecr-repository-template.yaml
       Parameters:
         ProjectName: !Ref ProjectName
         CreatedBy: !Ref CreatedBy
@@ -122,7 +122,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     DependsOn: VPCStack
     Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/test-cfn/templates/vpc-endpoint-template.yaml
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/2.0.2/templates/vpc-endpoint-template.yaml
       Parameters:
         VPCId: !GetAtt VPCStack.Outputs.VpcId
         PrivateRouteTableId: !GetAtt VPCStack.Outputs.PrivateRouteTableId
@@ -136,7 +136,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     DependsOn: [VPCStack]
     Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/test-cfn/templates/dynamodb-template.yaml
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/2.0.2/templates/dynamodb-template.yaml
       Parameters:
         ProjectName: !Ref ProjectName
         TableSuffix: !Ref TableSuffix
@@ -148,7 +148,7 @@ Resources:
     Condition: CreateOpenSearchStack
     DependsOn: [VPCStack]
     Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/test-cfn/templates/opensearch-template.yaml
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/2.0.2/templates/opensearch-template.yaml
       Parameters:
         VpcId: !GetAtt VPCStack.Outputs.VpcId
         PrivateSubnetId: !GetAtt VPCStack.Outputs.PrivateSubnet1
@@ -165,7 +165,7 @@ Resources:
     Condition: CreateOpenSearchStack
     DependsOn: [VPCStack, DynamoDBStack, OpenSearchStack, ECRRepositoryStack]
     Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/test-cfn/templates/lambda-template.yaml
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/2.0.2/templates/lambda-template.yaml
       Parameters:
         TableSuffix: !Ref TableSuffix
         VpcId: !GetAtt VPCStack.Outputs.VpcId
@@ -186,19 +186,19 @@ Resources:
         CostComputeRepositoryUri: !GetAtt ECRRepositoryStack.Outputs.CostComputeRepositoryURI
         PublicSubnet1: !GetAtt VPCStack.Outputs.PublicSubnet1
         PrivateSubnet1: !GetAtt VPCStack.Outputs.PrivateSubnet1
-        IndexingImageTag: "2.0.1"
-        RetrieverImageTag: "2.0.1"
-        AppImageTag: "2.0.1.1"
-        EvaluationImageTag: "2.0.1"
-        RuntimeImageTag: "2.0.1"
-        CostComputeImageTag: "2.0.1"
+        IndexingImageTag: "2.0.2"
+        RetrieverImageTag: "2.0.2"
+        AppImageTag: "2.0.2"
+        EvaluationImageTag: "2.0.2"
+        RuntimeImageTag: "2.0.2"
+        CostComputeImageTag: "2.0.2"
 
   LambdaStackNoOpenSearch:
     Type: AWS::CloudFormation::Stack
     Condition: CreateNoOpenSearchStack
     DependsOn: [VPCStack, DynamoDBStack, ECRRepositoryStack]
     Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/test-cfn/templates/lambda-template.yaml
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/2.0.2/templates/lambda-template.yaml
       Parameters:
         TableSuffix: !Ref TableSuffix
         VpcId: !GetAtt VPCStack.Outputs.VpcId
@@ -219,19 +219,19 @@ Resources:
         CostComputeRepositoryUri: !GetAtt ECRRepositoryStack.Outputs.CostComputeRepositoryURI
         PublicSubnet1: !GetAtt VPCStack.Outputs.PublicSubnet1
         PrivateSubnet1: !GetAtt VPCStack.Outputs.PrivateSubnet1
-        IndexingImageTag: "2.0.1"
-        RetrieverImageTag: "2.0.1"
-        AppImageTag: "2.0.1.1"
-        EvaluationImageTag: "2.0.1"
-        RuntimeImageTag: "2.0.1"
-        CostComputeImageTag: "2.0.1"
+        IndexingImageTag: "2.0.2"
+        RetrieverImageTag: "2.0.2"
+        AppImageTag: "2.0.2"
+        EvaluationImageTag: "2.0.2"
+        RuntimeImageTag: "2.0.2"
+        CostComputeImageTag: "2.0.2"
 
   ECSStack:
     Type: AWS::CloudFormation::Stack
     Condition: CreateOpenSearchStack
     DependsOn: [VPCStack, DynamoDBStack, OpenSearchStack, ECRRepositoryStack]
     Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/test-cfn/templates/ecs-template.yaml
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/2.0.2/templates/ecs-template.yaml
       Parameters:
         TableSuffix: !Ref TableSuffix
         VpcId: !GetAtt VPCStack.Outputs.VpcId
@@ -253,7 +253,7 @@ Resources:
     Condition: CreateNoOpenSearchStack
     DependsOn: [VPCStack, DynamoDBStack, ECRRepositoryStack]
     Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/test-cfn/templates/ecs-template.yaml
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/2.0.2/templates/ecs-template.yaml
       Parameters:
         TableSuffix: !Ref TableSuffix
         VpcId: !GetAtt VPCStack.Outputs.VpcId
@@ -275,7 +275,7 @@ Resources:
     Condition: CreateOpenSearchStack
     DependsOn: [VPCStack, ECSStack, LambdaStack, DynamoDBStack, OpenSearchStack]
     Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/test-cfn/templates/state-machine-template.yaml
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/2.0.2/templates/state-machine-template.yaml
       Parameters:
         TableSuffix: !Ref TableSuffix
         VpcId: !GetAtt VPCStack.Outputs.VpcId
@@ -302,7 +302,7 @@ Resources:
     Condition: CreateNoOpenSearchStack
     DependsOn: [VPCStack, ECSStackNoOpenSearch, LambdaStackNoOpenSearch, DynamoDBStack]
     Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/test-cfn/templates/state-machine-template.yaml
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/2.0.2/templates/state-machine-template.yaml
       Parameters:
         TableSuffix: !Ref TableSuffix
         VpcId: !GetAtt VPCStack.Outputs.VpcId
@@ -329,7 +329,7 @@ Resources:
     Condition: CreateOpenSearchStack
     DependsOn: [ECRRepositoryStack, DynamoDBStack, OpenSearchStack, StateMachineStack]
     Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/test-cfn/templates/app-runner-template.yaml
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/2.0.2/templates/app-runner-template.yaml
       Parameters:
         TableSuffix: !Ref TableSuffix
         Region: !Ref AWS::Region
@@ -344,14 +344,14 @@ Resources:
         VpcConnectorArn: !GetAtt VPCStack.Outputs.VpcConnectorArn
         BedrockRoleArn: !GetAtt VPCStack.Outputs.BedrockRoleArn
         EcrRepositoryUri: !GetAtt ECRRepositoryStack.Outputs.AppRepositoryURI
-        AppImageTag: "2.0.1.1"
+        AppImageTag: "2.0.2"
 
   AppRunnerStackNoOpenSearch:
     Type: AWS::CloudFormation::Stack
     Condition: CreateNoOpenSearchStack
     DependsOn: [ECRRepositoryStack, DynamoDBStack, StateMachineStackNoOpenSearch]
     Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/test-cfn/templates/app-runner-template.yaml
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/2.0.2/templates/app-runner-template.yaml
       Parameters:
         TableSuffix: !Ref TableSuffix
         Region: !Ref AWS::Region
@@ -366,7 +366,7 @@ Resources:
         VpcConnectorArn: !GetAtt VPCStack.Outputs.VpcConnectorArn
         BedrockRoleArn: !GetAtt VPCStack.Outputs.BedrockRoleArn
         EcrRepositoryUri: !GetAtt ECRRepositoryStack.Outputs.AppRepositoryURI
-        AppImageTag: "2.0.1.1"
+        AppImageTag: "2.0.2"
 
 Outputs:
   AppRunnerServiceUrl:
