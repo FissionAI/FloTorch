@@ -391,19 +391,41 @@ Resources:
                           aws ecr describe-repositories --repository-names "$repo" --region "$REGION" || aws ecr create-repository --repository-name "$repo" --region "$REGION"
                       done
 
-                      # Git Clone the Repo
-                      git clone https://github.com/FissionAI/FloTorch.git
-                      cd FloTorch
+                      # Tag and push indexing image with version and latest tags
+                      docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-indexing:$INDEXING_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-indexing-$TABLE_SUFFIX:$INDEXING_IMAGE_TAG"
+                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-indexing-$TABLE_SUFFIX:$INDEXING_IMAGE_TAG"
+                      docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-indexing:$INDEXING_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-indexing-$TABLE_SUFFIX:latest"
+                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-indexing-$TABLE_SUFFIX:latest"
 
-                      # Build and Push images
-                      docker build -t "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-app-$TABLE_SUFFIX:latest" -f app/Dockerfile --push .
-                      docker build -t "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-indexing-$TABLE_SUFFIX:latest" -f indexing/fargate_indexing.Dockerfile --push .
-                      docker build -t "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-retriever-$TABLE_SUFFIX:latest" -f retriever/fargate_retriever.Dockerfile --push .
-                      docker build -t "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-evaluation-$TABLE_SUFFIX:latest" -f evaluation/fargate_evaluation.Dockerfile --push .
-                      docker build -t "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-runtime-$TABLE_SUFFIX:latest" -f opensearch/opensearch.Dockerfile --push .
-                      cd lambda_handlers
-                      docker build -t "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-costcompute-$TABLE_SUFFIX:latest" -f cost_handler/Dockerfile --push .
-                      cd ..
+                      # Tag and push AI image with version and latest tags
+                      docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-costcompute:$AI_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-costcompute-$TABLE_SUFFIX:$AI_IMAGE_TAG"
+                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-costcompute-$TABLE_SUFFIX:$AI_IMAGE_TAG"
+                      docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-costcompute:$AI_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-costcompute-$TABLE_SUFFIX:latest"
+                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-costcompute-$TABLE_SUFFIX:latest"
+
+                      # Tag and push evaluation image with version and latest tags
+                      docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-evaluation:$EVALUATION_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-evaluation-$TABLE_SUFFIX:$EVALUATION_IMAGE_TAG"
+                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-evaluation-$TABLE_SUFFIX:$EVALUATION_IMAGE_TAG"
+                      docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-evaluation:$EVALUATION_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-evaluation-$TABLE_SUFFIX:latest"
+                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-evaluation-$TABLE_SUFFIX:latest"
+
+                      # Tag and push app image with version and latest tags
+                      docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-app:$APP_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-app-$TABLE_SUFFIX:$APP_IMAGE_TAG"
+                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-app-$TABLE_SUFFIX:$APP_IMAGE_TAG"
+                      docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-app:$APP_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-app-$TABLE_SUFFIX:latest"
+                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-app-$TABLE_SUFFIX:latest"
+
+                      # Tag and push runtime image with version and latest tags
+                      docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-runtime:$RUNTIME_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-runtime-$TABLE_SUFFIX:$RUNTIME_IMAGE_TAG"
+                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-runtime-$TABLE_SUFFIX:$RUNTIME_IMAGE_TAG"
+                      docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-runtime:$RUNTIME_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-runtime-$TABLE_SUFFIX:latest"
+                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-runtime-$TABLE_SUFFIX:latest"
+
+                      # Tag and push retriever image with version and latest tags
+                      docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-retriever:$RETRIEVER_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-retriever-$TABLE_SUFFIX:$RETRIEVER_IMAGE_TAG"
+                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-retriever-$TABLE_SUFFIX:$RETRIEVER_IMAGE_TAG"
+                      docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-retriever:$RETRIEVER_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-retriever-$TABLE_SUFFIX:latest"
+                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-retriever-$TABLE_SUFFIX:latest"
 
                       echo "Docker operations completed successfully"
                       '''
