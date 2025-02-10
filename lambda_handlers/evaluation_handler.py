@@ -46,7 +46,8 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             kb_data=exp_config_data.get('kb_data'),
             n_shot_prompts=exp_config_data.get('n_shot_prompts'),
             n_shot_prompt_guide=exp_config_data.get('n_shot_prompt_guide'),
-            indexing_algorithm=exp_config_data.get('indexing_algorithm')
+            indexing_algorithm=exp_config_data.get('indexing_algorithm'),
+            knowledge_base=exp_config_data.get('knowledge_base', False)
         )
         logger.info("Processing event: %s", json.dumps(event))
 

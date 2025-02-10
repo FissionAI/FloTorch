@@ -57,7 +57,7 @@ class RagasLLMEvaluator(RagasEvaluator):
         if not experiment_id:
             raise ValueError("Experiment ID cannot be None")
 
-        questions = self.get_all_questions(experiment_id)['Items']
+        questions = self.get_all_questions(experiment_id)['Items'] # Contains question, generated answer, GT answer and retrieved context
 
         metrics_records = [ExperimentQuestionMetrics(**question) for question in questions]
         metrics = self.evaluate_bulk_questions(metrics_records)
@@ -77,17 +77,27 @@ class RagasLLMEvaluator(RagasEvaluator):
         answer_samples = []
 
         for metrics_record in metrics_records:
-            answer_sample = SingleTurnSample(
-                user_input=metrics_record.question,
-                response=metrics_record.generated_answer,
-                reference=metrics_record.gt_answer,
-                retrieved_contexts=metrics_record.reference_contexts
-            )
-            answer_samples.append(answer_sample)
-
-        evaluation_dataset = EvaluationDataset(answer_samples)
-        metrics = evaluate(evaluation_dataset, [self.faithfulness, self.context_precision, self.aspect_critic, self.answers_relevancy])
-
+            if self.experimental_config.knowledge_base:
+                answer_sample = SingleTurnSample(
+                    user_input=metrics_record.question,
+                    response=metrics_record.generated_answer,
+                    reference=metrics_record.gt_answer,
+                    retrieved_contexts=metrics_record.reference_contexts
+                )
+                answer_samples.append(answer_sample)
+                evaluation_dataset = EvaluationDataset(answer_samples)
+                metrics = evaluate(evaluation_dataset, [self.faithfulness, self.context_precision, self.aspect_critic, self.answers_relevancy])
+            
+            else:
+                answer_sample = SingleTurnSample(
+                    user_input=metrics_record.question,
+                    response=metrics_record.generated_answer,
+                    reference=metrics_record.gt_answer,
+                )
+                answer_samples.append(answer_sample)
+                evaluation_dataset = EvaluationDataset(answer_samples)
+                metrics = evaluate(evaluation_dataset, [self.aspect_critic, self.answers_relevancy])
+        
         return metrics
 
 
