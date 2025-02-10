@@ -122,7 +122,7 @@ const resetKbModel = (event: any) => {
         </div>
     </UFormField>
       <p v-if="state.kb_model && state.kb_model !== 'default-upload' &&  state.kb_model !=='none'" class="text-blue-500">[Note]: Indexing Strategy step will be skipped if Bedrock Knowledge Bases is selected </p>
-      <p v-if="state.kb_model && state.kb_model !== 'default-upload' &&  state.kb_model ==='none'" class="text-blue-500">[Note]: Indexing Strategy step will be skipped if Don't select any Knowledge Base Type </p>
+      <p v-if="state.kb_model && state.kb_model !== 'default-upload' &&  state.kb_model ==='none'" class="text-blue-500">[Note]: Indexing Strategy step will be skipped if you don't select any Knowledge Base Type </p>
 
 
     <template v-if="state.kb_model && state.kb_model === 'default-upload' && state.kb_model !== 'none'">
