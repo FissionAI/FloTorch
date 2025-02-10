@@ -12,6 +12,7 @@ const modelValue = defineModel<ProjectCreateDataStrategy>({
 //   queryKey: ["presignedUploadUrl"],
 //   queryFn: () => usePresignedUploadUrl(),
 // })
+const emits = defineEmits(["next", "previous", "kbFilesUpload", "showTooltip"]);
 
 const presignedUploadUrl = ref();
 
@@ -29,6 +30,10 @@ const {
 onMounted(() => {
   getPresignedUploadUrl(props.fileUploadId as string);
 });
+
+const handleTooltip = (tooltipInfo: string) => {
+  emits('showTooltip', tooltipInfo)
+}
 
 const props = withDefaults(
   defineProps<{
@@ -58,7 +63,6 @@ const state = reactive<Partial<ProjectCreateDataStrategy>>({
   // kb_data_uploadedFiles: modelValue.value?.kb_data_uploadedFiles || undefined,
 });
 
-const emits = defineEmits(["next", "previous", "kbFilesUpload"]);
 
 const onSubmit = (event: FormSubmitEvent<ProjectCreateDataStrategy>) => {
     modelValue.value = event.data;
@@ -83,25 +87,43 @@ const resetKbModel = (event: any) => {
     :validate-on="['input']"
     @submit="onSubmit"
   >
-    <UFormField id="name" name="name" label="Project Name" required>
-      <UInput v-model="state.name" type="text" />
-      <template #hint>
+    <UFormField id="name" name="name" label="Project Name">
+      <template #label="{ label }">
+        <div class="flex items-center">
+          {{ label }}
+          <FieldTooltip @show-tooltip="handleTooltip" field-name="name"/>
+        </div>
+      </template>
+      <UInput v-model="state.name" type="text">
+        </UInput>
+      
+      <!-- <template #hint>
         <FieldTooltip field-name="name" />
-      </template>
+      </template> -->
     </UFormField>
-    <UFormField id="region" name="region" label="Region" required>
-      <RegionSelect v-model="state.region" />
-      <template #hint>
-        <FieldTooltip field-name="region" />
+    <UFormField id="region" name="region" label="Region">
+      <template #label="{ label }">
+        <div class="flex items-center">
+          {{ label }}
+          <FieldTooltip @show-tooltip="handleTooltip" field-name="region"/>
+        </div>
       </template>
+      <RegionSelect v-model="state.region" />
+      
     </UFormField>
 
     <UFormField
       id="kb_model"
       name="kb_model"
       label="Select Knowledge Base Type"
-      required
+      
     >
+      <template #label="{ label }">
+        <div class="flex items-center">
+          {{ label }}
+          <FieldTooltip @show-tooltip="handleTooltip" field-name="kb_model"/>
+        </div>
+      </template>
       <USelectMenu
         :items="meta.kb_model"
         v-model="state.kb_model"
@@ -110,9 +132,9 @@ const resetKbModel = (event: any) => {
         @change="resetKbModel"
         
       />
-      <template #hint>
+      <!-- <template #hint>
         <FieldTooltip field-name="kb_model" />
-      </template>
+      </template> -->
        <div v-if="state.kb_model && state.kb_model !== 'default-upload'" class="my-2" >
           <ULink class="text-blue-500 hover:underline" target="_blank" raw :to="`https://${state.region}.console.aws.amazon.com/bedrock/home?region=${state.region}#/knowledge-bases`" active-class="font-bold" inactive-class="text-[var(--ui-text-muted)]">Create Bedrock Knowledge Bases</ULink>
         </div>
@@ -125,8 +147,14 @@ const resetKbModel = (event: any) => {
         name="kb_data"
         label="Knowledge Base Data"
       >
-      <template #hint>
+      <!-- <template #hint>
           <FieldTooltip field-name="kb_data" />
+        </template> -->
+        <template #label="{ label }">
+          <div class="flex items-center">
+            {{ label }}
+            <FieldTooltip @show-tooltip="handleTooltip" field-name="kb_data"/>
+          </div>
         </template>
         <FileUploadKb
           @kbFiles="fetchKbFiles"
@@ -148,7 +176,13 @@ const resetKbModel = (event: any) => {
         />
 
     </template>
-    <UFormField id="gt_data" name="gt_data" label="Ground Truth Data" required>
+    <UFormField id="gt_data" name="gt_data" label="Ground Truth Data" >
+      <template #label="{ label }">
+        <div class="flex items-center">
+          {{ label }}
+          <FieldTooltip @show-tooltip="handleTooltip" field-name="gt_data"/>
+        </div>
+      </template>
       <FileUpload
         v-if="presignedUploadUrl?.gt_data"
         key="gt_data"
@@ -156,9 +190,9 @@ const resetKbModel = (event: any) => {
         accept="application/json"
         :data="presignedUploadUrl.gt_data"
       />
-      <template #hint>
+      <!-- <template #hint>
         <FieldTooltip field-name="gt_data" />
-      </template>
+      </template> -->
     </UFormField>
     <div class="flex justify-between items-center w-full mt-6">
       <div>
@@ -167,7 +201,7 @@ const resetKbModel = (event: any) => {
           type="button"
           icon="i-lucide-arrow-left"
           label="Back"
-          variant="outline"
+          class="secondary-btn"
           @click.prevent="emits('previous')"
         />
       </div>
@@ -176,6 +210,7 @@ const resetKbModel = (event: any) => {
           trailing-icon="i-lucide-arrow-right"
           :label="nextButtonLabel"
           type="submit"
+          class="primary-btn"
         />
       </div>
     </div>

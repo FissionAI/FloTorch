@@ -53,10 +53,10 @@ useHead({
     <ProjectExperimentValidList :experiments="validExperiments" :loading="isLoading" />
     <div class="flex justify-end mt-4">
       <div class="flex justify-between gap-4">
-        <UButton variant="outline" icon="i-lucide-x" @click="navigateTo({ name: 'projects-id-validexperiments' })">
+        <UButton class="secondary-btn" icon="i-lucide-x" @click="navigateTo({ name: 'projects-id-validexperiments' })">
           Cancel
         </UButton>
-        <UButton icon="i-lucide-check" :loading="isExecutingRun" @click="handleExecuteRun">
+        <UButton class="primary-btn" icon="i-lucide-check" :loading="isExecutingRun" @click="handleExecuteRun">
           Confirm
         </UButton>
       </div>

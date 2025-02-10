@@ -35,7 +35,7 @@ const isOpen = ref(false)
     </template>
     <template #footer>
       <div class="flex justify-end w-full">
-        <UButton variant="outline" @click="isOpen = false">Close</UButton>
+        <UButton class="secondary-btn" @click="isOpen = false">Close</UButton>
       </div>
     </template>
   </UModal>

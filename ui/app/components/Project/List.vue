@@ -15,18 +15,21 @@ const columns = ref<TableColumn<ProjectListItem>[]>([
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
 
-      return h(UButton, {
-        color: "neutral",
-        variant: "ghost",
-        label: "Id",
-        icon: isSorted
-          ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
-        class: "-mx-2.5",
-        onClick: () => column.toggleSorting(),
-      });
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
+          color: "neutral",
+          variant: "ghost",
+          label: "Id",
+          trailingIcon: isSorted
+            ? isSorted === "asc"
+              ? "i-lsicon:triangle-up-outline"
+              : "i-lsicon:triangle-down-outline"
+            : "i-lsicon:triangle-down-outline",
+          class: "-mx-2.5",
+          onClick: () => column.toggleSorting(),
+        }),
+        h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+      ]);
     },
   },
   {
@@ -36,19 +39,23 @@ const columns = ref<TableColumn<ProjectListItem>[]>([
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
 
-      return h(UButton, {
-        color: "neutral",
-        variant: "ghost",
-        label: "Name",
-        icon: isSorted
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
+          color: "neutral",
+          variant: "ghost",
+          label: "Name",
+          trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
-        class: "-mx-2.5",
-        onClick: () => column.toggleSorting(),
-      });
+            ? "i-lsicon:triangle-up-outline"
+              : "i-lsicon:triangle-down-outline"
+            : "i-lsicon:triangle-down-outline",
+          class: "-mx-2.5",
+          onClick: () => column.toggleSorting(),
+        }),
+        h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+      ]);
     },
+    label: 'Name',
     sortingFn: (rowA, rowB) => {
       const a = rowA.original.name ?? 0;
       const b = rowB.original.name ?? 0;
@@ -62,18 +69,21 @@ const columns = ref<TableColumn<ProjectListItem>[]>([
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
 
-      return h(UButton, {
-        color: "neutral",
-        variant: "ghost",
-        label: "Region",
-        icon: isSorted
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
+          color: "neutral",
+          variant: "ghost",
+          label: "Region",
+          trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
+            ? "i-lsicon:triangle-up-outline"
+            : "i-lsicon:triangle-down-outline"
+          : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(),
-      });
+      }),
+      h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+    ]);
     },
   },
   {
@@ -83,18 +93,21 @@ const columns = ref<TableColumn<ProjectListItem>[]>([
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
 
-      return h(UButton, {
-        color: "neutral",
-        variant: "ghost",
-        label: "Status",
-        icon: isSorted
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
+          color: "neutral",
+          variant: "ghost",
+          label: "Status",
+          trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
+            ? "i-lsicon:triangle-up-outline"
+            : "i-lsicon:triangle-down-outline"
+          : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(),
-      });
+      }),
+      h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+    ]);
     },
   },
   {
@@ -108,11 +121,11 @@ const columns = ref<TableColumn<ProjectListItem>[]>([
         color: "neutral",
         variant: "ghost",
         label: "Date",
-        icon: isSorted
+        trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
+            ? "i-lsicon:triangle-up-outline"
+            : "i-lsicon:triangle-down-outline"
+          : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
       });

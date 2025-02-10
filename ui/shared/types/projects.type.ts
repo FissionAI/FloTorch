@@ -17,30 +17,30 @@ export const ProjectCreateModelSchema = z.object({
 });
 
 export const ProjectCreateDataStrategySchema = z.object({
-  name: z.string({
-    required_error: "Name is required",
-  }).trim().min(1, { message: "Name cannot be empty" }),
-  region: z.string({
-    required_error: "Region is required",
-  }),
-  kb_model : z.string({
-    required_error : "Knowledge Base Model is required"
-  }),
-  kb_data: z.union([
-    z.string({
-      required_error : "Knowledge Base data is required",
-      invalid_type_error : "Knowledge Base data is required"
-    }).min(1, { message: "Knowledge Base data is required" }),
-    z.array(z.string({
-      required_error : "Knowledge Base data is required",
-      invalid_type_error : "Knowledge Base data is required"
-    })).min(1, { message: "Knowledge Base data is required" })
-  ], {
-    errorMap: (issue, ctx) => ({ message: "Knowledge Base data is required" }),
-  }),
-  gt_data: z.string({
-    required_error: "Ground Truth data is required",
-  }),
+  // name: z.string({
+  //   required_error: "Name is required",
+  // }).trim().min(1, { message: "Name cannot be empty" }),
+  // region: z.string({
+  //   required_error: "Region is required",
+  // }),
+  // kb_model : z.string({
+  //   required_error : "Knowledge Base Model is required"
+  // }),
+  // kb_data: z.union([
+  //   z.string({
+  //     required_error : "Knowledge Base data is required",
+  //     invalid_type_error : "Knowledge Base data is required"
+  //   }).min(1, { message: "Knowledge Base data is required" }),
+  //   z.array(z.string({
+  //     required_error : "Knowledge Base data is required",
+  //     invalid_type_error : "Knowledge Base data is required"
+  //   })).min(1, { message: "Knowledge Base data is required" })
+  // ], {
+  //   errorMap: (issue, ctx) => ({ message: "Knowledge Base data is required" }),
+  // }),
+  // gt_data: z.string({
+  //   required_error: "Ground Truth data is required",
+  // }),
 });
 
 export type ProjectCreateDataStrategy = z.infer<
@@ -192,39 +192,39 @@ export type ProjectNShotPromptGuide = z.infer<
 
 export const ProjectCreateRetrievalStrategySchema = z
   .object({
-    rerank_model_id: z.string({
-      required_error: "At least one reranking model is required",
-    }).array().min(1, {
-      message: "At least one reranking model is required",
-    }),
-    n_shot_prompts: z
-      .number({
-        required_error: "At least one shot prompt is required",
-      })
-      .array()
-      .min(1, {
-        message: "At least one shot prompt is required",
-      }),
-    knn_num: z
-      .number({
-        required_error: "At least one KNN is required",
-      })
-      .array()
-      .min(1, {
-        message: "At least one KNN is required",
-      }),
-    temp_retrieval_llm: z
-      .number({
-        required_error: "At least one Inferencing model temperature is required",
-      })
-      .array()
-      .min(1, {
-        message: "At least one Inferencing model temperature is required",
-      }),
-    retrieval: ProjectCreateModelSchema.array().min(1, {
-      message: "At least one Inferencing model is required",
-    }).default([]),
-    n_shot_prompt_guide: ProjectNShotPromptGuideSchema,
+    // rerank_model_id: z.string({
+    //   required_error: "At least one reranking model is required",
+    // }).array().min(1, {
+    //   message: "At least one reranking model is required",
+    // }),
+    // n_shot_prompts: z
+    //   .number({
+    //     required_error: "At least one shot prompt is required",
+    //   })
+    //   .array()
+    //   .min(1, {
+    //     message: "At least one shot prompt is required",
+    //   }),
+    // knn_num: z
+    //   .number({
+    //     required_error: "At least one KNN is required",
+    //   })
+    //   .array()
+    //   .min(1, {
+    //     message: "At least one KNN is required",
+    //   }),
+    // temp_retrieval_llm: z
+    //   .number({
+    //     required_error: "At least one Inferencing model temperature is required",
+    //   })
+    //   .array()
+    //   .min(1, {
+    //     message: "At least one Inferencing model temperature is required",
+    //   }),
+    // retrieval: ProjectCreateModelSchema.array().min(1, {
+    //   message: "At least one Inferencing model is required",
+    // }).default([]),
+    // n_shot_prompt_guide: ProjectNShotPromptGuideSchema,
   })
   .superRefine((data, ctx) => {
     if (

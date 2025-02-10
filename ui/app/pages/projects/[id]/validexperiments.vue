@@ -133,9 +133,9 @@ useHead({
             :key="validExperiments?.length"
             :disabled="validExperiments?.length === 0"
             :project-id="project!.id"
-            variant="outline"
           />
           <UButton
+            class="primary-btn"
             icon="i-lucide-play"
             :disabled="selectedExperiments?.length === 0"
             :loading="isCreatingExperiments"

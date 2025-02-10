@@ -11,7 +11,7 @@ useHead({
 
 <template>
   <div class="flex flex-col min-h-screen bg-white">
-    <header class="bg-gray-800 text-white p-2">
+    <header class="navbar text-white p-2">
       <div class="container mx-auto flex justify-between items-center">
         <div>
           <img src="/logo.png" alt="logo" class="w-32" />
@@ -24,9 +24,10 @@ useHead({
       <h1 class="text-4xl font-bold">FloTorch</h1>
       <p class="text-lg">Manage and run your RAG experiments at scale with ease</p>
       <img src="/flotorch-hero.gif" alt="hero" class="w-full max-w-7xl" />
-      <UButton label="Get Started" trailing-icon="i-lucide-arrow-right" :to="{ name: 'projects' }" size="xl" />
+      <UButton class="primary-btn" label="Get Started" trailing-icon="i-lucide-arrow-right" :to="{ name: 'projects' }"
+        size="xl" />
     </main>
-    <footer class="bg-gray-800 text-white p-2 text-sm">
+    <footer class="navbar text-white p-2 text-sm">
       <div class="container mx-auto flex justify-center items-center">
         <div>
           Powered by <a href="https://flotorch.ai?utm_source=flowtorch-repo" target="_blank"
@@ -46,6 +47,6 @@ main.container {
   width: 100% !important;
   max-width: unset !important;
   min-width: unset !important;
-  padding: 50px !important;
+  padding: 50px;
 }
 </style>

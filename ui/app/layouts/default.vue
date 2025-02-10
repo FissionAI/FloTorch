@@ -1,14 +1,28 @@
 <script setup lang="ts">
+const { $on } = useNuxtApp()
+
 useHead({
   titleTemplate(title) {
     return title ? `${title} | FloTorch` : "FloTorch"
   },
 })
+
+const drawerOpen = ref(false)
+
+const tooltip = ref('')
+const fieldName = ref('')
+$on('showTooltip', (tooltipInfo) => {
+  console.log(tooltipInfo)
+  drawerOpen.value = true
+  tooltip.value = tooltipInfo.tooltip.value
+  fieldName.value = tooltipInfo.fieldName
+})
+
 </script>
 
 <template>
   <div class="flex flex-col min-h-screen bg-gray-100">
-    <header class="bg-gray-800 text-white p-2 sticky top-0 z-50">
+    <header class="navbar text-white p-2 sticky top-0 z-50">
       <div class="container mx-auto flex justify-between items-center">
         <div>
           <NuxtLink :to="{ name: 'index' }">
@@ -19,10 +33,22 @@ useHead({
           target="_blank" />
       </div>
     </header>
-    <main class="flex-1 container mx-auto py-4">
+    <main :class="{ '!pl-4 !pr-[calc(100vw-79%)]': drawerOpen, '': !drawerOpen }" class="flex-1 container mx-auto py-4">
       <slot />
     </main>
-    <footer class="bg-gray-800 text-white p-2 text-sm">
+    <UDrawer v-model:open="drawerOpen" height="100" :handle="false" class="drawer-content" direction="right" :overlay="false">
+        <template #content>
+          <div class="w-96 h-[calc(100% - 66px)]">
+            <Placeholder class="m-4">
+              
+              <h1 class="tooltip-title pr-[8px]">{{ fieldName.charAt(0).toUpperCase() + fieldName.slice(1) }}</h1>
+
+              <p class="tooltip-description mt-7 pr-[8px]">{{ tooltip }}</p>
+            </Placeholder>
+          </div>
+        </template>
+  </UDrawer>
+    <footer class="navbar text-white p-2 text-sm">
       <div class="container mx-auto flex justify-center items-center">
         <div>
           Powered by <a href="https://flotorch.ai?utm_source=flowtorch-repo" target="_blank"
@@ -42,6 +68,13 @@ main.container {
   width: 100% !important;
   max-width: unset !important;
   min-width: unset !important;
-  padding: 50px !important;
+  padding: 50px;
 }
+
+.drawer-content {
+  height: calc(100% - 95px) !important;
+    top: 58px;
+    right: 0px;
+}
+
 </style>

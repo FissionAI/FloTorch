@@ -50,8 +50,9 @@ onMounted(() => {
        <USelectMenu :disabled="!props.region" v-model="selectedModel" :loading="isLoading" :items="modelsList" multiple  class="w-full my-1" value-key="value" @change="emit('kbModels', {value:selectedModel})" />
         <p class="my-2 text-red-500" v-if="!props.region">Please select region first </p>
     </UFormField>
-        <UFormField name="refetch_kb_model" label=" " class="flex-1" >
+        <UFormField name="refetch_kb_model" label=" " class="flex-1 relative top-[10px]" >
         <UButton
+          class="primary-btn"
           label="Fetch Bedrock Kb"
           trailing-icon="i-lucide-repeat-2"
           :disabled="!props.region"
