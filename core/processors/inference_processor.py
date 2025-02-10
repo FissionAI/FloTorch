@@ -13,7 +13,7 @@ class InferenceProcessor:
         self.experimentalConfig = experimentalConfig
         self.inferencer = InferencerFactory.create_inferencer(experimentalConfig)
 
-    def generate_text(self, user_query: str, context: List[Dict], default_prompt: str, **kwargs) -> Tuple[Dict[Any,Any], str]:
+    def generate_text(self, user_query: str, default_prompt: str, context: List[Dict] = None, **kwargs) -> Tuple[Dict[Any,Any], str]:
         try:
             metadata, answer = self.inferencer.generate_text(
                 user_query=user_query,

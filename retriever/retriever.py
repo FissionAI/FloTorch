@@ -88,8 +88,8 @@ def initialize_components(config: Config, experimentalConfig: ExperimentalConfig
     """Initialize all required components for the retrieval process."""
     try:
         # Initialize embedding processor if required
-        if experimentalConfig.bedrock_knowledge_base:
-            logger.info("Setting up knowledge base retriever")
+        if experimentalConfig.bedrock_knowledge_base or not experimentalConfig.knowledge_base:
+            logger.info("Skipping embed processor initialization")
             embed_processor = None
             
         else:
@@ -101,19 +101,20 @@ def initialize_components(config: Config, experimentalConfig: ExperimentalConfig
         inference_processor = InferenceProcessor(experimentalConfig)
         
         # Initialize vector database
-        
-        if experimentalConfig.bedrock_knowledge_base:
-            logger.info("Connecting to Knowledge base")
-            vector_database = KnowledgeBaseVectorDatabase(region=experimentalConfig.aws_region)
-        else:
-            logger.info(f"Connecting to OpenSearch at {config.opensearch_host}")
-            vector_database = OpenSearchVectorDatabase(
-                host=config.opensearch_host,
-                is_serverless=config.opensearch_serverless,
-                region=config.aws_region,
-                username=config.opensearch_username,
-                password=config.opensearch_password
-            )
+        vector_database = None
+        if experimentalConfig.knowledge_base:
+            if experimentalConfig.bedrock_knowledge_base:
+                logger.info("Connecting to Knowledge base")
+                vector_database = KnowledgeBaseVectorDatabase(region=experimentalConfig.aws_region)
+            else:
+                logger.info(f"Connecting to OpenSearch at {config.opensearch_host}")
+                vector_database = OpenSearchVectorDatabase(
+                    host=config.opensearch_host,
+                    is_serverless=config.opensearch_serverless,
+                    region=config.aws_region,
+                    username=config.opensearch_username,
+                    password=config.opensearch_password
+                )
         
         # Initialize DynamoDB connections
         logger.info("Initializing DynamoDB connections")
@@ -194,14 +195,13 @@ def process_questions(
             logger.debug(f"Processing question {idx+1}: {question}")
 
             # Generate embeddings
-            if not experimentalConfig.bedrock_knowledge_base:
+            if experimentalConfig.bedrock_knowledge_base or not experimentalConfig.knowledge_base:
+                query_metadata, query_embedding = {'inputTokens': '0', 'latencyMs': '0'}, None                
+            else:
                 logger.info("Generating embeddings for the question using provided embedder")
                 query_metadata, query_embedding = components["embed_processor"].embed_text(
                     question
                 )
-            else:
-                query_metadata, query_embedding = {'inputTokens': '0', 'latencyMs': '0'}, None
-            
                 
             query_results=None
             guardrail_input_assessment = None
@@ -238,22 +238,23 @@ def process_questions(
 
                 # Apply CONTEXT guardrails if not already blocked
                 if experimentalConfig.enable_context_guardrails and guardrail_blocked == 'NONE':
-                    # Search for relevant context once
-                    if isinstance(components["vector_database"], OpenSearchVectorDatabase):
-                        query_results = components["vector_database"].search(
-                            experimentalConfig.index_id, query_embedding, experimentalConfig.knn_num
-                        )
-                    elif isinstance(components["vector_database"], KnowledgeBaseVectorDatabase):
-                        query_results = components["vector_database"].search(
-                            question, experimentalConfig.kb_data, experimentalConfig.knn_num
-                        )
+                    if experimentalConfig.knowledge_base:
+                        # Search for relevant context once
+                        if isinstance(components["vector_database"], OpenSearchVectorDatabase):
+                            query_results = components["vector_database"].search(
+                                experimentalConfig.index_id, query_embedding, experimentalConfig.knn_num
+                            )
+                        elif isinstance(components["vector_database"], KnowledgeBaseVectorDatabase):
+                            query_results = components["vector_database"].search(
+                                question, experimentalConfig.kb_data, experimentalConfig.knn_num
+                            )
 
-                    if experimentalConfig.chunking_strategy.lower() == 'hierarchical':
-                        query_results = __duplicate_removal_for_heirarchical_config(query_results)
+                        if experimentalConfig.chunking_strategy.lower() == 'hierarchical':
+                            query_results = __duplicate_removal_for_heirarchical_config(query_results)
 
-                    if experimentalConfig.rerank_model_id and experimentalConfig.rerank_model_id.lower() != 'none':
-                        #Rerank the query results
-                        query_results = __rerank_query_result(query_results, question, experimentalConfig, idx)
+                        if experimentalConfig.rerank_model_id and experimentalConfig.rerank_model_id.lower() != 'none':
+                            #Rerank the query results
+                            query_results = __rerank_query_result(query_results, question, experimentalConfig, idx)
 
 
                     if query_results:
@@ -273,28 +274,33 @@ def process_questions(
                 if guardrail_blocked == 'NONE':
                     # Fetch context if not already done
                     if query_results is None:
-                        if isinstance(components["vector_database"], OpenSearchVectorDatabase):
-                            query_results = components["vector_database"].search(
-                                experimentalConfig.index_id, query_embedding, experimentalConfig.knn_num
-                        )
-                    elif isinstance(components["vector_database"], KnowledgeBaseVectorDatabase):
-                        query_results = components["vector_database"].search(
-                            question, experimentalConfig.kb_data, experimentalConfig.knn_num
-                        )
-
-                        if experimentalConfig.chunking_strategy.lower() == 'hierarchical':
-                            query_results = __duplicate_removal_for_heirarchical_config(query_results)
-
-                        if experimentalConfig.rerank_model_id and experimentalConfig.rerank_model_id.lower() != 'none':
-                            #Rerank the query results
-                            query_results = __rerank_query_result(query_results, question, experimentalConfig, idx)
+                        if experimentalConfig.knowledge_base:
+                            if isinstance(components["vector_database"], OpenSearchVectorDatabase):
+                                query_results = components["vector_database"].search(
+                                    experimentalConfig.index_id, query_embedding, experimentalConfig.knn_num
+                            )
+                            elif isinstance(components["vector_database"], KnowledgeBaseVectorDatabase):
+                                query_results = components["vector_database"].search(
+                                    question, experimentalConfig.kb_data, experimentalConfig.knn_num
+                                )
+                            if experimentalConfig.chunking_strategy.lower() == 'hierarchical':
+                                query_results = __duplicate_removal_for_heirarchical_config(query_results)
+                            if experimentalConfig.rerank_model_id and experimentalConfig.rerank_model_id.lower() != 'none':
+                                #Rerank the query results
+                                query_results = __rerank_query_result(query_results, question, experimentalConfig, idx)
 
                    # Generate answer
-                    answer_metadata, answer = components["inference_processor"].generate_text(
+                    if experimentalConfig.knowledge_base:
+                        answer_metadata, answer = components["inference_processor"].generate_text(
                         user_query=question,
                         context=query_results,
                         default_prompt=config.inference_system_prompt,
                     )
+                    else:
+                        answer_metadata, answer = components["inference_processor"].generate_text(
+                            user_query=question,
+                            default_prompt=config.inference_system_prompt,
+                        )
                     retrieval_input_tokens += int(answer_metadata["inputTokens"])
                     retrieval_output_tokens += int(answer_metadata["outputTokens"])
 
@@ -311,29 +317,36 @@ def process_questions(
                             answer = modified_answer
                             guardrail_blocked = 'OUTPUT'
             else:
-                # Search for relevant context
-                if isinstance(components["vector_database"], OpenSearchVectorDatabase):
+                if experimentalConfig.knowledge_base:
+                    # Search for relevant context
+                    if isinstance(components["vector_database"], OpenSearchVectorDatabase):
                         query_results = components["vector_database"].search(
                             experimentalConfig.index_id, query_embedding, experimentalConfig.knn_num
                         )
-                elif isinstance(components["vector_database"], KnowledgeBaseVectorDatabase):
-                    query_results = components["vector_database"].search(
-                        question, experimentalConfig.kb_data, experimentalConfig.knn_num
-                    )
+                    elif isinstance(components["vector_database"], KnowledgeBaseVectorDatabase):
+                        query_results = components["vector_database"].search(
+                            question, experimentalConfig.kb_data, experimentalConfig.knn_num
+                        )
 
-                if experimentalConfig.chunking_strategy.lower() == 'hierarchical':
-                    query_results = __duplicate_removal_for_heirarchical_config(query_results)
+                    if experimentalConfig.chunking_strategy.lower() == 'hierarchical':
+                        query_results = __duplicate_removal_for_heirarchical_config(query_results)
 
-                if experimentalConfig.rerank_model_id and experimentalConfig.rerank_model_id.lower() != 'none':
-                    #Rerank the query results
-                    query_results = __rerank_query_result(query_results, question, experimentalConfig, idx)
+                    if experimentalConfig.rerank_model_id and experimentalConfig.rerank_model_id.lower() != 'none':
+                        #Rerank the query results
+                        query_results = __rerank_query_result(query_results, question, experimentalConfig, idx)
 
                 # Generate answer
-                answer_metadata, answer = components["inference_processor"].generate_text(
-                    user_query=question,
-                    context=query_results,
-                    default_prompt=config.inference_system_prompt,
-                )
+                if experimentalConfig.knowledge_base:
+                    answer_metadata, answer = components["inference_processor"].generate_text(
+                        user_query=question,
+                        context=query_results,
+                        default_prompt=config.inference_system_prompt,
+                    )
+                else:
+                    answer_metadata, answer = components["inference_processor"].generate_text(
+                        user_query=question,
+                        default_prompt=config.inference_system_prompt
+                    )
                 retrieval_input_tokens += int(answer_metadata["inputTokens"])
                 retrieval_output_tokens += int(answer_metadata["outputTokens"])
 

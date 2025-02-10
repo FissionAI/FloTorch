@@ -331,7 +331,7 @@ class SageMakerInferencer(BaseInferencer):
         else:
             logger.error(f"Model ID {model_id} is not recognized as an inferencing model.")
             
-    def generate_prompt(self, experiment_config: ExperimentalConfig, default_prompt: str, user_query: str, context: List[Dict]):
+    def generate_prompt(self, experiment_config: ExperimentalConfig, default_prompt: str, user_query: str, context: List[Dict] = None):
         n_shot_prompt_guide = experiment_config.n_shot_prompt_guide_obj
         n_shot_prompt = experiment_config.n_shot_prompts
         # Input validation
@@ -341,7 +341,9 @@ class SageMakerInferencer(BaseInferencer):
         # Get system prompt
         system_prompt = default_prompt if n_shot_prompt_guide is None or n_shot_prompt_guide.system_prompt is None else n_shot_prompt_guide.system_prompt
         
-        context_text = self._format_context(user_query, context)
+        context_text = ""
+        if context:
+            context_text = self._format_context(user_query, context)
         
         base_prompt = n_shot_prompt_guide.user_prompt if n_shot_prompt_guide.user_prompt else ""
         
@@ -431,7 +433,7 @@ class SageMakerInferencer(BaseInferencer):
             return formatted_context
         
 
-    def generate_text(self, user_query: str, context: List[Dict], default_prompt: str, **kwargs) -> str:
+    def generate_text(self, user_query: str, default_prompt: str, context: List[Dict] = None, **kwargs) -> str:
         """
         Generates a response based on the provided user query and context. It formats the context, sends it to 
         the model for text generation, and processes the response to return the generated text.

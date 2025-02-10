@@ -2,7 +2,7 @@ import json
 from typing import Dict, Any
 from config.config import Config
 from config.experimental_config import ExperimentalConfig
-from evaluation.eval import Evaluator
+from evaluation.eval import evaluate
 import logging
 
 logger = logging.getLogger()
@@ -40,6 +40,9 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             chunking_strategy=exp_config_data.get('chunking_strategy'),
             chunk_size=exp_config_data.get('chunk_size'),
             chunk_overlap=exp_config_data.get('chunk_overlap'),
+            hierarchical_parent_chunk_size=exp_config_data.get('hierarchical_parent_chunk_size'),
+            hierarchical_child_chunk_size=exp_config_data.get('hierarchical_child_chunk_size'),
+            hierarchical_chunk_overlap_percentage=exp_config_data.get('hierarchical_chunk_overlap_percentage'),
             kb_data=exp_config_data.get('kb_data'),
             n_shot_prompts=exp_config_data.get('n_shot_prompts'),
             n_shot_prompt_guide=exp_config_data.get('n_shot_prompt_guide'),
@@ -47,12 +50,8 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         )
         logger.info("Processing event: %s", json.dumps(event))
 
-        # Load base configuration
-        config = Config.load_config()
 
-        evaluator = Evaluator(config)
-        
-        evaluator.perform_evaluation(experiment_id=exp_config.experiment_id)
+        evaluate(exp_config)
 
         return {
             "status": "success"
