@@ -12,7 +12,7 @@ const config = computed(() => getConfig(configId.value))
 
 <template>
   <Page title="Create Project">
-    <Breadcumb />
+   
     <UCard>
       <div class="max-w-2xl mx-auto">
         <ProjectCreateForm :config="config" />
