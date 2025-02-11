@@ -52,9 +52,9 @@ $on('showTooltip', (tooltipInfo) => {
       <div class="container mx-auto flex justify-center items-center">
         <div>
           Powered by <a href="https://flotorch.ai?utm_source=flowtorch-repo" target="_blank"
-            class="text-white underline">FloTorch.ai</a>. For
+            class="external-link">FloTorch.ai<UIcon name="i-rivet-icons:link-external" /></a> For
           more information, contact us at <a href="mailto:info@flotorch.ai"
-            class="text-white underline">info@flotorch.ai</a>.
+            class="external-link">info@flotorch.ai<UIcon name="i-rivet-icons:link-external" /></a>.
         </div>
       </div>
     </footer>

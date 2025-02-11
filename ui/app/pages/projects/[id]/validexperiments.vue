@@ -108,6 +108,9 @@ useHead({
       Experiments Verifying....
     </div>
     <UAlert
+      class="info-error"
+      variant="subtle"
+      icon="i-lucide-circle-x"
       v-else-if="experimentError && !experimentLoading"
       :description="experimentError"
       title="Error : "

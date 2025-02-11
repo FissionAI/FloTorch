@@ -97,13 +97,24 @@ div.divide-y.divide-\[var\(--ui-border\)\].scroll-py-1 div[role='group'] {
   --aws-secondary-hover-color: #f0fbff;
   --aws-secondary-hover-font-color: #002b66;
 
+  --aws-error-color: #db0000;
+
   --aws-font-grey-color: #0f141a;
   --aws-font-blue-color: #396ee0;
+  --aws-info-alert-color: #f9f9fa;
 
   --aws-navbar-bg-color: #161d26;
 
   --aws-info-tooltip-color: #002b66;
 
+}
+
+.primary-color {
+  color: var(--aws-primary-color);
+}
+
+.secondary-color {
+  color: var(--aws-secondary-color);
 }
 
 .primary-btn {
@@ -176,4 +187,41 @@ div.divide-y.divide-\[var\(--ui-border\)\].scroll-py-1 div[role='group'] {
   color: rgb(66, 70, 80);
   line-height: 20px;
   margin-left: 36px;
+}
+
+.info-alert {
+  background-color: var(--aws-secondary-color);
+  color: var(--aws-info-alert-color);
+  border-radius: 12px;
+}
+
+.info-error {
+  background-color: var(--aws-error-color);
+  color: var(--aws-info-alert-color);
+  border-radius: 12px;
+}
+
+.external-link {
+  color: var(--aws-secondary-color);
+  text-decoration: underline;
+}
+
+.external-link:hover {
+  color: var(--aws-secondary-hover-font-color);
+}
+
+.primary-modal-with-header > div:first-of-type {
+  border-bottom: unset;
+}
+
+.secondary-breadcrumb a{
+  color: var(--aws-secondary-color);
+  text-decoration: underline;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.secondary-breadcrumb a.cursor-not-allowed {
+  color: var(--aws-font-grey-color);
+  text-decoration: none;
 }
