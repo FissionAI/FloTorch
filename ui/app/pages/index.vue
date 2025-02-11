@@ -30,9 +30,9 @@ useHead({
       <div class="container mx-auto flex justify-center items-center">
         <div>
           Powered by <a href="https://flotorch.ai?utm_source=flowtorch-repo" target="_blank"
-            class="text-white underline">FloTorch.ai</a>. For
+            class="text-white underline">FloTorch.ai</a> For
           more information, contact us at <a href="mailto:info@flotorch.ai"
-            class="text-white underline">info@flotorch.ai</a>.
+            class="text-white underline">info@flotorch.ai</a>
         </div>
       </div>
     </footer>

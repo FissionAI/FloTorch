@@ -294,7 +294,7 @@ const items = ref([
 
           <UCard class="my-5">
             <template #header>
-              <h4 class="text-lg font-medium">Inferencer</h4>
+              <h4 class="text-lg font-medium">Inferencing</h4>
             </template>
             <table class="w-full text-left">
               <tbody>
