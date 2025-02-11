@@ -1,7 +1,7 @@
 export default defineAppConfig({
   ui: {
     colors: {
-      primary: "orange",
+      // primary: "orange",
     },
     form: {
       base: "space-y-3",

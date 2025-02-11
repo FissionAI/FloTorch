@@ -49,5 +49,6 @@ const downloadResults = () => {
     :label="buttonLabel"
     icon="i-lucide-download"
     @click="downloadResults"
+    class="primary-btn"
   />
 </template>

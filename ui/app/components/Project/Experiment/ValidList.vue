@@ -60,22 +60,25 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
   {
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
-      return h(UButton, {
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
         color: "neutral",
         variant: "ghost",
         label: "Chunking",
-        icon: isSorted
+        trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
+            ? "i-lsicon:triangle-up-outline"
+            : "i-lsicon:triangle-down-outline"
+          : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
+      }),
+      h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+    ]);
     },
     enableHiding: true,
     accessorKey: "chunking_strategy",
-    label: "Chunking",
+    label: 'Chunking',
     sortingFn: (rowA, rowB) => {
       const getChunkingValue = (row: any) => {
         const strategy = useHumanChunkingStrategy(row.chunking_strategy);
@@ -96,151 +99,189 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
   {
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
-      return h(UButton, {
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
         color: "neutral",
         variant: "ghost",
         label: "Embedding Model",
-        icon: isSorted
+        trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
+            ? "i-lsicon:triangle-up-outline"
+            : "i-lsicon:triangle-down-outline"
+          : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
+      }),
+      h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+    ]);
     },
     enableHiding: true,
     accessorKey: "embedding_model",
-    label: "Embedding Model"
+    label: 'Embedding Model',
   },
   {
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
-      return h(UButton, {
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
         color: "neutral",
         variant: "ghost",
         label: "N Shot Prompts",
-        icon: isSorted
+        trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
+            ? "i-lsicon:triangle-up-outline"
+            : "i-lsicon:triangle-down-outline"
+          : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
+      }),
+      h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+    ]);
     },
     enableHiding: true,
     accessorKey: "n_shot_prompts",
-    label: "N Shot Prompts"
+    label: 'N Shot Prompts',
   },
   {
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
-      return h(UButton, {
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
         color: "neutral",
         variant: "ghost",
         label: "KNN",
-        icon: isSorted
+        trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
+            ? "i-lsicon:triangle-up-outline"
+            : "i-lsicon:triangle-down-outline"
+          : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
+      }),
+      h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+    ]);
     },
     enableHiding: true,
     accessorKey: "knn_num",
-    label: "KNN"
+    label: 'KNN',
   },
   {
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
-      return h(UButton, {
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
         color: "neutral",
         variant: "ghost",
         label: "Reranking Model",
-        icon: isSorted
+        trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
+            ? "i-lsicon:triangle-up-outline"
+            : "i-lsicon:triangle-down-outline"
+          : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
+      }),
+      h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+    ]);
     },
     enableHiding: true,
     accessorKey: "rerank_model_id",
-    label: "Reranking Model"
+    label: 'Reranking Model',
   },
   {
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
-      return h(UButton, {
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
         color: "neutral",
         variant: "ghost",
         label: "Inferencing Model",
-        icon: isSorted
+        trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
+            ? "i-lsicon:triangle-up-outline"
+            : "i-lsicon:triangle-down-outline"
+          : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
+      }),
+      h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+    ]);
     },
     enableHiding: true,
     accessorKey: "retrieval_model",
-    label: "Inferencing Model"
+    label: 'Inferencing Model',
   },
   {
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
-      return h(UButton, {
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
         color: "neutral",
         variant: "ghost",
         label: "Guardrail",
-        icon: isSorted
+        trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
+            ? "i-lsicon:triangle-up-outline"
+            : "i-lsicon:triangle-down-outline"
+          : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
+      }),
+      h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+    ]);
     },
     enableHiding: true,
     accessorKey: "guardrail_name",
-    label: "Guardrail",
+    label: 'Guardrail',
     cell: ({ row }) => {
       return row.original.guardrail_name || 'NA';
     }
   },
   {
-    header: 'Directional Cost',
+    header: ({ column }) => {
+      const isSorted = column.getIsSorted();
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
+        color: "neutral",
+        variant: "ghost",
+        label: "Directional Cost",
+        trailingIcon: isSorted
+          ? isSorted === "asc"
+            ? "i-lsicon:triangle-up-outline"
+            : "i-lsicon:triangle-down-outline"
+          : "i-lsicon:triangle-down-outline",
+        class: "-mx-2.5",
+        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+      }),
+      h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+    ]);
+    },
     enableHiding: true,
     accessorKey: "directional_pricing",
-    label: "Directional Cost"
+    label: 'Directional Cost',
   },
   {
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
-      return h(UButton, {
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
         color: "neutral",
         variant: "ghost",
         label: "Chunk Size",
-        icon: isSorted
+        trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
+            ? "i-lsicon:triangle-up-outline"
+            : "i-lsicon:triangle-down-outline"
+          : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
+      }),
+      h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+    ]);
     },
     enableHiding: true,
     accessorKey: "chunk_size",
-    label: "Chunk Size",
+    label: 'Chunk Size',
     sortingFn: (rowA, rowB) => {
       const getChunkSizeValue = (row: any) => {
         const strategy = useHumanChunkingStrategy(row.chunking_strategy);
@@ -262,22 +303,25 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
   {
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
-      return h(UButton, {
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
         color: "neutral",
         variant: "ghost",
         label: "Chunk Overlap Percentage",
-        icon: isSorted
+        trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
+            ? "i-lsicon:triangle-up-outline"
+            : "i-lsicon:triangle-down-outline"
+          : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
+      }),
+      h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+    ]);
     },
     enableHiding: true,
     accessorKey: "chunk_overlap",
-    label: "Chunk Overlap Percentage",
+    label: 'Chunk Overlap Percentage',
     sortingFn: (rowA, rowB) => {
       const getOverlapValue = (row: any) => {
         const strategy = useHumanChunkingStrategy(row.chunking_strategy);
@@ -294,122 +338,140 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
   {
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
-      return h(UButton, {
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
         color: "neutral",
         variant: "ghost",
         label: "Vector Dimensions",
-        icon: isSorted
+        trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
+            ? "i-lsicon:triangle-up-outline"
+            : "i-lsicon:triangle-down-outline"
+          : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
+      }),
+      h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+    ]);
     },
     enableHiding: true,
     accessorKey: "vector_dimension",
-    label: "Vector Dimensions"
+    label: 'Vector Dimensions',
   },
   {
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
-      return h(UButton, {
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
         color: "neutral",
         variant: "ghost",
         label: "Indexing Algorithm",
-        icon: isSorted
+        trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
+            ? "i-lsicon:triangle-up-outline"
+            : "i-lsicon:triangle-down-outline"
+          : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
+      }),
+      h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+    ]);
     },
     enableHiding: true,
     accessorKey: "indexing_algorithm",
-    label: "Indexing Algorithm"
+    label: 'Indexing Algorithm',
   },
   {
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
-      return h(UButton, {
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
         color: "neutral",
         variant: "ghost",
         label: "Inferencing Model Temperature",
-        icon: isSorted
+        trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
+            ? "i-lsicon:triangle-up-outline"
+            : "i-lsicon:triangle-down-outline"
+          : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
+      }),
+      h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+    ]);
     },
     enableHiding: true,
     accessorKey: "temp_retrieval_llm",
-    label: "Inferencing Model Temperature"
+    label: 'Inferencing Model Temperature',
   },
   {
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
-      return h(UButton, {
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
         color: "neutral",
         variant: "ghost",
         label: "Evaluation Service",
-        icon: isSorted
+        trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
+            ? "i-lsicon:triangle-up-outline"
+            : "i-lsicon:triangle-down-outline"
+          : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
+      }),
+      h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+    ]);
     },
     enableHiding: true,
     accessorKey: "eval_service",
-    label: "Evaluation Service"
+    label: 'Evaluation Service',
   },
   {
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
-      return h(UButton, {
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
         color: "neutral",
         variant: "ghost",
         label: "Evaluation Embedding Model",
-        icon: isSorted
+        trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
+            ? "i-lsicon:triangle-up-outline"
+            : "i-lsicon:triangle-down-outline"
+          : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
+      }),
+      h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+    ]);
     },
     enableHiding: true,
     accessorKey: "eval_embedding_model",
-    label: "Evaluation Embedding Model"
+    label: 'Evaluation Embedding Model',
   },
   {
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
-      return h(UButton, {
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
         color: "neutral",
         variant: "ghost",
         label: "Evaluation Inferencing Model",
-        icon: isSorted
+        trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
+            ? "i-lsicon:triangle-up-outline"
+            : "i-lsicon:triangle-down-outline"
+          : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
+      }),
+      h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+    ]);
     },
     enableHiding: true,
     accessorKey: "eval_retrieval_model",
-    label: "Evaluation Inferencing Model"
+    label: 'Evaluation Inferencing Model',
   },
   // {
   //   header: ({ column }) => {
@@ -434,22 +496,25 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
   {
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
-      return h(UButton, {
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
         color: "neutral",
         variant: "ghost",
         label: "Bedrock Kb Name",
-        icon: isSorted
+        trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
+            ? "i-lsicon:triangle-up-outline"
+            : "i-lsicon:triangle-down-outline"
+          : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
+      }),
+      h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+    ]);
     },
     enableHiding: true,
     accessorKey: "kb_name",
-    label: "Bedrock Kb Name",
+    label: 'Bedrock Kb Name',
     cell: ({ row }) => {
       return row.original.kb_name ? row.original.kb_name : 'NA';
     }
@@ -504,23 +569,6 @@ const columnVisibility = ref({
           <p v-if="isLoading" class="text-gray-500">Please wait, we are fetching valid experiments...!</p>
           <p v-else>No valid experiments are found...!</p>
         </div>
-      </template>
-      <template #directional_pricing-header="{ column }">
-        <UButton
-          color="neutral"
-          variant="ghost"
-          :icon="column.getIsSorted() 
-            ? column.getIsSorted() === 'asc'
-              ? 'i-lucide-arrow-up-narrow-wide'
-              : 'i-lucide-arrow-down-wide-narrow'
-            : 'i-lucide-arrow-up-down'"
-          class="-mx-2.5"
-          @click="column.toggleSorting(column.getIsSorted() === 'asc')"
-        >
-          <span class="whitespace-pre-wrap">
-          {{ 'Directional Cost' }}
-          </span>
-        </UButton>
       </template>
       <template #directional_pricing-cell="{ row }">
         <div class="w-full">
@@ -594,23 +642,6 @@ const columnVisibility = ref({
         <span class=" ">
           {{ row.original.vector_dimension || 'NA' }}
         </span>
-      </template>
-      <template #n_shot_prompts-header="{ column }">
-        <UButton
-          color="neutral"
-          variant="ghost"
-          :icon="column.getIsSorted() 
-            ? column.getIsSorted() === 'asc'
-              ? 'i-lucide-arrow-up-narrow-wide'
-              : 'i-lucide-arrow-down-wide-narrow'
-            : 'i-lucide-arrow-up-down'"
-          class="-mx-2.5"
-          @click="column.toggleSorting(column.getIsSorted() === 'asc')"
-        >
-          <span class="whitespace-pre-wrap">
-          {{ 'N\nShot\nPrompts' }}
-          </span>
-        </UButton>
       </template>
       <template #n_shot_prompts-cell="{ row }">
         <span class=" ">

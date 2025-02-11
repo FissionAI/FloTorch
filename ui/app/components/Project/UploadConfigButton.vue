@@ -45,5 +45,5 @@ onChange((files) => {
 
 
 <template>
-  <UButton icon="i-lucide-upload" label="Upload Config" @click="openDialog" />
+  <UButton class="primary-btn" icon="i-lucide-upload" label="Upload Config" @click="openDialog" />
 </template>

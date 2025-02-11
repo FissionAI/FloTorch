@@ -18,7 +18,7 @@ const showHomeButton = computed(() => {
 <template>
   <div class="flex justify-between items-center">
     <div class="flex gap-2 items-center">
-      <UButton v-if="showHomeButton" icon="i-lucide-house" :to="{ name: 'projects' }" square />
+      <!-- <UButton v-if="showHomeButton" icon="i-lucide-house" :to="{ name: 'projects' }" square /> -->
       <div>
         <h2>
           <NuxtLink :to="props.to" class="text-2xl font-bold">{{ props.title }}</NuxtLink>

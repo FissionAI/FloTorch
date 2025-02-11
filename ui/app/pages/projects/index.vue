@@ -27,6 +27,7 @@ useHead({
     <template #actions>
       <ProjectUploadConfigButton />
       <UButton
+        class="primary-btn"
         icon="i-lucide-plus"
         :to="{ name: 'projects-create' }"
         label="Create Project"

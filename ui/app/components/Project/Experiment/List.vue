@@ -13,62 +13,71 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
   {
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
-      return h(UButton, {
-        color: "neutral",
-        variant: "ghost",
-        label: "ID",
-        icon: isSorted
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
+          color: "neutral",
+          variant: "ghost",
+          label: "ID",
+          trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
+            ? "i-lsicon:triangle-up-outline"
+            : "i-lsicon:triangle-down-outline"
+          : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
+        }),
+        h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+      ]);
     },
-    label: "ID",
     accessorKey: "id",
     enableHiding: false,
+    label: 'ID',
   },
   {
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
-      return h(UButton, {
-        color: "neutral",
-        variant: "ghost",
-        label: "Status",
-        icon: isSorted
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
+          color: "neutral",
+          variant: "ghost",
+          label: "Status",
+          trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
+            ? "i-lsicon:triangle-up-outline"
+            : "i-lsicon:triangle-down-outline"
+          : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
+      }),
+      h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+    ]);
     },
-    label: "Status",
     accessorKey: "experiment_status",
     enableHiding: true,
+    label: 'Status',
   },
   {
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
-      return h(UButton, {
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
         color: "neutral",
         variant: "ghost",
         label: "Inferencing Model",
-        icon: isSorted
+        trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
+            ? "i-lsicon:triangle-up-outline"
+            : "i-lsicon:triangle-down-outline"
+          : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
+        }),
+        h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+      ]);
     },
-    label: "Inferencing Model",
     accessorKey: "config.retrieval_model",
     enableHiding: true,
+    label: 'Inferencing Model',
     cell: ({ row }) => {
       return getModelName("retrieval", row.original.config.retrieval_model) || 'NA'
     }
@@ -76,22 +85,25 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
   {
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
-      return h(UButton, {
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
         color: "neutral",
         variant: "ghost",
         label: "Estimated Cost",
-        icon: isSorted
+        trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
+            ? "i-lsicon:triangle-up-outline"
+            : "i-lsicon:triangle-down-outline"
+          : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
+        }),
+        h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+      ]);
     },
-    label: 'Estimated Cost',
     accessorKey: "experiment_cost",
     enableHiding: true,
+    label: 'Estimated Cost',
     sortingFn: (rowA, rowB) => {
       const a = rowA.original.cost ?? 0;
       const b = rowB.original.cost ?? 0;
@@ -104,22 +116,25 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
   {
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
-      return h(UButton, {
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
         color: "neutral",
         variant: "ghost",
         label: "Faithfulness",
-        icon: isSorted
+        trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
+            ? "i-lsicon:triangle-up-outline"
+            : "i-lsicon:triangle-down-outline"
+          : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
+        }),
+        h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+      ]);
     },
-    label: 'Faithfulness',
     accessorKey: "eval_metrics.faithfulness_score",
     enableHiding: true,
+    label: 'Faithfulness',
     sortingFn: (rowA, rowB) => {
       const getScore = (row: any) => {
         if ("faithfulness_score" in row.original.eval_metrics) {
@@ -148,22 +163,25 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
   {
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
-      return h(UButton, {
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
         color: "neutral",
         variant: "ghost",
         label: "Context Precision",
-        icon: isSorted
+        trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
+            ? "i-lsicon:triangle-up-outline"
+            : "i-lsicon:triangle-down-outline"
+          : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
+        }),
+        h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+      ]);
     },
-    label: 'Context Precision',
     accessorKey: "eval_metrics.context_precision_score",
     enableHiding: true,
+    label: 'Context Precision',
     sortingFn: (rowA, rowB) => {
       if ("M" in rowA.original.eval_metrics) {
         const a = rowA.original.eval_metrics?.M?.context_precision_score;
@@ -190,22 +208,25 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
   {
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
-      return h(UButton, {
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
         color: "neutral",
         variant: "ghost",
         label: "Aspect Critic",
-        icon: isSorted
+        trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
+            ? "i-lsicon:triangle-up-outline"
+            : "i-lsicon:triangle-down-outline"
+          : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
+        }),
+        h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+      ]);
     },
-    label: 'Aspect Critic',
     accessorKey: "eval_metrics.aspect_critic_score",
     enableHiding: true,
+    label: 'Aspect Critic',
     sortingFn: (rowA, rowB) => {
       if ("M" in rowA.original.eval_metrics) {
         const a = rowA.original.eval_metrics?.M?.aspect_critic_score ?? 0;
@@ -232,22 +253,25 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
   {
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
-      return h(UButton, {
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
         color: "neutral",
         variant: "ghost",
         label: "Answer Relevancy",
-        icon: isSorted
+        trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
+            ? "i-lsicon:triangle-up-outline"
+            : "i-lsicon:triangle-down-outline"
+          : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
+        }),
+        h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+      ]);
     },
-    label: 'Answers Relevancy',
     accessorKey: "eval_metrics.answers_relevancy_score",
     enableHiding: true,
+    label: 'Answer Relevancy',
     sortingFn: (rowA, rowB) => {
       if ("M" in rowA.original.eval_metrics) {
         const a = rowA.original.eval_metrics?.M?.answers_relevancy_score ?? 0;
@@ -274,22 +298,25 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
   {
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
-      return h(UButton, {
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
         color: "neutral",
         variant: "ghost",
         label: "Duration",
-        icon: isSorted
+        trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
+            ? "i-lsicon:triangle-up-outline"
+            : "i-lsicon:triangle-down-outline"
+          : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
+        }),
+        h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+      ]);
     },
-    label: 'Duration',
     accessorKey: "experiment_duration",
     enableHiding: true,
+    label: 'Duration',
     sortingFn: (rowA, rowB) => {
       const a = rowA.original.total_time ?? 0;
       const b = rowB.original.total_time ?? 0;
@@ -302,45 +329,25 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
   {
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
-      return h(UButton, {
-        color: "neutral",
-        variant: "ghost",
-        label: "N Shot Prompts",
-        icon: isSorted
-          ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
-        class: "-mx-2.5",
-        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
-    },
-    label: "N Shot Prompts",
-    accessorKey: "config.n_shot_prompts",
-    enableHiding: true,
-    cell: ({ row }) => {
-      return row.original.config?.n_shot_prompts !== undefined || row.original.config?.n_shot_prompts !== null ? row.original.config.n_shot_prompts : "-"
-    }
-  },
-  {
-    header: ({ column }) => {
-      const isSorted = column.getIsSorted();
-      return h(UButton, {
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
         color: "neutral",
         variant: "ghost",
         label: "Embedding Model",
-        icon: isSorted
+        trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
+            ? "i-lsicon:triangle-up-outline"
+            : "i-lsicon:triangle-down-outline"
+          : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
+        }),
+        h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+      ]);
     },
-    label: "Embedding Model",
     accessorKey: "config.embedding_model",
     enableHiding: true,
+    label: 'Embedding Model',
     cell: ({ row }) => {
       return getModelName("indexing", row.original.config.embedding_model) || 'NA'
     }
@@ -348,22 +355,25 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
   {
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
-      return h(UButton, {
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
         color: "neutral",
         variant: "ghost",
         label: "Evaluation Service",
-        icon: isSorted
+        trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
+            ? "i-lsicon:triangle-up-outline"
+            : "i-lsicon:triangle-down-outline"
+          : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
+        }),
+        h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+      ]);
     },
-    label: 'Evaluation Service',
     accessorKey: "config.eval_service",
     enableHiding: true,
+    label: 'Evaluation Service',
     sortingFn: (rowA, rowB) => {
       const a = rowA.original.config?.eval_service ?? 0;
       const b = rowB.original.config?.eval_service ?? 0;
@@ -376,22 +386,25 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
   {
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
-      return h(UButton, {
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
         color: "neutral",
         variant: "ghost",
         label: "Evaluation Embedding Model",
-        icon: isSorted
+        trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
+            ? "i-lsicon:triangle-up-outline"
+            : "i-lsicon:triangle-down-outline"
+          : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
+        }),
+        h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+      ]);
     },
-    label: 'Evaluation Embedding Model',
     accessorKey: "config.eval_embedding_model",
     enableHiding: true,
+    label: 'Evaluation Embedding Model',
     sortingFn: (rowA, rowB) => {
       const a = rowA.original.config?.eval_embedding_model ?? 0;
       const b = rowB.original.config?.eval_embedding_model ?? 0;
@@ -404,22 +417,25 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
   {
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
-      return h(UButton, {
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
         color: "neutral",
         variant: "ghost",
         label: "Evaluation Inferencing Model",
-        icon: isSorted
+        trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
+            ? "i-lsicon:triangle-up-outline"
+            : "i-lsicon:triangle-down-outline"
+          : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
+        }),
+        h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+      ]);
     },
-    label: 'Evaluation Inferencing Model',
     accessorKey: "config.eval_retrieval_model",
     enableHiding: true,
+    label: 'Evaluation Inferencing Model',
     sortingFn: (rowA, rowB) => {
       const a = rowA.original.config?.eval_retrieval_model ?? 0;
       const b = rowB.original.config?.eval_retrieval_model ?? 0;
@@ -432,22 +448,25 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
   {
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
-      return h(UButton, {
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
         color: "neutral",
         variant: "ghost",
         label: "Directional Cost",
-        icon: isSorted
+        trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
+            ? "i-lsicon:triangle-up-outline"
+            : "i-lsicon:triangle-down-outline"
+          : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
+        }),
+        h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+      ]);
     },
-    label: 'Directional Cost',
     accessorKey: "directional_pricing",
     enableHiding: true,
+    label: 'Directional Cost',
     sortingFn: (rowA, rowB) => {
       const a = rowA.original.config?.directional_pricing ?? 0;
       const b = rowB.original.config?.directional_pricing ?? 0;
@@ -460,22 +479,25 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
   {
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
-      return h(UButton, {
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
         color: "neutral",
         variant: "ghost",
         label: "Indexing Algorithm",
-        icon: isSorted
+        trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
+            ? "i-lsicon:triangle-up-outline"
+            : "i-lsicon:triangle-down-outline"
+          : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
+        }),
+        h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+      ]);
     },
-    label: "Indexing Algorithm",
     accessorKey: "config.indexing_algorithm",
     enableHiding: true,
+    label: 'Indexing Algorithm',
     cell: ({ row }) => {
       return useHumanIndexingAlgorithm(row.original.config.indexing_algorithm) || 'NA'
     }
@@ -483,45 +505,51 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
   {
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
-      return h(UButton, {
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
         color: "neutral",
         variant: "ghost",
         label: "Chunking",
-        icon: isSorted
+        trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
+            ? "i-lsicon:triangle-up-outline"
+            : "i-lsicon:triangle-down-outline"
+          : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
+        }),
+        h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+      ]);
     },
     accessorKey: "config.chunking_strategy",
     enableHiding: true,
+    label: 'Chunking',
     cell: ({ row }) => {
       return useHumanChunkingStrategy(row.original.config.chunking_strategy) || 'NA'
     },
-    label: "Chunking"
   },
   {
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
-      return h(UButton, {
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
         color: "neutral",
         variant: "ghost",
         label: "Inferencing Model Temperature",
-        icon: isSorted
+        trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
+            ? "i-lsicon:triangle-up-outline"
+            : "i-lsicon:triangle-down-outline"
+          : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
+        }),
+        h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+      ]);
     },
-    label: "Inferencing Model Temperature",
     accessorKey: "config.temp_retrieval_llm",
     enableHiding: true,
+    label: 'Inferencing Model Temperature',
     sortingFn: (rowA, rowB) => {
       const a = rowA.original.config?.temp_retrieval_llm ?? 0;
       const b = rowB.original.config?.temp_retrieval_llm ?? 0;
@@ -531,22 +559,25 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
   {
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
-      return h(UButton, {
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
         color: "neutral",
         variant: "ghost",
         label: "Reranking Model",
-        icon: isSorted
+        trailingIcon: isSorted
           ? isSorted === "asc"
             ? "i-lucide-arrow-up-narrow-wide"
             : "i-lucide-arrow-down-wide-narrow"
           : "i-lucide-arrow-up-down",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
+        }),
+        h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+      ]);
     },
-    label: 'Reranking Model',
     accessorKey: "config.rerank_model_id",
     enableHiding: true,
+    label: 'Reranking Model',
     sortingFn: (rowA, rowB) => {
       const a = rowA.original.config.rerank_model_id ?? 0;
       const b = rowB.original.config.rerank_model_id ?? 0;
@@ -559,22 +590,25 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
    {
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
-      return h(UButton, {
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
         color: "neutral",
         variant: "ghost",
         label: "Guardrail",
-        icon: isSorted
+        trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
+            ? "i-lsicon:triangle-up-outline"
+            : "i-lsicon:triangle-down-outline"
+          : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
+        }),
+        h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+      ]);
     },
-    label: 'Guardrail',
     accessorKey: "config.guardrail_name",
     enableHiding: true,
+    label: 'Guardrail',
     sortingFn: (rowA, rowB) => {
       const a = rowA.original.config?.guardrail_name ?? 0;
       const b = rowB.original.config?.guardrail_name ?? 0;
@@ -587,22 +621,25 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
   {
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
-      return h(UButton, {
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
         color: "neutral",
         variant: "ghost",
         label: "Bedrock Kb Name",
-        icon: isSorted
+        trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
+            ? "i-lsicon:triangle-up-outline"
+            : "i-lsicon:triangle-down-outline"
+          : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-      });
+        }),
+        h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+      ]);
     },
-    label: 'Bedrock Kb Name',
     accessorKey: "config.kb_name",
     enableHiding: true,
+    label: 'Bedrock Kb Name',
     sortingFn: (rowA, rowB) => {
       const a = rowA.original.config?.kb_name ?? 0;
       const b = rowB.original.config?.kb_name ?? 0;
@@ -640,7 +677,6 @@ const columnVisibility = ref({
   config_indexing_algorithm: false,
   config_chunking_strategy: false,
   config_embedding_model: false,
-  config_n_shot_prompts: false,
 })
 </script>
 
@@ -709,12 +745,12 @@ const columnVisibility = ref({
                               <td>{{useHumanCurrencyAmount(row.original?.config?.retrieval_cost_estimate,3)}}</td>
                             </tr>
                             <tr>
-                              <td>Inferencing Cost Estimate:</td>
-                              <td>{{useHumanCurrencyAmount(row.original?.config?.inferencing_cost_estimate,3)}}</td>
-                            </tr>
-                            <tr>
                               <td>Evaluation Cost Estimate:</td>
                               <td>{{useHumanCurrencyAmount(row.original?.config?.eval_cost_estimate,3)}}</td>
+                            </tr>
+                            <tr>
+                              <td>Inferencing Cost Estimate:</td>
+                              <td>{{useHumanCurrencyAmount(row.original?.config?.inferencing_cost_estimate,3)}}</td>
                             </tr>
                           </tbody>
                         </table>

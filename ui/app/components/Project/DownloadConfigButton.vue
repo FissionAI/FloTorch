@@ -35,5 +35,5 @@ const handleDownload = () => {
 
 
 <template>
-  <UButton icon="i-lucide-download" label="Download Config" :loading="isLoading" :disabled="props.disabled" @click="handleDownload" />
+  <UButton class="secondary-btn" icon="i-lucide-download" label="Download Config" :loading="isLoading" :disabled="props.disabled" @click="handleDownload" />
 </template>

@@ -79,6 +79,14 @@ const fetchGuardrails = () => {
   getGuardrailsList();
 };
 
+const tooltip = ref('')
+const fieldName = ref('')
+
+const handleTooltip = (tooltipInfo: {tooltip: string, fieldName: string}) => {
+  tooltip.value = tooltipInfo.tooltip
+  fieldName.value = tooltipInfo.fieldName
+}
+
 onMounted(() => {
   fetchGuardrails();
 });
@@ -92,12 +100,19 @@ onMounted(() => {
     @submit="onSubmit"
   >
     <UCard class="w-full">
-      <label class="font-bold text-sm -my-4">Guardrails {{ state?.guardrails?.length ? `(${state?.guardrails?.length})` : ''}} - Applied at User Query,Context and Model Response levels</label>
+      <!-- <label class="font-bold text-sm -my-4">Guardrails {{ state?.guardrails?.length ? `(${state?.guardrails?.length})` : ''}} - Applied at User Query,Context and Model Response levels</label> -->
       <div class="flex gap-2">
         <UFormField
+          :label="`Guardrails ${state?.guardrails?.length ? `(${state?.guardrails?.length})` : ''}`"
           name="guardrails"
           class="text-ellipsis overflow-hidden flex-11"
         >
+          <template #label="{ label }">
+            <div class="flex items-center">
+              {{ label }}
+              <FieldTooltip @show-tooltip="handleTooltip" field-name="guardrails"/>
+            </div>
+          </template>
           <USelectMenu
             v-model="state.guardrails"
             :disabled="isFetchingGuardrailsList"
@@ -117,36 +132,42 @@ onMounted(() => {
         </div>
         </UFormField>
         
-        <UFormField name="refetch_guardrail_list" label=" " class="flex-1">
+        <UFormField name="refetch_guardrail_list" label=" " class="flex-1 content-center">
           <UButton
+            class="primary-btn"
             label="Fetch Guardrails"
             trailing-icon="i-lucide-repeat-2"
             @click.prevent="fetchGuardrails"
           />
-          <template #hint>
+          <!-- <template #hint>
             <FieldTooltip field-name="guardrails" />
-          </template>
+          </template> -->
         </UFormField>
       </div>
     </UCard>
     <UCard>
     <label class="font-bold text-sm">Evaluation</label>
     <div class="my-3">
-    <UFormField name="service" :label="`Service`" required>
+    <UFormField name="service" :label="`Service`">
       <USelectMenu
         v-model="state.service"
         value-key="value"
         :items="meta.evalStrategy.service"
         class="w-full"
       />
-      <template #hint>
-        <FieldTooltip field-name="service" />
+      <template #label="{ label }">
+        <div class="flex items-center">
+          {{ label }}
+          <FieldTooltip @show-tooltip="handleTooltip" field-name="service"/>
+        </div>
       </template>
+      <!-- <template #hint>
+        <FieldTooltip field-name="service" />
+      </template> -->
     </UFormField>
     <UFormField
       name="ragas_embedding_llm"
       :label="`Embedding Model`"
-      required
     >
       <USelectMenu
         v-model="state.ragas_embedding_llm"
@@ -154,14 +175,19 @@ onMounted(() => {
         :items="useFilteredRagasEmbeddingModels(embeddingModel)"
         class="w-full"
       />
-      <template #hint>
-        <FieldTooltip field-name="ragas_embedding_llm" />
+      <template #label="{ label }">
+        <div class="flex items-center">
+          {{ label }}
+          <FieldTooltip @show-tooltip="handleTooltip" field-name="ragas_embedding_llm"/>
+        </div>
       </template>
+      <!-- <template #hint>
+        <FieldTooltip field-name="ragas_embedding_llm" />
+      </template> -->
     </UFormField>
     <UFormField
       name="ragas_inference_llm"
       :label="`Inferencing Model`"
-      required
     >
       <USelectMenu
         v-model="state.ragas_inference_llm"
@@ -169,9 +195,15 @@ onMounted(() => {
         :items="useFilteredRagasInferenceModels(inferenceModel)"
         class="w-full"
       />
-      <template #hint>
-        <FieldTooltip field-name="ragas_inference_llm" />
+      <template #label="{ label }">
+        <div class="flex items-center">
+          {{ label }}
+          <FieldTooltip @show-tooltip="handleTooltip" field-name="ragas_inference_llm"/>
+        </div>
       </template>
+      <!-- <template #hint>
+        <FieldTooltip field-name="ragas_inference_llm" />
+      </template> -->
     </UFormField>
   </div>
     </UCard>
@@ -182,7 +214,7 @@ onMounted(() => {
           type="button"
           icon="i-lucide-arrow-left"
           label="Back"
-          variant="outline"
+          class="secondary-btn"
           @click.prevent="emits('previous')"
         />
       </div>
@@ -191,6 +223,7 @@ onMounted(() => {
           trailing-icon="i-lucide-arrow-right"
           :label="nextButtonLabel"
           type="submit"
+          class="primary-btn"
         />
       </div>
     </div>

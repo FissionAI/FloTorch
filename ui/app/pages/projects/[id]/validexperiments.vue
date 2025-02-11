@@ -108,6 +108,9 @@ useHead({
       Experiments Verifying....
     </div>
     <UAlert
+      class="info-error"
+      variant="subtle"
+      icon="i-lucide-circle-x"
       v-else-if="experimentError && !experimentLoading"
       :description="experimentError"
       title="Error : "
@@ -133,9 +136,9 @@ useHead({
             :key="validExperiments?.length"
             :disabled="validExperiments?.length === 0"
             :project-id="project!.id"
-            variant="outline"
           />
           <UButton
+            class="primary-btn"
             icon="i-lucide-play"
             :disabled="selectedExperiments?.length === 0"
             :loading="isCreatingExperiments"

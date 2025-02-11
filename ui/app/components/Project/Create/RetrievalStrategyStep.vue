@@ -55,6 +55,15 @@ const handlePromptGuideError = (error?: FormError) => {
     // retForm.value?.setErrors([])
   }
 }
+
+const tooltip = ref('')
+const fieldName = ref('')
+
+const handleTooltip = (tooltipInfo: {tooltip: string, fieldName: string}) => {
+  console.log(tooltipInfo)
+  tooltip.value = tooltipInfo.tooltip
+  fieldName.value = tooltipInfo.fieldName
+}
 </script>
 
 <template>
@@ -63,12 +72,18 @@ const handlePromptGuideError = (error?: FormError) => {
     <div class="flex gap-4 items-baseline">
       <UFormField name="n_shot_prompts"
         :label="`N Shot Prompts ${state?.n_shot_prompts?.length === 0 || state?.n_shot_prompts === undefined ? '' : `(${state?.n_shot_prompts?.length})`}`"
-        required class="flex-1">
+        class="flex-1">
+        <template #label="{ label }">
+          <div class="flex items-center">
+            {{ label }}
+            <FieldTooltip @show-tooltip="handleTooltip" field-name="n_shot_prompts"/>
+          </div>
+        </template>
         <USelectMenu v-model="state.n_shot_prompts" value-key="value" multiple
           :items="meta.retrievalStrategy.shotPrompts" class="w-full" />
-        <template #hint>
+        <!-- <template #hint>
           <FieldTooltip field-name="n_shot_prompts" />
-        </template>
+        </template> -->
       </UFormField>
       <UFormField name="n_shot_prompt_guide" label="Shot Prompt File" required class="flex-1">
         <PromptGuideSelect v-model="state.n_shot_prompt_guide" :required-prompts="selectedMaxShotPrompts"
@@ -80,47 +95,71 @@ const handlePromptGuideError = (error?: FormError) => {
     </div>
     <UFormField name="knn_num"
       :label="`KNN ${state?.knn_num?.length === 0 || state?.knn_num === undefined ? '' : `(${state?.knn_num?.length})`}`"
-      required>
+      >
       <USelectMenu v-model="state.knn_num" value-key="value" multiple :items="meta.retrievalStrategy.knnNumber"
         class="w-full" />
-      <template #hint>
-        <FieldTooltip field-name="knn_num" />
+      <template #label="{ label }">
+        <div class="flex items-center">
+          {{ label }}
+          <FieldTooltip @show-tooltip="handleTooltip" field-name="knn_num"/>
+        </div>
       </template>
+      <!-- <template #hint>
+        <FieldTooltip field-name="knn_num" />
+      </template> -->
     </UFormField>
     <UFormField name="rerank_model_id" :label="`Reranking Model ${region === 'us-east-1' ? `(Reranking is not available in us-east-1)`:``}`" :required="region !== 'us-east-1'">
       <USelectMenu :disabled="region === 'us-east-1'" v-model="state.rerank_model_id" value-key="value" multiple
         :items="useFilteredRerankModels(region)" class="w-full" />
-      <template #hint>
-        <FieldTooltip field-name="rerank_model_id" />
+      <template #label="{ label }">
+        <div class="flex items-center">
+          {{ label }}
+          <FieldTooltip @show-tooltip="handleTooltip" field-name="rerank_model_id"/>
+        </div>
       </template>
+      <!-- <template #hint>
+        <FieldTooltip field-name="rerank_model_id" />
+      </template> -->
     </UFormField>
     <UFormField name="retrieval"
       :label="`Inferencing Model ${state?.retrieval?.length === 0 || state?.retrieval === undefined ? '' : `(${state?.retrieval?.length})`}`"
-      required>
+      >
       <ModelSelect v-model="state.retrieval" model="retrieval" />
-      <template #hint>
-        <FieldTooltip field-name="retrieval" />
+      <template #label="{ label }">
+        <div class="flex items-center">
+          {{ label }}
+          <FieldTooltip @show-tooltip="handleTooltip" field-name="retrieval"/>
+        </div>
       </template>
+      <!-- <template #hint>
+        <FieldTooltip field-name="retrieval" />
+      </template> -->
     </UFormField>
     <UFormField name="temp_retrieval_llm"
       :label="`Inferencing Model Temperature ${state?.temp_retrieval_llm?.length === 0 || state?.temp_retrieval_llm === undefined ? '' : `(${state?.temp_retrieval_llm?.length})`}`"
-      required>
+      >
       <USelectMenu v-model="state.temp_retrieval_llm" value-key="value" multiple
         :items="meta.retrievalStrategy.temperature" class="w-full" />
-      <template #hint>
-        <FieldTooltip field-name="temp_retrieval_llm" />
+      <template #label="{ label }">
+        <div class="flex items-center">
+          {{ label }}
+          <FieldTooltip @show-tooltip="handleTooltip" field-name="temp_retrieval_llm"/>
+        </div>
       </template>
+      <!-- <template #hint>
+        <FieldTooltip field-name="temp_retrieval_llm" />
+      </template> -->
     </UFormField>
     <!-- <UFormField name="region-selected" label="Selected Region">
       <UInput v-model="state.region"/>
     </UFormField> -->
     <div class="flex justify-between items-center w-full mt-6">
       <div>
-        <UButton v-if="showBackButton" type="button" icon="i-lucide-arrow-left" label="Back" variant="outline"
+        <UButton v-if="showBackButton" type="button" icon="i-lucide-arrow-left" label="Back" class="secondary-btn"
           @click.prevent="emits('previous')" />
       </div>
       <div>
-        <UButton trailing-icon="i-lucide-arrow-right" :label="nextButtonLabel" type="submit" />
+        <UButton trailing-icon="i-lucide-arrow-right" :label="nextButtonLabel" type="submit" class="primary-btn" />
       </div>
     </div>
   </UForm>

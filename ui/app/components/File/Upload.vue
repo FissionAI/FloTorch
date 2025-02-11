@@ -97,6 +97,6 @@ onChange(async (files) => {
 <template>
   <UButtonGroup class="w-full">
     <UInput v-model="filepath" disabled />
-    <UButton color="neutral" variant="subtle" icon="i-lucide-upload" :loading="isUploading" @click="open()" />
+    <UButton class="secondary-btn ml-2" leading-icon="i-lucide-arrow-up-to-line" label="Choose File" variant="ghost" :loading="isUploading" @click="open()" />
   </UButtonGroup>
 </template>
