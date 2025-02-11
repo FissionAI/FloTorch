@@ -23,7 +23,6 @@ useHead({
 
 <template>
   <Page title="Projects">
-    <Breadcumb />
     <template #actions>
       <ProjectUploadConfigButton />
       <UButton

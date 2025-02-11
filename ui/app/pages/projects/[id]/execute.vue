@@ -45,7 +45,7 @@ useHead({
 </script>
 
 <template>
-<Breadcumb />
+
   <UCard>
     <template #header>
       <h2 class="text-xl font-medium">Selected Experiments {{ validExperiments.length > 0 ? `(${validExperiments.length})` : '' }}</h2>
