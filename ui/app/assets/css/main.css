@@ -74,10 +74,29 @@ td {
   vertical-align: top !important;
 }
 
+.experiment-details-tabs div button {
+  color: #474545;
+  font-weight: bold;
+}
+
 .experiment-details-tabs div button[data-state]:not([data-state='active']) {
-  border : 1px solid lightgray;
+  border-radius: 0px;
+  border-right: 1px solid rgb(144, 150, 144);
+  margin-bottom: 10px;
   cursor: pointer;
-  margin:2px;
+}
+.experiment-details-tabs div button[data-state]:not([data-state='active']):hover {
+  color: var(--aws-secondary-color);
+}
+.experiment-details-tabs div button[data-state='active'] {
+  cursor: pointer;
+  color: var(--aws-secondary-color);
+  margin-bottom: 10px;
+  cursor: pointer;
+
+}
+.experiment-details-tabs div button:last-child {
+  border: none;
 }
 
 
@@ -253,7 +272,7 @@ input, .primary-dropdown {
   
   border-bottom: 1px solid lightgray;
   margin-bottom: 0px !important;
-  padding: 1px;
+  padding: 2px;
   
 }
 
@@ -262,7 +281,30 @@ input, .primary-dropdown {
 }
 
 .custom-options-group:hover {
-  border: 1px outset lightgray !important;
-  border-radius: 7px !important;
-  /* padding:2px !important; */
+  border-radius: 6px !important;
+  outline-style: solid;
+  outline-color: lightgrey;
+  outline-width: 2px;
+  border: none;
+}
+
+.custom-tab-list-group {
+  border-bottom:2px solid lightgray;
+  border-color : lightgray;
+}
+.custom-tab-list-group  .custom-tabs-trigger{
+  border-radius: 0px;
+  border-right: 1px solid rgb(144, 150, 144);
+ 
+  margin-bottom: 10px;
+}
+
+.custom-tab-list-group .custom-tab-indicator {
+  height: 5px !important;
+  background-color: var(--aws-secondary-color);
+}
+
+.secondery-color {
+  background-color: var(--aws-secondary-color) !important;
+  border-color: var(--aws-secondary-color) !important;
 }

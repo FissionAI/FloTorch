@@ -75,6 +75,6 @@ const breadcrumbItems = computed((): BreadcrumbItem[] => {
   <UBreadcrumb
     v-if="breadcrumbItems.length > 0"
     :items="breadcrumbItems"
-    class="py-4 secondary-breadcrumb"
+    class="py-4 secondary-breadcrumb ml-1"
   />
 </template>
