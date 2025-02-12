@@ -37,7 +37,7 @@ const { data: experiments, isLoading } = useQuery({
 
 
 <template>
- 
+  <Breadcumb />
   <UCard v-if="project?.status !== 'not_started'">
     <template #header>
       <h2 class="text-xl font-medium">Running Experiments {{ experiments?.length > 0 ? "("+experiments?.length+")" : "" }}</h2>

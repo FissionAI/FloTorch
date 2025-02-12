@@ -37,6 +37,15 @@ const hideInfraAlert = computed(() => {
   }
   return false
 })
+
+const sharedData = inject('sharedData')
+
+onMounted(() => {
+  sharedData.value.title = title
+  sharedData.value.to = { name: 'projects-id', params: { id: projectId } }
+  sharedData.value.description = description
+});
+
 </script>
 
 

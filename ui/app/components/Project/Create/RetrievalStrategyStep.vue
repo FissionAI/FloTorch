@@ -80,7 +80,7 @@ const handleTooltip = (tooltipInfo: {tooltip: string, fieldName: string}) => {
           </div>
         </template>
         <USelectMenu v-model="state.n_shot_prompts" value-key="value" multiple
-          :items="meta.retrievalStrategy.shotPrompts" class="w-full" />
+          :items="meta.retrievalStrategy.shotPrompts" class="w-full primary-dropdown" />
         <!-- <template #hint>
           <FieldTooltip field-name="n_shot_prompts" />
         </template> -->
@@ -97,7 +97,7 @@ const handleTooltip = (tooltipInfo: {tooltip: string, fieldName: string}) => {
       :label="`KNN ${state?.knn_num?.length === 0 || state?.knn_num === undefined ? '' : `(${state?.knn_num?.length})`}`"
       >
       <USelectMenu v-model="state.knn_num" value-key="value" multiple :items="meta.retrievalStrategy.knnNumber"
-        class="w-full" />
+        class="w-full primary-dropdown" />
       <template #label="{ label }">
         <div class="flex items-center">
           {{ label }}
@@ -110,7 +110,7 @@ const handleTooltip = (tooltipInfo: {tooltip: string, fieldName: string}) => {
     </UFormField>
     <UFormField name="rerank_model_id" :label="`Reranking Model ${region === 'us-east-1' ? `(Reranking is not available in us-east-1)`:``}`" :required="region !== 'us-east-1'">
       <USelectMenu :disabled="region === 'us-east-1'" v-model="state.rerank_model_id" value-key="value" multiple
-        :items="useFilteredRerankModels(region)" class="w-full" />
+        :items="useFilteredRerankModels(region)" class="w-full primary-dropdown" />
       <template #label="{ label }">
         <div class="flex items-center">
           {{ label }}
@@ -139,7 +139,7 @@ const handleTooltip = (tooltipInfo: {tooltip: string, fieldName: string}) => {
       :label="`Inferencing Model Temperature ${state?.temp_retrieval_llm?.length === 0 || state?.temp_retrieval_llm === undefined ? '' : `(${state?.temp_retrieval_llm?.length})`}`"
       >
       <USelectMenu v-model="state.temp_retrieval_llm" value-key="value" multiple
-        :items="meta.retrievalStrategy.temperature" class="w-full" />
+        :items="meta.retrievalStrategy.temperature" class="w-full primary-dropdown" />
       <template #label="{ label }">
         <div class="flex items-center">
           {{ label }}

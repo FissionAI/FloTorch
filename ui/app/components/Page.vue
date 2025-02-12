@@ -1,44 +1,40 @@
 <script setup lang="ts">
-import type { RouteLocationRaw } from "vue-router";
+import type { RouteLocationRaw } from 'vue-router';
 
 const props = defineProps<{
   title: string;
   description?: string;
-  to?: RouteLocationRaw;
+  to?: RouteLocationRaw,
+  hideSlot? : boolean;
 }>();
 
-const route = useRoute();
+const route = useRoute()
 const showHomeButton = computed(() => {
-  return route.name !== "projects";
-});
+  return route.name !== 'projects'
+})
+
+
 </script>
 
+
+
 <template>
-  <div class=" justify-between items-center">
-    <UCard class="w-full bg-gray-800 text-white">
+  <div class="flex justify-between items-center">
+    <div class="flex gap-2 items-center" v-if="hideSlot">
+      <!-- <UButton v-if="showHomeButton" icon="i-lucide-house" :to="{ name: 'projects' }" square /> -->
+      <div>
+        <h2>
+          <NuxtLink :to="props.to" class="text-2xl font-bold">{{ props.title }}</NuxtLink>
+        </h2>
+        <p v-if="props.description" class="text-sm text-gray-500">{{ props.description }}</p>
+      </div>
+    </div>
+
+    <div v-if="!hideSlot">
       <div class="flex gap-2 items-center">
-        <!-- <UButton v-if="showHomeButton" icon="i-lucide-house" :to="{ name: 'projects' }" square /> -->
-        <div>
-          <h2>
-            <NuxtLink :to="props.to" class="text-2xl font-bold">{{
-              props.title
-            }}</NuxtLink>
-          </h2>
-          <p v-if="props.description" class="text-sm text-gray-500">
-            {{ props.description }}
-          </p>
-        </div>
+        <slot name="actions" />
       </div>
-     
-    </UCard>
-     <div class="flex justify-between my-5">
-        <Breadcumb />
-        <div>
-          <div class="flex gap-2 items-center">
-            <slot name="actions" />
-          </div>
-        </div>
-      </div>
+    </div>
   </div>
   <div class="mt-4">
     <slot />

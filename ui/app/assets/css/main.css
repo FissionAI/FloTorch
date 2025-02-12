@@ -225,3 +225,8 @@ div.divide-y.divide-\[var\(--ui-border\)\].scroll-py-1 div[role='group'] {
   color: var(--aws-font-grey-color);
   text-decoration: none;
 }
+
+input, .primary-dropdown {
+   height: 32px !important;
+   border-radius: 8px !important;
+}

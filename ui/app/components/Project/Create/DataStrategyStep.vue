@@ -127,11 +127,11 @@ const resetKbModel = (event: any) => {
       <USelectMenu
         :items="meta.kb_model"
         v-model="state.kb_model"
-        class="w-full"
+        class="w-full primary-dropdown"
         value-key="value"
         @change="resetKbModel"
-        
-      />
+
+     />
       <!-- <template #hint>
         <FieldTooltip field-name="kb_model" />
       </template> -->

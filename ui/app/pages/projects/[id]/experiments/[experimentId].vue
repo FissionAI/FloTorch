@@ -107,6 +107,7 @@ const items = ref([
 
 <template>
   <div>
+    <Breadcumb />
     <UTabs
       :items="items"
       :unmount-on-hide="false"
