@@ -193,7 +193,7 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
       return h(UButton, {
         color: "neutral",
         variant: "ghost",
-        label: "Aspect Critic",
+        label: "Maliciousness",
         icon: isSorted
           ? isSorted === "asc"
             ? "i-lucide-arrow-up-narrow-wide"
@@ -203,7 +203,7 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
       });
     },
-    label: 'Aspect Critic',
+    label: 'Maliciousness',
     accessorKey: "eval_metrics.aspect_critic_score",
     enableHiding: true,
     sortingFn: (rowA, rowB) => {
