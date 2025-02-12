@@ -38,5 +38,14 @@ export default defineAppConfig({
         td: "!whitespace-normal",
       },
     },
+    tabs: {
+      slots : {
+        root : "gap-2",
+        list: "custom-tab-list-group",
+        indicator : "h-10px custom-tab-indicator",
+        trigger : ['custom-tabs-trigger'],
+        content : "focus-outline"
+      }
+    }
   },
 });

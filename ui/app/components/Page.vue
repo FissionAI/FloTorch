@@ -24,9 +24,9 @@ const showHomeButton = computed(() => {
       <!-- <UButton v-if="showHomeButton" icon="i-lucide-house" :to="{ name: 'projects' }" square /> -->
       <div>
         <h2>
-          <NuxtLink :to="props.to" class="text-2xl font-bold">{{ props.title }}</NuxtLink>
+          <NuxtLink :to="props.to" class="text-2xl font-bold ml-1">{{ props.title }}</NuxtLink>
         </h2>
-        <p v-if="props.description" class="text-sm text-gray-500">{{ props.description }}</p>
+        <p v-if="props.description" class="text-sm text-gray-500 ml-1">{{ props.description }}</p>
       </div>
     </div>
 
