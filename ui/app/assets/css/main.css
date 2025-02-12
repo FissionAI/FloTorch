@@ -285,3 +285,8 @@ input, .primary-dropdown {
   height: 5px !important;
   background-color: var(--aws-secondary-color);
 }
+
+.secondery-color {
+  background-color: var(--aws-secondary-color) !important;
+  border-color: var(--aws-secondary-color) !important;
+}

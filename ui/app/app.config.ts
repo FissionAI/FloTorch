@@ -37,6 +37,15 @@ export default defineAppConfig({
       slots: {
         td: "!whitespace-normal",
       },
+      compoundVariants : [
+        {
+          loading: true,
+          loadingColor: 'primary',
+          class: {
+            thead: 'after:bg-blue-300 '
+          }
+        },
+      ]
     },
     tabs: {
       slots : {
@@ -45,6 +54,26 @@ export default defineAppConfig({
         indicator : "h-10px custom-tab-indicator",
         trigger : ['custom-tabs-trigger'],
         content : "focus-outline"
+      }
+    },
+    checkbox : {
+      slots : {
+        base : "",
+      },
+      
+      compoundVariants : [
+        {
+          color: 'primary',
+          checked: true,
+          class: 'secondery-color '
+        },
+      ]
+        
+      
+    },
+    card : {
+      slots : {
+        root : 'rounded-[16px]'
       }
     }
   },
