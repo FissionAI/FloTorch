@@ -46,8 +46,10 @@ const nextStep = () => {
       prestep: {
         region: state.prestep?.region,
         gt_data: state.prestep?.gt_data,
-        kb_data: state.prestep?.kb_data,
-        bedrock_knowledge_base : state.prestep?.kb_model === 'default-upload' ? false : true
+        kb_data: state.prestep?.kb_model === 'none' ? '' :  state.prestep?.kb_data,
+        bedrock_knowledge_base : (state.prestep?.kb_model === 'default-upload' || state.prestep?.kb_model === 'none') ? false : true,
+        knowledge_base : state.prestep?.kb_model === 'none' ? false : true
+
       },
       indexing: {
         chunking_strategy: state.indexing?.chunking_strategy || '',
@@ -73,7 +75,7 @@ const nextStep = () => {
       },
       retrieval: {
         n_shot_prompts: state.retrieval?.n_shot_prompts,
-        knn_num: state.retrieval?.knn_num,
+        knn_num: state.prestep?.kb_model === 'none' ? [] :  state.retrieval?.knn_num,
         temp_retrieval_llm: state.retrieval?.temp_retrieval_llm,
         retrieval: state.retrieval?.retrieval?.map((pc) => {
           return {
@@ -82,7 +84,7 @@ const nextStep = () => {
             label: pc.label
           }
         }),
-        rerank_model_id: state.prestep?.region === 'us-east-1' ? ['none'] : state.retrieval?.rerank_model_id,
+        rerank_model_id: (state.prestep?.region === 'us-east-1' || state.prestep?.kb_model === 'none' ) ? ['none'] : state.retrieval?.rerank_model_id,
       },
       evaluation: {
         evaluation: [
@@ -163,7 +165,7 @@ const steps = [
       <ProjectCreateIndexingStrategyStep v-model="state.indexing" @previous="previousStep" @next="nextStep" />
     </div>
     <div v-if="currentStep === 3">
-      <ProjectCreateRetrievalStrategyStep :region="state.prestep?.region" v-model="state.retrieval" @next="nextStep" @previous="previousStep" />
+      <ProjectCreateRetrievalStrategyStep :kb-model="state.prestep?.kb_model" :region="state.prestep?.region" v-model="state.retrieval" @next="nextStep" @previous="previousStep" />
     </div>
     <div v-if="currentStep === 4">
       <ProjectCreateEvalStrategyStep :region="state.prestep?.region" :inferenceModel="state.retrieval?.retrieval?.map(model => model.value)" :embeddingModel="state.indexing?.embedding?.map(model => model.value)" v-model="state.eval" @previous="previousStep" @next="nextStep" next-button-label="Submit" />

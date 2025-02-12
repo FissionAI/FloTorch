@@ -112,7 +112,7 @@ Before starting the installation, subscribe to FloTorch:
 
 ### Approach #1: Using AWS Cloudformation Template (<mark> Ensure the above Parameter conditions are met </mark>).
 
-Click this link: [Install FloTorch (US East 1)](https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/create?stackName=flotorch-stack&templateURL=https://flotorch-public.s3.us-east-1.amazonaws.com/2.0.1/templates/master-template.yaml)
+Click this link: [Install FloTorch (US East 1)](https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/create?stackName=flotorch-stack&templateURL=https://flotorch-public.s3.us-east-1.amazonaws.com/2.0.3/templates/master-template.yaml)
 
 ### Approach #2: AWS Command Line Installation (<mark> Ensure the above Parameter conditions are met </mark>).
 

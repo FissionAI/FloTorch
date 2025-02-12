@@ -13,6 +13,7 @@ ENV PYTHONPATH=/app
 ENV NGINX_AUTH_PASSWORD=Flotorch@123
 
 FROM node:22 AS uibuilder
+RUN npm install -g corepack@latest
 RUN corepack enable pnpm
 WORKDIR /app/
 COPY ui/ /app/ui/

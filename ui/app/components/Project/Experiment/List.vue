@@ -136,6 +136,10 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
       return Number(a) - Number(b);
     },
     cell: ({ row }) => {
+      if(!row.original.config.knowledge_base){
+        return "NA"
+
+      }
       if ("faithfulness_score" in row.original.eval_metrics) {
         return row.original.eval_metrics.faithfulness_score ? parseFloat(row.original.eval_metrics.faithfulness_score.toString()).toFixed(2) : "-"
       }
@@ -178,6 +182,10 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
       return 0;
     },
     cell: ({ row }) => {
+       if(!row.original.config.knowledge_base){
+        return "NA"
+
+      }
       if ("context_precision_score" in row.original.eval_metrics) {
         return row.original.eval_metrics.context_precision_score ? parseFloat(row.original.eval_metrics.context_precision_score.toString()).toFixed(2) : "-"
       }

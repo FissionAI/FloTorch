@@ -7,10 +7,11 @@ const props = withDefaults(defineProps<{
   showBackButton?: boolean,
   nextButtonLabel?: string,
   region?: string,
+  kbModel:string | string[]
 }>(), {
   showBackButton: true,
   nextButtonLabel: "Next",
-  region:'us-east-1',
+
 })
 
 const emits = defineEmits(['previous', 'next'])
@@ -23,7 +24,7 @@ const modelValue = defineModel<ProjectCreateRetrievalStrategy>({
 })
 
 const state = reactive<ProjectCreateRetrievalStrategy>({
-  knn_num: modelValue.value.knn_num || undefined,
+  knn_num: props.kbModel === 'none' ? [0] : (modelValue.value.knn_num || undefined),
   retrieval: modelValue.value.retrieval || undefined,
   n_shot_prompts: modelValue.value.n_shot_prompts || undefined,
   n_shot_prompt_guide: modelValue.value.n_shot_prompt_guide || undefined,
@@ -78,7 +79,8 @@ const handlePromptGuideError = (error?: FormError) => {
         </template>
       </UFormField>
     </div>
-    <UFormField name="knn_num"
+    <template v-if="props.kbModel !=='none'">
+      <UFormField name="knn_num"
       :label="`KNN ${state?.knn_num?.length === 0 || state?.knn_num === undefined ? '' : `(${state?.knn_num?.length})`}`"
       required>
       <USelectMenu v-model="state.knn_num" value-key="value" multiple :items="meta.retrievalStrategy.knnNumber"
@@ -94,6 +96,7 @@ const handlePromptGuideError = (error?: FormError) => {
         <FieldTooltip field-name="rerank_model_id" />
       </template>
     </UFormField>
+    </template>
     <UFormField name="retrieval"
       :label="`Inferencing Model ${state?.retrieval?.length === 0 || state?.retrieval === undefined ? '' : `(${state?.retrieval?.length})`}`"
       required>
