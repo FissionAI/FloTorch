@@ -112,7 +112,7 @@ const items = ref([
       :items="items"
       :unmount-on-hide="false"
       class="w-full experiment-details-tabs"
-      variant="pill"
+      variant="link"
     >
       <template #account="{ item }">
         <UCard>
