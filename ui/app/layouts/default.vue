@@ -27,7 +27,7 @@ provide('sharedData', sharedData)
 </script>
 
 <template>
-  <div class="flex flex-col min-h-screen bg-gray-100">
+  <div class="flex flex-col min-h-screen bg-white">
     <header class="navbar text-white p-2 sticky top-0 z-50">
       <div class="mx-10 flex flex-col">
         <div class="w-full flex justify-between">

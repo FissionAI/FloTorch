@@ -30,13 +30,15 @@ onMounted(() => {
   <Page title="Projects">
     <Breadcumb />
     <template #actions>
-      <UButton
+      <div class="flex justify-end gap-2 w-full">
+        <UButton
         class="primary-btn"
         icon="i-lucide-plus"
         :to="{ name: 'projects-create' }"
-        label="Create Project"
-      />
-      <ProjectUploadConfigButton />
+          label="Create Project"
+        />
+        <ProjectUploadConfigButton />
+      </div>
 
     </template>
     <UCard>

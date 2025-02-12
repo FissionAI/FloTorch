@@ -22,7 +22,7 @@ useHead({
     </header>
     <main class="flex-1 container mx-auto flex flex-col items-center justify-center gap-4">
       <h1 class="text-4xl font-bold">FloTorch</h1>
-      <p class="text-lg">Manage and run your RAG experiments at scale with ease</p>
+      <p class="text-lg">Manage and run your GenAI experiments at scale with ease</p>
       <img src="/flotorch-hero.gif" alt="hero" class="w-full max-w-7xl" />
       <UButton class="primary-btn" label="Get Started" trailing-icon="i-lucide-arrow-right" :to="{ name: 'projects' }"
         size="xl" />
