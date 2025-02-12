@@ -230,3 +230,21 @@ input, .primary-dropdown {
    height: 32px !important;
    border-radius: 8px !important;
 }
+
+.custom-options-group {
+  
+  border-bottom: 1px solid lightgray;
+  margin-bottom: 0px !important;
+  padding: 1px;
+  
+}
+
+.custom-options-group:last-child {
+  border-bottom: none;
+}
+
+.custom-options-group:hover {
+  border: 1px outset lightgray !important;
+  border-radius: 7px !important;
+  /* padding:2px !important; */
+}

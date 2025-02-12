@@ -23,7 +23,7 @@ export default defineAppConfig({
       slots : {
         group: 'p-1 isolate-custom',
         item : [
-          'w-full h-6 flex border my- border-gray-300 rounded'
+          'custom-options-group w-full'
         ],
         input: 'h-6',
       }
