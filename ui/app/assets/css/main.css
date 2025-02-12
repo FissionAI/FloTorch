@@ -99,6 +99,10 @@ td {
   border: none;
 }
 
+.experiment-details-tabs div button[data-state]:not([data-state='active']):last-child {
+ border-right: none;
+}
+
 
 div.divide-y.divide-\[var\(--ui-border\)\].scroll-py-1 div[role='group'] {
   max-height: 150px;

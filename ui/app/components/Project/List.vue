@@ -142,7 +142,7 @@ const sorting = ref([
 </script>
 
 <template>
-  <UTable class="h-100" sticky v-model:sorting="sorting" :columns="columns" :data="projects">
+  <UTable class="h-[calc(100vh-430px)]" sticky v-model:sorting="sorting" :columns="columns" :data="projects">
     <template #id-cell="{ row }">
       <NuxtLink
         :to="{ name: 'projects-id', params: { id: row.original.id } }"
