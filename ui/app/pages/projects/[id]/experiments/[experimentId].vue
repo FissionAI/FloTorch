@@ -248,6 +248,13 @@ const items = ref([
                     </div>
                   </td>
                 </tr>
+                <tr v-else-if="experimentsData?.config?.knowledge_base">
+                  <td colspan="2">
+                    <div class="flex flex-col items-center justify-center py-6">
+                      <p>No indexing cost incurred</p>
+                    </div>
+                  </td>
+                </tr>
                 <tr v-else>
                   <td colspan="2">
                     <div class="flex flex-col items-center justify-center py-6">
