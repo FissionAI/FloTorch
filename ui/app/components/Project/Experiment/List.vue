@@ -721,12 +721,16 @@ const columnVisibility = ref({
         {{ row.original.config?.temp_retrieval_llm ? row.original.config.temp_retrieval_llm : "-" }}
       </template>
       <template #experiment_status-cell="{ row }">
-        <UBadge variant="subtle" :color="useExperimentStatusColor(row.original.experiment_status)">
-          <template #leading>
+        <!-- <UBadge variant="subtle" :color="useExperimentStatusColor(row.original.experiment_status)"> -->
+        <div :class="`${useExperimentBadgeColor(row.original.experiment_status)}-badge`" class="flex items-center gap-2">
+          <UIcon :name="useExperimentBadgeIcon(row.original.experiment_status)" />
+          {{ useHumanExperimentStatus(row.original.experiment_status) }}
+        </div>
+          <!-- <template #leading>
             <UIcon :name="useExperimentStatusIcon(row.original.experiment_status)" />
           </template>
-          {{ useHumanExperimentStatus(row.original.experiment_status) }}
-        </UBadge>
+          {{ useHumanExperimentStatus(row.original.experiment_status) }} -->
+        <!-- </UBadge> -->
       </template>
       <template #directional_pricing-cell="{row}">     
         <div class="w-full">

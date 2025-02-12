@@ -116,7 +116,6 @@ div.divide-y.divide-\[var\(--ui-border\)\].scroll-py-1 div[role='group'] {
   --aws-secondary-hover-color: #f0fbff;
   --aws-secondary-hover-font-color: #002b66;
 
-  --aws-error-color: #db0000;
 
   --aws-font-grey-color: #0f141a;
   --aws-font-blue-color: #396ee0;
@@ -126,6 +125,10 @@ div.divide-y.divide-\[var\(--ui-border\)\].scroll-py-1 div[role='group'] {
 
   --aws-info-tooltip-color: #002b66;
 
+  --aws-success-color: #00802f;
+  --aws-pending-color: #006ce0;
+  --aws-error-color: #db0000;
+  --aws-not-started-color: #656871;
 }
 
 .primary-color {
@@ -245,6 +248,21 @@ div.divide-y.divide-\[var\(--ui-border\)\].scroll-py-1 div[role='group'] {
   text-decoration: none;
 }
 
+.not-started-badge {
+  color: var(--aws-not-started-color);
+}
+
+.pending-badge {
+  color: var(--aws-pending-color);
+}
+
+.success-badge {
+  color: var(--aws-success-color);
+}
+
+.error-badge {
+  color: var(--aws-error-color);
+}
 input, .primary-dropdown {
    height: 32px !important;
    border-radius: 8px !important;
@@ -284,4 +302,9 @@ input, .primary-dropdown {
 .custom-tab-list-group .custom-tab-indicator {
   height: 5px !important;
   background-color: var(--aws-secondary-color);
+}
+
+.secondery-color {
+  background-color: var(--aws-secondary-color) !important;
+  border-color: var(--aws-secondary-color) !important;
 }

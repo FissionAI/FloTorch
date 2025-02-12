@@ -155,15 +155,19 @@ const sorting = ref([
       {{ row.original.name || "Not available" }}
     </template>
     <template #status-cell="{ row }">
-      <UBadge
+      <!-- <UBadge
         variant="subtle"
         :color="useProjectStatusColor(row.original.status)"
-      >
-        <template #leading>
+      > -->
+      <div :class="`${useProjectBadgeColor(row.original.status)}-badge`" class="flex items-center gap-2">
+        <UIcon :name="useProjectBadgeIcon(row.original.status)" />
+        {{ useHumanProjectStatus(row.original.status) }}
+      </div>
+        <!-- <template #leading>
           <UIcon :name="useProjectStatusIcon(row.original.status)" />
         </template>
-        {{ useHumanProjectStatus(row.original.status) }}
-      </UBadge>
+        {{ useHumanProjectStatus(row.original.status) }} -->
+      <!-- </UBadge> -->
     </template>
     <template #date-cell="{ row }">
       {{ useHumanDateTime(row.original.date.toString()) }}

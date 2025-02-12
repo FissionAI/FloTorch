@@ -132,11 +132,7 @@ useHead({
       />
       <div class="flex justify-end mt-4">
         <div class="flex gap-2">
-          <ProjectDownloadConfigButton
-            :key="validExperiments?.length"
-            :disabled="validExperiments?.length === 0"
-            :project-id="project!.id"
-          />
+          
           <UButton
             class="primary-btn"
             icon="i-lucide-play"
@@ -146,6 +142,11 @@ useHead({
           >
             Run ({{ selectedExperiments?.length || 0 }})
           </UButton>
+          <ProjectDownloadConfigButton
+            :key="validExperiments?.length"
+            :disabled="validExperiments?.length === 0"
+            :project-id="project!.id"
+          />
         </div>
       </div>
     </UCard>

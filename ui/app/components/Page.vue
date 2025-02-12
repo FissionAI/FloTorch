@@ -30,8 +30,8 @@ const showHomeButton = computed(() => {
       </div>
     </div>
 
-    <div v-if="!hideSlot">
-      <div class="flex gap-2 items-center">
+    <div class="w-full" v-if="!hideSlot">
+      <div class="flex gap-2 items-center w-full">
         <slot name="actions" />
       </div>
     </div>
