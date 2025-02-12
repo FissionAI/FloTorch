@@ -704,6 +704,32 @@ export const useProjectUploadConfig = () => {
   };
 };
 
+export const useProjectBadgeColor = (status: ProjectStatus) => {
+  if (status === "not_started") {
+    return "not-started";
+  } else if (status === "in_progress") {
+    return "pending";
+  } else if (status === "completed") {
+    return "success";
+  } else if (status === "failed") {
+    return "error";
+  }
+  return "not-started";
+};
+
+export const useProjectBadgeIcon = (status: ProjectStatus) => {
+  if (status === "in_progress") {
+    return "i-lucide-circle-ellipsis";
+  } else if (status === "completed") {
+    return "i-lucide-circle-check";
+  } else if (status === "not_started") {
+    return "i-lucide-clock-9";
+  } else if (status === "failed") {
+    return "i-lucide-circle-x";
+  }
+  return "i-lucide-circle-alert";
+};
+
 export const useProjectStatusColor = (status: ProjectStatus) => {
   if (status === "not_started") {
     return "neutral";
@@ -726,6 +752,28 @@ export const useProjectStatusIcon = (status: ProjectStatus) => {
     return "i-lucide-clock-alert";
   } else if (status === "failed") {
     return "i-lucide-x";
+  }
+  return "i-lucide-circle-alert";
+};
+
+export const useExperimentBadgeColor = (status: ProjectExperimentStatus) => {
+  if (status === "indexing_inprogress" || status === "retrieval_inprogress" || status === "eval_inprogress" || status === "in_progress") {
+    return "pending";
+  } else if (status === "indexing_completed" || status === "retrieval_completed" || status === "succeeded") {
+    return "success";
+  } else if (status === "failed") {
+    return "error";
+  }
+  return "not-started";
+};
+
+export const useExperimentBadgeIcon = (status: ProjectExperimentStatus) => {
+  if (status === "indexing_inprogress" || status === "retrieval_inprogress" || status === "eval_inprogress" || status === "in_progress") {
+    return "i-lucide-circle-ellipsis";
+  } else if (status === "indexing_completed" || status === "retrieval_completed" || status === "succeeded") {
+    return "i-lucide-circle-check";
+  } else if (status === "failed") {
+    return "i-lucide-circle-x";
   }
   return "i-lucide-circle-alert";
 };

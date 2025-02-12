@@ -11,11 +11,14 @@ const drawerOpen = ref(false)
 
 const tooltip = ref('')
 const fieldName = ref('')
+const content = ref('')
 $on('showTooltip', (tooltipInfo) => {
   console.log(tooltipInfo)
   drawerOpen.value = true
   tooltip.value = tooltipInfo.tooltip.value
   fieldName.value = tooltipInfo.fieldName
+  content.value = tooltipInfo.tooltip.value.content
+  console.log('content', content.value)
 })
 
 </script>
@@ -33,17 +36,18 @@ $on('showTooltip', (tooltipInfo) => {
           target="_blank" />
       </div>
     </header>
-    <main :class="{ '!pl-4 !pr-[calc(100vw-79%)]': drawerOpen, '': !drawerOpen }" class="flex-1 container mx-auto py-4">
+    <main :class="{ 'pl-4 !pr-[calc(100vw-79%)]': drawerOpen, '': !drawerOpen }" class="flex-1 container mx-auto py-4">
       <slot />
     </main>
     <UDrawer v-model:open="drawerOpen" height="100" :handle="false" class="drawer-content" direction="right" :overlay="false">
-        <template #content>
+        <template #body>
           <div class="w-96 h-[calc(100% - 66px)]">
             <Placeholder class="m-4">
               
-              <h1 class="tooltip-title pr-[8px]">{{ fieldName.charAt(0).toUpperCase() + fieldName.slice(1) }}</h1>
+              <h1 class="tooltip-title pr-[8px]">{{ tooltip.label.charAt(0).toUpperCase() + tooltip.label.slice(1) }}</h1>
 
-              <p class="tooltip-description mt-7 pr-[8px]">{{ tooltip }}</p>
+              <!-- <p class="tooltip-description mt-7 pr-[8px]">{{ tooltip }}</p> -->
+              <div class="tooltip-description mt-7 pr-[8px]" v-html="content"></div>
             </Placeholder>
           </div>
         </template>
