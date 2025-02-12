@@ -91,7 +91,7 @@ const resetKbModel = (event: any) => {
       <template #label="{ label }">
         <div class="flex items-center">
           {{ label }}
-          <FieldTooltip @show-tooltip="handleTooltip" field-name="name"/>
+          <!-- <FieldTooltip @show-tooltip="handleTooltip" field-name="name"/> -->
         </div>
       </template>
       <UInput v-model="state.name" type="text">

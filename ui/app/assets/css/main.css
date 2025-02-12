@@ -308,3 +308,7 @@ input, .primary-dropdown {
   background-color: var(--aws-secondary-color) !important;
   border-color: var(--aws-secondary-color) !important;
 }
+
+.github-link {
+  height: 32px !important;
+}

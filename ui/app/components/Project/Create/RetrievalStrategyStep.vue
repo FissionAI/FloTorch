@@ -85,11 +85,17 @@ const handleTooltip = (tooltipInfo: {tooltip: string, fieldName: string}) => {
           <FieldTooltip field-name="n_shot_prompts" />
         </template> -->
       </UFormField>
-      <UFormField name="n_shot_prompt_guide" label="Shot Prompt File" required class="flex-1">
+      <UFormField name="n_shot_prompt_guide" label="Shot Prompt File" class="flex-1">
         <PromptGuideSelect v-model="state.n_shot_prompt_guide" :required-prompts="selectedMaxShotPrompts"
           @error="handlePromptGuideError" />
-        <template #hint>
+        <!-- <template #hint>
           <PromptGuideHelp />
+        </template> -->
+        <template #label="{ label }">
+          <div class="flex items-center">
+            {{ label }}
+            <FieldTooltip @show-tooltip="handleTooltip" field-name="n_shot_prompt_guide"/>
+          </div>
         </template>
       </UFormField>
     </div>
