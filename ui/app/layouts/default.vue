@@ -30,18 +30,18 @@ provide('sharedData', sharedData)
   <div class="flex flex-col min-h-screen bg-white">
     <header class="navbar text-white p-2 sticky top-0 z-50">
       <div class="mx-10 flex flex-col">
-        <div class="w-full flex justify-between">
+        <div class="w-full flex justify-between mb-5">
           <NuxtLink :to="{ name: 'index' }">
-            <img src="/logo.png" alt="logo" class="w-32" />
+            <img src="/logo.png" alt="logo" class="w-[163px]" />
           </NuxtLink>
-        <UButton icon="i-lucide-github" variant="outline" color="neutral" href="https://github.com/FissionAI/FloTorch"
+        <UButton class="height-[32px] github-link" icon="i-lucide-github" variant="outline" color="neutral" href="https://github.com/FissionAI/FloTorch"
           target="_blank" />
         </div>
-        <Page class="my-20" :title="sharedData.title" :to="sharedData.to"
+        <Page class="my-30" :title="sharedData.title" :to="sharedData.to"
       :description="sharedData.description" hide-slot="true"/>
       </div>
     </header>
-    <main :class="{ 'pl-4 !pr-[calc(100vw-79%)]': drawerOpen, '': !drawerOpen }" class="flex-1 container mx-auto py-4">
+    <main :class="{ 'pl-4 !pr-[calc(100vw-77.40%)]': drawerOpen, '': !drawerOpen }" class="flex-1 container mx-auto py-4">
       <slot />
     </main>
     <UDrawer v-model:open="drawerOpen" height="100" :handle="false" class="drawer-content" direction="right" :overlay="false">

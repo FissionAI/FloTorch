@@ -14,9 +14,9 @@ useHead({
     <header class="navbar text-white p-2">
       <div class="container mx-auto flex justify-between items-center">
         <div>
-          <img src="/logo.png" alt="logo" class="w-32" />
+          <img src="/logo.png" alt="logo" class="w-[163px]" />
         </div>
-        <UButton icon="i-lucide-github" variant="outline" color="neutral" href="https://github.com/FissionAI/FloTorch"
+        <UButton class="height-[32px]" icon="i-lucide-github" variant="outline" color="neutral" href="https://github.com/FissionAI/FloTorch"
           target="_blank" />
       </div>
     </header>
