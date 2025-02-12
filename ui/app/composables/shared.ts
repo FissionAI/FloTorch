@@ -337,6 +337,11 @@ export const useProjectCreateMeta = () => {
           service: "bedrock",
         },
         {
+          label: "Anthropic/us.anthropic.claude-3-5-haiku-20241022-v1:0",
+          value: "us.anthropic.claude-3-5-haiku-20241022-v1:0",
+          service: "bedrock",
+        },
+        {
           label: "Cohere/cohere.command-r-plus-v1:0",
           value: "cohere.command-r-plus-v1:0",
           service: "bedrock",
@@ -407,6 +412,27 @@ export const useProjectCreateMeta = () => {
           service: "sagemaker",
           type: "deepseek-ai/DeepSeek-R1-Distill-Llama-8B",
           model_name : "ml.g5.2xlarge"
+        },
+        {
+          label: "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B (ml.g5.xlarge)",
+          value: "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
+          service: "sagemaker",
+          type: "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
+          model_name : "ml.g5.xlarge"
+        },
+        {
+          label: "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B (ml.g5.xlarge)",
+          value: "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B",
+          service: "sagemaker",
+          type: "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B",
+          model_name : "ml.g5.xlarge"
+        },
+        {
+          label: "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B (ml.g6e.12xlarge)",
+          value: "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B",
+          service: "sagemaker",
+          type: "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B",
+          model_name : "ml.g6e.12xlarge"
         },
       ],
       temperature: [
