@@ -69,10 +69,10 @@ const handleTooltip = (tooltipInfo: {tooltip: string, fieldName: string}) => {
 <template>
   <UForm ref="retForm" :state="state" :schema="ProjectCreateRetrievalStrategySchema" :validate-on="['input']"
     @error="console.log" @submit="onSubmit">
-    <div class="flex gap-4 items-baseline">
+    <div class="flex gap-4 items-baseline -my-3">
       <UFormField name="n_shot_prompts"
         :label="`N Shot Prompts ${state?.n_shot_prompts?.length === 0 || state?.n_shot_prompts === undefined ? '' : `(${state?.n_shot_prompts?.length})`}`"
-        class="flex-1">
+        class="flex-1 my-5">
         <template #label="{ label }">
           <div class="flex items-center">
             {{ label }}
@@ -80,7 +80,7 @@ const handleTooltip = (tooltipInfo: {tooltip: string, fieldName: string}) => {
           </div>
         </template>
         <USelectMenu v-model="state.n_shot_prompts" value-key="value" multiple
-          :items="meta.retrievalStrategy.shotPrompts" class="w-full primary-dropdown" />
+          :items="meta.retrievalStrategy.shotPrompts" class="w-full primary-dropdown my-2" />
         <!-- <template #hint>
           <FieldTooltip field-name="n_shot_prompts" />
         </template> -->
