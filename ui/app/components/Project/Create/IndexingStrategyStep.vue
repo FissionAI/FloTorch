@@ -54,7 +54,7 @@ const meta = useProjectCreateMeta()
       :label="`Chunking ${state?.chunking_strategy?.length === 0 || state?.chunking_strategy === undefined ? '' : `(${state?.chunking_strategy?.length})`}`"
       >
       <USelectMenu v-model="state.chunking_strategy" value-key="value" multiple
-        :items="meta.indexingStrategy.chunkingStrategy" class="w-full" />
+        :items="meta.indexingStrategy.chunkingStrategy" class="w-full primary-dropdown" />
       <template #label="{ label }">
         <div class="flex items-center">
           {{ label }}
@@ -72,7 +72,7 @@ const meta = useProjectCreateMeta()
       :label="`Chunk Size (Tokens) ${state?.chunk_size?.length === 0 || state?.chunk_size === undefined ? '' : `(${state?.chunk_size?.length})`}`"
       >
       <USelectMenu v-model="state.chunk_size" value-key="value" multiple :items="meta.indexingStrategy.chunkSize"
-        class="w-full" />
+        class="w-full primary-dropdown" />
       <template #label="{ label }">
         <div class="flex items-center">
           {{ label }}
@@ -87,7 +87,7 @@ const meta = useProjectCreateMeta()
       :label="`Chunk Overlap Percentage ${state?.chunk_overlap?.length === 0 || state?.chunk_overlap === undefined ? '' : `(${state?.chunk_overlap?.length})`}`"
       >
       <USelectMenu v-model="state.chunk_overlap" value-key="value" multiple
-        :items="meta.indexingStrategy.chunkOverlapPercentage" class="w-full" >
+        :items="meta.indexingStrategy.chunkOverlapPercentage" class="w-full primary-dropdown" >
         </USelectMenu>
       <template #label="{ label }">
         <div class="flex items-center">
@@ -121,7 +121,7 @@ const meta = useProjectCreateMeta()
       :label="`Parent Chunk Size (Tokens) ${state?.hierarchical_parent_chunk_size?.length === 0 || state?.hierarchical_parent_chunk_size === undefined ? '' : `(${state?.hierarchical_parent_chunk_size?.length})`}`"
       >
         <USelectMenu v-model="state.hierarchical_parent_chunk_size" value-key="value" multiple
-          :items="meta.indexingStrategy.hierarchical_parent_chunk_size" class="w-full" />
+          :items="meta.indexingStrategy.hierarchical_parent_chunk_size" class="w-full primary-dropdown" />
         <template #label="{ label }">
           <div class="flex items-center">
             {{ label }}
@@ -133,7 +133,7 @@ const meta = useProjectCreateMeta()
         :label="` Chunk Overlap Percentage ${state?.hierarchical_chunk_overlap_percentage?.length === 0 || state?.hierarchical_chunk_overlap_percentage === undefined ? '' : `(${state?.hierarchical_chunk_overlap_percentage?.length})`}`"
         >
         <USelectMenu v-model="state.hierarchical_chunk_overlap_percentage" value-key="value" multiple
-        :items="meta.indexingStrategy.hierarchical_chunk_overlap_percentage" class="w-full">
+        :items="meta.indexingStrategy.hierarchical_chunk_overlap_percentage" class="w-full primary-dropdown">
         </USelectMenu>
         <template #label="{ label }">
           <div class="flex items-center">

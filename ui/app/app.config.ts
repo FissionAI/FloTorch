@@ -20,6 +20,13 @@ export default defineAppConfig({
         // @ts-expect-error type inference
         size: "xl",
       },
+      slots : {
+        group: 'p-1 isolate-custom',
+        item : [
+          'custom-options-group w-full'
+        ],
+        input: 'h-6',
+      }
     },
     inputNumber: {
       slots: {
