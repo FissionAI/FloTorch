@@ -4,20 +4,23 @@ import type { RouteLocationRaw } from 'vue-router';
 const props = defineProps<{
   title: string;
   description?: string;
-  to?: RouteLocationRaw
+  to?: RouteLocationRaw,
+  hideSlot? : boolean;
 }>();
 
 const route = useRoute()
 const showHomeButton = computed(() => {
   return route.name !== 'projects'
 })
+
+
 </script>
 
 
 
 <template>
   <div class="flex justify-between items-center">
-    <div class="flex gap-2 items-center">
+    <div class="flex gap-2 items-center" v-if="hideSlot">
       <!-- <UButton v-if="showHomeButton" icon="i-lucide-house" :to="{ name: 'projects' }" square /> -->
       <div>
         <h2>
@@ -27,7 +30,7 @@ const showHomeButton = computed(() => {
       </div>
     </div>
 
-    <div>
+    <div v-if="!hideSlot">
       <div class="flex gap-2 items-center">
         <slot name="actions" />
       </div>

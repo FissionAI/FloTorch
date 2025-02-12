@@ -19,6 +19,11 @@ const { data: projects, isLoading } = useQuery({
 useHead({
   title: "Projects",
 })
+const sharedData = inject('sharedData')
+
+onMounted(() => {
+  sharedData.value.title = "Projects"
+});
 </script>
 
 <template>

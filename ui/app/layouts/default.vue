@@ -20,20 +20,25 @@ $on('showTooltip', (tooltipInfo) => {
   content.value = tooltipInfo.tooltip.value.content
   console.log('content', content.value)
 })
+const sharedData = ref({})
+
+provide('sharedData', sharedData)
 
 </script>
 
 <template>
   <div class="flex flex-col min-h-screen bg-gray-100">
     <header class="navbar text-white p-2 sticky top-0 z-50">
-      <div class="container mx-auto flex justify-between items-center">
-        <div>
+      <div class="mx-10 flex flex-col">
+        <div class="w-full flex justify-between">
           <NuxtLink :to="{ name: 'index' }">
             <img src="/logo.png" alt="logo" class="w-32" />
           </NuxtLink>
-        </div>
         <UButton icon="i-lucide-github" variant="outline" color="neutral" href="https://github.com/FissionAI/FloTorch"
           target="_blank" />
+        </div>
+        <Page class="my-20" :title="sharedData.title" :to="sharedData.to"
+      :description="sharedData.description" hide-slot="true"/>
       </div>
     </header>
     <main :class="{ 'pl-4 !pr-[calc(100vw-79%)]': drawerOpen, '': !drawerOpen }" class="flex-1 container mx-auto py-4">

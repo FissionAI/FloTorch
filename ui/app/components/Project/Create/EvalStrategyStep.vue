@@ -119,7 +119,7 @@ onMounted(() => {
             :loading="isFetchingGuardrailsList"
             multiple
             :items="guardrailsList"
-            class="w-full my-7"
+            class="w-full my-7 primary-dropdown"
             placeholder="None"
           >
           
@@ -153,7 +153,7 @@ onMounted(() => {
         v-model="state.service"
         value-key="value"
         :items="meta.evalStrategy.service"
-        class="w-full"
+        class="w-full primary-dropdown"
       />
       <template #label="{ label }">
         <div class="flex items-center">
@@ -173,7 +173,7 @@ onMounted(() => {
         v-model="state.ragas_embedding_llm"
         value-key="value"
         :items="useFilteredRagasEmbeddingModels(embeddingModel)"
-        class="w-full"
+        class="w-full primary-dropdown"
       />
       <template #label="{ label }">
         <div class="flex items-center">
@@ -193,7 +193,7 @@ onMounted(() => {
         v-model="state.ragas_inference_llm"
         value-key="value"
         :items="useFilteredRagasInferenceModels(inferenceModel)"
-        class="w-full"
+        class="w-full primary-dropdown"
       />
       <template #label="{ label }">
         <div class="flex items-center">
