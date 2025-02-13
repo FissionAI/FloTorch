@@ -108,7 +108,8 @@ const resetKbModel = (event: any) => {
     <UFormField id="region" name="region" label="Region">
       <template #label="{ label }">
         <div class="flex items-center">
-          {{ label }}
+          {{ label }} - required 
+          <USeparator orientation="vertical" class="h-3 ml-4" />
           <FieldTooltip @show-tooltip="handleTooltip" field-name="region"/>
         </div>
       </template>

@@ -1,11 +1,12 @@
-@import url('https://fonts.cdnfonts.com/css/amazon-ember');
+/* @import url('https://fonts.cdnfonts.com/css/amazon-ember'); */
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap');
 
 @import "tailwindcss";
 @import "@nuxt/ui";
 
 
 * {
-  font-family: 'Amazon Ember', open-sans;
+  font-family: "Open Sans", serif;
 }
 
 :root {
@@ -155,6 +156,7 @@ div.divide-y.divide-\[var\(--ui-border\)\].scroll-py-1 div[role='group'] {
   font-weight: 700;
   font-size: 14px;
   line-height: 22px;
+  padding: 4px 20px;
 }
 
 .primary-btn:hover {
@@ -174,6 +176,7 @@ div.divide-y.divide-\[var\(--ui-border\)\].scroll-py-1 div[role='group'] {
   font-weight: 700;
   font-size: 14px;
   line-height: 22px;
+  padding: 4px 20px;
 
 }
 
@@ -315,4 +318,10 @@ input, .primary-dropdown {
 
 .github-link {
   height: 32px !important;
+}
+
+.separator {
+  height: 16px;
+  width: 1px;
+  background-color: #000000;
 }
