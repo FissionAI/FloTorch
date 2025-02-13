@@ -286,7 +286,21 @@ const items = ref([
             </template>
             <table class="w-full">
               <tbody>
-                <tr v-if="indexing_metadata && !experimentsData?.config?.bedrock_knowledge_base">
+              <tr v-if="experimentsData?.config?.bedrock_knowledge_base">
+                  <td colspan="2">
+                    <div class="flex flex-col items-center justify-center py-6">
+                      <p>Bedrock Knowledge Bases Pricing is currently not supported</p>
+                    </div>
+                  </td>
+                </tr>
+                <tr v-else-if="!experimentsData?.config?.knowledge_base">
+                  <td colspan="2">
+                    <div class="flex flex-col items-center justify-center py-6">
+                      <p>No indexing cost incurred</p>
+                    </div>
+                  </td>
+                </tr>
+                <tr v-else-if="indexing_metadata && !experimentsData?.config?.bedrock_knowledge_base">
                   <td colspan="2">
                     <table class="w-full">
                       <tbody>
@@ -304,20 +318,6 @@ const items = ref([
                         </tr>
                       </tbody>
                     </table>
-                  </td>
-                </tr>
-                <tr v-else-if="experimentsData?.config?.bedrock_knowledge_base">
-                  <td colspan="2">
-                    <div class="flex flex-col items-center justify-center py-6">
-                      <p>Bedrock Knowledge Bases Pricing is currently not supported</p>
-                    </div>
-                  </td>
-                </tr>
-                <tr v-else-if="experimentsData?.config?.knowledge_base">
-                  <td colspan="2">
-                    <div class="flex flex-col items-center justify-center py-6">
-                      <p>No indexing cost incurred</p>
-                    </div>
                   </td>
                 </tr>
                 <tr v-else>
