@@ -158,13 +158,13 @@ const steps = [
         </div>
       </div>
     </div>
-    <div v-if="currentStep === 3">
+    <div v-if="currentStep === 1">
       <ProjectCreateDataStrategyStep @kbFilesUpload="(files) => kbFilesUploadedData = files" :kbFilesUploadedData="kbFilesUploadedData" :file-upload-id="uuid" v-model="state.prestep" :show-back-button="false" @next="nextStep" />
     </div>
     <div v-if="currentStep === 2">
       <ProjectCreateIndexingStrategyStep v-model="state.indexing" @previous="previousStep" @next="nextStep" />
     </div>
-    <div v-if="currentStep === 1">
+    <div v-if="currentStep === 3">
       <ProjectCreateRetrievalStrategyStep :kb-model="state.prestep?.kb_model" :region="state.prestep?.region" v-model="state.retrieval" @next="nextStep" @previous="previousStep" />
     </div>
     <div v-if="currentStep === 4">

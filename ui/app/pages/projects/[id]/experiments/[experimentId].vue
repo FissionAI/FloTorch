@@ -2,6 +2,8 @@
 import type { TableColumn } from "@nuxt/ui";
 import { useQuery, useMutation } from "@tanstack/vue-query";
 const experimentId = useRouteParams<string>("experimentId");
+const UButton = resolveComponent("UButton");
+
 
 const project = inject<Ref<Project>>("project");
 const experimentsData = ref([]);
@@ -35,31 +37,94 @@ useHead({
 
 const columns = ref<TableColumn<ExperimentQuestionMetric>[]>([
   {
-    header: "S.No",
+    header: ({ column }) => {
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
+          color: "neutral",
+          variant: "ghost",
+          label: "S.No",
+        }),
+        h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+      ]);
+    },
     accessorKey: "sno"
    },
   {
-    header: "Question",
+    header: ({ column }) => {
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
+          color: "neutral",
+          variant: "ghost",
+          label: "Question",
+        }),
+        h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+      ]);
+    },
     accessorKey: "question",
   },
   {
-    header: "Ground Truth",
+    header: ({ column }) => {
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
+          color: "neutral",
+          variant: "ghost",
+          label: "Ground Truth",
+        }),
+        h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+      ]);
+    },
     accessorKey: "gt_answer",
   },
   {
-    header: "Generated Answer",
+    header: ({ column }) => {
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
+          color: "neutral",
+          variant: "ghost",
+          label: "Generated Answer",
+        }),
+        h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+      ]);
+    },
     accessorKey: "generated_answer",
   },
   {
-    header: "Guardrails User Query",
+    header: ({ column }) => {
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
+          color: "neutral",
+          variant: "ghost",
+          label: "Guardrails User Query",
+        }),
+        h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+      ]);
+    },
     accessorKey: "guardrail_input_assessment",
   },
   {
-    header: "Guardrails Context",
+    header: ({ column }) => {
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
+          color: "neutral",
+          variant: "ghost",
+          label: "Guardrails Context",
+        }),
+        h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+      ]);
+    },
     accessorKey: "guardrail_context_assessment",
   },
   {
-    header: "Guardrails Model Response",
+    header: ({ column }) => {
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
+          color: "neutral",
+          variant: "ghost",
+          label: "Guardrails Model Response",
+        }),
+        h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+      ]);
+    },
     accessorKey: "guardrail_result_assessment",
   },
 ]);
