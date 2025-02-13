@@ -185,7 +185,10 @@ Resources:
                   "SageMakerRoleArn": "${SageMakerRoleArn}",
                   "execution_id.$": "$.execution_id"
                 },
-                "Next": "Query model invocations"
+                "Next": "Query model invocations",
+                "Assign": {
+                  "opensearch_endpoint.$": "$.OpenSearchEndpoint"
+                }
               },
               "Query model invocations": {
                 "Next": "Map",
@@ -236,7 +239,7 @@ Resources:
                 "Next": "Query"
               },
               "Query": {
-                "Next": "Create Opensearch indices",
+                "Next": "Check if OpenSearch provisioned",
                 "Type": "Task",
                 "ResultPath": "$",
                 "ResultSelector": {
@@ -254,6 +257,17 @@ Resources:
                     }
                   }
                 }
+              },
+               "Check if OpenSearch provisioned": {
+                "Type": "Choice",
+                "Choices": [
+                  {
+                    "Variable": "$opensearch_endpoint",
+                    "StringEquals": "",
+                    "Next": "Experiments Map"
+                  }
+                ],
+                "Default": "Create Opensearch indices"
               },
               "Create Opensearch indices": {
                 "Next": "Index creation evaluation",

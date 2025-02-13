@@ -1,29 +1,27 @@
 <script setup lang="ts">
-const { $on } = useNuxtApp()
+const { $on } = useNuxtApp();
 
 useHead({
   titleTemplate(title) {
-    return title ? `${title} | FloTorch` : "FloTorch"
+    return title ? `${title} | FloTorch` : "FloTorch";
   },
-})
+});
 
-const drawerOpen = ref(false)
+const drawerOpen = ref(false);
 
-const tooltip = ref('')
-const fieldName = ref('')
-const content = ref('')
-$on('showTooltip', (tooltipInfo) => {
-  console.log(tooltipInfo)
-  drawerOpen.value = true
-  tooltip.value = tooltipInfo.tooltip.value
-  fieldName.value = tooltipInfo.fieldName
-  content.value = tooltipInfo.tooltip.value.content
-  console.log('content', content.value)
-})
-const sharedData = ref({})
+const tooltip = ref("");
+const fieldName = ref("");
+const content = ref({});
+$on("showTooltip", (tooltipInfo) => {
+  console.log(tooltipInfo);
+  drawerOpen.value = true;
+  tooltip.value = tooltipInfo.tooltip.value;
+  fieldName.value = tooltipInfo.fieldName;
+  content.value = tooltipInfo.tooltip.value;
+});
+const sharedData = ref({});
 
-provide('sharedData', sharedData)
-
+provide("sharedData", sharedData);
 </script>
 
 <template>
@@ -34,45 +32,83 @@ provide('sharedData', sharedData)
           <NuxtLink :to="{ name: 'index' }">
             <img src="/logo.png" alt="logo" class="w-[163px]" />
           </NuxtLink>
-        <UButton class="height-[32px] github-link" icon="i-lucide-github" variant="outline" color="neutral" href="https://github.com/FissionAI/FloTorch"
-          target="_blank" />
+          <UButton
+            class="height-[32px] github-link"
+            icon="i-lucide-github"
+            variant="outline"
+            color="neutral"
+            href="https://github.com/FissionAI/FloTorch"
+            target="_blank"
+          />
         </div>
-        <Page class="my-30" :title="sharedData.title" :to="sharedData.to"
-      :description="sharedData.description" hide-slot="true"/>
+        <Page
+          class="my-30"
+          :title="sharedData.title"
+          :to="sharedData.to"
+          :description="sharedData.description"
+          hide-slot="true"
+        />
       </div>
     </header>
-    <main :class="{ 'pl-4 !pr-[calc(100vw-77.40%)]': drawerOpen, '': !drawerOpen }" class="flex-1 container mx-auto py-4">
-      <slot />
-    </main>
-    <UDrawer v-model:open="drawerOpen" height="100" :handle="false" class="drawer-content" direction="right" :overlay="false">
-        <template #body>
-          <div class="w-96 h-[calc(100% - 66px)]">
-            <Placeholder class="m-4">
-              
-              <h1 class="tooltip-title pr-[8px]">{{ tooltip.label.charAt(0).toUpperCase() + tooltip.label.slice(1) }}</h1>
+    <main
+      class="w-full flex justify-between mx-auto py-4 w-full flex-1 container mx-auto py-4"
+    >
+      <div
+        class="slot-div"
+        :class="{ 'w-[78%]': drawerOpen, 'w-full': !drawerOpen }"
+      >
+        <div class="w-full">
+          <slot />
+        </div>
+      </div>
+      <UCard
+        class="drawer-content -my-12 -mr-10"
+        :class="{ 'w-[20%] h-100%': drawerOpen, hidden: !drawerOpen }"
+      >
+      <template #header>
+      <div class="w-full flex justify-between">
+              <h1 class="tooltip-title pr-[8px]">{{ tooltip?.label?.charAt(0).toUpperCase() + tooltip?.label?.slice(1) }}</h1>
+      
+          <UButton class="cursor-pointer" icon="i-lucide-chevron-right" variant="ghost" color="primary-gray " @click.prevent="drawerOpen=false" />
+        </div>
+      </template>
+        <template #default>
+        
+          <div class=" h-[calc(100% - 66px)]">
+            <Placeholder class="">
+              <div class="tooltip-description pr-[8px]" v-html="content?.info"></div>
+              <div class="tooltip-description mt-3 pr-[8px]"> 
+               <NuxtLink target="_blank" :to="`https://github.com/abdul-fission/FloTorch/blob/feature/github_help_links/Help_Links.MD#${content.link}`" class="font-bold ml-1 external-link">Learn More<UIcon name="i-rivet-icons:link-external"
+          /></NuxtLink>
 
-              <!-- <p class="tooltip-description mt-7 pr-[8px]">{{ tooltip }}</p> -->
-              <div class="tooltip-description mt-7 pr-[8px]" v-html="content"></div>
+              </div>
             </Placeholder>
           </div>
-        </template>
-  </UDrawer>
-    <footer class="navbar text-white p-2 text-sm">
+          </template>
+      </UCard>
+    </main>
+
+    <footer class="navbar w-full text-white p-2 text-sm z-100">
       <div class="container mx-auto flex justify-center items-center">
         <div>
-          Powered by <a href="https://flotorch.ai?utm_source=flowtorch-repo" target="_blank"
-            class="external-link">FloTorch.ai<UIcon name="i-rivet-icons:link-external" /></a> For
-          more information, contact us at <a href="mailto:info@flotorch.ai"
-            class="external-link">info@flotorch.ai<UIcon name="i-rivet-icons:link-external" /></a>.
+          Powered by
+          <a
+            href="https://flotorch.ai?utm_source=flowtorch-repo"
+            target="_blank"
+            class="external-link"
+            >FloTorch.ai<UIcon name="i-rivet-icons:link-external"
+          /></a>
+          For more information, contact us at
+          <a href="mailto:info@flotorch.ai" class="external-link"
+            >info@flotorch.ai<UIcon name="i-rivet-icons:link-external" /></a
+          >.
         </div>
       </div>
     </footer>
   </div>
 </template>
 
-
 <style>
-
 main.container {
   width: 100% !important;
   max-width: unset !important;
@@ -81,9 +117,9 @@ main.container {
 }
 
 .drawer-content {
-  height: calc(100% - 95px) !important;
-    top: 58px;
-    right: 0px;
+  min-height: 100%;
+  top: 137px;
+  right: 0px;
+  bottom: 0px;
 }
-
 </style>
