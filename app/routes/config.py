@@ -1,10 +1,10 @@
 from fastapi import APIRouter
-import os
+from util.open_search_config_utils import OpenSearchUtils
 
 router = APIRouter()
 
 @router.get("/config", tags=["config"])
-async def opensearch_config():
-    opensearch_endpoint = os.getenv("OPENSEARCH_ENDPOINT")
-    configured = bool(opensearch_endpoint)  # True if string is not empty/None, otherwise False.
-    return {"opensearch": {"configured": configured}}
+async def config():
+    return {
+        "opensearch": OpenSearchUtils.opensearch_config()
+    }
