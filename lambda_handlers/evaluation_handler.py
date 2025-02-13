@@ -47,12 +47,19 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             n_shot_prompts=exp_config_data.get('n_shot_prompts'),
             n_shot_prompt_guide=exp_config_data.get('n_shot_prompt_guide'),
             indexing_algorithm=exp_config_data.get('indexing_algorithm'),
-            knowledge_base=exp_config_data.get('knowledge_base', False)
+            knowledge_base=exp_config_data.get('knowledge_base', False),
+            eval_service=exp_config_data.get('eval_service', "ragas"), 
+            eval_embedding_model=exp_config_data.get('eval_embedding_model', "amazon.titan-embed-text-v1"), #amazon.nova-pro-v1:0
+            eval_retrieval_model=exp_config_data.get('eval_retrieval_model', "mistral.mixtral-8x7b-instruct-v0:1"),
         )
         logger.info("Processing event: %s", json.dumps(event))
 
+        # Load base configuration
+        config = Config.load_config()
 
-        evaluate(exp_config)
+        evaluator = evaluate(exp_config)
+        
+        evaluator.perform_evaluation(experiment_id=exp_config.experiment_id)
 
         return {
             "status": "success"

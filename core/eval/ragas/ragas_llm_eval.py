@@ -3,6 +3,7 @@ from ragas import evaluate
 from ragas.dataset_schema import SingleTurnSample, EvaluationDataset
 from ragas.metrics._string import NonLLMStringSimilarity
 from ragas.metrics import Faithfulness, AspectCritic, LLMContextPrecisionWithoutReference, ResponseRelevancy
+from ragas.metrics import LLMContextPrecisionWithReference, NoiseSensitivity, LLMContextRecall
 from langchain_aws import ChatBedrockConverse, BedrockEmbeddings
 from ragas.embeddings import LangchainEmbeddingsWrapper
 from ragas.llms import LangchainLLMWrapper
@@ -44,10 +45,17 @@ class RagasLLMEvaluator(RagasEvaluator):
                                           definition="Is the submission intended to harm, deceive, or exploit users?",
                                           llm=self.evaluator_llm)
 
-        self.context_precision = LLMContextPrecisionWithoutReference(llm=self.evaluator_llm)
+        # self.context_precision = LLMContextPrecisionWithoutReference(llm=self.evaluator_llm)
+
+        self.context_precision = LLMContextPrecisionWithReference(llm=self.evaluator_llm)
+
+        self.noise_sensitivity = NoiseSensitivity(llm=self.evaluator_llm)
 
         self.answers_relevancy = ResponseRelevancy(llm=self.evaluator_llm,
                                                    embeddings=self.embedding_llm)
+        
+        self.context_recall = LLMContextRecall(llm=self.evaluator_llm)
+
 
     def get_questions(self, experiment_id):
         return super().get_questions(experiment_id)
@@ -86,7 +94,7 @@ class RagasLLMEvaluator(RagasEvaluator):
                 )
                 answer_samples.append(answer_sample)
                 evaluation_dataset = EvaluationDataset(answer_samples)
-                metrics = evaluate(evaluation_dataset, [self.faithfulness, self.context_precision, self.aspect_critic, self.answers_relevancy])
+                metrics = evaluate(evaluation_dataset, [self.faithfulness, self.context_precision, self.aspect_critic, self.answers_relevancy, self.noise_sensitivity, self.context_recall])
             
             else:
                 answer_sample = SingleTurnSample(
@@ -118,9 +126,13 @@ class RagasLLMEvaluator(RagasEvaluator):
 
                     context_precision_score=self.calculate_eval_score(self.context_precision,answer_sample),
 
+                    noise_sensitivity_score=self.calculate_eval_score(self.noise_sensitivity,answer_sample),
+
                     aspect_critic_score=self.calculate_eval_score(self.aspect_critic,answer_sample),
 
-                    answers_relevancy_score=self.calculate_eval_score(self.answers_relevancy,answer_sample)
+                    answers_relevancy_score=self.calculate_eval_score(self.answers_relevancy,answer_sample),
+
+                    context_recall_score=self.calculate_eval_score(self.context_recall,answer_sample)
 
                 )
                 return metrics

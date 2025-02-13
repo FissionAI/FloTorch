@@ -147,7 +147,20 @@ def compute_actual_price_breakdown(
                 reranking_cost = (reranker_model_price * float(question_details['reranker_queries'])) / THOUSAND
                 retriever_metadata['reranking_cost'] = reranking_cost
                 retrieval_cost += reranking_cost
-            inferencing_cost = retrieval_model_input_actual_cost + retrieval_model_output_actual_cost + query_embedding_cost
+                inferencer_metadata['query_embed_tokens'] = query_embed_tokens
+                inferencer_metadata['query_embed_tokens_cost'] = query_embedding_cost
+            if rerank_model_id:
+                inferencer_metadata['rerank_model'] = rerank_model_id
+                inferencer_metadata['reranker_queries'] = question_details["reranker_queries"]
+                reranker_model_price = df[(df["model"] == rerank_model_id) & (df["Region"] == aws_region)]["input_price"]
+                if reranker_model_price.empty:
+                    logger.error(f"No reranker model {rerank_model_id} price found.")
+                    return None
+                reranker_model_price = float(reranker_model_price.values[0])  # Price per 1000 queries
+                reranking_cost = (reranker_model_price * float(question_details['reranker_queries'])) / THOUSAND
+                inferencer_metadata['reranking_cost'] = reranking_cost
+
+            inferencing_cost = retrieval_model_input_actual_cost + retrieval_model_output_actual_cost + query_embedding_cost + reranking_cost
         else:
             inferencer_metadata['runtime'] = retrieval_time
             inferencing_cost = sagemaker_cost(retrieval_time)
@@ -179,13 +192,11 @@ def compute_actual_price_breakdown(
         retriever_ecs_cost = ecs_cost(retrieval_time)
         eval_ecs_cost = ecs_cost(eval_time)
 
-        if not bedrock_knowledge_base:
-            indexing_cost += indexing_ecs_cost
-            indexing_metadata['ecs_cost'] = indexing_ecs_cost
-
+        indexing_metadata['ecs_cost'] = indexing_ecs_cost
         retriever_metadata['ecs_cost'] = retriever_ecs_cost
         evaluator_metadata['ecs_cost'] = eval_ecs_cost
 
+        indexing_cost += indexing_ecs_cost
         retrieval_cost += retriever_ecs_cost
         eval_cost += eval_ecs_cost
         
