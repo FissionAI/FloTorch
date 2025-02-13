@@ -112,7 +112,7 @@ const items = ref([
       :items="items"
       :unmount-on-hide="false"
       class="w-full experiment-details-tabs"
-      variant="pill"
+      variant="link"
     >
       <template #account="{ item }">
         <UCard>
@@ -179,7 +179,7 @@ const items = ref([
         />
       </template>
       <template #cost-breakdown="{ item }">
-        <UCard class="my-5">
+        <UCard class="my-1">
           <template #header>
             <h2 class="text-xl font-medium">Breakdown</h2>
           </template>
@@ -195,7 +195,7 @@ const items = ref([
                       <tbody>
                         <tr v-for="key in overall_metadata.order" :key="key">
                           <template v-if="overall_metadata[key] !== undefined">
-                            <td class="font-medium w-40 break-all">{{ key === 'ecs_cost' ? 'ECS Cost' : key.split('_').join(' ').replace(/\w\S*/g, (w) => (w.replace(/^\w/, (c) => c.toUpperCase()))) }}</td>
+                            <td class="font-medium w-17 break-all">{{ key === 'ecs_cost' ? 'ECS Cost' : key.split('_').join(' ').replace(/\w\S*/g, (w) => (w.replace(/^\w/, (c) => c.toUpperCase()))) }}</td>
                             <td v-if="key.includes('time')" class="w-40 break-all">{{ useConvertSecondsToDHM(Number(overall_metadata[key])) }}</td>
                             <td v-else-if="key.includes('cost')" class="w-40 break-all">{{ useHumanCurrencyAmount(Number(overall_metadata[key])) }}</td>
                             <td v-else class="w-40 break-all">{{ overall_metadata[key] }}</td>
@@ -227,7 +227,7 @@ const items = ref([
                       <tbody>
                         <tr v-for="key in indexing_metadata.order" :key="key">
                           <template v-if="indexing_metadata[key] !== undefined">
-                            <td class="font-medium w-40 break-all">{{ 
+                            <td class="font-medium w-17 break-all">{{ 
                               key === 'ecs_cost' 
                                 ? 'ECS Cost' 
                                 : key.split('_').join(' ').replace(/\w\S*/g, (w) => (w.replace(/^\w/, (c) => c.toUpperCase())))
@@ -278,7 +278,7 @@ const items = ref([
                       <tbody>
                         <tr v-for="key in retriever_metadata.order" :key="key">
                           <template v-if="retriever_metadata[key] !== undefined">
-                            <td class="font-medium w-40 break-all">{{ key === 'ecs_cost' ? 'ECS Cost' : key.split('_').join(' ').replace(/\w\S*/g, (w) => (w.replace(/^\w/, (c) => c.toUpperCase()))) }}</td>
+                            <td class="font-medium w-17 break-all">{{ key === 'ecs_cost' ? 'ECS Cost' : key.split('_').join(' ').replace(/\w\S*/g, (w) => (w.replace(/^\w/, (c) => c.toUpperCase()))) }}</td>
                           <td v-if="key.includes('time') || key.includes('latency')" class="w-40 break-all">{{ useConvertSecondsToDHM(Number(retriever_metadata[key])) }}</td>
                           <td v-else-if="key.includes('cost')" class="w-40 break-all">{{ useHumanCurrencyAmount(Number(retriever_metadata[key])) }}</td>
                           <td v-else class="w-40 break-all">{{ retriever_metadata[key] }}</td>
@@ -311,7 +311,7 @@ const items = ref([
                       <tbody>
                         <tr v-for="key in inferencer_metadata.order" :key="key">
                           <template v-if="inferencer_metadata[key] !== undefined">
-                            <td class="font-medium w-40 break-all">{{ key === 'ecs_cost' ? 'ECS Cost' : key.split('_').join(' ').replace(/\w\S*/g, (w) => (w.replace(/^\w/, (c) => c.toUpperCase()))) }}</td>
+                            <td class="font-medium w-17 break-all">{{ key === 'ecs_cost' ? 'ECS Cost' : key.split('_').join(' ').replace(/\w\S*/g, (w) => (w.replace(/^\w/, (c) => c.toUpperCase()))) }}</td>
                           <td v-if="key.includes('time') || key.includes('latency')" class="w-40 break-all">{{ useConvertSecondsToDHM(Number(inferencer_metadata[key])) }}</td>
                             <td v-else-if="key.includes('cost')" class="w-40 break-all">{{ useHumanCurrencyAmount(Number(inferencer_metadata[key])) }}</td>
                             <td v-else class="w-40 break-all">{{ inferencer_metadata[key] }}</td> 
@@ -344,7 +344,7 @@ const items = ref([
                       <tbody>
                         <tr v-for="key in evaluation_metadata.order" :key="key">
                           <template v-if="evaluation_metadata[key] !== undefined">
-                            <td class="font-medium w-40 break-all">{{ key === 'ecs_cost' ? 'ECS Cost' : key.split('_').join(' ').replace(/\w\S*/g, (w) => (w.replace(/^\w/, (c) => c.toUpperCase()))) }}</td>
+                            <td class="font-medium w-17 break-all">{{ key === 'ecs_cost' ? 'ECS Cost' : key.split('_').join(' ').replace(/\w\S*/g, (w) => (w.replace(/^\w/, (c) => c.toUpperCase()))) }}</td>
                             <td v-if="key.includes('time') || key.includes('latency')" class="w-40 break-all">{{ useConvertSecondsToDHM(Number(evaluation_metadata[key])) }}</td>
                           <td v-else-if="key.includes('cost')" class="w-40 break-all">{{ useHumanCurrencyAmount(Number(evaluation_metadata[key])) }}</td>
                             <td v-else class="w-40 break-all">{{ evaluation_metadata[key] }}</td> 

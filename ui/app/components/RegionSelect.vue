@@ -11,5 +11,5 @@ const regions = computed(() => {
 
 
 <template>
-  <USelectMenu :items="regions" class="w-full" value-key="value" />
+  <USelectMenu :items="regions" class="w-full primary-dropdown" value-key="value" />
 </template>

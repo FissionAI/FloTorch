@@ -7,7 +7,7 @@ const isOpen = ref(false)
 
 <template>
   <UButton icon="i-lucide-circle-help" color="neutral" variant="ghost" @click="isOpen = true" />
-  <UModal v-model:open="isOpen" title="How to use prompt guide" description="&nbsp;">
+  <UModal class="primary-modal-with-header" v-model:open="isOpen" title="How to use prompt guide" description="&nbsp;">
     <template #body>
       <p class="font-medium">Your prompt guide must be a valid JSON file containing three key sections:</p>
       <ul class="ml-8 list-disc">
@@ -35,7 +35,7 @@ const isOpen = ref(false)
     </template>
     <template #footer>
       <div class="flex justify-end w-full">
-        <UButton variant="outline" @click="isOpen = false">Close</UButton>
+        <UButton class="secondary-btn" @click="isOpen = false">Close</UButton>
       </div>
     </template>
   </UModal>

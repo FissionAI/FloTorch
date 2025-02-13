@@ -80,6 +80,6 @@ const isUploading = ref(false)
 <template>
   <UButtonGroup class="w-full">
     <UInput v-model="filepath" disabled />
-    <UButton color="neutral" variant="subtle" icon="i-lucide-upload" :loading="isUploading" @click="handleOpen()" />
+    <UButton class="secondary-btn ml-2" leading-icon="i-lucide-arrow-up-to-line" label="Choose File" variant="ghost" :loading="isUploading" @click="handleOpen()" />
   </UButtonGroup>
 </template>

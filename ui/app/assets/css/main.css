@@ -1,5 +1,16 @@
+@import url('https://fonts.cdnfonts.com/css/amazon-ember');
+
 @import "tailwindcss";
 @import "@nuxt/ui";
+
+
+* {
+  font-family: 'Amazon Ember', open-sans;
+}
+
+:root {
+  --ui-primary: #000000;
+}
 
 /* Table Styles */
 table {
@@ -7,16 +18,26 @@ table {
 }
 
 th {
-  @apply bg-gray-100 text-left p-4 font-medium text-gray-700;
+  @apply bg-transparent text-left p-4;
+  border-block-end-color: rgb(198, 198, 205);
+  border-block-end-style: solid;
+  border-block-end-width: 1px;
+  color: rgb(66, 70, 80);
+  padding-block-end: 4px;
+  padding-block-start: 4px;
+  padding-inline-end: 8px;
+  padding-inline-start: 2px;
+  font-size: 14px;
 }
 
 td {
-  @apply p-4 text-gray-600;
+  @apply text-gray-600;
+  padding: 9px 19px 10px 1px;
 }
 
-tr:nth-child(even) {
+/* tr:nth-child(even) {
   @apply bg-gray-50;
-}
+} */
 
 /* Status Colors */
 .completed {
@@ -53,10 +74,33 @@ tr:nth-child(even) {
   vertical-align: top !important;
 }
 
+.experiment-details-tabs div button {
+  color: #474545;
+  font-weight: bold;
+}
+
 .experiment-details-tabs div button[data-state]:not([data-state='active']) {
-  border : 1px solid lightgray;
+  border-radius: 0px;
+  border-right: 1px solid rgb(144, 150, 144);
+  margin-bottom: 10px;
   cursor: pointer;
-  margin:2px;
+}
+.experiment-details-tabs div button[data-state]:not([data-state='active']):hover {
+  color: var(--aws-secondary-color);
+}
+.experiment-details-tabs div button[data-state='active'] {
+  cursor: pointer;
+  color: var(--aws-secondary-color);
+  margin-bottom: 10px;
+  cursor: pointer;
+
+}
+.experiment-details-tabs div button:last-child {
+  border: none;
+}
+
+.experiment-details-tabs div button[data-state]:not([data-state='active']):last-child {
+ border-right: none;
 }
 
 
@@ -65,7 +109,210 @@ div.divide-y.divide-\[var\(--ui-border\)\].scroll-py-1 div[role='group'] {
   overflow-y:scroll;
 }
 
-div.divide-y.divide-\[var\(--ui-border\)\].scroll-py-1 div[role='group'] {
-  max-height: 165px;
-  overflow-y:scroll;
+
+@theme {
+  --font-family: 'Amazon Ember', sans-serif;
+  --aws-primary-color: #ff9900;
+  --aws-secondary-color: #006ce0;
+  --aws-tertiary-color: #000000;
+
+  --aws-primary-hover-color: #ec7211;
+  --aws-secondary-hover-color: #f0fbff;
+  --aws-secondary-hover-font-color: #002b66;
+
+
+  --aws-font-grey-color: #0f141a;
+  --aws-font-blue-color: #396ee0;
+  --aws-info-alert-color: #f9f9fa;
+
+  --aws-navbar-bg-color: #161d26;
+
+  --aws-info-tooltip-color: #002b66;
+
+  --aws-success-color: #00802f;
+  --aws-pending-color: #006ce0;
+  --aws-error-color: #db0000;
+  --aws-not-started-color: #656871;
+}
+
+.primary-color {
+  color: var(--aws-primary-color);
+}
+
+.secondary-color {
+  color: var(--aws-secondary-color);
+}
+
+.primary-btn {
+  background-color: var(--aws-primary-color);
+  color: var(--aws-font-grey-color);
+  border-radius: 0.25rem;
+  border-color: var(--aws-primary-color);
+  border-end-start-radius: 20px;
+  border-end-end-radius: 20px;
+  border-start-start-radius: 20px;
+  border-start-end-radius: 20px;
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.primary-btn:hover {
+  background-color: var(--aws-primary-hover-color);
+}
+
+.secondary-btn {
+  background-color: transparent;
+  color: var(--aws-font-blue-color);
+  border-radius: 0.25rem;
+  border-color: var(--aws-secondary-color);
+  border-width: 2px;
+  border-end-start-radius: 20px;
+  border-end-end-radius: 20px;
+  border-start-start-radius: 20px;
+  border-start-end-radius: 20px;
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 22px;
+
+}
+
+.secondary-btn:hover {
+  background-color: var(--aws-secondary-hover-color);
+  color: var(--aws-secondary-hover-font-color);
+  border-color: var(--aws-secondary-hover-font-color);
+}
+
+.navbar {
+  background-color: var(--aws-navbar-bg-color);
+}
+
+.info-tooltip {
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 16px;
+  color: var(--aws-secondary-color);
+}
+
+.info-tooltip:hover {
+  color: var(--aws-info-tooltip-color);
+  
+}
+
+.tooltip-title {
+  font-size: 18px;
+  color: rgb(15, 20, 26);
+  font-weight: 700;
+  line-height: 24px;
+  margin-left: 36px;
+}
+
+.tooltip-description {
+  font-size: 14px;
+  color: rgb(66, 70, 80);
+  line-height: 20px;
+  margin-left: 36px;
+}
+
+.info-alert {
+  background-color: var(--aws-secondary-color);
+  color: var(--aws-info-alert-color);
+  border-radius: 12px;
+}
+
+.info-error {
+  background-color: var(--aws-error-color);
+  color: var(--aws-info-alert-color);
+  border-radius: 12px;
+}
+
+.external-link {
+  color: var(--aws-secondary-color);
+  text-decoration: underline;
+}
+
+.external-link:hover {
+  color: var(--aws-secondary-hover-font-color);
+}
+
+.primary-modal-with-header > div:first-of-type {
+  border-bottom: unset;
+}
+
+.secondary-breadcrumb a{
+  color: var(--aws-secondary-color);
+  text-decoration: underline;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.secondary-breadcrumb a.cursor-not-allowed {
+  color: var(--aws-font-grey-color);
+  text-decoration: none;
+}
+
+.not-started-badge {
+  color: var(--aws-not-started-color);
+}
+
+.pending-badge {
+  color: var(--aws-pending-color);
+}
+
+.success-badge {
+  color: var(--aws-success-color);
+}
+
+.error-badge {
+  color: var(--aws-error-color);
+}
+input, .primary-dropdown {
+   height: 32px !important;
+   border-radius: 8px !important;
+}
+
+.custom-options-group {
+  
+  border-bottom: 1px solid lightgray;
+  margin-bottom: 0px !important;
+  padding: 2px;
+  
+}
+
+.custom-options-group:last-child {
+  border-bottom: none;
+}
+
+.custom-options-group:hover {
+  border-radius: 6px !important;
+  outline-style: solid;
+  outline-color: lightgrey;
+  outline-width: 2px;
+  border: none;
+}
+
+.custom-tab-list-group {
+  border-bottom:2px solid lightgray;
+  border-color : lightgray;
+}
+.custom-tab-list-group  .custom-tabs-trigger{
+  border-radius: 0px;
+  border-right: 1px solid rgb(144, 150, 144);
+ 
+  margin-bottom: 10px;
+}
+
+.custom-tab-list-group .custom-tab-indicator {
+  height: 5px !important;
+  background-color: var(--aws-secondary-color);
+}
+
+.secondery-color {
+  background-color: var(--aws-secondary-color) !important;
+  border-color: var(--aws-secondary-color) !important;
+}
+
+.github-link {
+  height: 32px !important;
 }

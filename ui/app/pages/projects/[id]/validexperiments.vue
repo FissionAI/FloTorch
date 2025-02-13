@@ -108,6 +108,9 @@ useHead({
       Experiments Verifying....
     </div>
     <UAlert
+      class="info-error"
+      variant="subtle"
+      icon="i-lucide-circle-x"
       v-else-if="experimentError && !experimentLoading"
       :description="experimentError"
       title="Error : "
@@ -129,13 +132,9 @@ useHead({
       />
       <div class="flex justify-end mt-4">
         <div class="flex gap-2">
-          <ProjectDownloadConfigButton
-            :key="validExperiments?.length"
-            :disabled="validExperiments?.length === 0"
-            :project-id="project!.id"
-            variant="outline"
-          />
+          
           <UButton
+            class="primary-btn"
             icon="i-lucide-play"
             :disabled="selectedExperiments?.length === 0"
             :loading="isCreatingExperiments"
@@ -143,6 +142,11 @@ useHead({
           >
             Run ({{ selectedExperiments?.length || 0 }})
           </UButton>
+          <ProjectDownloadConfigButton
+            :key="validExperiments?.length"
+            :disabled="validExperiments?.length === 0"
+            :project-id="project!.id"
+          />
         </div>
       </div>
     </UCard>

@@ -37,6 +37,15 @@ const hideInfraAlert = computed(() => {
   }
   return false
 })
+
+const sharedData = inject('sharedData')
+
+onMounted(() => {
+  sharedData.value.title = title
+  sharedData.value.to = { name: 'projects-id', params: { id: projectId } }
+  sharedData.value.description = description
+});
+
 </script>
 
 
@@ -44,7 +53,9 @@ const hideInfraAlert = computed(() => {
 <template>
   <div>
     <div v-if="!hideInfraAlert" class="mb-4">
-      <UAlert variant="subtle" title="Heads Up!" :close="{
+      <UAlert class="info-alert" variant="subtle" icon="i-lucide-info"  :close="{
+        icon: 'i-lucide-x',
+        color: 'var(--aws-info-alert-color)',
         onClick: () => {
           handleAlertClose()
         }
