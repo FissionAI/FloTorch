@@ -109,7 +109,7 @@ const resetKbModel = (event: any) => {
       <template #label="{ label }">
         <div class="flex items-center">
           {{ label }}
-          <USeparator orientation="vertical" class="h-3 ml-4" />
+          <!-- <USeparator orientation="vertical" class="h-3 ml-4" /> -->
           <FieldTooltip @show-tooltip="handleTooltip" field-name="region"/>
         </div>
       </template>
