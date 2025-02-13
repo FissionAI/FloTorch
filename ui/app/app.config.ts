@@ -47,6 +47,15 @@ export default defineAppConfig({
         },
       ]
     },
+    formField: {
+      variants: {
+        required: {
+          true: {
+            label: "after:content-[''] after:ms-0.5 after:text-(--ui-error)"
+          }
+        }
+      }
+    },
     tabs: {
       slots : {
         root : "gap-2",

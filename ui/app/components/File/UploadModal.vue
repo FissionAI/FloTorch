@@ -166,4 +166,23 @@ const { mutateAsync: getKbPresignedUrls, isPending: isFetchingKbPresignedUrls } 
     .uppy-Dashboard--singleFile.uppy-size--height-md .uppy-Dashboard-Item-action--remove {
       top: unset !important;
     }
+
+    .uppy-StatusBar.is-waiting .uppy-StatusBar-actions button{
+      background-color: var(--aws-primary-color) !important;
+      color: var(--aws-font-grey-color) !important;
+      border-radius: 0.25rem !important;
+      border-color: var(--aws-primary-color) !important;
+      border-end-start-radius: 20px !important;
+      border-end-end-radius: 20px !important;
+      border-start-start-radius: 20px !important;
+      border-start-end-radius: 20px !important;
+      font-weight: 700 !important;
+      font-size: 14px !important;
+      line-height: 22px !important;
+      padding: 4px 20px !important;
+    }
+
+    /* .uppy-StatusBar.is-complete .uppy-StatusBar-progress {
+      background-color: var(--aws-secondary-color) !important;
+    } */
 </style>

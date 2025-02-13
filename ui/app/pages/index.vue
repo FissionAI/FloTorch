@@ -33,7 +33,7 @@ useHead({
           Powered by <a href="https://flotorch.ai?utm_source=flowtorch-repo" target="_blank"
             class="external-link">FloTorch.ai<UIcon name="i-rivet-icons:link-external" /></a> For
           more information, contact us at <a href="mailto:info@flotorch.ai"
-            class="external-link">info@flotorch.ai<UIcon name="i-rivet-icons:link-external" /></a>
+            class="external-link">info@flotorch.ai<UIcon name="i-rivet-icons:link-external" /></a>.
         </div>
       </div>
     </footer>
@@ -47,6 +47,6 @@ main.container {
   width: 100% !important;
   max-width: unset !important;
   min-width: unset !important;
-  padding: 15px 50px 50px 50px;
+  padding: 50px;
 }
 </style>

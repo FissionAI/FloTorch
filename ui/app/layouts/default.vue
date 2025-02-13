@@ -13,7 +13,6 @@ const tooltip = ref("");
 const fieldName = ref("");
 const content = ref({});
 $on("showTooltip", (tooltipInfo) => {
-  console.log(tooltipInfo);
   drawerOpen.value = true;
   tooltip.value = tooltipInfo.tooltip.value;
   fieldName.value = tooltipInfo.fieldName;
@@ -27,10 +26,10 @@ provide("sharedData", sharedData);
 <template>
   <div class="flex flex-col min-h-screen bg-white">
     <header class="navbar text-white p-2 sticky top-0 z-50">
-      <div class="mx-10 flex flex-col">
-        <div class="w-full flex justify-between mb-5">
+      <div class="container mx-auto flex flex-col">
+        <div class="w-full mx-auto flex justify-between items-center mb-5">
           <NuxtLink :to="{ name: 'index' }">
-            <img src="/logo.png" alt="logo" class="w-[163px]" />
+            <img src="/logo.png" alt="logo" class="w-[200px]" />
           </NuxtLink>
           <UButton
             class="height-[32px] github-link"
@@ -78,7 +77,7 @@ provide("sharedData", sharedData);
             <Placeholder class="">
               <div class="tooltip-description pr-[8px]" v-html="content?.info"></div>
               <div class="tooltip-description mt-3 pr-[8px]"> 
-               <NuxtLink target="_blank" :to="`https://github.com/abdul-fission/FloTorch/blob/feature/github_help_links/Help_Links.MD#${content.link}`" class="font-bold ml-1 external-link">Learn More<UIcon name="i-rivet-icons:link-external"
+               <NuxtLink target="_blank" :to="`https://github.com/FissionAI/FloTorch/blob/v2.1.0/Help_Links.MD#${content.link}`" class="font-bold ml-1 external-link">Learn More<UIcon name="i-rivet-icons:link-external"
           /></NuxtLink>
 
               </div>
