@@ -46,6 +46,7 @@ class ExperimentalConfig(BaseModel):
     rerank_model_id: str = Field(alias="rerank_model_id", default="none")
     bedrock_knowledge_base: bool = False
     knowledge_base: bool = True
+    is_opensearch: bool = True
     class Config:
         alias_generator = lambda string: string.replace("-", "_")
         populate_by_name = True

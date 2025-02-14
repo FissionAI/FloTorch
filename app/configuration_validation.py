@@ -305,6 +305,7 @@ def generate_all_combinations(data):
 
     if len(valid_configurations) > 0:
         for configuration in valid_configurations:
+            configuration["is_opensearch"] = True if configs.opensearch_host else False
             #TODO: Organize the pricing code, break into static methods
             configuration["directional_pricing"] = 0
             configuration["indexing_cost_estimate"] = 0 
@@ -349,7 +350,7 @@ def generate_all_combinations(data):
             configuration["eval_cost_estimate"] += estimate_fargate_price(eval_time)
 
             # add opensearch provisioned costs
-            if not configuration["bedrock_knowledge_base"]:
+            if not configuration["bedrock_knowledge_base"] or configuration["is_opensearch"]:
                 configuration["indexing_cost_estimate"] += estimate_opensearch_price(indexing_time)
                 configuration["retrieval_cost_estimate"] += estimate_opensearch_price(retrieval_time)
                 configuration["eval_cost_estimate"] += estimate_opensearch_price(eval_time)

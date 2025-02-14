@@ -48,6 +48,7 @@ def compute_actual_price_breakdown(
         retrieval_service = configuration.get("config", {}).get("retrieval_service", "")
         bedrock_knowledge_base = configuration.get("config", {}).get("bedrock_knowledge_base", False)
         rerank_model_id = configuration.get("config", {}).get("rerank_model_id", None)
+        is_opensearch = configuration.get("config", {}).get("is_opensearch", True)
 
         is_config_valid, config_missing = validate_params(
             aws_region=aws_region,
@@ -191,7 +192,7 @@ def compute_actual_price_breakdown(
         
 
         # Adding opensearch provisioned costs
-        if not bedrock_knowledge_base:
+        if not bedrock_knowledge_base and is_opensearch:
             indexing_os_cost = opensearch_cost(indexing_time)
             retriever_os_cost = opensearch_cost(retrieval_time)
             eval_os_cost = opensearch_cost(eval_time)
