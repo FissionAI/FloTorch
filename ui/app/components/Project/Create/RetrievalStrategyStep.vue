@@ -29,7 +29,7 @@ const state = reactive<ProjectCreateRetrievalStrategy>({
   n_shot_prompts: modelValue.value.n_shot_prompts || undefined,
   n_shot_prompt_guide: modelValue.value.n_shot_prompt_guide || undefined,
   temp_retrieval_llm: modelValue.value.temp_retrieval_llm || undefined,
-  rerank_model_id: props.region === 'us-east-1' ? ['none'] : modelValue.value.rerank_model_id || undefined,
+  rerank_model_id: (props.region === 'us-east-1' || props.kbModel === 'none') ? ['none'] : modelValue.value.rerank_model_id || undefined,
   // region: modelValue.value.region || props.region
 })
 
