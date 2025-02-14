@@ -108,7 +108,7 @@ useHead({
       Experiments Verifying....
     </div>
     <UAlert
-      class="info-error"
+      class="info-error mt-5"
       variant="subtle"
       icon="i-lucide-circle-x"
       v-else-if="experimentError && !experimentLoading"

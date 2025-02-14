@@ -58,7 +58,7 @@ export default defineAppConfig({
       variants: {
         required: {
           true: {
-            label: "after:content-[''] after:ms-0.5 after:text-(--ui-error)"
+            label: "after:content-[''] after:ms-0 after:text-(--ui-error)"
           }
         }
       }

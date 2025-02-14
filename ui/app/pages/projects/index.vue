@@ -30,7 +30,7 @@ onMounted(() => {
   <Page title="Projects">
     <Breadcumb />
     <template #actions>
-      <div class="flex justify-end gap-2 w-full">
+      <div class="flex justify-end gap-2 w-full mt-2">
         <UButton
         class="primary-btn"
         icon="i-lucide-plus"

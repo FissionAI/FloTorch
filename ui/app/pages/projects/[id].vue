@@ -52,7 +52,7 @@ onMounted(() => {
 
 <template>
   <div>
-    <div v-if="!hideInfraAlert" class="mb-4">
+    <div v-if="!hideInfraAlert" class="-mb-2 mt-5">
       <UAlert class="info-alert" variant="subtle" icon="i-lucide-info"  :close="{
         icon: 'i-lucide-x',
         color: 'var(--aws-info-alert-color)',

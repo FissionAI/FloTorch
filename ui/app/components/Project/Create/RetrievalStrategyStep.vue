@@ -70,10 +70,10 @@ const handleTooltip = (tooltipInfo: {tooltip: string, fieldName: string}) => {
 <template>
   <UForm ref="retForm" :state="state" :schema="ProjectCreateRetrievalStrategySchema" :validate-on="['input']"
     @error="console.log" @submit="onSubmit">
-    <div class="flex gap-4 items-baseline -my-3">
+    <div class="flex gap-4 items-baseline">
       <UFormField name="n_shot_prompts"
         :label="`N Shot Prompts ${state?.n_shot_prompts?.length === 0 || state?.n_shot_prompts === undefined ? '' : `(${state?.n_shot_prompts?.length})`}`"
-        class="flex-1 my-5">
+        class="flex-1 my-0">
         <template #label="{ label }">
           <div class="flex items-center">
             {{ label }} <span class="italic"> - required</span>
@@ -82,7 +82,7 @@ const handleTooltip = (tooltipInfo: {tooltip: string, fieldName: string}) => {
           </div>
         </template>
         <USelectMenu :search-input="false" v-model="state.n_shot_prompts" value-key="value" multiple
-          :items="meta.retrievalStrategy.shotPrompts" class="w-full primary-dropdown my-2" />
+          :items="meta.retrievalStrategy.shotPrompts" class="w-full primary-dropdown my-0" />
         <!-- <template #hint>
           <FieldTooltip field-name="n_shot_prompts" />
         </template> -->
@@ -103,7 +103,7 @@ const handleTooltip = (tooltipInfo: {tooltip: string, fieldName: string}) => {
       </UFormField>
     </div>
     <template v-if="props.kbModel !=='none'">
-      <UFormField name="knn_num"
+    <UFormField name="knn_num"
       :label="`KNN ${state?.knn_num?.length === 0 || state?.knn_num === undefined ? '' : `(${state?.knn_num?.length})`}`"
       >
       <USelectMenu :search-input="false" v-model="state.knn_num" value-key="value" multiple :items="meta.retrievalStrategy.knnNumber"
@@ -115,9 +115,6 @@ const handleTooltip = (tooltipInfo: {tooltip: string, fieldName: string}) => {
           <FieldTooltip @show-tooltip="handleTooltip" field-name="knn_num"/>
         </div>
       </template>
-      <!-- <template #hint>
-        <FieldTooltip field-name="knn_num" />
-      </template> -->
     </UFormField>
     <UFormField name="rerank_model_id" :label="`Reranking Model ${region === 'us-east-1' ? `(Reranking is not available in us-east-1)`:``}`" :required="region !== 'us-east-1'">
       <USelectMenu :search-input="false" :disabled="region === 'us-east-1'" v-model="state.rerank_model_id" value-key="value" multiple
@@ -129,9 +126,6 @@ const handleTooltip = (tooltipInfo: {tooltip: string, fieldName: string}) => {
           <FieldTooltip @show-tooltip="handleTooltip" field-name="rerank_model_id"/>
         </div>
       </template>
-      <!-- <template #hint>
-        <FieldTooltip field-name="rerank_model_id" />
-      </template> -->
     </UFormField>
     </template>
     <UFormField name="retrieval"

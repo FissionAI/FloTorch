@@ -21,18 +21,25 @@ $on("showTooltip", (tooltipInfo) => {
 const sharedData = ref({});
 
 provide("sharedData", sharedData);
+
+
+const router = useRouter()
+
+// Listen for route changes after navigation
+router.afterEach(() => drawerOpen.value = false)
+
 </script>
 
 <template>
   <div class="flex flex-col min-h-screen bg-white">
-    <header class="navbar text-white p-2 sticky top-0 z-50">
-      <div class="container mx-auto flex flex-col">
-        <div class="w-full mx-auto flex justify-between items-center mb-5">
-          <NuxtLink :to="{ name: 'index' }">
+    <header class="navbar text-white p-2 sticky top-0 z-50 -mb-12">
+      <div class="mx-10  flex flex-col">
+        <div class="w-full flex justify-between">
+          <NuxtLink :to="{ name: 'index' }" class="self-center">
             <img src="/logo.png" alt="logo" class="w-[200px]" />
           </NuxtLink>
           <UButton
-            class="height-[32px] github-link"
+            class="height-[32px] github-link self-center"
             icon="i-lucide-github"
             variant="outline"
             color="neutral"
@@ -61,8 +68,8 @@ provide("sharedData", sharedData);
         </div>
       </div>
       <UCard
-        class="drawer-content -my-12 -mr-10"
-        :class="{ 'w-[20%] h-100%': drawerOpen, hidden: !drawerOpen }"
+        class="drawer-content  -mr-10"
+        :class="{ 'w-[20%] h-auto': drawerOpen, hidden: !drawerOpen }"
       >
       <template #header>
       <div class="w-full flex justify-between">
@@ -77,8 +84,16 @@ provide("sharedData", sharedData);
             <Placeholder class="">
               <div class="tooltip-description pr-[8px]" v-html="content?.info"></div>
               <div class="tooltip-description mt-3 pr-[8px]"> 
-               <NuxtLink target="_blank" :to="`https://github.com/FissionAI/FloTorch/blob/v2.1.0/Help_Links.MD#${content.link}`" class="font-bold ml-1 external-link">Learn More<UIcon name="i-rivet-icons:link-external"
-          /></NuxtLink>
+               <!-- <NuxtLink target="_blank" :to="`https://github.com/FissionAI/FloTorch/blob/v2.1.0/Help_Links.MD#${content.link}`" class="font-bold ml-1 external-link">Learn More<UIcon name="i-rivet-icons:link-external"
+          /></NuxtLink> -->
+
+          <h4 class="text-[18px] font-bold">Learn More <UIcon name="i-rivet-icons:link-external"/></h4>
+              <ul class="my-4">
+              <li>
+               <NuxtLink target="_blank" :to="`https://github.com/FissionAI/FloTorch/blob/v2.1.0/Help_Links.MD#${content.link}`" class="font-bold py-5 external-link">{{content.label}}</NuxtLink>
+
+              </li>
+              </ul>
 
               </div>
             </Placeholder>
@@ -113,11 +128,13 @@ main.container {
   max-width: unset !important;
   min-width: unset !important;
   padding: 50px;
+  padding-bottom:0px !important;
 }
 
 .drawer-content {
+  position:relative;
   min-height: 100%;
-  top: 137px;
+  top: 0px;
   right: 0px;
   bottom: 0px;
 }
