@@ -10,5 +10,5 @@ const options = computed(() => {
 
 
 <template>
-  <USelectMenu :items="options" class="w-full primary-dropdown" value-key="value" multiple />
+  <USelectMenu :search-input="false" :items="options" class="w-full primary-dropdown" value-key="value" multiple />
 </template>

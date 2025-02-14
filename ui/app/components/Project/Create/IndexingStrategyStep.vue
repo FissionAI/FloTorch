@@ -53,11 +53,12 @@ const meta = useProjectCreateMeta()
     <UFormField name="chunking_strategy"
       :label="`Chunking ${state?.chunking_strategy?.length === 0 || state?.chunking_strategy === undefined ? '' : `(${state?.chunking_strategy?.length})`}`"
       >
-      <USelectMenu v-model="state.chunking_strategy" value-key="value" multiple
+      <USelectMenu :search-input="false" v-model="state.chunking_strategy" value-key="value" multiple
         :items="meta.indexingStrategy.chunkingStrategy" class="w-full primary-dropdown" />
       <template #label="{ label }">
         <div class="flex items-center">
-          {{ label }}
+          {{ label }} <span class="italic"> - required</span>
+          <span class="w-[1px] h-3 ml-2 bg-gray-400"></span>
           <FieldTooltip @show-tooltip="handleTooltip" field-name="chunking_strategy"/>
         </div>
       </template>
@@ -71,11 +72,12 @@ const meta = useProjectCreateMeta()
         <UFormField name="chunk_size"
       :label="`Chunk Size (Tokens) ${state?.chunk_size?.length === 0 || state?.chunk_size === undefined ? '' : `(${state?.chunk_size?.length})`}`"
       >
-      <USelectMenu v-model="state.chunk_size" value-key="value" multiple :items="meta.indexingStrategy.chunkSize"
+      <USelectMenu :search-input="false" v-model="state.chunk_size" value-key="value" multiple :items="meta.indexingStrategy.chunkSize"
         class="w-full primary-dropdown" />
       <template #label="{ label }">
         <div class="flex items-center">
-          {{ label }}
+          {{ label }} <span class="italic"> - required</span>
+          <span class="w-[1px] h-3 ml-2 bg-gray-400"></span>
           <FieldTooltip @show-tooltip="handleTooltip" field-name="chunk_size"/>
         </div>
       </template>
@@ -86,12 +88,13 @@ const meta = useProjectCreateMeta()
     <UFormField name="chunk_overlap"
       :label="`Chunk Overlap Percentage ${state?.chunk_overlap?.length === 0 || state?.chunk_overlap === undefined ? '' : `(${state?.chunk_overlap?.length})`}`"
       >
-      <USelectMenu v-model="state.chunk_overlap" value-key="value" multiple
+      <USelectMenu :search-input="false" v-model="state.chunk_overlap" value-key="value" multiple
         :items="meta.indexingStrategy.chunkOverlapPercentage" class="w-full primary-dropdown" >
         </USelectMenu>
       <template #label="{ label }">
         <div class="flex items-center">
-          {{ label }}
+          {{ label }} <span class="italic"> - required</span>
+          <span class="w-[1px] h-3 ml-2 bg-gray-400"></span>
           <FieldTooltip @show-tooltip="handleTooltip" field-name="chunk_overlap"/>
         </div>
       </template>
@@ -108,11 +111,12 @@ const meta = useProjectCreateMeta()
       <UFormField name="hierarchical_child_chunk_size"
         :label="`Child Chunk Size (Tokens) ${state?.hierarchical_child_chunk_size?.length === 0 || state?.hierarchical_child_chunk_size === undefined ? '' : `(${state?.hierarchical_child_chunk_size?.length})`}`"
         >
-        <USelectMenu v-model="state.hierarchical_child_chunk_size" value-key="value" multiple
+        <USelectMenu :search-input="false" v-model="state.hierarchical_child_chunk_size" value-key="value" multiple
         :items="meta.indexingStrategy.hierarchical_child_chunk_size" class="w-full" />
         <template #label="{ label }">
           <div class="flex items-center">
-            {{ label }}
+            {{ label }} <span class="italic"> - required</span>
+          <span class="w-[1px] h-3 ml-2 bg-gray-400"></span>
             <FieldTooltip @show-tooltip="handleTooltip" field-name="hierarchical_child_chunk_size"/>
           </div>
         </template>
@@ -120,11 +124,12 @@ const meta = useProjectCreateMeta()
        <UFormField name="hierarchical_parent_chunk_size"
       :label="`Parent Chunk Size (Tokens) ${state?.hierarchical_parent_chunk_size?.length === 0 || state?.hierarchical_parent_chunk_size === undefined ? '' : `(${state?.hierarchical_parent_chunk_size?.length})`}`"
       >
-        <USelectMenu v-model="state.hierarchical_parent_chunk_size" value-key="value" multiple
+        <USelectMenu :search-input="false" v-model="state.hierarchical_parent_chunk_size" value-key="value" multiple
           :items="meta.indexingStrategy.hierarchical_parent_chunk_size" class="w-full primary-dropdown" />
         <template #label="{ label }">
           <div class="flex items-center">
-            {{ label }}
+            {{ label }} <span class="italic"> - required</span>
+          <span class="w-[1px] h-3 ml-2 bg-gray-400"></span>
             <FieldTooltip @show-tooltip="handleTooltip" field-name="hierarchical_parent_chunk_size"/>
           </div>
         </template>
@@ -132,12 +137,13 @@ const meta = useProjectCreateMeta()
       <UFormField name="hierarchical_chunk_overlap_percentage"
         :label="` Chunk Overlap Percentage ${state?.hierarchical_chunk_overlap_percentage?.length === 0 || state?.hierarchical_chunk_overlap_percentage === undefined ? '' : `(${state?.hierarchical_chunk_overlap_percentage?.length})`}`"
         >
-        <USelectMenu v-model="state.hierarchical_chunk_overlap_percentage" value-key="value" multiple
+        <USelectMenu :search-input="false" v-model="state.hierarchical_chunk_overlap_percentage" value-key="value" multiple
         :items="meta.indexingStrategy.hierarchical_chunk_overlap_percentage" class="w-full primary-dropdown">
         </USelectMenu>
         <template #label="{ label }">
           <div class="flex items-center">
-            {{ label }}
+            {{ label }} <span class="italic"> - required</span>
+          <span class="w-[1px] h-3 ml-2 bg-gray-400"></span>
             <FieldTooltip @show-tooltip="handleTooltip" field-name="hierarchical_chunk_overlap_percentage"/>
           </div>
         </template>
@@ -150,7 +156,8 @@ const meta = useProjectCreateMeta()
       <ModelSelect v-model="state.embedding" model="embedding" />
       <template #label="{ label }">
         <div class="flex items-center">
-          {{ label }}
+          {{ label }} <span class="italic"> - required</span>
+          <span class="w-[1px] h-3 ml-2 bg-gray-400"></span>
           <FieldTooltip @show-tooltip="handleTooltip" field-name="embedding"/>
         </div>
       </template>
@@ -164,7 +171,8 @@ const meta = useProjectCreateMeta()
       <VectorDimensionSelect v-model="state.vector_dimension" />
       <template #label="{ label }">
         <div class="flex items-center">
-          {{ label }}
+          {{ label }} <span class="italic"> - required</span>
+          <span class="w-[1px] h-3 ml-2 bg-gray-400"></span>
           <FieldTooltip @show-tooltip="handleTooltip" field-name="vector_dimension"/>
         </div>
       </template>
@@ -175,11 +183,12 @@ const meta = useProjectCreateMeta()
     <UFormField name="indexing_algorithm"
       :label="`Indexing Algorithm ${state?.indexing_algorithm?.length === 0 || state?.indexing_algorithm === undefined ? '' : `(${state?.indexing_algorithm?.length})`}`"
       >
-      <USelectMenu v-model="state.indexing_algorithm" value-key="value" multiple
-        :items="meta.indexingStrategy.indexingAlgorithms" class="w-full" />
+      <USelectMenu :search-input="false" v-model="state.indexing_algorithm" value-key="value" multiple
+        :items="meta.indexingStrategy.indexingAlgorithms" class="w-full primary-dropdown" />
       <template #label="{ label }">
         <div class="flex items-center">
-          {{ label }}
+          {{ label }} <span class="italic"> - required</span>
+          <span class="w-[1px] h-3 ml-2 bg-gray-400"></span>
           <FieldTooltip @show-tooltip="handleTooltip" field-name="indexing_algorithm"/>
         </div>
       </template>

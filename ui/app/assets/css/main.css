@@ -134,6 +134,8 @@ div.divide-y.divide-\[var\(--ui-border\)\].scroll-py-1 div[role='group'] {
   --aws-pending-color: #006ce0;
   --aws-error-color: #db0000;
   --aws-not-started-color: #656871;
+
+  --aws-required-color: #0f141a;
 }
 
 .primary-color {
@@ -188,6 +190,10 @@ div.divide-y.divide-\[var\(--ui-border\)\].scroll-py-1 div[role='group'] {
 
 .navbar {
   background-color: var(--aws-navbar-bg-color);
+}
+
+.required-color {
+  color: var(--aws-required-color);
 }
 
 .info-tooltip {

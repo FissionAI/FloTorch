@@ -109,7 +109,8 @@ onMounted(() => {
         >
           <template #label="{ label }">
             <div class="flex items-center">
-              {{ label }}
+              {{ label }} <span class="italic"> - required</span>
+          <span class="w-[1px] h-3 ml-2 bg-gray-400"></span>
               <FieldTooltip @show-tooltip="handleTooltip" field-name="guardrails"/>
             </div>
           </template>
@@ -121,6 +122,7 @@ onMounted(() => {
             :items="guardrailsList"
             class="w-full my-7 primary-dropdown"
             placeholder="None"
+            :search-input="false"
           >
           
             <template #item-label="{ item }">
@@ -154,10 +156,12 @@ onMounted(() => {
         value-key="value"
         :items="meta.evalStrategy.service"
         class="w-full primary-dropdown"
+        :search-input="false"
       />
       <template #label="{ label }">
         <div class="flex items-center">
-          {{ label }}
+          {{ label }} <span class="italic"> - required</span>
+          <span class="w-[1px] h-3 ml-2 bg-gray-400"></span>
           <FieldTooltip @show-tooltip="handleTooltip" field-name="service"/>
         </div>
       </template>
@@ -174,10 +178,12 @@ onMounted(() => {
         value-key="value"
         :items="useFilteredRagasEmbeddingModels(embeddingModel)"
         class="w-full primary-dropdown"
+        :search-input="false"
       />
       <template #label="{ label }">
         <div class="flex items-center">
-          {{ label }}
+          {{ label }} <span class="italic"> - required</span>
+          <span class="w-[1px] h-3 ml-2 bg-gray-400"></span>
           <FieldTooltip @show-tooltip="handleTooltip" field-name="ragas_embedding_llm"/>
         </div>
       </template>
@@ -194,10 +200,12 @@ onMounted(() => {
         value-key="value"
         :items="useFilteredRagasInferenceModels(inferenceModel)"
         class="w-full primary-dropdown"
+        :search-input="false"
       />
       <template #label="{ label }">
         <div class="flex items-center">
-          {{ label }}
+          {{ label }} <span class="italic"> - required</span>
+          <span class="w-[1px] h-3 ml-3 bg-gray-400"></span>
           <FieldTooltip @show-tooltip="handleTooltip" field-name="ragas_inference_llm"/>
         </div>
       </template>

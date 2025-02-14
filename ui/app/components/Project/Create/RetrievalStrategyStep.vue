@@ -76,11 +76,12 @@ const handleTooltip = (tooltipInfo: {tooltip: string, fieldName: string}) => {
         class="flex-1 my-5">
         <template #label="{ label }">
           <div class="flex items-center">
-            {{ label }}
+            {{ label }} <span class="italic"> - required</span>
+          <span class="w-[1px] h-3 ml-2 bg-gray-400"></span>
             <FieldTooltip @show-tooltip="handleTooltip" field-name="n_shot_prompts"/>
           </div>
         </template>
-        <USelectMenu v-model="state.n_shot_prompts" value-key="value" multiple
+        <USelectMenu :search-input="false" v-model="state.n_shot_prompts" value-key="value" multiple
           :items="meta.retrievalStrategy.shotPrompts" class="w-full primary-dropdown my-2" />
         <!-- <template #hint>
           <FieldTooltip field-name="n_shot_prompts" />
@@ -94,7 +95,8 @@ const handleTooltip = (tooltipInfo: {tooltip: string, fieldName: string}) => {
         </template> -->
         <template #label="{ label }">
           <div class="flex items-center">
-            {{ label }}
+            {{ label }} <span class="italic"> - required</span>
+          <span class="w-[1px] h-3 ml-2 bg-gray-400"></span>
             <FieldTooltip @show-tooltip="handleTooltip" field-name="n_shot_prompt_guide"/>
           </div>
         </template>
@@ -104,11 +106,12 @@ const handleTooltip = (tooltipInfo: {tooltip: string, fieldName: string}) => {
       <UFormField name="knn_num"
       :label="`KNN ${state?.knn_num?.length === 0 || state?.knn_num === undefined ? '' : `(${state?.knn_num?.length})`}`"
       >
-      <USelectMenu v-model="state.knn_num" value-key="value" multiple :items="meta.retrievalStrategy.knnNumber"
+      <USelectMenu :search-input="false" v-model="state.knn_num" value-key="value" multiple :items="meta.retrievalStrategy.knnNumber"
         class="w-full primary-dropdown" />
       <template #label="{ label }">
         <div class="flex items-center">
-          {{ label }}
+          {{ label }} <span class="italic"> - required</span>
+          <span class="w-[1px] h-3 ml-2 bg-gray-400"></span>
           <FieldTooltip @show-tooltip="handleTooltip" field-name="knn_num"/>
         </div>
       </template>
@@ -117,11 +120,12 @@ const handleTooltip = (tooltipInfo: {tooltip: string, fieldName: string}) => {
       </template> -->
     </UFormField>
     <UFormField name="rerank_model_id" :label="`Reranking Model ${region === 'us-east-1' ? `(Reranking is not available in us-east-1)`:``}`" :required="region !== 'us-east-1'">
-      <USelectMenu :disabled="region === 'us-east-1'" v-model="state.rerank_model_id" value-key="value" multiple
+      <USelectMenu :search-input="false" :disabled="region === 'us-east-1'" v-model="state.rerank_model_id" value-key="value" multiple
         :items="useFilteredRerankModels(region)" class="w-full primary-dropdown" />
       <template #label="{ label }">
         <div class="flex items-center">
-          {{ label }}
+          {{ label }} <span v-if="region !== 'us-east-1'" class="italic"> - required</span>
+          <span class="w-[1px] h-3 ml-2 bg-gray-400"></span>
           <FieldTooltip @show-tooltip="handleTooltip" field-name="rerank_model_id"/>
         </div>
       </template>
@@ -136,7 +140,8 @@ const handleTooltip = (tooltipInfo: {tooltip: string, fieldName: string}) => {
       <ModelSelect v-model="state.retrieval" model="retrieval" />
       <template #label="{ label }">
         <div class="flex items-center">
-          {{ label }}
+          {{ label }} <span class="italic"> - required</span>
+          <span class="w-[1px] h-3 ml-2 bg-gray-400"></span>
           <FieldTooltip @show-tooltip="handleTooltip" field-name="retrieval"/>
         </div>
       </template>
@@ -147,11 +152,12 @@ const handleTooltip = (tooltipInfo: {tooltip: string, fieldName: string}) => {
     <UFormField name="temp_retrieval_llm"
       :label="`Inferencing Model Temperature ${state?.temp_retrieval_llm?.length === 0 || state?.temp_retrieval_llm === undefined ? '' : `(${state?.temp_retrieval_llm?.length})`}`"
       >
-      <USelectMenu v-model="state.temp_retrieval_llm" value-key="value" multiple
+      <USelectMenu :search-input="false" v-model="state.temp_retrieval_llm" value-key="value" multiple
         :items="meta.retrievalStrategy.temperature" class="w-full primary-dropdown" />
       <template #label="{ label }">
         <div class="flex items-center">
-          {{ label }}
+          {{ label }} <span class="italic"> - required</span>
+          <span class="w-[1px] h-3 ml-2 bg-gray-400"></span>
           <FieldTooltip @show-tooltip="handleTooltip" field-name="temp_retrieval_llm"/>
         </div>
       </template>

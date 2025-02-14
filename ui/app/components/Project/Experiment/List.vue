@@ -221,7 +221,7 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         color: "neutral",
         variant: "ghost",
         label: "Maliciousness",
-        icon: isSorted
+        trailingIcon: isSorted
           ? isSorted === "asc"
             ? "i-lsicon:triangle-up-outline"
             : "i-lsicon:triangle-down-outline"

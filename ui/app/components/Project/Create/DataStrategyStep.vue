@@ -108,7 +108,8 @@ const disbleDefaultKbOption = computed(()=>{
     <UFormField id="name" name="name" label="Project Name">
       <template #label="{ label }">
         <div class="flex items-center">
-          {{ label }}
+          {{ label }} <span class="italic"> - required</span>
+          <!-- <span class="w-[1px] h-3 ml-2 bg-gray-400"></span> -->
           <!-- <FieldTooltip @show-tooltip="handleTooltip" field-name="name"/> -->
         </div>
       </template>
@@ -122,7 +123,8 @@ const disbleDefaultKbOption = computed(()=>{
     <UFormField id="region" name="region" label="Region">
       <template #label="{ label }">
         <div class="flex items-center">
-          {{ label }}
+          {{ label }} <span class="italic"> - required</span>
+          <span class="w-[1px] h-3 ml-2 bg-gray-400"></span>
           <!-- <USeparator orientation="vertical" class="h-3 ml-4" /> -->
           <FieldTooltip @show-tooltip="handleTooltip" field-name="region"/>
         </div>
@@ -139,7 +141,8 @@ const disbleDefaultKbOption = computed(()=>{
     >
       <template #label="{ label }">
         <div class="flex items-center">
-          {{ label }}
+          {{ label }} <span class="italic"> - required</span>
+          <span class="w-[1px] h-3 ml-2 bg-gray-400"></span>
           <FieldTooltip @show-tooltip="handleTooltip" field-name="kb_model"/>
         </div>
       </template>
@@ -151,7 +154,7 @@ const disbleDefaultKbOption = computed(()=>{
         @change="resetKbModel"
         :loading="isFetchingPresignedUploadUrl"
         :disabled="isFetchingPresignedUploadUrl"
-
+        :search-input="false"
      />
       <div class="flex mt-2" v-if="!kbConfig">
          <div class="flex"> Upload my own data not available. <FieldTooltip @show-tooltip="handleTooltip" field-name="no_own_data"/> </div>
@@ -176,7 +179,8 @@ const disbleDefaultKbOption = computed(()=>{
         </template> -->
         <template #label="{ label }">
           <div class="flex items-center">
-            {{ label }}
+            {{ label }} <span class="italic"> - required</span>
+          <span class="w-[1px] h-3 ml-2 bg-gray-400"></span>
             <FieldTooltip @show-tooltip="handleTooltip" field-name="kb_data"/>
           </div>
         </template>
@@ -203,7 +207,8 @@ const disbleDefaultKbOption = computed(()=>{
     <UFormField id="gt_data" name="gt_data" label="Ground Truth Data" >
       <template #label="{ label }">
         <div class="flex items-center">
-          {{ label }}
+          {{ label }} <span class="italic"> - required</span>
+          <span class="w-[1px] h-3 ml-2 bg-gray-400"></span>
           <FieldTooltip @show-tooltip="handleTooltip" field-name="gt_data"/>
         </div>
       </template>

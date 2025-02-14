@@ -47,6 +47,13 @@ export default defineAppConfig({
         },
       ]
     },
+    separator: {
+      variants: {
+        vertical: {
+          class: 'border-color-red'
+        }
+      }
+    },
     formField: {
       variants: {
         required: {

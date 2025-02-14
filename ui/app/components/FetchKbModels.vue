@@ -47,7 +47,7 @@ onMounted(() => {
 
   <div class="flex gap-2">
     <UFormField name="kb_data" label=" Bedrock Knowledge Base Data " class="flex-11 text-ellipsis overflow-hidden">
-       <USelectMenu :disabled="!props.region" v-model="selectedModel" :loading="isLoading" :items="modelsList" multiple  class="w-full my-1 primary-dropdown" value-key="value" @change="emit('kbModels', {value:selectedModel})" />
+       <USelectMenu :search-input="false" :disabled="!props.region" v-model="selectedModel" :loading="isLoading" :items="modelsList" multiple  class="w-full my-1 primary-dropdown" value-key="value" @change="emit('kbModels', {value:selectedModel})" />
         <p class="my-2 text-red-500" v-if="!props.region">Please select region first </p>
     </UFormField>
         <UFormField name="refetch_kb_model" label=" " class="flex-1 relative top-[10px]" >

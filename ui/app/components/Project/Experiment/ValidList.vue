@@ -625,11 +625,11 @@ const columnVisibility = ref({
         <UButton
           color="neutral"
           variant="ghost"
-          :icon="column.getIsSorted() 
+          :trailing-icon="column.getIsSorted() 
             ? column.getIsSorted() === 'asc'
-              ? 'i-lucide-arrow-up-narrow-wide'
-              : 'i-lucide-arrow-down-wide-narrow'
-            : 'i-lucide-arrow-up-down'"
+              ? 'i-lsicon:triangle-up-outline'
+              : 'i-lsicon:triangle-down-outline'
+            : 'i-lsicon:triangle-down-outline'"
           class="-mx-2.5"
           @click="column.toggleSorting(column.getIsSorted() === 'asc')"
         >
@@ -652,11 +652,11 @@ const columnVisibility = ref({
         <UButton
           color="neutral"
           variant="ghost"
-          :icon="column.getIsSorted() 
+          :trailing-icon="column.getIsSorted() 
             ? column.getIsSorted() === 'asc'
-              ? 'i-lucide-arrow-up-narrow-wide'
-              : 'i-lucide-arrow-down-wide-narrow'
-            : 'i-lucide-arrow-up-down'"
+              ? 'i-lsicon:triangle-up-outline'
+              : 'i-lsicon:triangle-down-outline'
+            : 'i-lsicon:triangle-down-outline'"
           class="-mx-2.5"
           @click="column.toggleSorting(column.getIsSorted() === 'asc')"
         >
