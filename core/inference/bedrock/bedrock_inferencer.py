@@ -27,7 +27,7 @@ class BedrockInferencer(BaseInferencer):
             region_name=self.region_name
         )
 
-    def generate_prompt(self, experiment_config: ExperimentalConfig, default_prompt: str, user_query: str, context: List[Dict] = None) -> Tuple[str, List[Dict[str, Any]]]:
+    def generate_prompt(self, experiment_config: ExperimentalConfig, default_prompt: str, user_query: str, context: List[Dict] = None) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
         # Get n_shot config values first to avoid repeated lookups
         n_shot_prompt_guide = experiment_config.n_shot_prompt_guide_obj
         n_shot_prompt = experiment_config.n_shot_prompts
@@ -45,8 +45,8 @@ class BedrockInferencer(BaseInferencer):
             raise ValueError("n_shot_prompt must be non-negative")
         
         # Get system prompt
-        system_prompt = default_prompt if n_shot_prompt_guide is None or n_shot_prompt_guide.system_prompt is None else n_shot_prompt_guide.system_prompt
-        
+        system_prompt_string = default_prompt if n_shot_prompt_guide is None or n_shot_prompt_guide.system_prompt is None else n_shot_prompt_guide.system_prompt
+        system_prompt = [{"text": system_prompt_string}]
         base_prompt = n_shot_prompt_guide.user_prompt if n_shot_prompt_guide.user_prompt else ""
         messages.append(self._prepare_conversation(role="user", message=base_prompt))
         
@@ -101,12 +101,10 @@ class BedrockInferencer(BaseInferencer):
         # Format message and role into a conversation
         if not message or not role:
             logger.error(f"Error in parsing message or role")
-        conversation = [
-            {
+        conversation = {
                 "role": role, 
                 "content": [{"text" : message}]
-            }
-        ]
+        }        
         return conversation
 
     def _format_context(self, context: List[Dict[str, str]]) -> str:
