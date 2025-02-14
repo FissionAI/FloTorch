@@ -16,7 +16,7 @@ const emits = defineEmits(["next", "previous", "kbFilesUpload", "showTooltip"]);
 
 const presignedUploadUrl = ref();
 
-const kbConfig = ref(false);
+const kbConfig = ref(true);
 
 const {
   mutateAsync: getPresignedUploadUrl,
@@ -89,7 +89,7 @@ const resetKbModel = (event: any) => {
 
 const disbleDefaultKbOption = computed(()=>{
     return meta.kb_model.map(item => {
-      if (kbConfig.value && item.value == 'default-upload') {
+      if (!kbConfig.value && item.value == 'default-upload') {
         item['disabled'] = true; 
       }
       return item;
@@ -153,7 +153,7 @@ const disbleDefaultKbOption = computed(()=>{
         :disabled="isFetchingPresignedUploadUrl"
 
      />
-      <div class="flex mt-2" v-if="kbConfig">
+      <div class="flex mt-2" v-if="!kbConfig">
          <div class="flex"> Upload my own data not available. <FieldTooltip @show-tooltip="handleTooltip" field-name="no_own_data"/> </div>
       </div>
       <div v-if="state.kb_model && state.kb_model !== 'default-upload' && state.kb_model !== 'none'" class="my-2" >
