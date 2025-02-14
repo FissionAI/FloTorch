@@ -60,7 +60,11 @@ class BedrockInferencer(BaseInferencer):
         
         # Use string concatenation for example formatting
         for example in selected_examples:
-                messages.append(self._prepare_conversation(role="user", message=example['example']))
+                if 'example' in example:
+                    messages.append(self._prepare_conversation(role="user", message=example['example']))
+                elif 'question' in example and 'answer' in example:
+                    messages.append(self._prepare_conversation(role="user", message=example['question']))
+                    messages.append(self._prepare_conversation(role="assistant", message=example['answer']))
         
         logger.info(f"into {n_shot_prompt} shot prompt  with examples {len(selected_examples)}")
 
