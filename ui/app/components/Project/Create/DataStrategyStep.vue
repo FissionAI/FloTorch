@@ -16,12 +16,16 @@ const emits = defineEmits(["next", "previous", "kbFilesUpload", "showTooltip"]);
 
 const presignedUploadUrl = ref();
 
+const kbConfig = ref(false);
+
 const {
   mutateAsync: getPresignedUploadUrl,
   isPending: isFetchingPresignedUploadUrl,
 } = useMutation({
   mutationFn: async (uuid: string) => {
     const response = await usePresignedUploadUrl(uuid);
+    const kbResponse = await useKBConfig();
+    kbConfig.value = kbResponse?.opensearch?.configured ;
     presignedUploadUrl.value = response;
     return response;
   },
@@ -82,6 +86,16 @@ const resetKbModel = (event: any) => {
   state.kb_data = [];
   }
 };
+
+const disbleDefaultKbOption = computed(()=>{
+    return meta.kb_model.map(item => {
+      if (kbConfig.value && item.value == 'default-upload') {
+        item['disabled'] = true; 
+      }
+      return item;
+    });
+})
+
 </script>
 
 <template>
@@ -130,23 +144,26 @@ const resetKbModel = (event: any) => {
         </div>
       </template>
       <USelectMenu
-        :items="meta.kb_model"
+        :items="disbleDefaultKbOption"
         v-model="state.kb_model"
         class="w-full primary-dropdown"
         value-key="value"
         @change="resetKbModel"
+        :loading="isFetchingPresignedUploadUrl"
+        :disabled="isFetchingPresignedUploadUrl"
 
      />
-      <!-- <template #hint>
-        <FieldTooltip field-name="kb_model" />
-      </template> -->
-       <div v-if="state.kb_model && state.kb_model !== 'default-upload'" class="my-2" >
+      <div class="flex mt-2" v-if="kbConfig">
+         <div class="flex"> Upload my own data not available. <FieldTooltip @show-tooltip="handleTooltip" field-name="no_own_data"/> </div>
+      </div>
+      <div v-if="state.kb_model && state.kb_model !== 'default-upload' && state.kb_model !== 'none'" class="my-2" >
           <ULink class="text-blue-500 hover:underline" target="_blank" raw :to="`https://${state.region}.console.aws.amazon.com/bedrock/home?region=${state.region}#/knowledge-bases`" active-class="font-bold" inactive-class="text-[var(--ui-text-muted)]">Create Bedrock Knowledge Bases</ULink>
-        </div>
-    </UFormField>
-      <p v-if="state.kb_model && state.kb_model !== 'default-upload' &&  state.kb_model !=='none'" class="text-blue-500">[Note]: Indexing Strategy step will be skipped if Bedrock Knowledge Bases is selected </p>
-      <p v-if="state.kb_model && state.kb_model !== 'default-upload' &&  state.kb_model ==='none'" class="text-blue-500">[Note]: Indexing Strategy step will be skipped if you don't select any Knowledge Base Type </p>
+      </div>
+      <p v-if="state.kb_model && state.kb_model !== 'default-upload' &&  state.kb_model !=='none'" >[Note]: Indexing Strategy step will be skipped if Bedrock Knowledge Bases is selected </p>
+      <p v-if="state.kb_model && state.kb_model !== 'default-upload' &&  state.kb_model ==='none'" >[Note]: Indexing Strategy step will be skipped if you don't select any Knowledge Base Type </p>
 
+    </UFormField>
+     
 
     <template v-if="state.kb_model && state.kb_model === 'default-upload' && state.kb_model !== 'none'">
       <UFormField

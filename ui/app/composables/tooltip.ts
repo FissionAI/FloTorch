@@ -134,6 +134,11 @@ export const useTooltipInfo = {
         label: 'KB Model',
         info: "Select Knowledge base type",
         content: "Select the type of knowledge base you want to use for your project. This will determine the type of data that will be used for retrieval and generation."
+    },
+    no_own_data : {
+        label : "Provision OpenSearch Cluster",
+        info : "Provisioning an OpenSearch cluster is necessary to upload your own data. To set up the cluster and enable data uploads, please follow the steps outlined here.",
+        link : 'https://google.com'
     }
     }
     

@@ -102,3 +102,13 @@ export const useGuardrailsList = (region:string) => {
 export const useFetchAllKbModels = (region:string) => {
   return useApi("/bedrock/knowledge_bases?region="+region);
 }
+
+export const useKBConfig = () => {
+  return useApi<{
+    data: {
+      "opensearch": {
+        "configured": boolean
+      }
+    };
+  }>("config");
+};
