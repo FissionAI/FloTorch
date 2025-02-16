@@ -78,6 +78,16 @@ Parameters:
   CostComputeImageTag:
     Type: String
     Description: Tag for the AI image
+  PrerequisitesMet:
+    Type: String
+    Description: Whether prerequisites are met (yes/no)
+    AllowedValues: 
+      - "yes"
+      - "no"
+
+Conditions:
+  PrerequisitesMet: !Equals [!Ref PrerequisitesMet, "yes"]
+  PrerequisitesNotMet: !Equals [!Ref PrerequisitesMet, "no"]
 
 Resources:
   LambdaSecurityGroup:
@@ -156,6 +166,7 @@ Resources:
 
   DockerPullPushRole:
     Type: AWS::IAM::Role
+    Condition: PrerequisitesMet
     Properties:
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
@@ -213,6 +224,7 @@ Resources:
 
   DockerPullPushFunction:
     Type: AWS::Lambda::Function
+    Condition: PrerequisitesMet
     Properties:
       Handler: index.handler
       Role: !GetAtt DockerPullPushRole.Arn
@@ -347,10 +359,21 @@ Resources:
                           fi
                       }}
 
+                      install_git() {{
+                          if command_exists git; then
+                              echo "Git is already installed"
+                              git --version
+                          else
+                              echo "Installing Git..."
+                              sudo yum install -y git
+                          fi
+                      }}
+
                       # Detect OS and install requirements
                       detect_os
                       install_docker
                       install_awscli
+                      install_git
 
                       # Configure Docker to use non-interactive mode
                       export DOCKER_CLI_NO_INTERACTIVE=1
@@ -475,6 +498,7 @@ Resources:
 
   DockerPullPushResource:
     Type: Custom::DockerPullPush
+    Condition: PrerequisitesMet
     DependsOn: DockerPullPushFunction
     Properties:
       ServiceToken: !GetAtt DockerPullPushFunction.Arn
@@ -495,14 +519,15 @@ Resources:
       RuntimeImageTag: !Ref RuntimeImageTag
       CostComputeImageTag: !Ref CostComputeImageTag
 
-  RuntimeLambdaFunction:
+  RuntimeLambdaFunctionWithPrereqs:
     Type: AWS::Lambda::Function
+    Condition: PrerequisitesMet
     DependsOn: DockerPullPushResource
     Properties:
       FunctionName: !Sub flotorch-runtime-${TableSuffix}
       Role: !GetAtt LambdaExecutionRole.Arn
       Code:
-        ImageUri: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/flotorch-runtime-${TableSuffix}:${RuntimeImageTag}
+        ImageUri: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/flotorch-runtime-${TableSuffix}:latest
       PackageType: Image
       MemorySize: 4096
       Timeout: 900
@@ -525,8 +550,39 @@ Resources:
           opensearch_serverless: "false"
           aws_region: !Ref AWS::Region
 
-  CostComputeLambdaFunction:
+  RuntimeLambdaFunctionNoPrereqs:
     Type: AWS::Lambda::Function
+    Condition: PrerequisitesNotMet
+    Properties:
+      FunctionName: !Sub flotorch-runtime-${TableSuffix}
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        ImageUri: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/flotorch-runtime-${TableSuffix}:latest
+      PackageType: Image
+      MemorySize: 4096
+      Timeout: 900
+      VpcConfig:
+        SubnetIds: !Split [",", !Join [",", !Ref PrivateSubnets]]
+        SecurityGroupIds:
+          - !Ref LambdaSecurityGroup
+      Environment:
+        Variables:
+          DATA_BUCKET: !Ref DataBucketName
+          EXECUTION_TABLE: !Ref ExecutionTableName
+          EXPERIMENT_TABLE: !Ref ExperimentTableName
+          METRICS_TABLE: !Ref MetricsTableName
+          MODEL_INVOCATIONS_TABLE: !Ref ModelInvocationsTableName
+          opensearch_host: !Ref OpenSearchEndpoint
+          opensearch_username: !Ref OpenSearchAdminUser
+          opensearch_password: !Ref OpenSearchAdminPassword
+          INFERENCE_SYSTEM_PROMPT: "You are a helpful assistant. Use the provided context to answer questions accurately. If you cannot find the answer in the context, say so"
+          vector_field_name: "vectors"
+          opensearch_serverless: "false"
+          aws_region: !Ref AWS::Region
+
+  CostComputeLambdaFunctionWithPrereqs:
+    Type: AWS::Lambda::Function
+    Condition: PrerequisitesMet
     DependsOn: DockerPullPushResource
     Properties:
       FunctionName: !Sub flotorch-costcompute-${TableSuffix}
@@ -550,13 +606,48 @@ Resources:
           experiment_question_metrics_index: experiment_id-index
           experiment_question_metrics_table: !Ref MetricsTableName
 
+  CostComputeLambdaFunctionNoPrereqs:
+    Type: AWS::Lambda::Function
+    Condition: PrerequisitesNotMet
+    Properties:
+      FunctionName: !Sub flotorch-costcompute-${TableSuffix}
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        ImageUri: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/flotorch-costcompute-${TableSuffix}:latest
+      PackageType: Image
+      MemorySize: 4096
+      Timeout: 900
+      VpcConfig:
+        SubnetIds: !Split [",", !Join [",", !Ref PrivateSubnets]]
+        SecurityGroupIds:
+          - !Ref LambdaSecurityGroup
+      Environment:
+        Variables:
+          execution_table: !Ref ExecutionTableName
+          experiment_table: !Ref ExperimentTableName
+          s3_bucket: !Ref DataBucketName
+          bedrock_limit_csv: seed/bedrock_limits_small.csv
+          aws_region: !Ref AWS::Region
+          experiment_question_metrics_index: experiment_id-index
+          experiment_question_metrics_table: !Ref MetricsTableName
+
 Outputs:
-  RuntimeLambdaArn:
+  RuntimeLambdaArnWithPrereqs:
     Description: ARN of the Runtime Lambda function
-    Value: !GetAtt RuntimeLambdaFunction.Arn
-  CostComputeLambdaArn:
+    Condition: PrerequisitesMet
+    Value: !GetAtt RuntimeLambdaFunctionWithPrereqs.Arn
+  CostComputeLambdaArnWithPrereqs:
     Description: ARN of the cost compute lambda function
-    Value: !GetAtt CostComputeLambdaFunction.Arn
+    Condition: PrerequisitesMet
+    Value: !GetAtt CostComputeLambdaFunctionWithPrereqs.Arn
+  RuntimeLambdaArnNoPrereqs:
+    Description: ARN of the Runtime Lambda function
+    Condition: PrerequisitesNotMet
+    Value: !GetAtt RuntimeLambdaFunctionNoPrereqs.Arn
+  CostComputeLambdaArnNoPrereqs:
+    Description: ARN of the cost compute lambda function
+    Condition: PrerequisitesNotMet
+    Value: !GetAtt CostComputeLambdaFunctionNoPrereqs.Arn
   LambdaRoleArn:
     Description: ARN of the Lambda execution role
     Value: !GetAtt LambdaExecutionRole.Arn
