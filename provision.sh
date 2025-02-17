@@ -164,7 +164,7 @@ echo "----------------------------------"
 
 # Get Prerequisites confirmation
 while true; do
-    read -p "Have you completed all prerequisites? (yes/no): " PREREQUISITES_MET
+    read -p "Subscribed to FloTorch on AWS Marketplace? (yes/no): " PREREQUISITES_MET
     if [[ "$PREREQUISITES_MET" =~ ^(yes|no)$ ]]; then
         break
     else
@@ -182,11 +182,11 @@ while true; do
         echo "Error: Please enter either 'yes' or 'no'"
     fi
 done
-VERSION=2.1.0
+VERSION="latest"
 # Get version input if prerequisites are met
 if [ "$PREREQUISITES_MET" = "yes" ]; then
-    read -p "Enter FloTorch version [2.0.1]: " VERSION
-    VERSION=${VERSION:-2.0.1}
+    read -p "Enter FloTorch version [latest]: " VERSION
+    VERSION=${VERSION:-latest}
 fi
 
 # Get Project Name
@@ -246,7 +246,7 @@ fi
 # Execute CloudFormation deployment
 echo -e "\nStarting CloudFormation deployment..."
 aws cloudformation create-stack \
-    --stack-name flotorch-stack \
+    --stack-name $PROJECT_NAME \
     --template-url "https://flotorch-public.s3.us-east-1.amazonaws.com/${VERSION}/templates/master-template.yaml" \
     --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
     --region "$REGION" \

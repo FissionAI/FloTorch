@@ -286,13 +286,13 @@ Resources:
         IndexingTaskDefinitionArn: !GetAtt ECSStack.Outputs.IndexingTaskDefinitionArn
         RetrieverTaskDefinitionArn: !GetAtt ECSStack.Outputs.RetrieverTaskDefinitionArn
         EvaluationTaskDefinitionArn: !GetAtt ECSStack.Outputs.EvaluationTaskDefinitionArn
-        RuntimeLambdaArn: !GetAtt LambdaStack.Outputs.RuntimeLambdaArnWithPrereqs
+        RuntimeLambdaName: !Sub flotorch-runtime-${TableSuffix}
+        CostComputeLambdaName: !Sub flotorch-costcompute-${TableSuffix}
         DataBucketName: !GetAtt DynamoDBStack.Outputs.DataBucketName
         ExecutionTableName: !GetAtt DynamoDBStack.Outputs.ExecutionTableName
         ExperimentTableName: !GetAtt DynamoDBStack.Outputs.ExperimentTableName
         MetricsTableName: !GetAtt DynamoDBStack.Outputs.MetricsTableName
         ModelInvocationsTableName: !GetAtt DynamoDBStack.Outputs.ModelInvocationsTableName
-        CostComputeLambdaArn: !GetAtt LambdaStack.Outputs.CostComputeLambdaArnWithPrereqs
         OpenSearchEndpoint: !If [CreateOpenSearchStack, !GetAtt OpenSearchStack.Outputs.OpenSearchEndpoint, ""]
         OpenSearchAdminUser: !Ref OpenSearchAdminUser
         OpenSearchAdminPassword: !Ref OpenSearchAdminPassword
@@ -313,13 +313,13 @@ Resources:
         IndexingTaskDefinitionArn: !GetAtt ECSStackNoOpenSearch.Outputs.IndexingTaskDefinitionArn
         RetrieverTaskDefinitionArn: !GetAtt ECSStackNoOpenSearch.Outputs.RetrieverTaskDefinitionArn
         EvaluationTaskDefinitionArn: !GetAtt ECSStackNoOpenSearch.Outputs.EvaluationTaskDefinitionArn
-        RuntimeLambdaArn: !GetAtt LambdaStackNoOpenSearch.Outputs.RuntimeLambdaArnNoPrereqs
+        RuntimeLambdaName: !Sub flotorch-runtime-${TableSuffix}
+        CostComputeLambdaName: !Sub flotorch-costcompute-${TableSuffix}
         DataBucketName: !GetAtt DynamoDBStack.Outputs.DataBucketName
         ExecutionTableName: !GetAtt DynamoDBStack.Outputs.ExecutionTableName
         ExperimentTableName: !GetAtt DynamoDBStack.Outputs.ExperimentTableName
         MetricsTableName: !GetAtt DynamoDBStack.Outputs.MetricsTableName
         ModelInvocationsTableName: !GetAtt DynamoDBStack.Outputs.ModelInvocationsTableName
-        CostComputeLambdaArn: !GetAtt LambdaStackNoOpenSearch.Outputs.CostComputeLambdaArnNoPrereqs
         OpenSearchEndpoint: ""
         OpenSearchAdminUser: ""
         OpenSearchAdminPassword: ""

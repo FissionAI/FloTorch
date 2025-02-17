@@ -51,12 +51,12 @@ Parameters:
     Type: String
     Description: OpenSearch admin password
     NoEcho: true
-  RuntimeLambdaArn:
+  RuntimeLambdaName:
     Type: String
-    Description: ARN of the Runtime Lambda function
-  CostComputeLambdaArn:
+    Description: Name of the Runtime Lambda function
+  CostComputeLambdaName:
     Type: String
-    Description: ARN of the Cost Compute Lambda function
+    Description: Name of the Cost Compute Lambda function
   InferenceSystemPrompt:
     Type: String
     Description: System prompt for inference
@@ -295,7 +295,7 @@ Resources:
                 "ResultPath": "$.indexCreation",
                 "Resource": "arn:aws:states:::lambda:invoke",
                 "Parameters": {
-                  "FunctionName": "${RuntimeLambdaArn}",
+                  "FunctionName": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${RuntimeLambdaName}",
                   "Payload.$": "$"
                 }
               },
@@ -1477,7 +1477,7 @@ Resources:
                       "ResultPath": "$.costEstimation",
                       "Resource": "arn:aws:states:::lambda:invoke",
                       "Parameters": {
-                        "FunctionName": "${CostComputeLambdaArn}",
+                        "FunctionName": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${CostComputeLambdaName}",
                         "Payload": {
                           "experiment_id.$": "$.parsedConfig.parsed_config.experiment_id",
                           "aws_region.$": "$.parsedConfig.parsed_config.aws_region",
@@ -1592,6 +1592,8 @@ Resources:
           SageMakerRoleArn: !Ref SageMakerRoleArn
           subnets_array: !Join ["", ["[\"", !Join ["\",\"", !Ref PrivateSubnets], "\"]"]]
           security_groups: !Ref SecurityGroups
+          RuntimeLambdaName: !Ref RuntimeLambdaName
+          CostComputeLambdaName: !Ref CostComputeLambdaName
 
 Outputs:
   StateMachineArn:
