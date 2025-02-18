@@ -185,7 +185,10 @@ Resources:
                   "SageMakerRoleArn": "${SageMakerRoleArn}",
                   "execution_id.$": "$.execution_id"
                 },
-                "Next": "Query model invocations"
+                "Next": "Query model invocations",
+                "Assign": {
+                  "opensearch_endpoint.$": "$.OpenSearchEndpoint"
+                }
               },
               "Query model invocations": {
                 "Next": "Map",
@@ -236,7 +239,7 @@ Resources:
                 "Next": "Query"
               },
               "Query": {
-                "Next": "Create Opensearch indices",
+                "Next": "Check if OpenSearch provisioned",
                 "Type": "Task",
                 "ResultPath": "$",
                 "ResultSelector": {
@@ -254,6 +257,17 @@ Resources:
                     }
                   }
                 }
+              },
+               "Check if OpenSearch provisioned": {
+                "Type": "Choice",
+                "Choices": [
+                  {
+                    "Variable": "$opensearch_endpoint",
+                    "StringEquals": "",
+                    "Next": "Experiments Map"
+                  }
+                ],
+                "Default": "Create Opensearch indices"
               },
               "Create Opensearch indices": {
                 "Next": "Index creation evaluation",
@@ -423,6 +437,7 @@ Resources:
                           "eval_retrieval_model.$": "$.Item.Item.config.M.eval_retrieval_model.S",
                           "rerank_model_id.$": "$.Item.Item.config.M.rerank_model_id.S",
                           "bedrock_knowledge_base.$": "$.Item.Item.config.M.bedrock_knowledge_base.Bool",
+                          "knowledge_base.$": "$.Item.Item.config.M.knowledge_base.Bool",
                           "ClusterArn": "${EcsClusterArn}",
                           "IndexingTaskDefinitionArn": "${IndexingTaskDefinitionArn}",
                           "RetrieverTaskDefinitionArn": "${RetrieverTaskDefinitionArn}",
@@ -1531,6 +1546,7 @@ Resources:
                           "eval_retrieval_model.$": "$.Item.Item.config.M.eval_retrieval_model.S",
                           "rerank_model_id.$": "$.Item.Item.config.M.rerank_model_id.S",
                           "bedrock_knowledge_base.$": "$.Item.Item.config.M.bedrock_knowledge_base.Bool",
+                          "knowledge_base.$": "$.Item.Item.config.M.knowledge_base.Bool",
                           "hierarchical_parent_chunk_size.$": "$.Item.Item.config.M.hierarchical_parent_chunk_size.N",
                           "hierarchical_child_chunk_size.$": "$.Item.Item.config.M.hierarchical_child_chunk_size.N",
                           "hierarchical_chunk_overlap_percentage.$": "$.Item.Item.config.M.hierarchical_chunk_overlap_percentage.N",
@@ -1547,8 +1563,16 @@ Resources:
                       "Type": "Choice",
                       "Choices": [
                         {
-                          "Variable": "$.parsedConfig.parsed_config.bedrock_knowledge_base",
-                          "BooleanEquals": true,
+                          "Or": [
+                            {
+                              "Variable": "$.parsedConfig.parsed_config.knowledge_base",
+                              "BooleanEquals": false
+                            },
+                            {
+                              "Variable": "$.parsedConfig.parsed_config.bedrock_knowledge_base",
+                              "BooleanEquals": true
+                            }
+                          ],
                           "Next": "Proceed to Retrieval Model Check"
                         }
                       ],
