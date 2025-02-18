@@ -49,7 +49,7 @@ const props = defineProps<{
           </tr>
           <tr>
             <td class="font-medium">KNN</td>
-            <td>{{props.experimentsData?.config?.knn_num }}</td>
+            <td>{{props.experimentsData?.config?.knn_num === 0 && props.experimentsData?.config?.knowledge_base !== true  ? 'NA' : props.experimentsData?.config?.knn_num}}</td>
           </tr>
           <tr>
             <td class="font-medium">Inferencing Model Temperature</td>
@@ -75,10 +75,7 @@ const props = defineProps<{
           </tr>
           <tr>
             <td class="font-medium">Reranking Model</td>
-            <!-- <td>{{ 
-             props.experimentsData?.config?.rerank_model_id! }}
-            </td> -->
-            <td>{{ props.experimentsData?.config?.rerank_model_id.includes('none') && props.experimentsData?.config?.knowledge_base !== 'true' ? 'NA' : props.experimentsData?.config?.rerank_model_id }}</td>
+            <td>{{ props.experimentsData?.config?.rerank_model_id === 'none' && props.experimentsData?.config?.knowledge_base !== true ? 'NA' : props.experimentsData?.config?.rerank_model_id }}</td>
           </tr>
            <tr v-if="props.experimentsData?.config?.guardrail_name">
             <td class="font-medium">Guardrails</td>

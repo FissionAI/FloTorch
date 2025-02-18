@@ -648,7 +648,10 @@ const columnVisibility = ref({
       {{!row.original.bedrock_knowledge_base ? 'NA' : row.original.kb_name}}
       </template>
       <template #rerank_model_id-cell="{row}">
-        {{row.original.knowledge_base !== 'true' ? 'NA' : row.original.rerank_model_id}}
+        {{row.original.knowledge_base !== true && row.original.rerank_model_id.includes('none') ? 'NA' : row.original.rerank_model_id}}
+      </template>
+      <template #knn_num-cell="{row}">
+        {{ row.original.knowledge_base !== true && row.original.knn_num === 0 ? 'NA' : row.original.knn_num }}
       </template>
     </UTable>
   </div>

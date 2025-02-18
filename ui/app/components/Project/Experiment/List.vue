@@ -597,7 +597,7 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
       return a.localeCompare(b);
     },
     cell: ({ row }) => {
-      return row.original.config.rerank_model_id.includes('none') && row.original.config.knowledge_base !== 'true' ? 'NA' : row.original.config.rerank_model_id
+      return row.original.config.rerank_model_id.includes('none') && row.original.config.knowledge_base !== true ? 'NA' : row.original.config.rerank_model_id
     }
   },
    {

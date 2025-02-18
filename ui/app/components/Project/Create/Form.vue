@@ -162,10 +162,10 @@ const steps = [
         </div>
       </div>
     </div>
-    <div v-if="currentStep === 1">
+    <div v-if="currentStep === 2">
       <ProjectCreateDataStrategyStep @kbFilesUpload="(files) => kbFilesUploadedData = files" :kbFilesUploadedData="kbFilesUploadedData" :file-upload-id="uuid" v-model="state.prestep" :show-back-button="false" @next="nextStep" />
     </div>
-    <div v-if="currentStep === 2">
+    <div v-if="currentStep === 1">
       <ProjectCreateIndexingStrategyStep v-model="state.indexing" @previous="previousStep" @next="nextStep" />
     </div>
     <div v-if="currentStep === 3">

@@ -22,5 +22,5 @@ const items = computed(() => {
 
 
 <template>
-  <USelectMenu :items="items" multiple class="w-full primary-dropdown" />
+  <USelectMenu :items="items" multiple class="w-full primary-dropdown mt-1" />
 </template>
