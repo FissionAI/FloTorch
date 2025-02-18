@@ -136,9 +136,9 @@ build_and_push_images() {
 update_cfn_stack() {
     local region="$1"
     local version="$2"
-    local stack_name="flotorch-stack"
+    local stack_name="${PROJECT_NAME}"
     
-    echo "Updating CloudFormation stack..."
+    echo "Updating CloudFormation stack '${stack_name}'..."
     aws cloudformation update-stack \
         --stack-name "$stack_name" \
         --template-url "https://flotorch-public.s3.us-east-1.amazonaws.com/${version}/templates/master-template.yaml" \
