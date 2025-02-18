@@ -148,14 +148,21 @@ onMounted(() => {
       </div>
     </UCard>
     <UCard>
-    <label class="font-bold text-sm">Evaluation</label>
+      <!-- <UFormField>
+        <template #label>
+          <label class="font-bold text-sm">Evaluation</label>
+          <FieldTooltip @show-tooltip="handleTooltip" field-name="evaluation"/>
+        </template>
+        <div class="my-3"></div>
+      </UFormField> -->
+      <label class="font-bold text-sm">Evaluation</label>
     <div class="my-3">
     <UFormField name="service" :label="`Service`">
       <USelectMenu
         v-model="state.service"
         value-key="value"
         :items="meta.evalStrategy.service"
-        class="w-full primary-dropdown"
+        class="w-full primary-dropdown my-3"
         :search-input="false"
       />
       <template #label="{ label }">
@@ -177,7 +184,7 @@ onMounted(() => {
         v-model="state.ragas_embedding_llm"
         value-key="value"
         :items="useFilteredRagasEmbeddingModels(embeddingModel)"
-        class="w-full primary-dropdown"
+        class="w-full primary-dropdown my-3"
         :search-input="false"
       />
       <template #label="{ label }">
@@ -199,7 +206,7 @@ onMounted(() => {
         v-model="state.ragas_inference_llm"
         value-key="value"
         :items="useFilteredRagasInferenceModels(inferenceModel)"
-        class="w-full primary-dropdown"
+        class="w-full primary-dropdown my-3"
         :search-input="false"
       />
       <template #label="{ label }">

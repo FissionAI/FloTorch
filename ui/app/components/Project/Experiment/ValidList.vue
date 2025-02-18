@@ -210,6 +210,11 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
     enableHiding: true,
     accessorKey: "retrieval_model",
     label: 'Inferencing Model',
+    sortingFn: (rowA, rowB) => {
+      const a = useModelName("retrieval", rowA.original.retrieval_model);
+      const b = useModelName("retrieval", rowB.original.retrieval_model);
+      return a.localeCompare(b);
+    }
   },
   {
     header: ({ column }) => {
@@ -641,6 +646,9 @@ const columnVisibility = ref({
       </template>
        <template #kb_name-cell="{row}">
       {{!row.original.bedrock_knowledge_base ? 'NA' : row.original.kb_name}}
+      </template>
+      <template #rerank_model_id-cell="{row}">
+        {{row.original.knowledge_base !== 'true' ? 'NA' : row.original.rerank_model_id}}
       </template>
     </UTable>
   </div>

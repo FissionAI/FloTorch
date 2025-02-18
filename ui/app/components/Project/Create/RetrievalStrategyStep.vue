@@ -116,7 +116,7 @@ const handleTooltip = (tooltipInfo: {tooltip: string, fieldName: string}) => {
         </div>
       </template>
     </UFormField>
-    <UFormField name="rerank_model_id" :label="`Reranking Model ${region === 'us-east-1' ? `(Reranking is not available in us-east-1)`:``}`" :required="region !== 'us-east-1'">
+    <UFormField name="rerank_model_id" :label="`Reranking Model ${state?.rerank_model_id?.length === 0 || state?.rerank_model_id === undefined ? '' : `(${state?.rerank_model_id?.length})`} ${region === 'us-east-1' ? `(Reranking is not available in us-east-1)`:``}`" :required="region !== 'us-east-1'">
       <USelectMenu :search-input="false" :disabled="region === 'us-east-1'" v-model="state.rerank_model_id" value-key="value" multiple
         :items="useFilteredRerankModels(region)" class="w-full primary-dropdown" />
       <template #label="{ label }">

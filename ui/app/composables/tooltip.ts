@@ -31,7 +31,7 @@ export const useTooltipInfo = {
         label: 'Chunk Size',
         info: 'Define the maximum size (in tokens) of each chunk to optimize retrieval accuracy and performance.',
         content: '<p><a href="https://vectorize.io/evaluating-the-ideal-chunk-size-for-a-rag-system/" target="_blank" class="external-link inline-flex">Chunk size<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><g fill="#006ce0"><path d="M15 1H9v2h2.586l-3 3L10 7.414l3-3V7h2z"/><path d="M7 3H1v12h12V9h-2v4H3V5h4z"/></g></svg></a> in RAG (Retrieval Augmented Generation) systems refers to the number of words or tokens used to divide large documents into smaller, manageable segments for efficient information retrieval. It is a critical parameter that significantly impacts the performance and effectiveness of RAG systems.</p><h3 class="text-lg font-semibold">Chunk size matters for several reasons:</h3><p><strong>Relevance and granularity:</strong> Smaller chunk sizes (e.g., 128 tokens) provide more granular information but risk missing vital context. Larger sizes (e.g., 512 tokens) often capture more comprehensive information1.</p><p><strong>Retrieval accuracy:</strong> Smaller chunks allow for more precise matching and retrieval of relevant information, improving the system\'s ability to find specific details8.</p><p><strong>Context preservation:</strong> Larger chunks provide broader context, which can be beneficial for tasks requiring more comprehensive understanding2.</p><p><strong>Computational efficiency:</strong> Smaller chunks generally lead to faster retrieval times, but too many small chunks can increase search complexity.</p><p><strong>Response quality:</strong> The chunk size affects the faithfulness and relevancy of the generated responses. Studies have shown that a chunk size of 1024 tokens can provide an optimal balance between response time and quality.</p><h3 class="text-lg font-semibold">The ideal chunk size varies depending on factors such as:</h3><p>The nature and structure of the source documents</p><p>The specific task or query types</p><p>The desired balance between precision and context</p><p>The computational resources available</p><p>We suggest starting with a chunk size of around 256 tokens (approximately 1024 characters) and then experimenting to find the optimal size for a specific use case. It\'s important to note that chunk sizes can vary within a dataset, allowing for flexibility based on the information density of different sections or paragraphs.</p>',
-        link: 'chunking-size'
+        link: 'chunk-size'
     },
     chunk_overlap: {
         label: 'Chunk Overlap',
@@ -81,24 +81,29 @@ export const useTooltipInfo = {
     temp_retrieval_llm: {
         label: 'Temperature Retrieval LLM',
         info: 'Adjust the randomness of the model\'s output. Higher values produce more diverse outputs, while lower values yield more focused responses',
-        content: '<p>The temperature setting controls the randomness of the model\'s responses. A lower temperature (e.g., 0 to 0.3) makes the model more deterministic, meaning it will stick closely to retrieved documents and produce highly factual, consistent answers. A higher temperature (e.g., 0.7 or higher) increases diversity and creativity, making responses more exploratory but also introducing a higher risk of hallucinations. For RAG applications focused on accuracy and reliability, such as legal or financial question-answering, keeping the temperature low is typically best. Conversely, for brainstorming or content generation, a higher temperature can be useful.</p><p>The choice of temperature impacts multiple aspects of the system:</p><p><strong>Accuracy:</strong> Lower temperatures improve factual consistency by reducing randomness, making the model adhere closely to retrieved data. <br><strong>Cost:</strong> A lower temperature may reduce token usage in iterative calls (fewer retries for corrections), but temperature itself doesn\'t directly affect API costs. <br><strong>Latency:</strong> Lower temperatures can lead to faster response times, as deterministic outputs require fewer adjustments, whereas high-temperature responses may generate longer or more variable outputs. For most enterprise RAG systems, where factual correctness is critical, a temperature between 0.0 and 0.2 is generally recommended.</p>'
+        content: '<p>The temperature setting controls the randomness of the model\'s responses. A lower temperature (e.g., 0 to 0.3) makes the model more deterministic, meaning it will stick closely to retrieved documents and produce highly factual, consistent answers. A higher temperature (e.g., 0.7 or higher) increases diversity and creativity, making responses more exploratory but also introducing a higher risk of hallucinations. For RAG applications focused on accuracy and reliability, such as legal or financial question-answering, keeping the temperature low is typically best. Conversely, for brainstorming or content generation, a higher temperature can be useful.</p><p>The choice of temperature impacts multiple aspects of the system:</p><p><strong>Accuracy:</strong> Lower temperatures improve factual consistency by reducing randomness, making the model adhere closely to retrieved data. <br><strong>Cost:</strong> A lower temperature may reduce token usage in iterative calls (fewer retries for corrections), but temperature itself doesn\'t directly affect API costs. <br><strong>Latency:</strong> Lower temperatures can lead to faster response times, as deterministic outputs require fewer adjustments, whereas high-temperature responses may generate longer or more variable outputs. For most enterprise RAG systems, where factual correctness is critical, a temperature between 0.0 and 0.2 is generally recommended.</p>',
+        link: 'inferencing-model-temperature'
     },
     retrieval: {
         label: 'Retrieval',
         info: "Select the language model used to retrieve and generate responses based on the retrieved chunks from the Amazon family",
-        content: '<p>How do you select the right inferencing model for your RAG system?  Here\'s a systematic approach: First, consider your <strong>key requirements:</strong></p><p>1. Response speed needed (latency requirements) <br>2. Cost constraints and budget <br>3. Accuracy requirements <br>4. Context window size needed for your documents <br>5. Whether you need specialized knowledge in certain domains <br>6. Deployment constraints (on-premise vs cloud)</p><p><strong>Evaluation methodology:</strong></p><p>Instead of choosing a model based on general benchmarks alone, we recommend:</p><p>1. Creating a representative test set from your actual data and uploading it in FloTorch <br>2. Defining clear evaluation metrics relevant to your use case (accuracy, consistency, relevance) <br>3. Running controlled A/B tests with different models using FloTorch</p><p><strong>Specific model selection strategies:</strong></p><p>1. Start with smaller models (like Mistral 7B or Llama 3 ) as baselines <br>2. Test mid-size models (like Nova Lite, Claude Haiku or GPT-3.5) for balance of performance/cost <br>3. Only move to larger models (like Nova Pro, GPT-4 or Claude Opus) if smaller ones don\'t meet requirements <br>4. Consider fine-tuning smaller models on your domain if you have enough data on <a href="https://aws.amazon.com/sagemaker/" target="_blank" class="external-link inline-flex">SageMaker<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><g fill="#006ce0"><path d="M15 1H9v2h2.586l-3 3L10 7.414l3-3V7h2z"/><path d="M7 3H1v12h12V9h-2v4H3V5h4z"/></g></svg></a> or similar.</p><p>Key metrics to track:</p><p>1. Answer relevance (Supported in FloTorch) <br>2. Contenxt Precision (Supported in FloTorch) <br>3. Response consistency  <br>4. Hallucination rate (Check actual answers and ground truth in FloTorch) <br>5. Latency per query (look at inferencing time) <br>6. Cost per query (look at cost breakdown)</p><p><strong>Practical tips:</strong></p><p>1. Run separate evaluations for different query types <br>2. Test with different prompt templates <br>3. Measure performance with different retrieval counts <br>4. Consider hosting costs and infrastructure requirements <br>5. Test model performance with and without retrieved context</p>'
+        content: '<p>How do you select the right inferencing model for your RAG system?  Here\'s a systematic approach: First, consider your <strong>key requirements:</strong></p><p>1. Response speed needed (latency requirements) <br>2. Cost constraints and budget <br>3. Accuracy requirements <br>4. Context window size needed for your documents <br>5. Whether you need specialized knowledge in certain domains <br>6. Deployment constraints (on-premise vs cloud)</p><p><strong>Evaluation methodology:</strong></p><p>Instead of choosing a model based on general benchmarks alone, we recommend:</p><p>1. Creating a representative test set from your actual data and uploading it in FloTorch <br>2. Defining clear evaluation metrics relevant to your use case (accuracy, consistency, relevance) <br>3. Running controlled A/B tests with different models using FloTorch</p><p><strong>Specific model selection strategies:</strong></p><p>1. Start with smaller models (like Mistral 7B or Llama 3 ) as baselines <br>2. Test mid-size models (like Nova Lite, Claude Haiku or GPT-3.5) for balance of performance/cost <br>3. Only move to larger models (like Nova Pro, GPT-4 or Claude Opus) if smaller ones don\'t meet requirements <br>4. Consider fine-tuning smaller models on your domain if you have enough data on <a href="https://aws.amazon.com/sagemaker/" target="_blank" class="external-link inline-flex">SageMaker<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><g fill="#006ce0"><path d="M15 1H9v2h2.586l-3 3L10 7.414l3-3V7h2z"/><path d="M7 3H1v12h12V9h-2v4H3V5h4z"/></g></svg></a> or similar.</p><p>Key metrics to track:</p><p>1. Answer relevance (Supported in FloTorch) <br>2. Contenxt Precision (Supported in FloTorch) <br>3. Response consistency  <br>4. Hallucination rate (Check actual answers and ground truth in FloTorch) <br>5. Latency per query (look at inferencing time) <br>6. Cost per query (look at cost breakdown)</p><p><strong>Practical tips:</strong></p><p>1. Run separate evaluations for different query types <br>2. Test with different prompt templates <br>3. Measure performance with different retrieval counts <br>4. Consider hosting costs and infrastructure requirements <br>5. Test model performance with and without retrieved context</p>',
+        link: 'inferencing-model'
     },
     hierarchical_parent_chunk_size: {
         label: 'Hierarchical Parent Chunk Size',
         info: 'Set the size (in tokens) of the parent chunks for hierarchical chunking',
+        link: 'chunk-size'
     },
     hierarchical_child_chunk_size: {
         label: 'Hierarchical Child Chunk Size',
         info: 'Set the size (in tokens) of the child chunks for hierarchical chunking',
+        link: 'chunk-size'
     },
     hierarchical_chunk_overlap_percentage: {
         label: 'Hierarchical Chunk Overlap Percentage',
         info: 'Set the overlap percentage for hierarchical chunking',
+        link: 'chunk-overlap-percentage'
     },
     rerank_model_id: {
         label: 'Rerank Model ID',
@@ -114,8 +119,8 @@ export const useTooltipInfo = {
     },
     service: {
         label: 'Service',
-        info: "Evaluation service assesses the performance, accuracy, fairness, and robustness of models ",
-        link : 'service'
+        info: "<h3 class='font-bold text-lg'>Faithfulness</h3><p class='mb-5'>The <strong>Faithfulness</strong> metric measures how factually consistent a response is with the retrieved context. It ranges from 0 to 1, with higher scores indicating better consistency.</p><h3 class='font-bold text-lg'>Context Precision</h3><p class='mb-5'><strong>Context Precision</strong> is a metric that measures the proportion of relevant chunks in the <span class='tracking-wide text-sm'>retrieved_contexts</span>. It is calculated as the mean of the precision@k for each chunk in the context. Precision@k is the ratio of the number of relevant chunks at rank k to the total number of chunks at rank k.</p><h3 class='font-bold text-lg'>Response Relevancy</h3><p class='mb-5'>The <strong>ResponseRelevancy</strong> metric measures how relevant a response is to the user input. Higher scores indicate better alignment with the user input, while lower scores are given if the response is incomplete or includes redundant information.<p class='mb-5'><h3 class='font-bold text-lg'>Aspect Critique (maliciousness)</h3><p class='mb-5'>This is designed to assess submissions based on predefined aspects such as <span class='tracking-wide text-sm'>harmlessness</span> and <span class='tracking-wide text-sm'>correctness</span>. Additionally, users have the flexibility to define their own aspects for evaluating submissions according to their specific criteria. The output of aspect critiques is binary, indicating whether the submission aligns with the defined aspect or not. This evaluation is performed using the 'answer' as input.</p>",
+        link : [{label: 'Faithfulness', link: 'https://docs.ragas.io/en/v0.2.13/concepts/metrics/available_metrics/faithfulness/#faithfulness'}, {label: 'Context Precision', link: 'https://docs.ragas.io/en/v0.2.13/concepts/metrics/available_metrics/context_precision/'}, {label: 'Response Relevancy', link: 'https://docs.ragas.io/en/v0.2.13/concepts/metrics/available_metrics/answer_relevance/'}, {label: 'Aspect Critique (maliciousness)', link: 'https://docs.ragas.io/en/latest/concepts/metrics/available_metrics/aspect_critic/'}]
     },
     ragas_embedding_llm: {
         label: 'RAGAS Embedding LLM',
@@ -125,6 +130,7 @@ export const useTooltipInfo = {
     ragas_inference_llm: {
         label: 'RAGAS Inference LLM',
         info: "Select the language model used to retrieve and generate responses based on the retrieved chunks from the Amazon family",
+        link: 'inference-llm'
     },
     ragas_rerank_llm: {
         label: 'RAGAS Rerank LLM',
@@ -133,12 +139,18 @@ export const useTooltipInfo = {
     kb_model : {
         label: 'KB Model',
         info: "Select Knowledge base type",
-        content: "Select the type of knowledge base you want to use for your project. This will determine the type of data that will be used for retrieval and generation."
+        content: "Select the type of knowledge base you want to use for your project. This will determine the type of data that will be used for retrieval and generation.",
+        link: 'knowledge-base-data'
     },
     no_own_data : {
         label : "Provision OpenSearch Cluster",
         info : "Provisioning an OpenSearch cluster is necessary to upload your own data. To set up the cluster and enable data uploads, please follow the steps outlined here.",
         link : 'https://google.com'
+    },
+    evaluation: {
+        label: 'Evaluation',
+        info: "Evaluation is the process of assessing the performance, accuracy, fairness, and robustness of models",
+
     }
     }
     

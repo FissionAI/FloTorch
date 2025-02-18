@@ -17,7 +17,7 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         h(UButton, {
           color: "neutral",
           variant: "ghost",
-          label: "ID",
+          label: "Id",
           trailingIcon: isSorted
           ? isSorted === "asc"
             ? "i-lsicon:triangle-up-outline"
@@ -31,7 +31,7 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
     },
     accessorKey: "id",
     enableHiding: false,
-    label: 'ID',
+    label: 'Id',
   },
   {
     header: ({ column }) => {
@@ -597,7 +597,7 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
       return a.localeCompare(b);
     },
     cell: ({ row }) => {
-      return row.original.config.rerank_model_id? row.original.config.rerank_model_id : "-"
+      return row.original.config.rerank_model_id.includes('none') && row.original.config.knowledge_base !== 'true' ? 'NA' : row.original.config.rerank_model_id
     }
   },
    {
@@ -762,12 +762,12 @@ const columnVisibility = ref({
                               <td>{{useHumanCurrencyAmount(row.original?.config?.retrieval_cost_estimate,3)}}</td>
                             </tr>
                             <tr>
-                              <td>Evaluation Cost Estimate:</td>
-                              <td>{{useHumanCurrencyAmount(row.original?.config?.eval_cost_estimate,3)}}</td>
-                            </tr>
-                            <tr>
                               <td>Inferencing Cost Estimate:</td>
                               <td>{{useHumanCurrencyAmount(row.original?.config?.inferencing_cost_estimate,3)}}</td>
+                            </tr>
+                            <tr>
+                              <td>Evaluation Cost Estimate:</td>
+                              <td>{{useHumanCurrencyAmount(row.original?.config?.eval_cost_estimate,3)}}</td>
                             </tr>
                           </tbody>
                         </table>

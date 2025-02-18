@@ -86,18 +86,27 @@ router.afterEach(() => drawerOpen.value = false)
           <div class=" h-[calc(100% - 66px)]">
             <Placeholder class="">
               <div class="tooltip-description pr-[8px]" v-html="content?.info"></div>
-              <div class="tooltip-description mt-3 pr-[8px]"> 
-               <!-- <NuxtLink target="_blank" :to="`https://github.com/FissionAI/FloTorch/blob/v2.1.0/Help_Links.MD#${content.link}`" class="font-bold ml-1 external-link">Learn More<UIcon name="i-rivet-icons:link-external"
-          /></NuxtLink> -->
-
-          <h4 class="text-[18px] font-bold">Learn More <UIcon name="i-rivet-icons:link-external"/></h4>
+              <div v-if="content.link" class="tooltip-description mt-3 pr-[8px]"> 
+                <div v-if="content.label !== 'Service'">
+                  <h4 class="text-[18px] font-bold">Learn More <UIcon name="i-rivet-icons:link-external"/></h4>
               <ul class="my-4">
               <li>
                <NuxtLink target="_blank" :to="`https://github.com/FissionAI/FloTorch/blob/v2.1.0/Help_Links.MD#${content.link}`" class="font-bold py-5 external-link">{{content.label}}</NuxtLink>
 
               </li>
+              <!-- <li v-else>
+                <NuxtLink target="_blank" :to="`https://github.com/FissionAI/FloTorch/blob/v2.1.0/Help_Links.MD`" class="font-bold py-5 external-link">Documentation</NuxtLink>
+              </li> -->
               </ul>
-
+                </div>
+                <div v-else-if="content.label === 'Service'">
+                  <h4 class="text-[18px] font-bold">Learn More <UIcon name="i-rivet-icons:link-external"/></h4>
+                  <ul class="my-4">
+                  <li v-for="link in content.link" :key="link.label">
+                    <NuxtLink target="_blank" :to="link.link" class="font-bold py-5 external-link">{{link.label}}</NuxtLink>
+                  </li>
+                  </ul>
+                </div>
               </div>
             </Placeholder>
           </div>
@@ -113,12 +122,12 @@ router.afterEach(() => drawerOpen.value = false)
             href="https://flotorch.ai?utm_source=flowtorch-repo"
             target="_blank"
             class="external-link"
-            >FloTorch.ai<UIcon name="i-rivet-icons:link-external"
+            >FloTorch.ai<UIcon class="ml-[5px]" name="i-rivet-icons:link-external"
           /></a>
           For more information, contact us at
           <a href="mailto:info@flotorch.ai" class="external-link"
-            >info@flotorch.ai<UIcon name="i-rivet-icons:link-external" /></a
-          >.
+            >info@flotorch.ai<UIcon class="ml-[5px]" name="i-rivet-icons:link-external" /></a
+          >
         </div>
       </div>
     </footer>
