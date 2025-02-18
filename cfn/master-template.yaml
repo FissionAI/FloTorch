@@ -79,7 +79,7 @@ Parameters:
     Description: "Password for the OpenSearch admin account(Must be between 12 and 41 characters, containing at least one uppercase letter, one lowercase letter, one number, and one special character). Must be strong and secure as it provides full access to the OpenSearch cluster."
     MinLength: 12
     MaxLength: 41
-    AllowedPattern: "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{12,41}$"
+    AllowedPattern: "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&()])[A-Za-z\\d@$!%*?&()]{12,41}$"
     ConstraintDescription: "Must be between 12 and 41 characters, containing at least one uppercase letter, one lowercase letter, one number, and one special character."
 
   NginxAuthPassword:
@@ -88,7 +88,7 @@ Parameters:
     Description: "Password for NGINX basic authentication(Must be between 12 and 41 characters, containing at least one uppercase letter, one lowercase letter, one number, and one special character). This secures access to the application's web interface."
     MinLength: 12
     MaxLength: 41
-    AllowedPattern: "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{12,41}$"
+    AllowedPattern: "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&()])[A-Za-z\\d@$!%*?&()]{12,41}$"
     ConstraintDescription: "Must be between 12 and 41 characters, containing at least one uppercase letter, one lowercase letter, one number, and one special character."
 
 Conditions:

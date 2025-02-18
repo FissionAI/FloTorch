@@ -118,6 +118,7 @@ build_and_push_images() {
     done
 
     # Build and push Docker images
+    echo "Building and pushing Docker images..."
     docker build --platform linux/amd64 -t ${account_id}.dkr.ecr."$region".amazonaws.com/flotorch-app-"$suffix":latest -f app/Dockerfile --push .
     docker build --platform linux/amd64 -t ${account_id}.dkr.ecr."$region".amazonaws.com/flotorch-indexing-"$suffix":latest -f indexing/fargate_indexing.Dockerfile --push .
     docker build --platform linux/amd64 -t ${account_id}.dkr.ecr."$region".amazonaws.com/flotorch-retriever-"$suffix":latest -f retriever/fargate_retriever.Dockerfile --push .
