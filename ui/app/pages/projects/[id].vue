@@ -29,7 +29,7 @@ const handleAlertClose = () => {
 
 
 const hideInfraAlert = computed(() => {
-  if (isInfraAlertHidden.value) {
+  if (isInfraAlertHidden.value === true) {
     return true
   }
   if (route.matched.some((route) => route.meta.hideInfraAlert)) {
@@ -39,6 +39,11 @@ const hideInfraAlert = computed(() => {
 })
 
 const sharedData = inject('sharedData')
+
+
+watch(route, () => {
+  isInfraAlertHidden.value = false;
+})
 
 onMounted(() => {
   sharedData.value.title = title

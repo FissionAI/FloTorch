@@ -602,42 +602,6 @@ const columnVisibility = ref({
               </UTooltip>
         </div>
       </template>
-      <!-- <template #chunk_overlap-header="{ column }">
-        <UButton
-          color="neutral"
-          variant="ghost"
-          :icon="column.getIsSorted() 
-            ? column.getIsSorted() === 'asc'
-              ? 'i-lucide-arrow-up-narrow-wide'
-              : 'i-lucide-arrow-down-wide-narrow'
-            : 'i-lucide-arrow-up-down'"
-          class="-mx-2.5"
-          @click="column.toggleSorting(column.getIsSorted() === 'asc')"
-        >
-        <template #default>
-          <span class="whitespace-pre-wrap">
-          {{ 'Chunk\nOverlap\nPercentage' }}
-          </span>
-        </template>
-      </UButton>
-      </template> -->
-      <template #vector_dimension-header="{ column }">
-        <UButton
-          color="neutral"
-          variant="ghost"
-          :trailing-icon="column.getIsSorted() 
-            ? column.getIsSorted() === 'asc'
-              ? 'i-lsicon:triangle-up-outline'
-              : 'i-lsicon:triangle-down-outline'
-            : 'i-lsicon:triangle-down-outline'"
-          class="-mx-2.5"
-          @click="column.toggleSorting(column.getIsSorted() === 'asc')"
-        >
-          <span class="whitespace-pre-wrap">
-          {{ 'Vector\nDimensions' }}
-          </span>
-        </UButton>
-      </template>
       <template #vector_dimension-cell="{ row }">
         <span class=" ">
           {{ row.original.vector_dimension || 'NA' }}
@@ -647,23 +611,6 @@ const columnVisibility = ref({
         <span class=" ">
           {{ row.original.n_shot_prompts !=='' ? row.original.n_shot_prompts : 'NA' }}
         </span>
-      </template>
-      <template #temp_retrieval_llm-header="{ column }">
-        <UButton
-          color="neutral"
-          variant="ghost"
-          :trailing-icon="column.getIsSorted() 
-            ? column.getIsSorted() === 'asc'
-              ? 'i-lsicon:triangle-up-outline'
-              : 'i-lsicon:triangle-down-outline'
-            : 'i-lsicon:triangle-down-outline'"
-          class="-mx-2.5"
-          @click="column.toggleSorting(column.getIsSorted() === 'asc')"
-        >
-          <span class="whitespace-pre-wrap">
-          {{ 'Inferencing\nModel\nTemperature' }}
-          </span>
-        </UButton>
       </template>
       <template #temp_retrieval_llm-cell="{ row }">
         <span class=" ">

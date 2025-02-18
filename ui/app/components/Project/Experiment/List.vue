@@ -80,6 +80,11 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
     label: 'Inferencing Model',
     cell: ({ row }) => {
       return getModelName("retrieval", row.original.config.retrieval_model) || 'NA'
+    },
+    sortingFn: (rowA, rowB) => {
+      const a = rowA.original.config.retrieval_model;
+      const b = rowB.original.config.retrieval_model;
+      return a.localeCompare(b);
     }
   },
   {
@@ -574,9 +579,9 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         label: "Reranking Model",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
+            ? "i-lsicon:triangle-up-outline"
+            : "i-lsicon:triangle-down-outline"
+          : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
         }),
@@ -730,7 +735,7 @@ const columnVisibility = ref({
       </template>
       <template #experiment_status-cell="{ row }">
         <!-- <UBadge variant="subtle" :color="useExperimentStatusColor(row.original.experiment_status)"> -->
-        <div :class="`${useExperimentBadgeColor(row.original.experiment_status)}-badge`" class="flex items-center gap-2">
+        <div :class="`${useExperimentBadgeColor(row.original.experiment_status)}-badge w-min-[150px]`" class="flex items-center gap-2">
           <UIcon :name="useExperimentBadgeIcon(row.original.experiment_status)" />
           {{ useHumanExperimentStatus(row.original.experiment_status) }}
         </div>

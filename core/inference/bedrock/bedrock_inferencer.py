@@ -46,8 +46,6 @@ class BedrockInferencer(BaseInferencer):
         
         # Get system prompt
         system_prompt = default_prompt if n_shot_prompt_guide is None or n_shot_prompt_guide.system_prompt is None else n_shot_prompt_guide.system_prompt
-
-        formatted_system_prompt = [{"text" : system_prompt}]
         
         base_prompt = n_shot_prompt_guide.user_prompt if n_shot_prompt_guide.user_prompt else ""
         messages.append(self._prepare_conversation(role="user", message=base_prompt))
@@ -73,20 +71,35 @@ class BedrockInferencer(BaseInferencer):
         # Add the current user prompt
         messages.append(self._prepare_conversation(role="user", message=user_query))
         
-        return formatted_system_prompt, messages
+        return system_prompt, messages
      
     @BedRockRetryHander()
     def generate_text(self, user_query: str, default_prompt: str, context: List[Dict] = None, **kwargs) -> Tuple[Dict[Any, Any], str]:
         try:
             # Code to generate prompt considering the upload prompt config file
             system_prompt, messages = self.generate_prompt(self.experiment_config, default_prompt, user_query, context)
-            inference_config={"maxTokens": 512, "temperature": self.experiment_config.temp_retrieval_llm, "topP": 0.9}
-            response = self.client.converse(
-                modelId=self.model_id,
-                messages=messages,
-                system=system_prompt,
-                inferenceConfig=inference_config
-            )
+
+            inference_config = {
+                "maxTokens": 512, 
+                "temperature": self.experiment_config.temp_retrieval_llm, 
+                "topP": 0.9
+            }
+            
+            is_titan_v1 = self.model_id in ("amazon.titan-text-express-v1", "amazon.titan-text-lite-v1")
+
+            request_params = {
+                "modelId": self.model_id,
+                "messages": ([self._prepare_conversation(role="user", message=system_prompt)] if is_titan_v1 else []) + messages,
+                "inferenceConfig": inference_config
+            }
+            
+            # Add system parameter only for non-Titan-v1 models
+            #TODO: Short-term fix, will be addressed using inheritence as part of refactoring
+            if not is_titan_v1:
+                request_params["system"] = [{"text" : system_prompt}]
+            
+            response = self.client.converse(**request_params)
+           
             metadata = {}
             if 'usage' in response:
                 for key, value in response['usage'].items():

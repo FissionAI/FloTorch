@@ -19,7 +19,7 @@ const emitTooltip = () => {
 
 
 <template>
-    <p class="info-tooltip ml-4" @click="emitTooltip">
+    <p class="info-tooltip ml-4" @click.prevent="emitTooltip">
       info
     </p>
 </template>

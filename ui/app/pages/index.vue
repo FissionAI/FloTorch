@@ -13,7 +13,7 @@ useHead({
     <header class="navbar text-white p-2 w-full">
      <div class="mx-10 pb-12  flex flex-col">
         <div class="w-full flex justify-between">
-          <NuxtLink :to="{ name: 'index' }" class="self-center">
+          <NuxtLink :to="{ name: 'index' }" class="self-center cursor-default">
             <img src="/logo.png" alt="logo" class="w-[200px]" />
           </NuxtLink>
           <UButton

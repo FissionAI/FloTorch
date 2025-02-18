@@ -18,6 +18,9 @@ $on("showTooltip", (tooltipInfo) => {
   fieldName.value = tooltipInfo.fieldName;
   content.value = tooltipInfo.tooltip.value;
 });
+$on("closeTooltip", () => {
+  drawerOpen.value = false;
+});
 const sharedData = ref({});
 
 provide("sharedData", sharedData);
@@ -49,9 +52,9 @@ router.afterEach(() => drawerOpen.value = false)
         </div>
         <Page
           class="my-30"
-          :title="sharedData.title"
-          :to="sharedData.to"
-          :description="sharedData.description"
+          :title="sharedData?.title"
+          :to="sharedData?.to"
+          :description="sharedData?.description"
           hide-slot="true"
         />
       </div>
