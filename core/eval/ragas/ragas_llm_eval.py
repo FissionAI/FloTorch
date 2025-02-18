@@ -75,28 +75,26 @@ class RagasLLMEvaluator(RagasEvaluator):
     def evaluate_bulk_questions(self, metrics_records: List[ExperimentQuestionMetrics]):
         """Evaluate a list of metrics records"""
         answer_samples = []
+        
+        metrics_to_evaluate = [self.aspect_critic, self.answers_relevancy]
+        if self.experimental_config.knowledge_base:
+            return metrics_to_evaluate + [self.faithfulness, self.context_precision]
 
         for metrics_record in metrics_records:
+            sample_params = {
+                'user_input': metrics_record.question,
+                'response': metrics_record.generated_answer,
+                'reference': metrics_record.gt_answer
+            }
             if self.experimental_config.knowledge_base:
-                answer_sample = SingleTurnSample(
-                    user_input=metrics_record.question,
-                    response=metrics_record.generated_answer,
-                    reference=metrics_record.gt_answer,
-                    retrieved_contexts=metrics_record.reference_contexts
-                )
-                answer_samples.append(answer_sample)
-                evaluation_dataset = EvaluationDataset(answer_samples)
-                metrics = evaluate(evaluation_dataset, [self.faithfulness, self.context_precision, self.aspect_critic, self.answers_relevancy])
+                sample_params['retrieved_contexts'] = metrics_record.reference_contexts
+
+            answer_sample = SingleTurnSample(**sample_params)
             
-            else:
-                answer_sample = SingleTurnSample(
-                    user_input=metrics_record.question,
-                    response=metrics_record.generated_answer,
-                    reference=metrics_record.gt_answer,
-                )
-                answer_samples.append(answer_sample)
-                evaluation_dataset = EvaluationDataset(answer_samples)
-                metrics = evaluate(evaluation_dataset, [self.aspect_critic, self.answers_relevancy])
+            answer_samples.append(answer_sample)
+
+        evaluation_dataset = EvaluationDataset(answer_samples)
+        metrics = evaluate(evaluation_dataset, metrics_to_evaluate)
         
         return metrics
 
