@@ -7,6 +7,8 @@ const props = defineProps<{
   config?: Record<string, any>
 }>()
 
+const { $emit } = useNuxtApp()
+
 const uuid = uuidv4()
 
 const currentStep = ref(1)
@@ -40,6 +42,7 @@ const { mutate } = useMutation({
 })
 
 const nextStep = () => {
+  $emit('closeTooltip');
   if (isLastStep.value) {
     const submitData = {
       name: state.prestep?.name,
@@ -111,6 +114,7 @@ const nextStep = () => {
 }
 
 const previousStep = () => {
+  $emit('closeTooltip');
    if(state.prestep.kb_model !== 'default-upload' && currentStep.value == 3){
       currentStep.value = currentStep.value - 2;
     }else{

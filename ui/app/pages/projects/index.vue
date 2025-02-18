@@ -21,6 +21,12 @@ useHead({
 })
 const sharedData = inject('sharedData')
 
+const route = useRoute();
+
+watch(route, () => {
+  sharedData.value.title = "Projects"
+})
+
 onMounted(() => {
   sharedData.value.title = "Projects"
 });

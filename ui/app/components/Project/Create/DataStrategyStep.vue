@@ -157,7 +157,7 @@ const disbleDefaultKbOption = computed(()=>{
         :search-input="false"
      />
       <div class="flex mt-2" v-if="!kbConfig">
-         <div class="flex"> Upload my own data not available. <FieldTooltip @show-tooltip="handleTooltip" field-name="no_own_data"/> </div>
+         <div class="flex items-center"> Upload my own data not available. <FieldTooltip @show-tooltip="handleTooltip" field-name="no_own_data"/> </div>
       </div>
       <div v-if="state.kb_model && state.kb_model !== 'default-upload' && state.kb_model !== 'none'" class="my-2" >
           <ULink class="text-blue-500 hover:underline" target="_blank" raw :to="`https://${state.region}.console.aws.amazon.com/bedrock/home?region=${state.region}#/knowledge-bases`" active-class="font-bold" inactive-class="text-[var(--ui-text-muted)]">Create Bedrock Knowledge Bases</ULink>
