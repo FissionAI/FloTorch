@@ -144,10 +144,9 @@ main.container {
 }
 
 .drawer-content {
-  position:relative;
-  min-height: 100%;
-  top: 0px;
-  right: 0px;
-  bottom: 0px;
+  position: fixed;
+  height: 87%;
+  right: 40px;
+  overflow-y: scroll;
 }
 </style>

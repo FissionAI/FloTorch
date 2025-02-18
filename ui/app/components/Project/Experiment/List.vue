@@ -82,9 +82,9 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
       return getModelName("retrieval", row.original.config.retrieval_model) || 'NA'
     },
     sortingFn: (rowA, rowB) => {
-      const a = rowA.original.config.retrieval_model;
-      const b = rowB.original.config.retrieval_model;
-      return a.localeCompare(b);
+      const a = getModelName("retrieval", rowA.original.config.retrieval_model);
+      const b = getModelName("retrieval", rowB.original.config.retrieval_model);
+      return a?.localeCompare(b ?? '');
     }
   },
   {
