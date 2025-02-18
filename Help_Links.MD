@@ -9,7 +9,7 @@ Welcome to the help documentation for this project. Below are the main sections 
 - [Knowledge Base Data](#knowledge-base-data)
 - [Ground Truth Data](#ground-truth-data)
 - [Chunking](#chunking)
-- [Chunk Size](#chunking-size)
+- [Chunk Size](#chunk-size)
 - [Chunk Overlap Percentage](#chunk-overlap-percentage)
 - [Embedding Model](#embedding-model)
 - [Vector Dimensions](#vector-dimensions)
@@ -162,7 +162,7 @@ Large K values increase processing time in retrieval and model inference.
 Smaller K speeds up response but may compromise completeness.
 A good approach is experimenting with different K values (e.g., K=3, K=5, K=10) and evaluating answer relevance against cost and latency trade-offs. Adaptive K selection, where K varies based on query complexity, can further optimize results."
 
-## Reranking Models
+## Reranking Model
 
 "Reranking models serve several key purposes:
 
