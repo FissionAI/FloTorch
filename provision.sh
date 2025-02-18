@@ -236,7 +236,7 @@ done
 
 # Only ask for OpenSearch credentials if NEED_OPENSEARCH is yes
 OPENSEARCH_USER="admin"
-OPENSEARCH_PASSWORD=""
+OPENSEARCH_PASSWORD="Flotorch@123"
 if [ "$NEED_OPENSEARCH" = "yes" ]; then
     read -p "Enter OpenSearch admin username [admin]: " OPENSEARCH_USER
     OPENSEARCH_USER=${OPENSEARCH_USER:-admin}
