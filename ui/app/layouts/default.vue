@@ -103,7 +103,7 @@ router.afterEach(() => drawerOpen.value = false)
                   <h4 class="text-[18px] font-bold">Learn More <UIcon name="i-rivet-icons:link-external"/></h4>
                   <ul class="my-4">
                   <li v-for="link in content.link" :key="link.label">
-                    <NuxtLink target="_blank" :to="link.link" class="font-bold py-5 external-link">{{link.label}}</NuxtLink>
+                    <NuxtLink target="_blank" :to="link.link" class="font-bold external-link">{{link.label}}</NuxtLink>
                   </li>
                   </ul>
                 </div>
