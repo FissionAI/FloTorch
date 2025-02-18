@@ -26,7 +26,7 @@ prompt_password() {
                 echo "Error: Passwords do not match. Please try again."
             fi
         else
-            echo "Error: Password must be 8-41 characters with at least one letter, one number, and one symbol."
+            echo "Error: Password must be 12-41 characters with at least one letter, one number, and one symbol."
         fi
     done
 }
@@ -118,18 +118,39 @@ build_and_push_images() {
     done
 
     # Build and push Docker images
-    docker build -t ${account_id}.dkr.ecr."$region".amazonaws.com/flotorch-app-"$suffix":latest -f app/Dockerfile --push .
-    docker build -t ${account_id}.dkr.ecr."$region".amazonaws.com/flotorch-indexing-"$suffix":latest -f indexing/fargate_indexing.Dockerfile --push .
-    docker build -t ${account_id}.dkr.ecr."$region".amazonaws.com/flotorch-retriever-"$suffix":latest -f retriever/fargate_retriever.Dockerfile --push .
-    docker build -t ${account_id}.dkr.ecr."$region".amazonaws.com/flotorch-evaluation-"$suffix":latest -f evaluation/fargate_evaluation.Dockerfile --push .
-    docker build -t ${account_id}.dkr.ecr."$region".amazonaws.com/flotorch-runtime-"$suffix":latest -f opensearch/opensearch.Dockerfile --push .
+    docker build --platform linux/amd64 -t ${account_id}.dkr.ecr."$region".amazonaws.com/flotorch-app-"$suffix":latest -f app/Dockerfile --push .
+    docker build --platform linux/amd64 -t ${account_id}.dkr.ecr."$region".amazonaws.com/flotorch-indexing-"$suffix":latest -f indexing/fargate_indexing.Dockerfile --push .
+    docker build --platform linux/amd64 -t ${account_id}.dkr.ecr."$region".amazonaws.com/flotorch-retriever-"$suffix":latest -f retriever/fargate_retriever.Dockerfile --push .
+    docker build --platform linux/amd64 -t ${account_id}.dkr.ecr."$region".amazonaws.com/flotorch-evaluation-"$suffix":latest -f evaluation/fargate_evaluation.Dockerfile --push .
+    docker build --platform linux/amd64 -t ${account_id}.dkr.ecr."$region".amazonaws.com/flotorch-runtime-"$suffix":latest -f opensearch/opensearch.Dockerfile --push .
 
     # Build cost compute image
     cd lambda_handlers
-    docker build -t ${account_id}.dkr.ecr."$region".amazonaws.com/flotorch-costcompute-"$suffix":latest -f cost_handler/Dockerfile --push .
+    docker build --platform linux/amd64 -t ${account_id}.dkr.ecr."$region".amazonaws.com/flotorch-costcompute-"$suffix":latest -f cost_handler/Dockerfile --push .
     cd ..
 
     echo "Docker images updated successfully"
+}
+
+# Function to update CloudFormation stack
+update_cfn_stack() {
+    local region="$1"
+    local version="$2"
+    local stack_name="flotorch-stack"
+    
+    echo "Updating CloudFormation stack..."
+    aws cloudformation update-stack \
+        --stack-name "$stack_name" \
+        --template-url "https://flotorch-public.s3.us-east-1.amazonaws.com/${version}/templates/master-template.yaml" \
+        --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
+        --region "$region"
+    
+    if [ $? -eq 0 ]; then
+        echo "Stack update initiated successfully. Please check AWS Console for status."
+    else
+        echo "Error: Failed to update CloudFormation stack"
+        exit 1
+    fi
 }
 
 # Check if any environments exist
@@ -151,6 +172,7 @@ if [ -d ".envs" ] && [ "$(ls -A .envs 2>/dev/null)" ]; then
                 if [ -f ".envs/${UPDATE_SUFFIX}.json" ]; then
                     load_environment "$UPDATE_SUFFIX"
                     build_and_push_images "$TABLE_SUFFIX" "$REGION"
+                    update_cfn_stack "$REGION" "$VERSION"
                     exit 0
                 else
                     echo "Error: Environment ${UPDATE_SUFFIX} not found"
