@@ -37,16 +37,16 @@ save_environment() {
     mkdir -p .envs
     cat > ".envs/${suffix}.json" << EOF
 {
-    "version": "$VERSION",
-    "project_name": "$PROJECT_NAME",
-    "table_suffix": "$TABLE_SUFFIX",
-    "client_name": "$CLIENT_NAME",
-    "opensearch_user": "$OPENSEARCH_USER",
-    "opensearch_password": "$OPENSEARCH_PASSWORD",
-    "nginx_password": "$NGINX_PASSWORD",
-    "region": "$REGION",
-    "prerequisites_met": "$PREREQUISITES_MET",
-    "need_opensearch": "$NEED_OPENSEARCH"
+    "version": "${VERSION}",
+    "project_name": "${PROJECT_NAME}",
+    "table_suffix": "${TABLE_SUFFIX}",
+    "client_name": "${CLIENT_NAME}",
+    "opensearch_user": "${OPENSEARCH_USER}",
+    "opensearch_password": "${OPENSEARCH_PASSWORD}",
+    "nginx_password": "${NGINX_PASSWORD}",
+    "region": "${REGION}",
+    "prerequisites_met": "${PREREQUISITES_MET}",
+    "need_opensearch": "${NEED_OPENSEARCH}"
 }
 EOF
     echo "Environment configuration saved to .envs/${suffix}.json"
@@ -54,21 +54,20 @@ EOF
 
 # Function to load environment from JSON
 load_environment() {
-    local suffix=$1
-    if [ -f ".envs/${suffix}.json" ]; then
-        echo "Loading environment from .envs/${suffix}.json"
-        VERSION=$(jq -r '.version' ".envs/${suffix}.json")
-        PROJECT_NAME=$(jq -r '.project_name' ".envs/${suffix}.json")
-        TABLE_SUFFIX=$(jq -r '.table_suffix' ".envs/${suffix}.json")
-        CLIENT_NAME=$(jq -r '.client_name' ".envs/${suffix}.json")
-        OPENSEARCH_USER=$(jq -r '.opensearch_user' ".envs/${suffix}.json")
-        OPENSEARCH_PASSWORD=$(jq -r '.opensearch_password' ".envs/${suffix}.json")
-        NGINX_PASSWORD=$(jq -r '.nginx_password' ".envs/${suffix}.json")
-        REGION=$(jq -r '.region' ".envs/${suffix}.json")
-        PREREQUISITES_MET=$(jq -r '.prerequisites_met' ".envs/${suffix}.json")
-        NEED_OPENSEARCH=$(jq -r '.need_opensearch' ".envs/${suffix}.json")
+    local env_file=".envs/$1.json"
+    if [ -f "$env_file" ]; then
+        VERSION=$(jq -r '.version' "$env_file")
+        PROJECT_NAME=$(jq -r '.project_name' "$env_file")
+        TABLE_SUFFIX=$(jq -r '.table_suffix' "$env_file")
+        CLIENT_NAME=$(jq -r '.client_name' "$env_file")
+        OPENSEARCH_USER=$(jq -r '.opensearch_user' "$env_file")
+        OPENSEARCH_PASSWORD=$(jq -r '.opensearch_password' "$env_file")
+        NGINX_PASSWORD=$(jq -r '.nginx_password' "$env_file")
+        REGION=$(jq -r '.region' "$env_file")
+        PREREQUISITES_MET=$(jq -r '.prerequisites_met' "$env_file")
+        NEED_OPENSEARCH=$(jq -r '.need_opensearch' "$env_file")
     else
-        echo "Error: Environment file .envs/${suffix}.json not found"
+        echo "Environment file not found: $env_file"
         exit 1
     fi
 }
@@ -99,8 +98,11 @@ build_and_push_images() {
 
     echo "Building and pushing Docker images for environment ${suffix}..."
 
+    # Get AWS account ID
+    local account_id=$(aws sts get-caller-identity --query Account --output text)
+
     # Login to ECR
-    aws ecr get-login-password --region "$region" | docker login --username AWS --password-stdin 677276078734.dkr.ecr."$region".amazonaws.com
+    aws ecr get-login-password --region "$region" | docker login --username AWS --password-stdin ${account_id}.dkr.ecr."$region".amazonaws.com
 
     # Create repositories if they don't exist
     echo "Ensuring ECR repositories exist..."
@@ -116,15 +118,15 @@ build_and_push_images() {
     done
 
     # Build and push Docker images
-    docker build -t 677276078734.dkr.ecr."$region".amazonaws.com/flotorch-app-"$suffix":latest -f app/Dockerfile --push .
-    docker build -t 677276078734.dkr.ecr."$region".amazonaws.com/flotorch-indexing-"$suffix":latest -f indexing/fargate_indexing.Dockerfile --push .
-    docker build -t 677276078734.dkr.ecr."$region".amazonaws.com/flotorch-retriever-"$suffix":latest -f retriever/fargate_retriever.Dockerfile --push .
-    docker build -t 677276078734.dkr.ecr."$region".amazonaws.com/flotorch-evaluation-"$suffix":latest -f evaluation/fargate_evaluation.Dockerfile --push .
-    docker build -t 677276078734.dkr.ecr."$region".amazonaws.com/flotorch-runtime-"$suffix":latest -f opensearch/opensearch.Dockerfile --push .
+    docker build -t ${account_id}.dkr.ecr."$region".amazonaws.com/flotorch-app-"$suffix":latest -f app/Dockerfile --push .
+    docker build -t ${account_id}.dkr.ecr."$region".amazonaws.com/flotorch-indexing-"$suffix":latest -f indexing/fargate_indexing.Dockerfile --push .
+    docker build -t ${account_id}.dkr.ecr."$region".amazonaws.com/flotorch-retriever-"$suffix":latest -f retriever/fargate_retriever.Dockerfile --push .
+    docker build -t ${account_id}.dkr.ecr."$region".amazonaws.com/flotorch-evaluation-"$suffix":latest -f evaluation/fargate_evaluation.Dockerfile --push .
+    docker build -t ${account_id}.dkr.ecr."$region".amazonaws.com/flotorch-runtime-"$suffix":latest -f opensearch/opensearch.Dockerfile --push .
 
     # Build cost compute image
     cd lambda_handlers
-    docker build -t 677276078734.dkr.ecr."$region".amazonaws.com/flotorch-costcompute-"$suffix":latest -f cost_handler/Dockerfile --push .
+    docker build -t ${account_id}.dkr.ecr."$region".amazonaws.com/flotorch-costcompute-"$suffix":latest -f cost_handler/Dockerfile --push .
     cd ..
 
     echo "Docker images updated successfully"
@@ -172,22 +174,18 @@ while true; do
     fi
 done
 
-# Get OpenSearch deployment preference
+# Get OpenSearch confirmation
 while true; do
-    read -p "Do you want to deploy OpenSearch? (yes/no) [no]: " NEED_OPENSEARCH
-    NEED_OPENSEARCH=${NEED_OPENSEARCH:-no}
+    read -p "Do you need OpenSearch? (yes/no) [yes]: " NEED_OPENSEARCH
+    NEED_OPENSEARCH=${NEED_OPENSEARCH:-yes}
     if [[ "$NEED_OPENSEARCH" =~ ^(yes|no)$ ]]; then
         break
     else
         echo "Error: Please enter either 'yes' or 'no'"
     fi
 done
+
 VERSION="latest"
-# Get version input if prerequisites are met
-if [ "$PREREQUISITES_MET" = "yes" ]; then
-    read -p "Enter FloTorch version [latest]: " VERSION
-    VERSION=${VERSION:-latest}
-fi
 
 # Get Project Name
 read -p "Enter Project Name [flotorch]: " PROJECT_NAME
@@ -214,28 +212,35 @@ while true; do
     fi
 done
 
-# Get OpenSearch credentials
-read -p "Enter OpenSearch Admin User [admin]: " OPENSEARCH_USER
-OPENSEARCH_USER=${OPENSEARCH_USER:-admin}
+# Only ask for OpenSearch credentials if NEED_OPENSEARCH is yes
+OPENSEARCH_USER="admin"
+OPENSEARCH_PASSWORD=""
+if [ "$NEED_OPENSEARCH" = "yes" ]; then
+    read -p "Enter OpenSearch admin username [admin]: " OPENSEARCH_USER
+    OPENSEARCH_USER=${OPENSEARCH_USER:-admin}
+    read -s -p "Enter OpenSearch admin password: " OPENSEARCH_PASSWORD
+    echo
+fi
 
-echo -e "\nSet OpenSearch Admin Password:"
-OPENSEARCH_PASSWORD=$(prompt_password "Enter password (8-41 chars with letters, numbers, symbols): " "Confirm password: ")
-
-echo -e "\nSet NGINX Auth Password:"
-NGINX_PASSWORD=$(prompt_password "Enter password (8-41 chars with letters, numbers, symbols): " "Confirm password: ")
+# Get NGINX password
+read -s -p "Enter NGINX password: " NGINX_PASSWORD
+echo
 
 # Get Region
 while true; do
-    read -p "Enter Region (us-east-1 or us-west-2) [us-east-1]: " REGION
+    read -p "Enter AWS region [us-east-1]: " REGION
     REGION=${REGION:-us-east-1}
-    if [[ "$REGION" == "us-east-1" || "$REGION" == "us-west-2" ]]; then
+    if [[ "$REGION" =~ ^[a-z]{2}-[a-z]+-[0-9]{1}$ ]]; then
         break
     else
-        echo "Error: Region must be either us-east-1 or us-west-2"
+        echo "Error: Invalid region format. Please use format like us-east-1"
     fi
 done
 
-# Save the environment configuration
+# Create .envs directory if it doesn't exist
+mkdir -p .envs
+
+# Save environment variables to JSON file
 save_environment "$TABLE_SUFFIX"
 
 # If prerequisites are not met, build and push Docker images
