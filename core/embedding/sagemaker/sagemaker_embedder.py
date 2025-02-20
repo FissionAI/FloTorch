@@ -73,7 +73,7 @@ class SageMakerEmbedder(BaseEmbedder):
         # Initialize additional embedding-related attributes
         self.embedding_model_id = model_id
         # self.embedding_model_endpoint_name = 'flotorch-embedding-endpoint'
-        self.embedding_model_endpoint_name = f"{self._sanitize_name(model_id)[:44]}-embedding-endpoint"
+        self.embedding_model_endpoint_name = f"flotorch-{self._sanitize_name(model_id)[:44]}-embedding"
         
         self.embedding_dimension = EMBEDDING_MODELS.get(model_id, {}).get('dimension', 1024)
         

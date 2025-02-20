@@ -88,7 +88,7 @@ class SageMakerInferencer(BaseInferencer):
 
         # Initialize additional inferencing-related attributes
         self.inferencing_model_id = model_id
-        self.inferencing_model_endpoint_name = f"{self._sanitize_name(model_id)[:42]}-inferencing-endpoint"
+        self.inferencing_model_endpoint_name = f"flotorch-{self._sanitize_name(model_id)[:42]}-inferencing"
 
         self.wait_time = 5
         
