@@ -45,17 +45,33 @@ Parameters:
   EvaluationRepositoryUri:
     Type: String
     Description: Uri of the evaluation repository
+  NeedOpensearch:
+    Type: String
+    Default: "no"
+    AllowedValues: 
+      - "yes"
+      - "no"
+    Description: "Specify whether to deploy OpenSearch cluster (yes/no)"
+
+Conditions:
+  HasOpenSearch: !Equals [!Ref NeedOpensearch, "yes"]
 
 Resources:
   ECSCluster:
     Type: AWS::ECS::Cluster
     Properties:
-      ClusterName: !Sub FlotorchCluster-${TableSuffix}
+      ClusterName: !If 
+        - HasOpenSearch
+        - !Sub flotorch-cluster-${TableSuffix}-withopensearch
+        - !Sub flotorch-cluster-${TableSuffix}-noopensearch
 
   TaskRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub flotorch-task-role-${TableSuffix}
+      RoleName: !If 
+        - HasOpenSearch
+        - !Sub flotorch-ecs-task-role-${TableSuffix}-withopensearch
+        - !Sub flotorch-ecs-task-role-${TableSuffix}-noopensearch
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -75,7 +91,10 @@ Resources:
         - arn:aws:iam::aws:policy/AmazonECS_FullAccess
         - arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
       Policies:
-        - PolicyName: !Sub task-role-policy-${TableSuffix}
+        - PolicyName: !If 
+            - HasOpenSearch
+            - !Sub task-role-policy-${TableSuffix}-withopensearch
+            - !Sub task-role-policy-${TableSuffix}-noopensearch
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
@@ -127,26 +146,38 @@ Resources:
   IndexingLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub /ecs/flotorch/indexing-${TableSuffix}
+      LogGroupName: !If 
+        - HasOpenSearch
+        - !Sub /ecs/flotorch/indexing-${TableSuffix}-withopensearch
+        - !Sub /ecs/flotorch/indexing-${TableSuffix}-noopensearch
       RetentionInDays: 7
 
   RetrieverLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub /ecs/flotorch/retriever-${TableSuffix}
+      LogGroupName: !If 
+        - HasOpenSearch
+        - !Sub /ecs/flotorch/retriever-${TableSuffix}-withopensearch
+        - !Sub /ecs/flotorch/retriever-${TableSuffix}-noopensearch
       RetentionInDays: 7
 
   EvaluationLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub /ecs/flotorch/evaluation-${TableSuffix}
+      LogGroupName: !If 
+        - HasOpenSearch
+        - !Sub /ecs/flotorch/evaluation-${TableSuffix}-withopensearch
+        - !Sub /ecs/flotorch/evaluation-${TableSuffix}-noopensearch
       RetentionInDays: 7
 
   IndexingTaskDefinition:
     Type: AWS::ECS::TaskDefinition
     DependsOn: IndexingLogGroup
     Properties:
-      Family: !Sub FlotorchTaskIndexing-${TableSuffix}
+      Family: !If 
+        - HasOpenSearch
+        - !Sub FlotorchTaskIndexing-${TableSuffix}-withopensearch
+        - !Sub FlotorchTaskIndexing-${TableSuffix}-noopensearch
       Cpu: '2048'
       Memory: '4096'
       NetworkMode: awsvpc
@@ -155,12 +186,18 @@ Resources:
       TaskRoleArn: !GetAtt TaskRole.Arn
       ExecutionRoleArn: !GetAtt TaskRole.Arn
       ContainerDefinitions:
-        - Name: !Sub FlotorchContainerIndexing-${TableSuffix}
+        - Name: !If 
+            - HasOpenSearch
+            - !Sub FlotorchContainerIndexing-${TableSuffix}-withopensearch
+            - !Sub FlotorchContainerIndexing-${TableSuffix}-noopensearch
           Image: !Sub ${IndexingRepositoryUri}:latest
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: !Sub /ecs/flotorch/indexing-${TableSuffix}
+              awslogs-group: !If 
+                - HasOpenSearch
+                - !Sub /ecs/flotorch/indexing-${TableSuffix}-withopensearch
+                - !Sub /ecs/flotorch/indexing-${TableSuffix}-noopensearch
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: flotorch-indexing
           Environment:
@@ -187,7 +224,10 @@ Resources:
     Type: AWS::ECS::TaskDefinition
     DependsOn: RetrieverLogGroup
     Properties:
-      Family: !Sub FlotorchTaskRetriever-${TableSuffix}
+      Family: !If 
+        - HasOpenSearch
+        - !Sub FlotorchTaskRetriever-${TableSuffix}-withopensearch
+        - !Sub FlotorchTaskRetriever-${TableSuffix}-noopensearch
       Cpu: '2048'
       Memory: '4096'
       NetworkMode: awsvpc
@@ -196,12 +236,18 @@ Resources:
       TaskRoleArn: !GetAtt TaskRole.Arn
       ExecutionRoleArn: !GetAtt TaskRole.Arn
       ContainerDefinitions:
-        - Name: !Sub FlotorchContainerRetriever-${TableSuffix}
+        - Name: !If 
+            - HasOpenSearch
+            - !Sub FlotorchContainerRetriever-${TableSuffix}-withopensearch
+            - !Sub FlotorchContainerRetriever-${TableSuffix}-noopensearch
           Image: !Sub ${RetrieverRepositoryUri}:latest
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: !Sub /ecs/flotorch/retriever-${TableSuffix}
+              awslogs-group: !If 
+                - HasOpenSearch
+                - !Sub /ecs/flotorch/retriever-${TableSuffix}-withopensearch
+                - !Sub /ecs/flotorch/retriever-${TableSuffix}-noopensearch
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: flotorch-retriever
           Environment:
@@ -228,7 +274,10 @@ Resources:
     Type: AWS::ECS::TaskDefinition
     DependsOn: EvaluationLogGroup
     Properties:
-      Family: !Sub FlotorchTaskEvaluation-${TableSuffix}
+      Family: !If 
+        - HasOpenSearch
+        - !Sub FlotorchTaskEvaluation-${TableSuffix}-withopensearch
+        - !Sub FlotorchTaskEvaluation-${TableSuffix}-noopensearch
       Cpu: '2048'
       Memory: '4096'
       NetworkMode: awsvpc
@@ -237,13 +286,19 @@ Resources:
       TaskRoleArn: !GetAtt TaskRole.Arn
       ExecutionRoleArn: !GetAtt TaskRole.Arn
       ContainerDefinitions:
-        - Name: !Sub FlotorchContainerEvaluation-${TableSuffix}
+        - Name: !If 
+            - HasOpenSearch
+            - !Sub FlotorchContainerEvaluation-${TableSuffix}-withopensearch
+            - !Sub FlotorchContainerEvaluation-${TableSuffix}-noopensearch
           Image: !Sub ${EvaluationRepositoryUri}:latest
           Essential: true
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: !Sub /ecs/flotorch/evaluation-${TableSuffix}
+              awslogs-group: !If 
+                - HasOpenSearch
+                - !Sub /ecs/flotorch/evaluation-${TableSuffix}-withopensearch
+                - !Sub /ecs/flotorch/evaluation-${TableSuffix}-noopensearch
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: flotorch-evaluation
           Environment:
@@ -270,7 +325,10 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Security group for Indexer ECS tasks
-      GroupName: !Sub IndexerSecurityGroup-${TableSuffix}
+      GroupName: !If 
+        - HasOpenSearch
+        - !Sub IndexerSecurityGroup-${TableSuffix}-withopensearch
+        - !Sub IndexerSecurityGroup-${TableSuffix}-noopensearch
       VpcId: !Ref VpcId
       SecurityGroupEgress:
         - IpProtocol: tcp
@@ -286,7 +344,10 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Security group for Retriever ECS tasks
-      GroupName: !Sub RetrieverSecurityGroup-${TableSuffix}
+      GroupName: !If 
+        - HasOpenSearch
+        - !Sub RetrieverSecurityGroup-${TableSuffix}-withopensearch
+        - !Sub RetrieverSecurityGroup-${TableSuffix}-noopensearch
       VpcId: !Ref VpcId
       SecurityGroupEgress:
         - IpProtocol: tcp
@@ -302,7 +363,10 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Security group for Evaluation ECS tasks
-      GroupName: !Sub EvaluationSecurityGroup-${TableSuffix}
+      GroupName: !If 
+        - HasOpenSearch
+        - !Sub EvaluationSecurityGroup-${TableSuffix}-withopensearch
+        - !Sub EvaluationSecurityGroup-${TableSuffix}-noopensearch
       VpcId: !Ref VpcId
       SecurityGroupIngress:
         - IpProtocol: tcp
@@ -323,7 +387,10 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Security group for ECS tasks
-      GroupName: !Sub TaskSecurityGroup-${TableSuffix}
+      GroupName: !If 
+        - HasOpenSearch
+        - !Sub TaskSecurityGroup-${TableSuffix}-withopensearch
+        - !Sub TaskSecurityGroup-${TableSuffix}-noopensearch
       VpcId: !Ref VpcId
       SecurityGroupEgress:
         - IpProtocol: -1

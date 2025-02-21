@@ -5,6 +5,20 @@ Parameters:
   TableSuffix:
     Type: String
     Description: Suffix to append to resource names
+  PrerequisitesMet:
+    Type: String
+    Description: Whether prerequisites are met (yes/no)
+    AllowedValues:
+      - "yes"
+      - "no"
+    Default: "no"
+  NeedOpensearch:
+    Type: String
+    Description: Whether to deploy OpenSearch cluster (yes/no)
+    AllowedValues:
+      - "yes"
+      - "no"
+    Default: "no"
   VpcId:
     Type: AWS::EC2::VPC::Id
     Description: VPC ID where Lambda functions will be deployed
@@ -78,23 +92,21 @@ Parameters:
   CostComputeImageTag:
     Type: String
     Description: Tag for the AI image
-  PrerequisitesMet:
-    Type: String
-    Description: Whether prerequisites are met (yes/no)
-    AllowedValues: 
-      - "yes"
-      - "no"
 
 Conditions:
   PrerequisitesMet: !Equals [!Ref PrerequisitesMet, "yes"]
   PrerequisitesNotMet: !Equals [!Ref PrerequisitesMet, "no"]
+  HasOpenSearch: !Equals [!Ref NeedOpensearch, "yes"]
 
 Resources:
   LambdaSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Security group for Lambda functions
-      GroupName: !Sub LambdaSecurityGroup-${TableSuffix}
+      GroupName: !If 
+        - HasOpenSearch
+        - !Sub FlotorchLambdaSecurityGroup-${TableSuffix}-withopensearch
+        - !Sub FlotorchLambdaSecurityGroup-${TableSuffix}-noopensearch
       VpcId: !Ref VpcId
       SecurityGroupEgress:
         - IpProtocol: -1
@@ -105,7 +117,10 @@ Resources:
   LambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub FlotorchLambdaRole-${TableSuffix}
+      RoleName: !If 
+        - HasOpenSearch
+        - !Sub FlotorchLambdaRole-${TableSuffix}-withopensearch
+        - !Sub FlotorchLambdaRole-${TableSuffix}-noopensearch
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -524,7 +539,10 @@ Resources:
     Condition: PrerequisitesMet
     DependsOn: DockerPullPushResource
     Properties:
-      FunctionName: !Sub flotorch-runtime-${TableSuffix}
+      FunctionName: !If 
+        - HasOpenSearch
+        - !Sub flotorch-runtime-${TableSuffix}-WithPrereqs-withopensearch
+        - !Sub flotorch-runtime-${TableSuffix}-WithPrereqs-noopensearch
       Role: !GetAtt LambdaExecutionRole.Arn
       Code:
         ImageUri: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/flotorch-runtime-${TableSuffix}:latest
@@ -554,7 +572,10 @@ Resources:
     Type: AWS::Lambda::Function
     Condition: PrerequisitesNotMet
     Properties:
-      FunctionName: !Sub flotorch-runtime-${TableSuffix}
+      FunctionName: !If 
+        - HasOpenSearch
+        - !Sub flotorch-runtime-${TableSuffix}-NoPrereqs-withopensearch
+        - !Sub flotorch-runtime-${TableSuffix}-NoPrereqs-noopensearch
       Role: !GetAtt LambdaExecutionRole.Arn
       Code:
         ImageUri: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/flotorch-runtime-${TableSuffix}:latest
@@ -585,7 +606,10 @@ Resources:
     Condition: PrerequisitesMet
     DependsOn: DockerPullPushResource
     Properties:
-      FunctionName: !Sub flotorch-costcompute-${TableSuffix}
+      FunctionName: !If 
+        - HasOpenSearch
+        - !Sub flotorch-costcompute-${TableSuffix}-WithPrereqs-withopensearch
+        - !Sub flotorch-costcompute-${TableSuffix}-WithPrereqs-noopensearch
       Role: !GetAtt LambdaExecutionRole.Arn
       Code:
         ImageUri: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/flotorch-costcompute-${TableSuffix}:latest
@@ -610,7 +634,10 @@ Resources:
     Type: AWS::Lambda::Function
     Condition: PrerequisitesNotMet
     Properties:
-      FunctionName: !Sub flotorch-costcompute-${TableSuffix}
+      FunctionName: !If 
+        - HasOpenSearch
+        - !Sub flotorch-costcompute-${TableSuffix}-NoPrereqs-withopensearch
+        - !Sub flotorch-costcompute-${TableSuffix}-NoPrereqs-noopensearch
       Role: !GetAtt LambdaExecutionRole.Arn
       Code:
         ImageUri: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/flotorch-costcompute-${TableSuffix}:latest

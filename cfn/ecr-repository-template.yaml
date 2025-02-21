@@ -13,38 +13,142 @@ Parameters:
     Description: Name of the project
 
 Resources:
+  ECRCleanupFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: index.handler
+      Role: !GetAtt ECRCleanupFunctionRole.Arn
+      Code:
+        ZipFile: |
+          import boto3
+          import cfnresponse
+          
+          def handler(event, context):
+              ecr = boto3.client('ecr')
+              try:
+                  if event['RequestType'] in ['Create', 'Update']:
+                      repository_name = event['ResourceProperties']['RepositoryName']
+                      try:
+                          # Check if repository exists
+                          ecr.describe_repositories(repositoryNames=[repository_name])
+                          # If exists, delete it
+                          ecr.delete_repository(
+                              repositoryName=repository_name,
+                              force=True  # Force delete even if it contains images
+                          )
+                          print(f"Deleted existing repository: {repository_name}")
+                      except ecr.exceptions.RepositoryNotFoundException:
+                          print(f"Repository {repository_name} does not exist")
+                      
+                      cfnresponse.send(event, context, cfnresponse.SUCCESS, {
+                          'Status': 'Repository cleaned up or not found'
+                      })
+                  else:  # Delete
+                      cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
+              except Exception as e:
+                  print(f"Error: {str(e)}")
+                  cfnresponse.send(event, context, cfnresponse.FAILED, {})
+      Runtime: python3.9
+      Timeout: 30
+      MemorySize: 128
+
+  ECRCleanupFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: ECRAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ecr:DeleteRepository
+                  - ecr:DescribeRepositories
+                Resource: !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/*"
+
+  IndexingRepositoryCleanup:
+    Type: Custom::ECRCleanup
+    Properties:
+      ServiceToken: !GetAtt ECRCleanupFunction.Arn
+      RepositoryName: !Sub "flotorch-indexing-${TableSuffix}"
+
   IndexingRepository:
     Type: AWS::ECR::Repository
+    DependsOn: IndexingRepositoryCleanup
     Properties:
       RepositoryName: !Sub "flotorch-indexing-${TableSuffix}"
       EmptyOnDelete: true
   
+  RetrieverRepositoryCleanup:
+    Type: Custom::ECRCleanup
+    Properties:
+      ServiceToken: !GetAtt ECRCleanupFunction.Arn
+      RepositoryName: !Sub "flotorch-retriever-${TableSuffix}"
+
   RetrieverRepository:
     Type: AWS::ECR::Repository
+    DependsOn: RetrieverRepositoryCleanup
     Properties:
       RepositoryName: !Sub "flotorch-retriever-${TableSuffix}"
       EmptyOnDelete: true
 
+  AppRepositoryCleanup:
+    Type: Custom::ECRCleanup
+    Properties:
+      ServiceToken: !GetAtt ECRCleanupFunction.Arn
+      RepositoryName: !Sub "flotorch-app-${TableSuffix}"
+
   AppRepository:
     Type: AWS::ECR::Repository
+    DependsOn: AppRepositoryCleanup
     Properties:
       RepositoryName: !Sub "flotorch-app-${TableSuffix}"
       EmptyOnDelete: true
   
+  EvaluationRepositoryCleanup:
+    Type: Custom::ECRCleanup
+    Properties:
+      ServiceToken: !GetAtt ECRCleanupFunction.Arn
+      RepositoryName: !Sub "flotorch-evaluation-${TableSuffix}"
+
   EvaluationRepository:
     Type: AWS::ECR::Repository
+    DependsOn: EvaluationRepositoryCleanup
     Properties:
       RepositoryName: !Sub "flotorch-evaluation-${TableSuffix}"
       EmptyOnDelete: true
   
+  RuntimeRepositoryCleanup:
+    Type: Custom::ECRCleanup
+    Properties:
+      ServiceToken: !GetAtt ECRCleanupFunction.Arn
+      RepositoryName: !Sub "flotorch-runtime-${TableSuffix}"
+
   RuntimeRepository:
     Type: AWS::ECR::Repository
+    DependsOn: RuntimeRepositoryCleanup
     Properties:
       RepositoryName: !Sub "flotorch-runtime-${TableSuffix}"
       EmptyOnDelete: true
 
+  CostComputeRepositoryCleanup:
+    Type: Custom::ECRCleanup
+    Properties:
+      ServiceToken: !GetAtt ECRCleanupFunction.Arn
+      RepositoryName: !Sub "flotorch-costcompute-${TableSuffix}"
+
   CostComputeRepository:
     Type: AWS::ECR::Repository
+    DependsOn: CostComputeRepositoryCleanup
     Properties:
       RepositoryName: !Sub "flotorch-costcompute-${TableSuffix}"
       EmptyOnDelete: true

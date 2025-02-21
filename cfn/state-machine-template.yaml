@@ -5,6 +5,13 @@ Parameters:
   TableSuffix:
     Type: String
     Description: Suffix to append to table names
+  NeedOpensearch:
+    Type: String
+    Description: Whether to deploy OpenSearch cluster (yes/no)
+    AllowedValues:
+      - "yes"
+      - "no"
+    Default: "no"
   VpcId:
     Type: AWS::EC2::VPC::Id
     Description: VPC ID where resources will be deployed
@@ -53,10 +60,10 @@ Parameters:
     NoEcho: true
   RuntimeLambdaName:
     Type: String
-    Description: Name of the Runtime Lambda function
+    Description: Base name of the Runtime Lambda function
   CostComputeLambdaName:
     Type: String
-    Description: Name of the Cost Compute Lambda function
+    Description: Base name of the Cost Compute Lambda function
   InferenceSystemPrompt:
     Type: String
     Description: System prompt for inference
@@ -64,12 +71,26 @@ Parameters:
   SageMakerRoleArn:
     Type: String
     Description: ARN of the SageMaker role
+  PrerequisitesMet:
+    Type: String
+    Description: Whether prerequisites are met (yes/no)
+    AllowedValues:
+      - "yes"
+      - "no"
+
+Conditions:
+  PrerequisitesMet: !Equals [!Ref PrerequisitesMet, "yes"]
+  PrerequisitesNotMet: !Equals [!Ref PrerequisitesMet, "no"]
+  HasOpenSearch: !Equals [!Ref NeedOpensearch, "yes"]
 
 Resources:
   StateMachineRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub flotorch-state-machine-role-${TableSuffix}
+      RoleName: !If 
+        - HasOpenSearch
+        - !Sub flotorch-state-machine-role-${TableSuffix}-withopensearch
+        - !Sub flotorch-state-machine-role-${TableSuffix}-noopensearch
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -103,7 +124,7 @@ Resources:
                 Resource: "*"
               - Effect: Allow
                 Action:
-                  - "lambda:InvokeFunction"
+                  - "lambda:*"
                 Resource: "*"
               - Effect: Allow
                 Action:
@@ -142,13 +163,19 @@ Resources:
   StateMachineLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub /aws/vendedlogs/states/FlotorchStateMachine-${TableSuffix}
+      LogGroupName: !If 
+        - HasOpenSearch
+        - !Sub /aws/vendedlogs/states/FlotorchStateMachine-${TableSuffix}-withopensearch
+        - !Sub /aws/vendedlogs/states/FlotorchStateMachine-${TableSuffix}-noopensearch
       RetentionInDays: 30
 
   FlotorchStateMachine:
     Type: AWS::StepFunctions::StateMachine
     Properties:
-      StateMachineName: !Sub FlotorchStateMachine-${TableSuffix}
+      StateMachineName: !If 
+        - HasOpenSearch
+        - !Sub FlotorchStateMachine-${TableSuffix}-withopensearch
+        - !Sub FlotorchStateMachine-${TableSuffix}-noopensearch
       RoleArn: !GetAtt StateMachineRole.Arn
       LoggingConfiguration:
         Level: ALL
@@ -309,7 +336,7 @@ Resources:
                 "ResultPath": "$.indexCreation",
                 "Resource": "arn:aws:states:::lambda:invoke",
                 "Parameters": {
-                  "FunctionName": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${RuntimeLambdaName}",
+                  "FunctionName": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${RuntimeLambdaName}${Suffix}${ESSuffix}",
                   "Payload.$": "$"
                 }
               },
@@ -628,7 +655,7 @@ Resources:
                         "Overrides": {
                           "ContainerOverrides": [
                             {
-                              "Name": "FlotorchContainerIndexing-${TableSuffix}",
+                              "Name": "${ContainerIndexingName}",
                               "Environment": [
                                 {
                                   "Name": "EXECUTION_ID",
@@ -846,7 +873,7 @@ Resources:
                         "Overrides": {
                           "ContainerOverrides": [
                             {
-                              "Name": "FlotorchContainerRetriever-${TableSuffix}",
+                              "Name": "${ContainerRetrieverName}",
                               "Environment": [
                                 {
                                   "Name": "EXECUTION_ID",
@@ -1280,7 +1307,7 @@ Resources:
                         "Overrides": {
                           "ContainerOverrides": [
                             {
-                              "Name": "FlotorchContainerEvaluation-${TableSuffix}",
+                              "Name": "${ContainerEvaluationName}",
                               "Environment": [
                                 {
                                   "Name": "EXECUTION_ID",
@@ -1492,7 +1519,7 @@ Resources:
                       "ResultPath": "$.costEstimation",
                       "Resource": "arn:aws:states:::lambda:invoke",
                       "Parameters": {
-                        "FunctionName": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${CostComputeLambdaName}",
+                        "FunctionName": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${CostComputeLambdaName}${Suffix}${ESSuffix}",
                         "Payload": {
                           "experiment_id.$": "$.parsedConfig.parsed_config.experiment_id",
                           "aws_region.$": "$.parsedConfig.parsed_config.aws_region",
@@ -1612,12 +1639,17 @@ Resources:
           OpenSearchEndpoint: !Ref OpenSearchEndpoint
           OpenSearchAdminUser: !Ref OpenSearchAdminUser
           OpenSearchAdminPassword: !Ref OpenSearchAdminPassword
-          InferenceSystemPrompt: !Ref InferenceSystemPrompt
-          SageMakerRoleArn: !Ref SageMakerRoleArn
-          subnets_array: !Join ["", ["[\"", !Join ["\",\"", !Ref PrivateSubnets], "\"]"]]
-          security_groups: !Ref SecurityGroups
           RuntimeLambdaName: !Ref RuntimeLambdaName
           CostComputeLambdaName: !Ref CostComputeLambdaName
+          Suffix: !If [PrerequisitesMet, "-WithPrereqs", "-NoPrereqs"]
+          ESSuffix: !If [HasOpenSearch, "-withopensearch", "-noopensearch"]
+          subnets_array: !Join ["", ["[\"", !Join ["\",\"", !Ref PrivateSubnets], "\"]"]]
+          security_groups: !Ref SecurityGroups
+          InferenceSystemPrompt: !Ref InferenceSystemPrompt
+          SageMakerRoleArn: !Ref SageMakerRoleArn
+          ContainerIndexingName: !If [HasOpenSearch, !Sub "FlotorchContainerIndexing-${TableSuffix}-withopensearch", !Sub "FlotorchContainerIndexing-${TableSuffix}-noopensearch"]
+          ContainerRetrieverName: !If [HasOpenSearch, !Sub "FlotorchContainerRetriever-${TableSuffix}-withopensearch", !Sub "FlotorchContainerRetriever-${TableSuffix}-noopensearch"]
+          ContainerEvaluationName: !If [HasOpenSearch, !Sub "FlotorchContainerEvaluation-${TableSuffix}-withopensearch", !Sub "FlotorchContainerEvaluation-${TableSuffix}-noopensearch"]
 
 Outputs:
   StateMachineArn:
