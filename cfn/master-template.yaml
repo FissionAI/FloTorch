@@ -29,7 +29,7 @@ Parameters:
     AllowedValues: 
       - "yes"
       - "no"
-    Description: "REQUIRED: You must complete all prerequisites given here https://github.com/2.1.0/FissionAI/FloTorch/blob/main/install.md before proceeding"
+    Description: "REQUIRED: You must complete all prerequisites given here https://github.com/latest/FissionAI/FloTorch/blob/main/install.md before proceeding"
     ConstraintDescription: "You must select either 'yes' or 'no'. The field cannot be empty."
 
   NeedOpensearch:
@@ -100,7 +100,7 @@ Resources:
   VPCStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/2.1.0/templates/vpc-template.yaml
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/latest/templates/vpc-template.yaml
       Parameters:
         ProjectName: !Ref ProjectName
         ClientName: !Ref ClientName
@@ -111,7 +111,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Condition: PrerequisitesMet
     Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/2.1.0/templates/ecr-repository-template.yaml
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/latest/templates/ecr-repository-template.yaml
       Parameters:
         ProjectName: !Ref ProjectName
         CreatedBy: !Ref CreatedBy
@@ -121,7 +121,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     DependsOn: VPCStack
     Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/2.1.0/templates/vpc-endpoint-template.yaml
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/latest/templates/vpc-endpoint-template.yaml
       Parameters:
         VPCId: !GetAtt VPCStack.Outputs.VpcId
         PrivateRouteTableId: !GetAtt VPCStack.Outputs.PrivateRouteTableId
@@ -135,7 +135,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     DependsOn: VPCStack
     Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/2.1.0/templates/dynamodb-template.yaml
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/latest/templates/dynamodb-template.yaml
       Parameters:
         ProjectName: !Ref ProjectName
         TableSuffix: !Ref TableSuffix
@@ -146,8 +146,10 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Condition: CreateOpenSearchStack
     DependsOn: [VPCStack]
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/2.1.0/templates/opensearch-template.yaml
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/latest/templates/opensearch-template.yaml
       Parameters:
         VpcId: !GetAtt VPCStack.Outputs.VpcId
         PrivateSubnetId: !GetAtt VPCStack.Outputs.PrivateSubnet1
@@ -163,10 +165,12 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Condition: CreateOpenSearchStack
     DependsOn: [VPCStack, DynamoDBStack, OpenSearchStack]
+    DeletionPolicy: Delete
     Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/2.1.0/templates/lambda-template.yaml
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/latest/templates/lambda-template.yaml
       Parameters:
         PrerequisitesMet: !Ref PrerequisitesMet
+        NeedOpensearch: !Ref NeedOpensearch
         TableSuffix: !Ref TableSuffix
         VpcId: !GetAtt VPCStack.Outputs.VpcId
         PrivateSubnets: !Join [",", [!GetAtt VPCStack.Outputs.PrivateSubnet1, !GetAtt VPCStack.Outputs.PrivateSubnet2, !GetAtt VPCStack.Outputs.PrivateSubnet3]]
@@ -197,10 +201,12 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Condition: CreateNoOpenSearchStack
     DependsOn: [VPCStack, DynamoDBStack]
+    DeletionPolicy: Delete
     Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/2.1.0/templates/lambda-template.yaml
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/latest/templates/lambda-template.yaml
       Parameters:
         PrerequisitesMet: !Ref PrerequisitesMet
+        NeedOpensearch: !Ref NeedOpensearch
         TableSuffix: !Ref TableSuffix
         VpcId: !GetAtt VPCStack.Outputs.VpcId
         PrivateSubnets: !Join [",", [!GetAtt VPCStack.Outputs.PrivateSubnet1, !GetAtt VPCStack.Outputs.PrivateSubnet2, !GetAtt VPCStack.Outputs.PrivateSubnet3]]
@@ -231,9 +237,11 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Condition: CreateOpenSearchStack
     DependsOn: [VPCStack, DynamoDBStack, OpenSearchStack]
+    DeletionPolicy: Delete
     Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/2.1.0/templates/ecs-template.yaml
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/latest/templates/ecs-template.yaml
       Parameters:
+        NeedOpensearch: !Ref NeedOpensearch
         TableSuffix: !Ref TableSuffix
         VpcId: !GetAtt VPCStack.Outputs.VpcId
         PrivateSubnets: !Join [",", [!GetAtt VPCStack.Outputs.PrivateSubnet1, !GetAtt VPCStack.Outputs.PrivateSubnet2, !GetAtt VPCStack.Outputs.PrivateSubnet3]]
@@ -253,9 +261,11 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Condition: CreateNoOpenSearchStack
     DependsOn: [VPCStack, DynamoDBStack]
+    DeletionPolicy: Delete
     Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/2.1.0/templates/ecs-template.yaml
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/latest/templates/ecs-template.yaml
       Parameters:
+        NeedOpensearch: !Ref NeedOpensearch
         TableSuffix: !Ref TableSuffix
         VpcId: !GetAtt VPCStack.Outputs.VpcId
         PrivateSubnets: !Join [",", [!GetAtt VPCStack.Outputs.PrivateSubnet1, !GetAtt VPCStack.Outputs.PrivateSubnet2, !GetAtt VPCStack.Outputs.PrivateSubnet3]]
@@ -274,9 +284,10 @@ Resources:
   StateMachineStack:
     Type: AWS::CloudFormation::Stack
     Condition: CreateOpenSearchStack
+    DeletionPolicy: Delete
     DependsOn: [VPCStack, ECSStack, LambdaStack, DynamoDBStack, OpenSearchStack]
     Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/2.1.0/templates/state-machine-template.yaml
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/latest/templates/state-machine-template.yaml
       Parameters:
         TableSuffix: !Ref TableSuffix
         VpcId: !GetAtt VPCStack.Outputs.VpcId
@@ -297,14 +308,18 @@ Resources:
         OpenSearchAdminUser: !Ref OpenSearchAdminUser
         OpenSearchAdminPassword: !Ref OpenSearchAdminPassword
         SageMakerRoleArn: !GetAtt VPCStack.Outputs.BedrockRoleArn
+        PrerequisitesMet: !Ref PrerequisitesMet
+        NeedOpensearch: !Ref NeedOpensearch
 
   StateMachineStackNoOpenSearch:
     Type: AWS::CloudFormation::Stack
     Condition: CreateNoOpenSearchStack
     DependsOn: [VPCStack, ECSStackNoOpenSearch, LambdaStackNoOpenSearch, DynamoDBStack]
+    DeletionPolicy: Delete
     Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/2.1.0/templates/state-machine-template.yaml
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/latest/templates/state-machine-template.yaml
       Parameters:
+        PrerequisitesMet: !Ref PrerequisitesMet
         TableSuffix: !Ref TableSuffix
         VpcId: !GetAtt VPCStack.Outputs.VpcId
         PrivateSubnets: !Join [",", [!GetAtt VPCStack.Outputs.PrivateSubnet1, !GetAtt VPCStack.Outputs.PrivateSubnet2, !GetAtt VPCStack.Outputs.PrivateSubnet3]]
@@ -324,13 +339,15 @@ Resources:
         OpenSearchAdminUser: ""
         OpenSearchAdminPassword: ""
         SageMakerRoleArn: !GetAtt VPCStack.Outputs.BedrockRoleArn
+        NeedOpensearch: !Ref NeedOpensearch
 
   AppRunnerStack:
     Type: AWS::CloudFormation::Stack
     Condition: CreateOpenSearchStack
+    DeletionPolicy: Delete
     DependsOn: [DynamoDBStack, OpenSearchStack, StateMachineStack]
     Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/2.1.0/templates/app-runner-template.yaml
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/latest/templates/app-runner-template.yaml
       Parameters:
         TableSuffix: !Ref TableSuffix
         Region: !Ref AWS::Region
@@ -346,13 +363,15 @@ Resources:
         BedrockRoleArn: !GetAtt VPCStack.Outputs.BedrockRoleArn
         EcrRepositoryUri: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/flotorch-app-${TableSuffix}"
         AppImageTag: "2.1.0"
+        NeedOpensearch: !Ref NeedOpensearch
 
   AppRunnerStackNoOpenSearch:
     Type: AWS::CloudFormation::Stack
     Condition: CreateNoOpenSearchStack
     DependsOn: [DynamoDBStack, StateMachineStackNoOpenSearch]
+    DeletionPolicy: Delete
     Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/2.1.0/templates/app-runner-template.yaml
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/latest/templates/app-runner-template.yaml
       Parameters:
         TableSuffix: !Ref TableSuffix
         Region: !Ref AWS::Region
@@ -368,6 +387,7 @@ Resources:
         BedrockRoleArn: !GetAtt VPCStack.Outputs.BedrockRoleArn
         EcrRepositoryUri: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/flotorch-app-${TableSuffix}"
         AppImageTag: "2.1.0"
+        NeedOpensearch: !Ref NeedOpensearch
 
 Outputs:
   AppRunnerServiceUrl:

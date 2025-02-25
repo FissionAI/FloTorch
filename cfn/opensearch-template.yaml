@@ -34,6 +34,8 @@ Parameters:
 Resources:
   OpenSearchSecurityGroup:
     Type: AWS::EC2::SecurityGroup
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       GroupDescription: Security group for OpenSearch domain
       GroupName: !Sub ${ClientName}-opensearch-sg

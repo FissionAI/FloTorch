@@ -60,12 +60,26 @@ Parameters:
   AppImageTag:
     Type: String
     Description: Tag for the app image
+  
+  NeedOpensearch:
+    Type: String
+    Description: Whether to deploy OpenSearch cluster (yes/no)
+    AllowedValues:
+      - "yes"
+      - "no"
+    Default: "no"
+  
+Conditions:
+  HasOpenSearch: !Equals [!Ref NeedOpensearch, "yes"]
 
 Resources:
   AppRunnerInstanceRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub flotorch-apprunner-instance-role-${TableSuffix}
+      RoleName: !If 
+        - HasOpenSearch
+        - !Sub flotorch-apprunner-instance-role-${TableSuffix}-withopensearch
+        - !Sub flotorch-apprunner-instance-role-${TableSuffix}-noopensearch
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -76,7 +90,10 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSAppRunnerServicePolicyForECRAccess
       Policies:
-        - PolicyName: !Sub apprunner-service-policy-${TableSuffix}
+        - PolicyName: !If 
+            - HasOpenSearch
+            - !Sub 'apprunner-service-policy-${TableSuffix}-withopensearch'
+            - !Sub 'apprunner-service-policy-${TableSuffix}-noopensearch'
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
@@ -135,7 +152,10 @@ Resources:
   AppRunnerAccessRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub flotorch-apprunner-access-role-${TableSuffix}
+      RoleName: !If 
+        - HasOpenSearch
+        - !Sub flotorch-apprunner-access-role-${TableSuffix}-withopensearch
+        - !Sub flotorch-apprunner-access-role-${TableSuffix}-noopensearch
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -146,7 +166,10 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSAppRunnerServicePolicyForECRAccess
       Policies:
-        - PolicyName: !Sub apprunner-access-policy-${TableSuffix}
+        - PolicyName: !If 
+            - HasOpenSearch
+            - !Sub 'apprunner-access-policy-${TableSuffix}-withopensearch'
+            - !Sub 'apprunner-access-policy-${TableSuffix}-noopensearch'
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
@@ -176,7 +199,10 @@ Resources:
   FlotorchWebApp:
     Type: AWS::AppRunner::Service
     Properties:
-      ServiceName: !Sub flotorch-webapp-${TableSuffix}
+      ServiceName: !If 
+        - HasOpenSearch
+        - !Sub 'flotorch-webapp-${TableSuffix}-withopensearch'
+        - !Sub 'flotorch-webapp-${TableSuffix}-noopensearch'
       NetworkConfiguration:
         EgressConfiguration:
           EgressType: VPC
@@ -247,9 +273,15 @@ Resources:
               - Name: sagemaker_role_arn
                 Value: !Ref BedrockRoleArn
               - Name: STEP_FUNCTION_ARN
-                Value: !Sub arn:aws:states:${Region}:${AccountId}:stateMachine:FlotorchStateMachine-${TableSuffix}
+                Value: !If 
+                  - HasOpenSearch
+                  - !Sub arn:aws:states:${Region}:${AccountId}:stateMachine:FlotorchStateMachine-${TableSuffix}-withopensearch
+                  - !Sub arn:aws:states:${Region}:${AccountId}:stateMachine:FlotorchStateMachine-${TableSuffix}-noopensearch
               - Name: step_function_arn
-                Value: !Sub arn:aws:states:${Region}:${AccountId}:stateMachine:FlotorchStateMachine-${TableSuffix}
+                Value: !If 
+                  - HasOpenSearch
+                  - !Sub arn:aws:states:${Region}:${AccountId}:stateMachine:FlotorchStateMachine-${TableSuffix}-withopensearch
+                  - !Sub arn:aws:states:${Region}:${AccountId}:stateMachine:FlotorchStateMachine-${TableSuffix}-noopensearch
 
 Outputs:
   ServiceUrl:

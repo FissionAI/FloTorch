@@ -138,20 +138,162 @@ update_cfn_stack() {
     local region="$1"
     local version="$2"
     local stack_name="${PROJECT_NAME}"
-    
+
     echo "Updating CloudFormation stack '${stack_name}'..."
     aws cloudformation update-stack \
         --stack-name "$stack_name" \
         --template-url "https://flotorch-public.s3.us-east-1.amazonaws.com/${version}/templates/master-template.yaml" \
         --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
+        --disable-rollback \
         --region "$region"
-    
+
     if [ $? -eq 0 ]; then
         echo "Stack update initiated successfully. Please check AWS Console for status."
     else
         echo "Error: Failed to update CloudFormation stack"
         exit 1
     fi
+}
+
+# Function to create OpenSearch service-linked role
+create_opensearch_service_role() {
+    echo "Creating OpenSearch service-linked role..."
+    aws iam get-role --role-name "AWSServiceRoleForAmazonOpenSearchService" >/dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        aws iam create-service-linked-role --aws-service-name es.amazonaws.com || {
+            echo "Failed to create OpenSearch service-linked role"
+            return 1
+        }
+        echo "OpenSearch service-linked role created successfully"
+    else
+        echo "OpenSearch service-linked role already exists"
+    fi
+}
+
+# Function to update an existing environment
+update_environment() {
+    local update_suffix=$1
+    echo "Loading environment ${update_suffix}..."
+    load_environment "$update_suffix"
+
+    echo "FloTorch Deployment Update Configuration"
+    echo "----------------------------------------"
+    echo "Current values shown in brackets. Press Enter to keep current value."
+
+    # Get Prerequisites confirmation with current value as default
+    while true; do
+        read -p "Subscribed to FloTorch on AWS Marketplace? (yes/no) [${PREREQUISITES_MET}]: " new_prerequisites
+        new_prerequisites=${new_prerequisites:-$PREREQUISITES_MET}
+        if [[ "$new_prerequisites" =~ ^(yes|no)$ ]]; then
+            PREREQUISITES_MET=$new_prerequisites
+            break
+        else
+            echo "Error: Please enter either 'yes' or 'no'"
+        fi
+    done
+
+    # Get OpenSearch confirmation with current value as default
+    while true; do
+        read -p "Do you need OpenSearch? (yes/no) [${NEED_OPENSEARCH}]: " new_opensearch
+        new_opensearch=${new_opensearch:-$NEED_OPENSEARCH}
+        if [[ "$new_opensearch" =~ ^(yes|no)$ ]]; then
+            NEED_OPENSEARCH=$new_opensearch
+            break
+        else
+            echo "Error: Please enter either 'yes' or 'no'"
+        fi
+    done
+
+    # Keep VERSION as is or allow update
+    read -p "Enter Version [${VERSION}]: " new_version
+    VERSION=${new_version:-$VERSION}
+
+    # Get Project Name with current value as default
+    read -p "Enter Project Name [${PROJECT_NAME}]: " new_project_name
+    PROJECT_NAME=${new_project_name:-$PROJECT_NAME}
+
+    # Table Suffix should not be changeable during update as it would break references
+    echo "Table Suffix: ${TABLE_SUFFIX} (cannot be changed during update)"
+
+    # Validate Client Name with current value as default
+    while true; do
+        read -p "Enter Client Name [${CLIENT_NAME}]: " new_client_name
+        new_client_name=${new_client_name:-$CLIENT_NAME}
+        if [[ "$new_client_name" =~ ^[a-z0-9-]{3,20}$ ]]; then
+            CLIENT_NAME=$new_client_name
+            break
+        else
+            echo "Error: Must be 3-20 lowercase letters, numbers, or hyphens"
+        fi
+    done
+
+    # Only ask for OpenSearch credentials if NEED_OPENSEARCH is yes
+    if [ "$NEED_OPENSEARCH" = "yes" ]; then
+        read -p "Enter OpenSearch admin username [${OPENSEARCH_USER}]: " new_opensearch_user
+        OPENSEARCH_USER=${new_opensearch_user:-$OPENSEARCH_USER}
+
+        # For passwords, always prompt but allow keeping the old value
+        read -s -p "Enter OpenSearch admin password (leave empty to keep current): " new_opensearch_password
+        echo
+        if [ -n "$new_opensearch_password" ]; then
+            if validate_password "$new_opensearch_password"; then
+                OPENSEARCH_PASSWORD=$new_opensearch_password
+            else
+                echo "Invalid password format. Keeping existing password."
+            fi
+        fi
+    fi
+
+    # Get NGINX password
+    read -s -p "Enter NGINX password (leave empty to keep current): " new_nginx_password
+    echo
+    if [ -n "$new_nginx_password" ]; then
+        if validate_password "$new_nginx_password"; then
+            NGINX_PASSWORD=$new_nginx_password
+        else
+            echo "Invalid password format. Keeping existing password."
+        fi
+    fi
+
+    # Get Region with current value as default
+    while true; do
+        read -p "Enter AWS region [${REGION}]: " new_region
+        new_region=${new_region:-$REGION}
+        if [[ "$new_region" =~ ^[a-z]{2}-[a-z]+-[0-9]{1}$ ]]; then
+            REGION=$new_region
+            break
+        else
+            echo "Error: Invalid region format. Please use format like us-east-1"
+        fi
+    done
+
+    # Save updated environment
+    save_environment "$TABLE_SUFFIX"
+
+    # If prerequisites are not met, build and push Docker images
+    if [ "$PREREQUISITES_MET" = "no" ]; then
+        build_and_push_images "$TABLE_SUFFIX" "$REGION"
+    fi
+
+    # Update CloudFormation stack
+    echo -e "\nUpdating CloudFormation stack..."
+    aws cloudformation update-stack \
+        --stack-name $PROJECT_NAME \
+        --template-url "https://flotorch-public.s3.us-east-1.amazonaws.com/${VERSION}/templates/master-template.yaml" \
+        --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
+        --disable-rollback \
+        --region "$REGION" \
+        --parameters \
+            ParameterKey=PrerequisitesMet,ParameterValue="$PREREQUISITES_MET" \
+            ParameterKey=NeedOpensearch,ParameterValue="$NEED_OPENSEARCH" \
+            ParameterKey=ProjectName,ParameterValue="$PROJECT_NAME" \
+            ParameterKey=TableSuffix,ParameterValue="$TABLE_SUFFIX" \
+            ParameterKey=ClientName,ParameterValue="$CLIENT_NAME" \
+            ParameterKey=OpenSearchAdminUser,ParameterValue="$OPENSEARCH_USER" \
+            ParameterKey=OpenSearchAdminPassword,ParameterValue="$OPENSEARCH_PASSWORD" \
+            ParameterKey=NginxAuthPassword,ParameterValue="$NGINX_PASSWORD"
+
+    echo -e "\nUpdate initiated. Check AWS CloudFormation console for progress."
 }
 
 # Check if any environments exist
@@ -171,9 +313,7 @@ if [ -d ".envs" ] && [ "$(ls -A .envs 2>/dev/null)" ]; then
             while true; do
                 read -p "Enter the environment suffix to update: " UPDATE_SUFFIX
                 if [ -f ".envs/${UPDATE_SUFFIX}.json" ]; then
-                    load_environment "$UPDATE_SUFFIX"
-                    build_and_push_images "$TABLE_SUFFIX" "$REGION"
-                    update_cfn_stack "$REGION" "$VERSION"
+                    update_environment "$UPDATE_SUFFIX"
                     exit 0
                 else
                     echo "Error: Environment ${UPDATE_SUFFIX} not found"
@@ -241,6 +381,12 @@ OPENSEARCH_PASSWORD="Flotorch@123"
 if [ "$NEED_OPENSEARCH" = "yes" ]; then
     read -p "Enter OpenSearch admin username [admin]: " OPENSEARCH_USER
     OPENSEARCH_USER=${OPENSEARCH_USER:-admin}
+
+    # Create OpenSearch service-linked role if needed
+    create_opensearch_service_role || {
+        echo "Failed to create OpenSearch service-linked role. Please ensure you have sufficient IAM permissions."
+        exit 1
+    }
     read -s -p "Enter OpenSearch admin password: " OPENSEARCH_PASSWORD
     echo
 fi
@@ -277,6 +423,7 @@ aws cloudformation create-stack \
     --stack-name $PROJECT_NAME \
     --template-url "https://flotorch-public.s3.us-east-1.amazonaws.com/${VERSION}/templates/master-template.yaml" \
     --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
+    --disable-rollback \
     --region "$REGION" \
     --parameters \
         ParameterKey=PrerequisitesMet,ParameterValue="$PREREQUISITES_MET" \
