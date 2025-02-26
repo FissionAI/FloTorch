@@ -926,11 +926,11 @@ export const useKnowledgeBaseModel = ()=>{
   return {
     kb_model : [
       {
-        label: "None",
+        label: "I don't have a Knowledge Base",
         value: "none"
       },
       {
-        label: "Bedrock Knowledge Bases",
+        label: "Use Existing Knowledge Bases",
         value: "Bedrock-Knowledge-Bases"
       },
       {

@@ -124,6 +124,13 @@ const { mutateAsync: getKbPresignedUrls, isPending: isFetchingKbPresignedUrls } 
   <style src="@uppy/drag-drop/dist/style.css"></style>
   <style src="@uppy/progress-bar/dist/style.css"></style>
   <style>
+
+  #radix-vue-dialog-content-v-0-15 div:first-child{
+    border-bottom: none !important;
+  }
+  .uppy-DashboardContent-title {
+    font-weight: 700 !important;
+  }
     .uppy-DashboardContent-addMore {
     height: 0 !important;
     padding: 0 !important;
@@ -180,6 +187,19 @@ const { mutateAsync: getKbPresignedUrls, isPending: isFetchingKbPresignedUrls } 
       font-size: 14px !important;
       line-height: 22px !important;
       padding: 4px 20px !important;
+    }
+
+    .uppy-u-reset.uppy-Dashboard-Item-action.uppy-Dashboard-Item-action--remove svg{
+      height: 30px !important;
+      width: 30px !important;
+    }
+
+    .uppy-u-reset.uppy-Dashboard-Item-action.uppy-Dashboard-Item-action--remove svg path:first-child{
+      d: unset
+    }
+
+    .uppy-u-reset.uppy-Dashboard-Item-action.uppy-Dashboard-Item-action--remove svg path:last-child{
+      fill: black !important;
     }
 
     /* .uppy-StatusBar.is-complete .uppy-StatusBar-progress {
