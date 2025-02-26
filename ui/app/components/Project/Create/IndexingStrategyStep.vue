@@ -78,7 +78,7 @@ const meta = useProjectCreateMeta()
         <div class="flex items-center">
           {{ label }} <span class="italic"> - required</span>
           <span class="w-[1px] h-3 ml-2 bg-gray-400"></span>
-          <FieldTooltip @show-tooltip="handleTooltip" field-name="chunk_size"/>
+          <FieldTooltip @show-tooltip="handleTooltip" field-name="fixed_chunk_size"/>
         </div>
       </template>
       <!-- <template #hint>
@@ -95,7 +95,7 @@ const meta = useProjectCreateMeta()
         <div class="flex items-center">
           {{ label }} <span class="italic"> - required</span>
           <span class="w-[1px] h-3 ml-2 bg-gray-400"></span>
-          <FieldTooltip @show-tooltip="handleTooltip" field-name="chunk_overlap"/>
+          <FieldTooltip @show-tooltip="handleTooltip" field-name="fixed_chunk_overlap_percentage"/>
         </div>
       </template>
       <!-- <template #hint>
@@ -166,7 +166,7 @@ const meta = useProjectCreateMeta()
       </template> -->
     </UFormField>
     <UFormField name="vector_dimension"
-      :label="`Vector Dimensions ${state?.vector_dimension?.length === 0 || state?.vector_dimension === undefined ? '' : `(${state?.vector_dimension?.length})`}`"
+      :label="`Vector Dimension ${state?.vector_dimension?.length === 0 || state?.vector_dimension === undefined ? '' : `(${state?.vector_dimension?.length})`}`"
       >
       <VectorDimensionSelect v-model="state.vector_dimension" />
       <template #label="{ label }">

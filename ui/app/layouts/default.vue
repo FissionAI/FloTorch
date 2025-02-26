@@ -73,6 +73,7 @@ router.afterEach(() => drawerOpen.value = false)
       <UCard
         class="drawer-content  -mr-10"
         :class="{ 'w-[20%] h-auto': drawerOpen, hidden: !drawerOpen }"
+        :ui="{ body: 'body-content' }"
       >
       <template #header>
       <div class="w-full flex justify-between">
@@ -82,8 +83,7 @@ router.afterEach(() => drawerOpen.value = false)
         </div>
       </template>
         <template #default>
-        
-          <div class=" h-[calc(100% - 66px)]">
+            <div style="height: 75%; overflow-y: scroll;">
             <Placeholder class="">
               <div class="tooltip-description pr-[8px]" v-html="content?.info"></div>
               <div v-if="content.link" class="tooltip-description mt-3 pr-[8px]"> 
@@ -114,7 +114,8 @@ router.afterEach(() => drawerOpen.value = false)
       </UCard>
     </main>
 
-    <footer class="navbar w-full text-white p-2 text-sm z-100">
+    <div class="footer-container mt-[50px]">
+    <footer class="navbar footer w-full text-white p-2 text-sm z-100">
       <div class="container mx-auto flex justify-center items-center">
         <div>
           Powered by
@@ -131,6 +132,7 @@ router.afterEach(() => drawerOpen.value = false)
         </div>
       </div>
     </footer>
+    </div>
   </div>
 </template>
 
@@ -143,11 +145,34 @@ main.container {
   padding-bottom:0px !important;
 }
 
-.drawer-content {
+/* .drawer-content {
   position:relative;
   min-height: 100%;
   top: 0px;
   right: 0px;
   bottom: 0px;
+} */
+
+footer {
+  position: fixed;
+  bottom: 0px;
+  padding-top: 10px;
+}
+
+.drawer-content {
+  position: fixed;
+  height: 100%;
+  right: 40px;
+}
+
+.body-content {
+  height: 90%;
+}
+
+@media (max-width: 1300px) {
+  .body-content {
+    height: 80%;
+    overflow-y: scroll;
+  }
 }
 </style>

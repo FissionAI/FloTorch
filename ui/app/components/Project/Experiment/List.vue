@@ -20,8 +20,8 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
           label: "Id",
           trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
@@ -43,8 +43,8 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
           label: "Status",
           trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
@@ -66,8 +66,8 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         label: "Inferencing Model",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
@@ -97,8 +97,8 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         label: "Estimated Cost",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
@@ -128,8 +128,8 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         label: "Faithfulness",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
@@ -179,8 +179,8 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         label: "Context Precision",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
@@ -228,8 +228,8 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         label: "Maliciousness",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
@@ -273,8 +273,8 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         label: "Answer Relevancy",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
@@ -318,8 +318,8 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         label: "Duration",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
@@ -349,8 +349,8 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         label: "Embedding Model",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
@@ -375,8 +375,8 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         label: "Evaluation Service",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
@@ -406,8 +406,8 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         label: "Evaluation Embedding Model",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
@@ -437,8 +437,8 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         label: "Evaluation Inferencing Model",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
@@ -468,8 +468,8 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         label: "Directional Cost",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
@@ -499,8 +499,8 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         label: "Indexing Algorithm",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
@@ -525,8 +525,8 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         label: "Chunking",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
@@ -551,8 +551,8 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         label: "Inferencing Model Temperature",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
@@ -579,8 +579,8 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         label: "Reranking Model",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
@@ -610,8 +610,8 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         label: "Guardrail",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
@@ -641,8 +641,8 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         label: "Bedrock Kb Name",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
@@ -660,6 +660,37 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
     },
     cell: ({ row }) => {
       return row.original.config?.kb_name ? row.original.config.kb_name : "NA"
+    }
+  },
+  {
+    header: ({ column }) => {
+      const isSorted = column.getIsSorted();
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
+        color: "neutral",
+        variant: "ghost",
+        label: "KNN",
+        trailingIcon: isSorted
+          ? isSorted === "asc"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
+          : "i-lsicon:triangle-down-outline",
+        class: "-mx-2.5",
+        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+        }),
+        h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+      ]);
+    },
+    accessorKey: "config.knn",
+    enableHiding: true,
+    label: 'KNN',
+    sortingFn: (rowA, rowB) => {
+      const a = rowA.original.config?.knn_num ?? 0;
+      const b = rowB.original.config?.knn_num ?? 0;
+      return a.localeCompare(b);
+    },
+    cell: ({ row }) => {
+      return row.original.config?.knn_num !== true && row.original.config?.knn_num === 0 ? "NA" : row.original.config.knn_num;
     }
   },
 ])
@@ -690,6 +721,7 @@ const columnVisibility = ref({
   config_indexing_algorithm: false,
   config_chunking_strategy: false,
   config_embedding_model: false,
+  config_knn: false,
 })
 </script>
 

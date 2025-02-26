@@ -67,8 +67,8 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
         label: "Chunking",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
@@ -106,8 +106,8 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
         label: "Embedding Model",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
@@ -129,8 +129,8 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
         label: "N Shot Prompts",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
@@ -152,8 +152,8 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
         label: "KNN",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
@@ -175,8 +175,8 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
         label: "Reranking Model",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
@@ -198,8 +198,8 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
         label: "Inferencing Model",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
@@ -226,8 +226,8 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
         label: "Guardrail",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
@@ -252,8 +252,8 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
         label: "Directional Cost",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
@@ -275,8 +275,8 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
         label: "Chunk Size",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
@@ -315,8 +315,8 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
         label: "Chunk Overlap Percentage",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
@@ -347,11 +347,11 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
         h(UButton, {
         color: "neutral",
         variant: "ghost",
-        label: "Vector Dimensions",
+        label: "Vector Dimension",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
@@ -361,7 +361,7 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
     },
     enableHiding: true,
     accessorKey: "vector_dimension",
-    label: 'Vector Dimensions',
+    label: 'Vector Dimension',
   },
   {
     header: ({ column }) => {
@@ -373,8 +373,8 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
         label: "Indexing Algorithm",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
@@ -396,8 +396,8 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
         label: "Inferencing Model Temperature",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
@@ -419,8 +419,8 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
         label: "Evaluation Service",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
@@ -442,8 +442,8 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
         label: "Evaluation Embedding Model",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
@@ -465,8 +465,8 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
         label: "Evaluation Inferencing Model",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
@@ -508,8 +508,8 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
         label: "Bedrock Kb Name",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
