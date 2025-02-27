@@ -29,7 +29,7 @@ pipeline {
             steps {
                 sh '''
                     apt-get update
-                    apt-get install -y docker.io curl unzip git
+                    apt-get install -y docker.io curl unzip git jq
                     curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
                     unzip -o -q awscliv2.zip
                     ./aws/install --update
@@ -58,17 +58,22 @@ pipeline {
                    
                     withAWS(credentials: 'aws-creds', region: env.AWS_REGION) {
                         try {
-                            // ECR Login
-                            sh """
+                            // ECR Login - Added verification for successful login
+                            def loginStatus = sh(script: """
                                 aws ecr get-login-password --region ${AWS_REGION} | \
                                 docker login --username AWS --password-stdin ${ECR_REGISTRY}
-                            """
+                            """, returnStatus: true)
+                           
+                            if (loginStatus != 0) {
+                                error "Failed to login to ECR. Please check your credentials."
+                            }
                            
                             // Build and push each service
                             services.each { service ->
                                 def repoName = "flotorch-${service.name}-${ENV_SUFFIX}"
                                 def imageTag = "${ECR_REGISTRY}/${repoName}:latest"
-                                echo "Building and pushing ${service.name} image..."
+                               
+                                echo "Building and pushing ${service.name} image with tag latest..."
                                
                                 // Check if Dockerfile exists
                                 if (!fileExists(service.dockerfile)) {
@@ -78,45 +83,100 @@ pipeline {
                                 echo "Using Dockerfile at: ${service.dockerfile}"
                                
                                 // Create ECR repository if it doesn't exist
-                                sh """
+                                def repoCreationStatus = sh(script: """
                                     if ! aws ecr describe-repositories --repository-names ${repoName} --region ${AWS_REGION} 2>/dev/null; then
                                         echo "Creating ECR repository: ${repoName}"
                                         aws ecr create-repository --repository-name ${repoName} --region ${AWS_REGION}
+                                    else
+                                        echo "Repository ${repoName} already exists"
                                     fi
-                                """
+                                """, returnStatus: true)
                                
-                                // Build and push
-                                try {
-                                    sh """
-                                        # Build image with linux/amd64 platform
-                                        docker build --platform linux/amd64 -t ${imageTag} -f ${service.dockerfile} . || exit 1
-                                       
-                                        # Push image
-                                        docker push ${imageTag} || exit 1
-                                    """
-                                    echo "${service.name} image built and pushed successfully"
-                                } catch (Exception e) {
-                                    echo "Failed to build/push ${service.name} image: ${e.getMessage()}"
-                                    throw e
+                                if (repoCreationStatus != 0) {
+                                    error "Failed to create or verify ECR repository: ${repoName}"
                                 }
+                               
+                                // Build image with no cache to ensure fresh build
+                                def buildStatus = sh(script: """
+                                    # Build image with linux/amd64 platform and no cache
+                                    docker build --no-cache --platform linux/amd64 -t ${imageTag} -f ${service.dockerfile} .
+                                """, returnStatus: true)
+                               
+                                if (buildStatus != 0) {
+                                    error "Failed to build image: ${imageTag}"
+                                }
+                               
+                                // Push the image
+                                def pushStatus = sh(script: """
+                                    # Push image with latest tag
+                                    docker push ${imageTag}
+                                """, returnStatus: true)
+                               
+                                if (pushStatus != 0) {
+                                    error "Failed to push image: ${imageTag}"
+                                }
+                               
+                                // Verify the push was successful
+                                def verifyStatus = sh(script: """
+                                    # Verify the image exists in ECR
+                                    aws ecr describe-images --repository-name ${repoName} --image-ids imageTag=latest --region ${AWS_REGION}
+                                """, returnStatus: true)
+                               
+                                if (verifyStatus != 0) {
+                                    error "Failed to verify image in ECR: ${repoName}:latest"
+                                }
+                               
+                                echo "${service.name} image built and pushed successfully with tag: latest"
                             }
                            
                             // Build and push cost compute image separately
                             def costComputeRepo = "flotorch-costcompute-${ENV_SUFFIX}"
-                            def costComputeTag = "${ECR_REGISTRY}/${costComputeRepo}:latest"
+                            def costImageTag = "${ECR_REGISTRY}/${costComputeRepo}:latest"
                            
-                            sh """
+                            def costRepoStatus = sh(script: """
                                 if ! aws ecr describe-repositories --repository-names ${costComputeRepo} --region ${AWS_REGION} 2>/dev/null; then
                                     echo "Creating ECR repository: ${costComputeRepo}"
                                     aws ecr create-repository --repository-name ${costComputeRepo} --region ${AWS_REGION}
+                                else
+                                    echo "Repository ${costComputeRepo} already exists"
                                 fi
-                               
+                            """, returnStatus: true)
+                           
+                            if (costRepoStatus != 0) {
+                                error "Failed to create or verify ECR repository: ${costComputeRepo}"
+                            }
+                           
+                            def costBuildStatus = sh(script: """
                                 cd lambda_handlers
-                                docker build --platform linux/amd64 -t ${costComputeTag} -f cost_handler/Dockerfile . || exit 1
-                                docker push ${costComputeTag} || exit 1
-                                cd ..
-                            """
-                            echo "Cost compute image built and pushed successfully"
+                                # Build image with no cache
+                                docker build --no-cache --platform linux/amd64 -t ${costImageTag} -f cost_handler/Dockerfile .
+                            """, returnStatus: true)
+                           
+                            if (costBuildStatus != 0) {
+                                error "Failed to build cost compute image: ${costImageTag}"
+                            }
+                           
+                            // Push the cost compute image
+                            def costPushStatus = sh(script: """
+                                # Push image with latest tag
+                                docker push ${costImageTag}
+                            """, returnStatus: true)
+                           
+                            if (costPushStatus != 0) {
+                                error "Failed to push cost compute image: ${costImageTag}"
+                            }
+                           
+                            // Verify the push was successful
+                            def costVerifyStatus = sh(script: """
+                                # Verify the image exists in ECR
+                                aws ecr describe-images --repository-name ${costComputeRepo} --image-ids imageTag=latest --region ${AWS_REGION}
+                            """, returnStatus: true)
+                           
+                            if (costVerifyStatus != 0) {
+                                error "Failed to verify cost compute image in ECR: ${costComputeRepo}:latest"
+                            }
+                           
+                            echo "Cost compute image built and pushed successfully with tag: latest"
                            
                         } catch (Exception e) {
                             echo "Error during build/push: ${e.getMessage()}"
