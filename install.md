@@ -1,9 +1,10 @@
 # FloTorch Installation guide
 
 
-Welcome to FloTorch! This guide will help you set up FloTorch's infrastructure on AWS. We will guide you through the steps.
+Welcome to FloTorch! This guide will help you set up FloTorch's infrastructure on AWS. There are two approaches for setting up and we will guide you through the steps.
 
-## Before You Begin (Prerequisites)
+Irrespective of the approach, below are the pre-requisites:
+
 
 ### 1. AWS Account and Tools
 
@@ -49,18 +50,9 @@ Welcome to FloTorch! This guide will help you set up FloTorch's infrastructure o
    }
    ```
 2. AWS CLI installed and configured on your computer
-3. AWS Marketplace Subscription (see next section)
-4. Docker installed (if you plan to build and push custom images)
 
-### 2. AWS Marketplace Subscription ‼️
-Before starting the installation, subscribe to FloTorch:
 
-1. Visit the [FloTorch AWS Marketplace page](https://aws.amazon.com/marketplace/pp/prodview-z5zcvloh7l3ky?ref_=aws-mp-console-subscription-detail-payg)
-2. Click on the "View Purchase options" button
-3. After subscribing, click on 'Continue to Configuration'
-4. Select your preferred fulfillment option and Software Version
-
-### 3. Required AWS Service Quotas
+### 2. Required AWS Service Quotas
 
 | Service | Resource Type |
 |---------|--------------|
@@ -73,7 +65,7 @@ Before starting the installation, subscribe to FloTorch:
 | ECR | Repositories |
 | AppRunner | Services |
 
-### 4. Required Bedrock Model Access
+### 3. Required Bedrock Model Access
 
 | Purpose | Model Name |
 |---------|------------|
@@ -97,9 +89,10 @@ Before starting the installation, subscribe to FloTorch:
 | | Mistral AI/mistral.mistral-7b-instruct-v0:2 |
 | | Mistral AI/mistral.mistral-large-2402-v1:0 |
 
+
 ## Installation Guide
 
-## Required Parameters that to be met in both approaches.
+## Required Parameters to be met in both approaches.
 
 | Parameter | Example | Requirements |
 |-----------|----------|--------------|
@@ -111,11 +104,27 @@ Before starting the installation, subscribe to FloTorch:
 | OpenSearchAdminPassword | "YourSecurePassword123!" | 12-41 chars with letters, numbers, specialchars |
 | NginxAuthPassword | "YourNginxPassword123!" | 12-41 chars with letters, numbers, specialchars |
 
-### Approach #1: AWS Cloudformation Template (<mark> Make sure you're subscribed to [FloTorch in Marketplace](https://aws.amazon.com/marketplace/pp/prodview-z5zcvloh7l3ky?sr=0-1&ref_=beagle&applicationId=AWSMPContessa) </mark>).
+### Approach #1: AWS Cloudformation Template 
 
-Click this link: [Install FloTorch (US East 1)](https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/create?stackName=flotorch-stack&templateURL=https://flotorch-public.s3.us-east-1.amazonaws.com/2.1.0/templates/master-template.yaml)
+Before starting the installation, please subscribe to FloTorch:
 
-### Approach #2: Command Line Installation.
+1. Visit the [FloTorch AWS Marketplace page](https://aws.amazon.com/marketplace/pp/prodview-z5zcvloh7l3ky?ref_=aws-mp-console-subscription-detail-payg)
+2. Click on the "View Purchase options" button
+3. After subscribing, click on 'Continue to Configuration'
+4. Select your preferred fulfillment option and Software Version
+
+
+Post subscribing, please click this link: [Install FloTorch (US East 1)](https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/create?stackName=flotorch-stack&templateURL=https://flotorch-public.s3.us-east-1.amazonaws.com/2.1.0/templates/master-template.yaml)
+
+### Approach #2: Command Line Installation
+
+Please ensure the following pre-requisites are met:
+
+1. Python 3.9+
+2. AWS CLI configured
+3. docker installed and running
+
+## Installation Steps
 
 1. Clone the repository:
 ```bash
