@@ -11,6 +11,7 @@ from app.price_calculator import estimate_embedding_model_bedrock_price,estimate
 from .dependencies.database import get_execution_db
 from constants.validation_status import ValidationStatus
 from functools import lru_cache
+import time 
 
 configs = get_config()
 
@@ -249,6 +250,9 @@ def add_kb_info(parameters_all):
     return parameters_all
     
 def generate_all_combinations(data):
+    
+    MAX_COMBINATIONS = 1000
+    
     # Parse the DynamoDB-style JSON
     parsed_data = {k: parse_dynamodb(v) for k, v in data.items()}
 
@@ -269,6 +273,11 @@ def generate_all_combinations(data):
     combinations = remove_invalid_combinations_keys(combinations)
     combinations = unpack_guardrails(combinations)
     combinations = unpack_knowledebases(combinations)
+    
+    # Limit combinations to first 1000
+    if len(combinations) > MAX_COMBINATIONS:
+        logger.warning(f"Number of combinations exceeds the limit ({MAX_COMBINATIONS}). Truncating the list.")
+        combinations = combinations[:MAX_COMBINATIONS]
     
     gt_data = parameters_all["gt_data"][0]
     [num_prompts, num_chars] = read_gt_data(gt_data)
@@ -359,7 +368,7 @@ def generate_all_combinations(data):
             configuration["directional_pricing"] +=configuration["directional_pricing"]*0.05 #extra
             configuration["directional_pricing"] = round(configuration["directional_pricing"],2)    
 
-    return valid_configurations[:1000]
+    return valid_configurations
 
 def generate_all_combinations_in_background(execution_id: str, execution_config_data):
     """       
