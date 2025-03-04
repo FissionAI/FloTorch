@@ -36,6 +36,7 @@ export default defineAppConfig({
     table: {
       slots: {
         td: "!whitespace-normal",
+        tr: "data-[selected=true]:bg-[#f0fbff] data-[selected=true]:border-[#006ce0]"
       },
       compoundVariants : [
         {
@@ -71,6 +72,32 @@ export default defineAppConfig({
         trigger : ['custom-tabs-trigger'],
         content : "focus-outline"
       }
+    },
+    tooltip : {
+      slots : {
+        content : "arrow_box"
+      }
+    },
+    dropdownMenu : {
+      slots : {
+        itemTrailingIcon: "secondery-color"
+      },
+      variants : [
+        {
+          color: 'primary',
+          active: true,
+          class: {
+            item: "text-red-500"
+          }
+        }
+      ]
+      // variants: {
+      //   active: {
+      //     true: {
+      //       item: "before:bg-red-500"
+      //     }
+      //   }
+      // }
     },
     checkbox : {
       slots : {

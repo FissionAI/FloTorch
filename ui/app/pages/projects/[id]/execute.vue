@@ -48,7 +48,7 @@ useHead({
 <Breadcumb />
   <UCard>
     <template #header>
-      <h2 class="text-xl font-medium">Selected Experiments {{ validExperiments.length > 0 ? `(${validExperiments.length})` : '' }}</h2>
+      <h2 class="text-xl font-medium"><span class="aws-font-grey">Selected Experiments</span> <span class="table-header-grey">{{ validExperiments.length > 0 ? `(${validExperiments.length})` : '' }}</span></h2>
     </template>
     <ProjectExperimentValidList :experiments="validExperiments" :loading="isLoading" />
     <div class="flex justify-end mt-4">

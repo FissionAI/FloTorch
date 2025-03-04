@@ -709,6 +709,8 @@ const hasAllExperimentsCompleted = computed(() => {
   })
 })
 
+const openTooltipId = ref<string | null>(null)
+
 const columnVisibility = ref({
   directional_pricing: false,
   config_kb_name: false,
@@ -779,34 +781,33 @@ const columnVisibility = ref({
       </template>
       <template #directional_pricing-cell="{row}">     
         <div class="w-full">
-            <UTooltip   :content="{side: 'right'}">
-                    <a class="text-blue-500 hover:underline" href="#">{{useHumanCurrencyAmount(row.original?.config?.directional_pricing)}}</a>
-                    <template #content>
-                      <UCard class="w-full">
-                        <table class="w-full">
-                          <tbody>
-                            <tr>
-                              <td>Indexing Cost Estimate:</td>
-                              <td>{{useHumanCurrencyAmount(row.original?.config?.indexing_cost_estimate,3)}}</td>
-                            </tr>
-                            <tr>
-                              <td>Retrieval Cost Estimate:</td>
-                              <td>{{useHumanCurrencyAmount(row.original?.config?.retrieval_cost_estimate,3)}}</td>
-                            </tr>
-                            <tr>
-                              <td>Inferencing Cost Estimate:</td>
-                              <td>{{useHumanCurrencyAmount(row.original?.config?.inferencing_cost_estimate,3)}}</td>
-                            </tr>
-                            <tr>
-                              <td>Evaluation Cost Estimate:</td>
-                              <td>{{useHumanCurrencyAmount(row.original?.config?.eval_cost_estimate,3)}}</td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </UCard>
-                  </template>
-            </UTooltip>
-          </div>
+          <UTooltip 
+            :open="openTooltipId === row.original.id"
+            :key="row.original.id" 
+            :content="{side: 'right'}"
+            class="h-full"
+          >
+            <a 
+              @click="openTooltipId = openTooltipId === row.original.id ? null : row.original.id" 
+              class="underline decoration-dotted" 
+              href="#"
+            >
+              {{useHumanCurrencyAmount(row.original?.config?.directional_pricing)}}
+            </a>
+            <template #content>
+                  <div>
+              <UButton @click="openTooltipId = null" variant="ghost" color="neutral" trailing-icon="i-lucide-x" />
+
+                    <ul>
+                      <li class="mb-2"><span class="tooltip-text-grey">Indexing Cost Estimate:</span> {{useHumanCurrencyAmount(row.original.indexing_cost_estimate,3)}}</li>
+                      <li class="mb-2"><span class="tooltip-text-grey">Retrieval Cost Estimate:</span> {{useHumanCurrencyAmount(row.original.retrieval_cost_estimate,3)}}</li>
+                      <li class="mb-2"><span class="tooltip-text-grey">Inferencing Cost Estimate:</span> {{useHumanCurrencyAmount(row.original.inferencing_cost_estimate,3)}}</li>
+                      <li class="mb-2"><span class="tooltip-text-grey">Evaluation Cost Estimate:</span> {{useHumanCurrencyAmount(row.original.eval_cost_estimate,3)}}</li>
+                    </ul>
+                  </div>
+              </template>
+          </UTooltip>
+        </div>
       </template>
     </UTable>
     <div v-if="hasAllExperimentsCompleted" class="flex justify-end">

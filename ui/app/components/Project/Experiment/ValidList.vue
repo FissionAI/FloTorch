@@ -526,6 +526,8 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
   }
 ])
 
+const openTooltipId = ref<string | null>(null)
+
 const columnVisibility = ref({
   select: props.selectable ?? false,
   // region: false,
@@ -577,32 +579,19 @@ const columnVisibility = ref({
       </template>
       <template #directional_pricing-cell="{ row }">
         <div class="w-full">
-              <UTooltip   :content="{side: 'right'}">
-                <a class="text-blue-500 hover:underline" href="#">{{useHumanCurrencyAmount(row.original.directional_pricing)}}</a>
+              <UTooltip :open="openTooltipId === row.id"
+              :key="row.id" class="h-full" :content="{side: 'left'}">
+                <a @click="openTooltipId = row.id" class="underline decoration-dotted" href="#">{{useHumanCurrencyAmount(row.original.directional_pricing)}}</a>
                 <template #content>
-                  <UCard class="w-full">
-                    <table class="w-full">
-                      <tbody>
-                        <tr>
-                          <td>Indexing Cost Estimate:</td>
-                          <td>{{useHumanCurrencyAmount(row.original.indexing_cost_estimate,3)}}</td>
-                        </tr>
-                        <tr>
-                          <td>Retrieval Cost Estimate:</td>
-                          <td>{{useHumanCurrencyAmount(row.original.retrieval_cost_estimate,3)}}</td>
-                        </tr>
-                        <tr>
-                          <td>Inferencing Cost Estimate:</td>
-                          <td>{{useHumanCurrencyAmount(row.original.inferencing_cost_estimate,3)}}</td>
-                        </tr>
-                        <tr>
-                          <td>Evaluation Cost Estimate:</td>
-                          <td>{{useHumanCurrencyAmount(row.original.eval_cost_estimate,3)}}</td>
-                        </tr>
-                         
-                      </tbody>
-                    </table>
-                  </UCard>
+                  <div>
+                    <UButton @click="openTooltipId = null" variant="ghost" color="neutral" trailing-icon="i-lucide-x" />
+                    <ul>
+                      <li class="mb-2"><span class="tooltip-text-grey">Indexing Cost Estimate:</span> {{useHumanCurrencyAmount(row.original.indexing_cost_estimate,3)}}</li>
+                      <li class="mb-2"><span class="tooltip-text-grey">Retrieval Cost Estimate:</span> {{useHumanCurrencyAmount(row.original.retrieval_cost_estimate,3)}}</li>
+                      <li class="mb-2"><span class="tooltip-text-grey">Inferencing Cost Estimate:</span> {{useHumanCurrencyAmount(row.original.inferencing_cost_estimate,3)}}</li>
+                      <li class="mb-2"><span class="tooltip-text-grey">Evaluation Cost Estimate:</span> {{useHumanCurrencyAmount(row.original.eval_cost_estimate,3)}}</li>
+                    </ul>
+                  </div>
               </template>
               </UTooltip>
         </div>

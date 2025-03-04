@@ -118,10 +118,10 @@ useHead({
     <UCard v-else>
       <template #header>
         <h2 class="text-xl font-medium">
-          Valid Experiments
-          {{
-            validExperimentsCount ? `(${validExperimentsCount} Identified)` : ""
-          }}
+          <span class="aws-font-grey">Valid Experiments</span>
+          <span class="table-header-grey">{{
+            validExperimentsCount ? `(${validExperimentsCount})` : ""
+          }}</span>
         </h2>
       </template>
       <ProjectExperimentValidList

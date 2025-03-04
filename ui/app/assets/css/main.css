@@ -188,6 +188,25 @@ div.divide-y.divide-\[var\(--ui-border\)\].scroll-py-1 div[role='group'] {
   border-color: var(--aws-secondary-hover-font-color);
 }
 
+.aws-font-grey {
+  color: var(--aws-font-grey-color);
+}
+
+.tooltip-text-grey {
+  color: #545b64;
+  /* font-size: 14px; */
+  line-height: 20px;
+  font-weight: 700;
+}
+
+.table-header-grey {
+  color: var(--aws-not-started-color);
+}
+
+.table-selected-row {
+  background-color: var(--aws-secondary-hover-color);
+}
+
 .navbar {
   background-color: var(--aws-navbar-bg-color);
 }
@@ -330,4 +349,37 @@ input, .primary-dropdown {
   height: 16px;
   width: 1px;
   background-color: #000000;
+}
+
+
+
+.arrow_box {
+	position: relative;
+	background: #ffffff;
+	border: 1px solid #d5dbdb;
+  width: 100%;
+  top: 55px;
+}
+.arrow_box:after, .arrow_box:before {
+	left: 100%;
+	top: 20%;
+	border: solid transparent;
+	content: "";
+	height: 0;
+	width: 0;
+	position: absolute;
+	pointer-events: none;
+}
+
+.arrow_box:after {
+	border-color: rgba(255, 255, 255, 0);
+	border-left-color: #ffffff;
+	border-width: 10px;
+	margin-top: -10px;
+}
+.arrow_box:before {
+	border-color: rgba(238, 238, 238, 0);
+	border-left-color: #d5dbdb;
+	border-width: 11px;
+	margin-top: -11px;
 }

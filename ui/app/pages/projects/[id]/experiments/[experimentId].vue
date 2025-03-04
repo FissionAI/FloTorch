@@ -183,7 +183,7 @@ const items = ref([
         <UCard>
           <template #header>
             <div class="flex justify-between items-center">
-              <h2 class="text-xl font-medium">Experiment Question Metrics ({{ questionMetrics?.question_metrics?.length }})</h2>
+              <h2 class="text-xl font-medium"><span class="aws-font-grey">Experiment Question Metrics</span> <span class="table-header-grey">({{ questionMetrics?.question_metrics?.length }})</span></h2>
               <DownloadResultsButton
                 :results="questionMetrics?.question_metrics"
                 button-label="Download Results"
