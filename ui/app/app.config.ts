@@ -78,27 +78,27 @@ export default defineAppConfig({
         content : "arrow_box"
       }
     },
-    dropdownMenu : {
-      slots : {
-        itemTrailingIcon: "secondery-color"
-      },
-      variants : [
-        {
-          color: 'primary',
-          active: true,
-          class: {
-            item: "text-red-500"
-          }
-        }
-      ]
-      // variants: {
-      //   active: {
-      //     true: {
-      //       item: "before:bg-red-500"
-      //     }
-      //   }
-      // }
-    },
+    // dropdownMenu : {
+    //   slots : {
+    //     itemTrailingIcon: "secondery-color"
+    //   },
+    //   variants : [
+    //     {
+    //       color: 'primary',
+    //       active: true,
+    //       class: {
+    //         item: "text-red-500"
+    //       }
+    //     }
+    //   ]
+    //   // variants: {
+    //   //   active: {
+    //   //     true: {
+    //   //       item: "before:bg-red-500"
+    //   //     }
+    //   //   }
+    //   // }
+    // },
     checkbox : {
       slots : {
         base : "",
