@@ -137,7 +137,7 @@ export const useTooltipInfo = {
         info: "Select the rerank model to use for the evaluation",
     },
     kb_model : {
-        label: 'KB Model',
+        label: 'Knowledge Base Type',
         info: "Select Knowledge base type",
         content: "Select the type of knowledge base you want to use for your project. This will determine the type of data that will be used for retrieval and generation.",
         link: 'knowledge-base-data'

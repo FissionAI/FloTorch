@@ -693,6 +693,29 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
       return row.original.config?.knn_num !== true && row.original.config?.knn_num === 0 ? "NA" : row.original.config.knn_num;
     }
   },
+  {
+    header: ({ column }) => {
+      const isSorted = column.getIsSorted();
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
+        color: "neutral",
+        variant: "ghost",
+        label: "N Shot Prompts",
+        trailingIcon: isSorted
+          ? isSorted === "asc"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
+          : "i-lsicon:triangle-down-outline",
+        class: "-mx-2.5",
+        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+      }),
+      h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+    ]);
+    },
+    enableHiding: true,
+    accessorKey: "config.n_shot_prompts",
+    label: 'N Shot Prompts',
+  },
 ])
 
 const navigateToExperiment = (experimentId: string) => {
@@ -712,6 +735,8 @@ const hasAllExperimentsCompleted = computed(() => {
 const openTooltipId = ref<string | null>(null)
 
 const columnVisibility = ref({
+  config_knn: false,
+  config_n_shot_prompts: false,
   directional_pricing: false,
   config_kb_name: false,
   config_guardrail_name: false,
@@ -723,7 +748,7 @@ const columnVisibility = ref({
   config_indexing_algorithm: false,
   config_chunking_strategy: false,
   config_embedding_model: false,
-  config_knn: false,
+  
 })
 </script>
 

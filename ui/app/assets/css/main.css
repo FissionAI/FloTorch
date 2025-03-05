@@ -286,6 +286,7 @@ div.divide-y.divide-\[var\(--ui-border\)\].scroll-py-1 div[role='group'] {
 
 .pending-badge {
   color: var(--aws-pending-color);
+  width: 150px !important;
 }
 
 .success-badge {
@@ -342,7 +343,9 @@ input, .primary-dropdown {
 }
 
 .github-link {
-  height: 32px !important;
+  height: 36px !important;
+  width: 36px !important;
+  justify-content: center;
 }
 
 .separator {
