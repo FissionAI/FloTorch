@@ -251,8 +251,6 @@ def add_kb_info(parameters_all):
     
 def generate_all_combinations(data):
     
-    MAX_COMBINATIONS = 1000
-    
     # Parse the DynamoDB-style JSON
     parsed_data = {k: parse_dynamodb(v) for k, v in data.items()}
 
