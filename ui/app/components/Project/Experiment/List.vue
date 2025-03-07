@@ -29,6 +29,11 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
       ]);
     },
+    sortingFn: (rowA, rowB) => {
+      const a = rowA.original.id ?? 0;
+      const b = rowB.original.id ?? 0;
+      return a.localeCompare(b);
+    },
     accessorKey: "id",
     enableHiding: false,
     label: 'Id',
@@ -687,7 +692,7 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
     sortingFn: (rowA, rowB) => {
       const a = rowA.original.config?.knn_num ?? 0;
       const b = rowB.original.config?.knn_num ?? 0;
-      return a.localeCompare(b);
+      return a - b;
     },
     cell: ({ row }) => {
       return row.original.config?.knn_num !== true && row.original.config?.knn_num === 0 ? "NA" : row.original.config.knn_num;
