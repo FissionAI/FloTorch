@@ -274,11 +274,6 @@ def generate_all_combinations(data):
     combinations = unpack_guardrails(combinations)
     combinations = unpack_knowledebases(combinations)
     
-    # Limit combinations to first 1000
-    if len(combinations) > MAX_COMBINATIONS:
-        logger.warning(f"Number of combinations exceeds the limit ({MAX_COMBINATIONS}). Truncating the list.")
-        combinations = combinations[:MAX_COMBINATIONS]
-    
     gt_data = parameters_all["gt_data"][0]
     [num_prompts, num_chars] = read_gt_data(gt_data)
 
@@ -290,9 +285,14 @@ def generate_all_combinations(data):
         
     configurations = []
     valid_configurations = []
+    MAX_VALID_EXPERIMENTS = 1000
+    experiment_count = 0
 
     for combination in combinations:
         # Generate a unique GUID
+        
+        if experiment_count >= MAX_VALID_EXPERIMENTS:
+            break  # Exit the loop when the limit is reached
        
         configuration = {
             **combination
@@ -311,6 +311,7 @@ def generate_all_combinations(data):
                 "eval_retrieval_model": configuration["evaluation"]["retrieval_model"],
                 }
             valid_configurations.append(configuration)
+            experiment_count += 1
 
     if len(valid_configurations) > 0:
         for configuration in valid_configurations:
