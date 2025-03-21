@@ -144,63 +144,91 @@ chmod +x provision.sh
 
 ## Configuration Steps
 
-The script will prompt you for the following information:
+When you run the provision script, it will first check if there are any existing environments. If there are, you'll be asked if you want to create a new environment or update an existing one.
 
-### 1. AWS Region
-- Choose AWS regions (us-east-1, us-west-2)
+For a new environment, or if no existing environments are found, the script will prompt you for the following information:
+
+### 1. AWS Marketplace Subscription
+- Answer `yes` if you have an active subscription to FloTorch on AWS Marketplace
+- Answer `no` if you haven't subscribed (this will build and push Docker images)
+
+```bash
+Subscribed to FloTorch on AWS Marketplace? (yes/no):
+```
+
+### 2. OpenSearch Configuration
+- Choose whether you need OpenSearch for your deployment
+- Default: `yes`
+
+```bash
+Do you need OpenSearch? (yes/no) [yes]:
+```
+
+### 3. Stack Parameters
+- Project Name: Used as your CloudFormation stack name. Must be unique within your AWS account
+- Default: `flotorch`
+
+```bash
+Enter project name [flotorch]:
+```
+
+- Table Suffix: Used to create resources with unique suffix
+- Must be exactly 6 lowercase letters
+
+```bash
+Enter Table suffix (exactly 6 lowercase letters):
+```
+
+- Client/Organization Name: Your organization or team name used for resource tagging
+- Must be 3-20 lowercase letters, numbers, or hyphens
+- Default: `flotorch`
+
+```bash
+Enter client/organization name [flotorch]:
+```
+
+### 4. OpenSearch Configuration (if enabled)
+- OpenSearch Admin Username
+- Default: `admin`
+
+```bash
+Enter OpenSearch admin username [admin]:
+```
+
+- OpenSearch Admin Password
+- Must be 8-41 characters with at least one letter, one number, and one special character
+
+```bash
+Enter OpenSearch admin password:
+```
+
+### 5. NGINX Authentication
+- NGINX Password for accessing the FloTorch App
+- Must be 8-41 characters with at least one letter, one number, and one special character
+
+```bash
+Enter NGINX password:
+```
+
+### 6. AWS Region
+- Choose AWS region for deployment
 - Default: `us-east-1`
 
 ```bash
 Enter AWS region [us-east-1]:
 ```
-### 2. AWS Marketplace Subscription
-- Answer `no` if you haven't subscribed to FloTorch on AWS Marketplace yet
-- Answer `yes` if you have an active subscription
 
-```bash
-Subscribed to FloTorch on AWS Marketplace? (yes/no) [no]:
-```
+## Environment Management
 
-### 3. Stack Parameters
-- This will be used as your CloudFormation stack name. Must be unique within your AWS account
-- Example: `MyProject` or `FloTorch-Dev`
+The script automatically saves your configuration to a JSON file in the `.envs` directory. This allows you to:
+1. Create multiple environments with different configurations
+2. Update existing environments without re-entering all parameters
+3. Keep track of your deployments
 
-```bash
-Enter project name [FloTorch]:
-```
-
-```bash
-Enter Table suffix (exactly 6 lowercase letters) [fltdev]:
-```
-- Used to create resources with unique suffix
-- Example: `asdfgh`, `qwerty`, `uiojkl` etc
-
-```bash
-Enter client/organization name [FloTorch]:
-```
-- Your organization or team name
-- Used for resource tagging
-
-### 4. OpenSearch is needed for FloTorch indexing. Skip if using Amazon Knowledge Bases or leverage Foundational Model data for inferencing (no KB dataset).
-- `yes`: Deploys with OpenSearch integration
-- `no`: Deploys without OpenSearch
-```bash
-Do you need OpenSearch? (yes/no) [yes]:
-
-# The details below will be asked if OpenSearch has been chosen.
-
-Enter OpenSearch admin username [admin]:
-Enter OpenSearch admin password (12-41 chars with letters, numbers, specialchars):
-
-```
-  
-### 5. FloTorch App login
-- Choose strong passwords
-- Store these securely as you'll need them to access services
-
-```bash
-Enter NGINX password (12-41 chars with letters, numbers, specialchars):
-```
+When updating an existing environment:
+- The script will show current values in brackets
+- Press Enter to keep the current value, or type a new value
+- Table suffix cannot be changed during an update
 
 ## Deployment
 
@@ -208,7 +236,7 @@ The script will:
 1. Create a CloudFormation stack with your project name
 2. Build Docker Images in your local and pushes to ECR, if there is no marketplace subscription.
 3. Deploy all necessary resources
-4. Output the API Gateway URL when complete
+4. Output the AppRunner URL when complete
 
 To monitor the deployment:
 ```bash
@@ -218,7 +246,7 @@ aws cloudformation describe-stack-events --stack-name YOUR_PROJECT_NAME
 ## Post-Installation
 
 After successful deployment, you'll receive:
-1. API Gateway URL for making requests
+1. AppRunner URL for making requests
 2. OpenSearch endpoint (if enabled)
 3. Monitoring dashboard URL
 

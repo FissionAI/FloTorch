@@ -662,7 +662,7 @@ Resources:
                                   "Value.$": "$.parsedConfig.parsed_config.execution_id"
                                 },
                                 {
-                                  "Name": "aws_region",
+                                  "Name": "AWS_REGION",
                                   "Value": "${AWS::Region}"
                                 },
                                 {
@@ -682,15 +682,15 @@ Resources:
                                   "Value": "${ModelInvocationsTableName}"
                                 },
                                 {
-                                  "Name": "opensearch_host",
+                                  "Name": "OPENSEARCH_HOST",
                                   "Value": "${OpenSearchEndpoint}"
                                 },
                                 {
-                                  "Name": "opensearch_username",
+                                  "Name": "OPENSEARCH_USERNAME",
                                   "Value": "${OpenSearchAdminUser}"
                                 },
                                 {
-                                  "Name": "opensearch_password",
+                                  "Name": "OPENSEARCH_PASSWORD",
                                   "Value": "${OpenSearchAdminPassword}"
                                 },
                                 {
@@ -880,7 +880,7 @@ Resources:
                                   "Value.$": "$.parsedConfig.parsed_config.execution_id"
                                 },
                                 {
-                                  "Name": "aws_region",
+                                  "Name": "AWS_REGION",
                                   "Value": "${AWS::Region}"
                                 },
                                 {
@@ -900,15 +900,15 @@ Resources:
                                   "Value": "${ModelInvocationsTableName}"
                                 },
                                 {
-                                  "Name": "opensearch_host",
+                                  "Name": "OPENSEARCH_HOST",
                                   "Value": "${OpenSearchEndpoint}"
                                 },
                                 {
-                                  "Name": "opensearch_username",
+                                  "Name": "OPENSEARCH_USERNAME",
                                   "Value": "${OpenSearchAdminUser}"
                                 },
                                 {
-                                  "Name": "opensearch_password",
+                                  "Name": "OPENSEARCH_PASSWORD",
                                   "Value": "${OpenSearchAdminPassword}"
                                 },
                                 {

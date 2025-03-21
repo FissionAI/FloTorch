@@ -109,7 +109,7 @@ Data strategy and retrieval strategy are key components in configuring and optim
 
 ## 10. Is there a limit on the size of the files I can upload?
 
-Yes, the Knowledge Base dataset size limit is restricted to **40MB**.
+Yes, the Knowledge Base dataset size limit is restricted to **100MB**.
 
 ---
 
@@ -127,29 +127,140 @@ This tool is governed by the terms and conditions of the **APACHE 2.0 license**.
 
 ## 13. When will this tool support SageMaker models?
 
-It will be released shortly. Please stay tuned to the FloTorch.ai website for regular updates.
+FloTorch integrates with SageMaker for both embedding and inferencing capabilities. Models can be seamlessly imported from either JumpStart or Huggingface repositories.
+
+Supported models include:
+- **Embedding:**
+  - BAAI/bge-large-en-v1.5
+  - BAAI/bge-m3
+  - Alibaba-NLP/gte-Qwen2-7B-instruct
+
+- **Inferencing:**
+  - meta-llama/Llama-3.1-8B
+  - tiiuae/falcon-7b
+  - meta-llama/Llama-3.3-70B-Instruct
+  - Multiple DeepSeek-R1-Distill variants:
+    - Llama-8B
+    - Qwen-1.5B
+    - Qwen-7B
+    - Qwen-14B
+
+As a pre-requisite, sufficient instances are to be available for provisioning
 
 ---
 
-## 14. What is the meaning of directional pricing? Is it not accurate?
+## 14. How does one add a custom SageMaker model to FloTorch for embedding or inferencing?
+
+Follow these steps to integrate a new SageMaker model:
+
+## Embedding
+  ## 1. Update Model Registry
+  Open `core/embedding/__init__.py` and add your model ID to the `model_list`:
+  - For JumpStart models: Add the specific JumpStart model ID. Supported model [list](https://sagemaker.readthedocs.io/en/stable/doc_utils/pretrainedmodels.html).
+  - For Hugging Face models: Add the relevant Hugging Face model ID. Model Id can be found on Huggingface hub.
+  ## 2. Configure Model Parameters
+  Open `core/embedding/sagemaker/sagemaker_embedder.py` and add an entry to the `EMBEDDING_MODELS` dictionary:
+  ```python
+  EMBEDDING_MODELS = {
+      # Existing models...
+      
+      "your-new-model-id": {
+          "model_name": "unique-identifiable-name",  # value used for model registry; used for endpoint creation
+          "model_source": "jumpstart",  # or "huggingface"
+          "dimension": 1024,  # Vector dimension supported by the model
+          "instance_type": "ml.g5.xlarge",  # Recommended instance type
+          "input_key": "inputs"  # Payload key the model accepts
+      }
+  }
+  ```
+  ## 3. Add to UI Options
+  Open `ui/app/composables/shared.ts` and add an entry under the SageMaker embedding service section:
+
+  ```typescript
+  // Under useProjectCreateMeta -> indexingStrategy -> embeddingService
+  {
+    type: "label",
+    label: "SageMaker (Provisioned)",
+  },
+  {
+    label: "Model Name (ml.g5.xlarge)",  // Display name with instance type
+    value: "your-new-model-id",          // MUST match model_id from step 1
+    service: "sagemaker",
+    type: "Model Name",                  // Used in label
+    model_name: "ml.g5.xlarge"           // Instance type for deployment
+  }
+  ```
+  ## 4. Set up parameters for model parallel experimentation
+  Open `app/seed_data.py` and add an entry to the `MODELS` dictionary:
+  ```python
+  MODELS = {
+    # Existing models...
+    "sagemaker_Model_id": 2,# Make sure to prefix with sagemaker_ 
+                            # Number of parallel calls the SageMaker instance can support
+  }
+  ```
+## Inferencing
+  ## 1. Update Model Registry
+  Open `core/inference/__init__.py` and add your model ID to the `model_list`:
+  - For JumpStart models: Add the specific JumpStart model ID
+  - For Hugging Face models: Add the relevant Hugging Face model ID
+  ## 2. Configure Model Parameters
+  Open `core/inferencer/sagemaker/sagemaker_inferencer.py` and add an entry to the `INFERENCER_MODELS` dictionary:
+  ```python
+  INFERENCER_MODELS = {
+      # Existing models...
+      
+      "your-new-model-id": {
+        "model_source": "jumpstart",  # or "huggingface"
+        "instance_type": "ml.g5.2xlarge" # Recommended instance type
+      }
+  }
+  ```
+  ## 3. Add to UI Options
+  Open `ui/app/composables/shared.ts` and add an entry under the SageMaker embedding service section:
+
+  ```typescript
+  // Under useProjectCreateMeta -> retrievalStrategy -> llmService
+  {
+    type: "label",
+    label: "SageMaker (Provisioned)",
+  },
+  {
+    label: "Model Name (ml.g5.xlarge)",  // Display name with instance type
+    value: "your-new-model-id",          // MUST match model_id from step 1
+    service: "sagemaker",
+    type: "Model Name",                  // Used in label
+    model_name: "ml.g5.xlarge"           // Instance type for deployment
+  }
+  ```
+  ## 4. Set up parameters for model parallel experimentation
+  Open `app/seed_data.py` and add an entry to the `MODELS` dictionary:
+  ```python
+  MODELS = {
+    # Existing models...
+    "sagemaker_Model_id": 2, # Make sure to prefix with sagemaker_
+                             # Number of parallel calls the SageMaker instance can support
+  }
+  ```
+
+  ## Note
+  Ensure sufficient instance capacity is available before provisioning the model.
+  
+---
+
+## 15. What is the meaning of directional pricing? Is it not accurate?
 
 Directional pricing is an effective price taken for an experiment to complete. It is the summation of OpenSearch price, embedding model price, retrieval, and evaluation price.
 
 ---
 
-## 15. Is there a limit on the number of experiments I can run with this tool?
+## 16. Is there a limit on the number of experiments I can run with this tool?
 
 Yes, here are restrictions from the tool:
 
-1. KB dataset limit - **40MB**
+1. KB dataset limit - **100MB**
 2. GT questions - **50**
-3. Max number of experiments - **25**
-
----
-
-## 16. When is the next version of the tool going to be released?
-
-The next version of the product will be released shortly. Stay tuned to the FloTorch.ai website for regular updates.
+3. Max number of experiments - **40**
 
 ---
 
