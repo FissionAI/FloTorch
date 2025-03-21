@@ -79,4 +79,4 @@ class RagasNonLLMEvaluator(RagasEvaluator):
             logger.error(f"Error processing sample {metrics_record.id}: {e}")
             return None
 
-EvalFactory.register_evaluator('ragas', 'non_llm', RagasNonLLMEvaluator)
+EvalFactory.register_evaluator('ragas', 'non_llm', 'os', RagasNonLLMEvaluator)

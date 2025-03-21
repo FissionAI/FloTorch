@@ -18,8 +18,8 @@ class EvalFactory:
     _registry: Dict[str, Type[BaseEvaluator]] = {}
 
     @classmethod
-    def register_evaluator(cls, service_type: str, eval_type: str, evaluator_cls: Type[BaseEvaluator]):
-        key = f"{service_type}:{eval_type}"
+    def register_evaluator(cls, service_type: str, eval_type: str, os_enterprise: str, evaluator_cls: Type[BaseEvaluator]):
+        key = f"{service_type}:{eval_type}:{os_enterprise}"
         cls._registry[key] = evaluator_cls
 
     @classmethod
@@ -28,8 +28,9 @@ class EvalFactory:
         
         eval_service_type = experimentalConfig.eval_service
         eval_type = 'llm' if experimentalConfig.llm_based_eval else 'non_llm' 
-
-        key = f"{eval_service_type}:{eval_type}"
+        os_enterprise = 'enterprise' if experimentalConfig.is_enterprise else 'os'
+        
+        key = f"{eval_service_type}:{eval_type}:{os_enterprise}"
 
         evaluator_cls = cls._registry.get(key)
         if not evaluator_cls:

@@ -4,6 +4,8 @@ from ragas.dataset_schema import SingleTurnSample, EvaluationDataset
 from ragas.metrics._string import NonLLMStringSimilarity
 from ragas.metrics import Faithfulness, AspectCritic, LLMContextPrecisionWithoutReference, ResponseRelevancy, LLMContextPrecisionWithReference
 from langchain_aws import ChatBedrockConverse, BedrockEmbeddings
+from langchain_openai.chat_models import ChatOpenAI
+from langchain_openai import OpenAIEmbeddings
 from ragas.embeddings import LangchainEmbeddingsWrapper
 from ragas.llms import LangchainLLMWrapper
 from baseclasses.base_classes import ExperimentQuestionMetrics, EvaluationMetrics
@@ -15,7 +17,7 @@ import logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-class RagasLLMEvaluator(RagasEvaluator):
+class RagasLLMEvaluatorEnterprise(RagasEvaluator):
     def __init__(self, config, experimental_config):
         super().__init__(config, experimental_config)
         self._initialze_llm()
@@ -24,12 +26,12 @@ class RagasLLMEvaluator(RagasEvaluator):
 
     def _initialze_llm(self):
         try:
-            self.evaluator_llm = LangchainLLMWrapper(ChatBedrockConverse(
-                    region_name=self.experimental_config.aws_region,
-                    base_url=f"https://bedrock-runtime.{self.experimental_config.aws_region}.amazonaws.com",
-                    model=self.experimental_config.eval_retrieval_model,
-                    temperature=self.experimental_config.eval_retrieval_temperature,
-                    ))
+            self.evaluator_llm = LangchainLLMWrapper(ChatOpenAI(
+                base_url=self.experimental_config.gateway_url,
+                api_key=self.experimental_config.gateway_api_key,
+                model=self.experimental_config.eval_retrieval_model,
+                temperature=self.experimental_config.eval_retrieval_temperature,
+            ))
 
             self.embedding_llm = LangchainEmbeddingsWrapper(BedrockEmbeddings(
                 region_name=self.experimental_config.aws_region,
@@ -131,4 +133,4 @@ class RagasLLMEvaluator(RagasEvaluator):
             return {}
 
 
-EvalFactory.register_evaluator('ragas', 'llm', 'os',  RagasLLMEvaluator)
+EvalFactory.register_evaluator('ragas', 'llm', 'enterprise', RagasLLMEvaluatorEnterprise)
