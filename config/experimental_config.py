@@ -48,8 +48,8 @@ class ExperimentalConfig(BaseModel):
     knowledge_base: bool = True
     is_opensearch: bool = True
     gateway_enabled: bool = False
-    url: Optional[str] = Field(alias="gateway_url")
-    api_key: Optional[str] = Field(alias="gateway_api_key")
+    url: Optional[str] = Field(alias="url")
+    api_key: Optional[str] = Field(alias="api_key")
     class Config:
         alias_generator = lambda string: string.replace("-", "_")
         populate_by_name = True
