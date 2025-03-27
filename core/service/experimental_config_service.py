@@ -85,8 +85,8 @@ class ExperimentalConfigService:
             knowledge_base=exp_config_data.get('knowledge_base', False),
             is_opensearch=True if exp_config_data.get('opensearch_host') else False,
             gateway_enabled=exp_config_data.get('gateway_enabled', False),
-            gateway_url=exp_config_data.get('gateway_url'),
-            gateway_api_key=exp_config_data.get('gateway_api_key'),
+            url=exp_config_data.get('url'),
+            api_key=exp_config_data.get('api_key'),
         )
 
         n_shot_prompt_guide = experiment.get('config').get('n_shot_prompt_guide')
