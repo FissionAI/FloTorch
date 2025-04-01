@@ -1,0 +1,91 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'CloudFormation template for FloTorch EC2 instance'
+
+Parameters:
+  EnvironmentName:
+    Description: An environment name that is prefixed to resource names
+    Type: String
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: The VPC ID where the EC2 instance will be created
+  SubnetId:
+    Type: AWS::EC2::Subnet::Id
+    Description: The subnet ID where the EC2 instance will be created
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
+  InstanceType:
+    Type: String
+    Default: m4.2xlarge
+    Description: EC2 instance type
+  SSHLocation:
+    Description: The IP address range that can be used to SSH to the EC2 instances
+    Type: String
+    MinLength: 9
+    MaxLength: 18
+    Default: 0.0.0.0/0
+    AllowedPattern: (\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})
+    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x
+  Region:
+    Type: String
+    Default: us-east-1
+    Description: AWS Region for deployment
+
+Conditions:
+  IsUsEast1: !Equals [!Ref Region, 'us-east-1']
+
+Resources:
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable SSH access via port 22
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref SSHLocation
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-flotorch-sg
+
+  FloTorchEC2Instance:
+    Type: AWS::EC2::Instance
+    DependsOn: 
+      - StateMachineTemplate
+      - AppRunnerTemplate
+    Properties:
+      InstanceType: !Ref InstanceType
+      SecurityGroupIds:
+        - !GetAtt InstanceSecurityGroup.GroupId
+      KeyName: !Ref KeyName
+      SubnetId: !Ref SubnetId
+      ImageId: !If [IsUsEast1, 'ami-01816d07b1128cd2d', 'ami-093a4ad9a8cc370f4']
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeSize: 64
+            VolumeType: gp3
+            DeleteOnTermination: true
+      Tags:
+        - Key: Name
+          Value: flotorch-instance-connect
+
+Outputs:
+  InstanceId:
+    Description: ID of the EC2 instance
+    Value: !Ref FloTorchEC2Instance
+  InstancePublicIP:
+    Description: Public IP address of the EC2 instance
+    Value: !GetAtt FloTorchEC2Instance.PublicIp
+  InstancePrivateIP:
+    Description: Private IP address of the EC2 instance
+    Value: !GetAtt FloTorchEC2Instance.PrivateIp

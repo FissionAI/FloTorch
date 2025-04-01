@@ -389,6 +389,38 @@ Resources:
         AppImageTag: "2.2"
         NeedOpensearch: !Ref NeedOpensearch
 
+  EC2InstanceStack:
+    Type: AWS::CloudFormation::Stack
+    Condition: CreateOpenSearchStack
+    DependsOn: [VPCStack, StateMachineStack, AppRunnerStack]
+    DeletionPolicy: Delete
+    Properties:
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/latest/templates/ec2-instance-template.yaml
+      Parameters:
+        EnvironmentName: !Ref ProjectName
+        VpcId: !GetAtt VPCStack.Outputs.VpcId
+        SubnetId: !GetAtt VPCStack.Outputs.PublicSubnet1
+        KeyName: flotorch-keypair
+        InstanceType: m4.2xlarge
+        SSHLocation: 0.0.0.0/0
+        Region: !Ref AWS::Region
+
+  EC2InstanceStackNoOpenSearch:
+    Type: AWS::CloudFormation::Stack
+    Condition: CreateNoOpenSearchStack
+    DependsOn: [VPCStack, StateMachineStackNoOpenSearch, AppRunnerStackNoOpenSearch]
+    DeletionPolicy: Delete
+    Properties:
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/latest/templates/ec2-instance-template.yaml
+      Parameters:
+        EnvironmentName: !Ref ProjectName
+        VpcId: !GetAtt VPCStack.Outputs.VpcId
+        SubnetId: !GetAtt VPCStack.Outputs.PublicSubnet1
+        KeyName: flotorch-keypair
+        InstanceType: m4.2xlarge
+        SSHLocation: 0.0.0.0/0
+        Region: !Ref AWS::Region
+
 Outputs:
   AppRunnerServiceUrl:
     Description: URL of the App Runner service
