@@ -16,9 +16,10 @@ class RagasLLMEvaluatorCustomGateway(RagasLLMEvaluator):
 
     def _initialze_llm(self):
         try:
+            gateway_url = f'{getattr(self.experimental_config, "gateway_url", "")}/api/openai/v1'
             temperature = getattr(self.experimental_config, 'eval_retrieval_temperature', 0.4)
             self.evaluator_llm = LangchainLLMWrapper(ChatOpenAI(
-                base_url=self.experimental_config.gateway_url,
+                base_url=gateway_url,
                 api_key=self.experimental_config.gateway_api_key,
                 model=self.experimental_config.eval_retrieval_model,
                 temperature=temperature,
@@ -26,7 +27,7 @@ class RagasLLMEvaluatorCustomGateway(RagasLLMEvaluator):
 
             self.embedding_llm = LangchainEmbeddingsWrapper(OpenAIEmbeddings(
                 model=self.experimental_config.eval_embedding_model,
-                base_url=self.experimental_config.gateway_url,
+                base_url=gateway_url,
                 api_key=self.experimental_config.gateway_api_key,
             ))
         except Exception as e:

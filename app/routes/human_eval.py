@@ -144,11 +144,12 @@ async def query_experiments(
         aws_region = exp_config.get("region")
         knowledge_base = exp_config.get("knowledge_base", False)
         bedrock_knowledge_base = exp_config.get("bedrock_knowledge_base", False)
+        gateway_url = f'{exp_config.get("gateway_url", "")}/api/openai/v1'
 
         # Inferencer Initialization
         inferencer = InferencerProviderFactory.create_inferencer_provider(
             exp_config.get("gateway_enabled"),
-            exp_config.get("gateway_url", ""),
+            gateway_url,
             exp_config.get("gateway_api_key", ""),
             inference_service,
             inference_model,

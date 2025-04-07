@@ -259,9 +259,9 @@ def generate_all_combinations(data):
     parameters_all.update(parsed_data["retrieval"])
     if "guardrails" in parsed_data and parsed_data["guardrails"]:
         parameters_all.update({"guardrails": parsed_data["guardrails"]})
-    parameters_all['gateway_enabled'] = [parsed_data.get('is_enterprise', False)]
-    parameters_all['api_key'] = [parsed_data.get('api_key', "")]
-    parameters_all['url'] = [parsed_data.get('url', "")]
+    parameters_all['gateway_enabled'] = [parsed_data.get('gateway_enabled', False)]
+    parameters_all['gateway_api_key'] = [parsed_data.get('gateway_api_key', "")]
+    parameters_all['gateway_url'] = [parsed_data.get('gateway_url', "")]
     parameters_all.update(parsed_data["evaluation"])
     parameters_all = add_kb_info(parameters_all)
     parameters_all = {key: value if isinstance(value, list) else [value] for key, value in parameters_all.items()}

@@ -10,4 +10,5 @@ uvicorn==0.32.0
 pandas
 PyPDF2==3.0.1
 pymupdf
-FloTorch-core
+openai
+FloTorch-core==2.7.0
