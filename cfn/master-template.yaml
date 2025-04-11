@@ -100,7 +100,7 @@ Resources:
   VPCStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/latest/templates/vpc-template.yaml
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/3.0.0.1/templates/vpc-template.yaml
       Parameters:
         ProjectName: !Ref ProjectName
         ClientName: !Ref ClientName
@@ -111,7 +111,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Condition: PrerequisitesMet
     Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/latest/templates/ecr-repository-template.yaml
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/3.0.0.1/templates/ecr-repository-template.yaml
       Parameters:
         ProjectName: !Ref ProjectName
         CreatedBy: !Ref CreatedBy
@@ -121,7 +121,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     DependsOn: VPCStack
     Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/latest/templates/vpc-endpoint-template.yaml
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/3.0.0.1/templates/vpc-endpoint-template.yaml
       Parameters:
         VPCId: !GetAtt VPCStack.Outputs.VpcId
         PrivateRouteTableId: !GetAtt VPCStack.Outputs.PrivateRouteTableId
@@ -135,7 +135,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     DependsOn: VPCStack
     Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/latest/templates/dynamodb-template.yaml
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/3.0.0.1/templates/dynamodb-template.yaml
       Parameters:
         ProjectName: !Ref ProjectName
         TableSuffix: !Ref TableSuffix
@@ -149,7 +149,7 @@ Resources:
     DeletionPolicy: Delete
     UpdateReplacePolicy: Delete
     Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/latest/templates/opensearch-template.yaml
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/3.0.0.1/templates/opensearch-template.yaml
       Parameters:
         VpcId: !GetAtt VPCStack.Outputs.VpcId
         PrivateSubnetId: !GetAtt VPCStack.Outputs.PrivateSubnet1
@@ -167,7 +167,7 @@ Resources:
     DependsOn: [VPCStack, DynamoDBStack, OpenSearchStack]
     DeletionPolicy: Delete
     Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/latest/templates/lambda-template.yaml
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/3.0.0.1/templates/lambda-template.yaml
       Parameters:
         PrerequisitesMet: !Ref PrerequisitesMet
         NeedOpensearch: !Ref NeedOpensearch
@@ -190,12 +190,12 @@ Resources:
         CostComputeRepositoryUri: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/flotorch-costcompute-${TableSuffix}"
         PublicSubnet1: !GetAtt VPCStack.Outputs.PublicSubnet1
         PrivateSubnet1: !GetAtt VPCStack.Outputs.PrivateSubnet1
-        IndexingImageTag: "2.2"
-        RetrieverImageTag: "2.2"
-        AppImageTag: "2.2"
-        EvaluationImageTag: "2.2"
-        RuntimeImageTag: "2.2"
-        CostComputeImageTag: "2.2"
+        IndexingImageTag: "3.0.0.1"
+        RetrieverImageTag: "3.0.0.1"
+        AppImageTag: "3.0.0.1"
+        EvaluationImageTag: "3.0.0.1"
+        RuntimeImageTag: "3.0.0.1"
+        CostComputeImageTag: "3.0.0.1"
 
   LambdaStackNoOpenSearch:
     Type: AWS::CloudFormation::Stack
@@ -203,7 +203,7 @@ Resources:
     DependsOn: [VPCStack, DynamoDBStack]
     DeletionPolicy: Delete
     Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/latest/templates/lambda-template.yaml
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/3.0.0.1/templates/lambda-template.yaml
       Parameters:
         PrerequisitesMet: !Ref PrerequisitesMet
         NeedOpensearch: !Ref NeedOpensearch
@@ -226,12 +226,12 @@ Resources:
         CostComputeRepositoryUri: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/flotorch-costcompute-${TableSuffix}"
         PublicSubnet1: !GetAtt VPCStack.Outputs.PublicSubnet1
         PrivateSubnet1: !GetAtt VPCStack.Outputs.PrivateSubnet1
-        IndexingImageTag: "2.2"
-        RetrieverImageTag: "2.2"
-        AppImageTag: "2.2"
-        EvaluationImageTag: "2.2"
-        RuntimeImageTag: "2.2"
-        CostComputeImageTag: "2.2"
+        IndexingImageTag: "3.0.0.1"
+        RetrieverImageTag: "3.0.0.1"
+        AppImageTag: "3.0.0.1"
+        EvaluationImageTag: "3.0.0.1"
+        RuntimeImageTag: "3.0.0.1"
+        CostComputeImageTag: "3.0.0.1"
 
   ECSStack:
     Type: AWS::CloudFormation::Stack
@@ -239,7 +239,7 @@ Resources:
     DependsOn: [VPCStack, DynamoDBStack, OpenSearchStack]
     DeletionPolicy: Delete
     Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/latest/templates/ecs-template.yaml
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/3.0.0.1/templates/ecs-template.yaml
       Parameters:
         NeedOpensearch: !Ref NeedOpensearch
         TableSuffix: !Ref TableSuffix
@@ -263,7 +263,7 @@ Resources:
     DependsOn: [VPCStack, DynamoDBStack]
     DeletionPolicy: Delete
     Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/latest/templates/ecs-template.yaml
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/3.0.0.1/templates/ecs-template.yaml
       Parameters:
         NeedOpensearch: !Ref NeedOpensearch
         TableSuffix: !Ref TableSuffix
@@ -287,7 +287,7 @@ Resources:
     DeletionPolicy: Delete
     DependsOn: [VPCStack, ECSStack, LambdaStack, DynamoDBStack, OpenSearchStack]
     Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/latest/templates/state-machine-template.yaml
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/3.0.0.1/templates/state-machine-template.yaml
       Parameters:
         TableSuffix: !Ref TableSuffix
         VpcId: !GetAtt VPCStack.Outputs.VpcId
@@ -317,7 +317,7 @@ Resources:
     DependsOn: [VPCStack, ECSStackNoOpenSearch, LambdaStackNoOpenSearch, DynamoDBStack]
     DeletionPolicy: Delete
     Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/latest/templates/state-machine-template.yaml
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/3.0.0.1/templates/state-machine-template.yaml
       Parameters:
         PrerequisitesMet: !Ref PrerequisitesMet
         TableSuffix: !Ref TableSuffix
@@ -347,7 +347,7 @@ Resources:
     DeletionPolicy: Delete
     DependsOn: [DynamoDBStack, OpenSearchStack, StateMachineStack]
     Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/latest/templates/app-runner-template.yaml
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/3.0.0.1/templates/app-runner-template.yaml
       Parameters:
         TableSuffix: !Ref TableSuffix
         Region: !Ref AWS::Region
@@ -362,7 +362,7 @@ Resources:
         VpcConnectorArn: !GetAtt VPCStack.Outputs.VpcConnectorArn
         BedrockRoleArn: !GetAtt VPCStack.Outputs.BedrockRoleArn
         EcrRepositoryUri: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/flotorch-app-${TableSuffix}"
-        AppImageTag: "2.2"
+        AppImageTag: "3.0.0.1"
         NeedOpensearch: !Ref NeedOpensearch
 
   AppRunnerStackNoOpenSearch:
@@ -371,7 +371,7 @@ Resources:
     DependsOn: [DynamoDBStack, StateMachineStackNoOpenSearch]
     DeletionPolicy: Delete
     Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/latest/templates/app-runner-template.yaml
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/3.0.0.1/templates/app-runner-template.yaml
       Parameters:
         TableSuffix: !Ref TableSuffix
         Region: !Ref AWS::Region
@@ -386,8 +386,40 @@ Resources:
         VpcConnectorArn: !GetAtt VPCStack.Outputs.VpcConnectorArn
         BedrockRoleArn: !GetAtt VPCStack.Outputs.BedrockRoleArn
         EcrRepositoryUri: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/flotorch-app-${TableSuffix}"
-        AppImageTag: "2.2"
+        AppImageTag: "3.0.0.1"
         NeedOpensearch: !Ref NeedOpensearch
+
+  # EC2InstanceStack:
+  #   Type: AWS::CloudFormation::Stack
+  #   Condition: CreateOpenSearchStack
+  #   DependsOn: [VPCStack, StateMachineStack, AppRunnerStack]
+  #   DeletionPolicy: Delete
+  #   Properties:
+  #     TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/3.0.0.1/templates/ec2-instance-template.yaml
+  #     Parameters:
+  #       EnvironmentName: !Ref ProjectName
+  #       VpcId: !GetAtt VPCStack.Outputs.VpcId
+  #       SubnetId: !GetAtt VPCStack.Outputs.PublicSubnet1
+  #       KeyName: flotorch-keypair
+  #       InstanceType: m4.2xlarge
+  #       SSHLocation: 0.0.0.0/0
+  #       Region: !Ref AWS::Region
+
+  # EC2InstanceStackNoOpenSearch:
+  #   Type: AWS::CloudFormation::Stack
+  #   Condition: CreateNoOpenSearchStack
+  #   DependsOn: [VPCStack, StateMachineStackNoOpenSearch, AppRunnerStackNoOpenSearch]
+  #   DeletionPolicy: Delete
+  #   Properties:
+  #     TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/3.0.0.1/templates/ec2-instance-template.yaml
+  #     Parameters:
+  #       EnvironmentName: !Ref ProjectName
+  #       VpcId: !GetAtt VPCStack.Outputs.VpcId
+  #       SubnetId: !GetAtt VPCStack.Outputs.PublicSubnet1
+  #       KeyName: flotorch-keypair
+  #       InstanceType: m4.2xlarge
+  #       SSHLocation: 0.0.0.0/0
+  #       Region: !Ref AWS::Region
 
 Outputs:
   AppRunnerServiceUrl:
