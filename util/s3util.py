@@ -8,6 +8,7 @@ from urllib.parse import urlparse
 import csv
 import pandas as pd
 from typing import Optional, List, Dict
+from functools import lru_cache
 
 
 class S3Util:
@@ -73,6 +74,7 @@ class S3Util:
             )
             raise
 
+    @lru_cache(maxsize=100)
     def read_csv_from_s3(self, object_key: str, bucket_name: str, as_dataframe: bool = False) -> Optional[object]:
         """
         Read CSV data from S3 and convert it to a list of dictionaries or a pandas DataFrame.

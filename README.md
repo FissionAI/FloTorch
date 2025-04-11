@@ -1,25 +1,15 @@
-# What is FloTorch?
+<p align="center">
+    <img src="./FloTorch Colour Logo.png" alt="flotorch-logo" width="1200">
+    <a href="https://www.flotorch.ai/" target="_blank">
+        <img alt="Static Badge" src="https://img.shields.io/badge/Product-F04438"></a>
+    <a href="https://www.linkedin.com/company/flotorch-ai/" target="_blank">
+        <img src="https://custom-icon-badges.demolab.com/badge/LinkedIn-0A66C2?logo=linkedin-white&logoColor=fff"
+            alt="follow on LinkedIn"></a>
+</p>
+
+## What is FloTorch?
 
 FloTorch is an innovative product poised to transform the field of Generative AI by simplifying and optimizing the decision-making process for leveraging Large Language Models (LLMs) in Retrieval Augmented Generation (RAG) systems. In today’s fast-paced digital landscape, selecting the right LLM setup is critical for achieving efficiency, accuracy, and cost-effectiveness. However, this process often involves extensive trial-and-error, significant resource expenditure, and complex comparisons of performance metrics. Our solution addresses these challenges with a streamlined, user-friendly approach.
-
-**Latest Update**: FloTorch now supports Bedrock knowledge bases and DeepSeek-R1-Distill-Llama-8B model on Sagemaker.
-
-## Key Features
-
-- **Automated Evaluation of LLMs**: FloTorch evaluates multiple LLMs by analyzing combinations of hyperparameters defined by the end user.
-- **Performance Metrics**: Produces detailed performance scores, including relevance, fluency, and robustness.
-- **Cost and Time Insights**: Provides actionable insights into the pricing and execution times for each LLM configuration.
-- **Data-Driven Decision-Making**: Empowers users to align LLM configurations with specific goals and budget constraints.
-
-## Who Benefits from FloTorch?
-
-FloTorch caters to a broad spectrum of users, including:
-
-- **Startups**: Optimize AI-driven systems for rapid growth.
-- **Data Scientists**: Simplify model selection and evaluation.
-- **Developers**: Focus on deployment and innovation rather than experimentation.
-- **Researchers**: Gain insights into LLM performance metrics effortlessly.
-- **Enterprises**: Enhance customer experiences, improve content generation, and refine data retrieval processes.
 
 ## Why Choose FloTorch?
 - **Well-Architected framework**: Focuses on five pillars of service architecture: Operational Excellence, Security, Reliability, Performance Efficiency, Cost Optimization.
@@ -28,15 +18,17 @@ FloTorch caters to a broad spectrum of users, including:
 - **Accelerates Selection**: Streamlines the evaluation and decision-making process.
 - **Focus on Innovation**: Allows users to dedicate resources to innovation and deployment rather than experimentation.
 
-![FloTorch Architecture](./flotorch-arch.png)
 
-## Vision
+## The FloTorch Solution
+<p align="center">
+    <img src="./flotorch-arch.png" alt="flotorch-arch" >
+</p>
 
-By combining advanced evaluation capabilities with a focus on cost and time efficiency, FloTorch provides a holistic solution for navigating the evolving RAG landscape. It empowers users to focus on innovation and deployment, setting a new standard for intelligent decision-making in AI-driven applications.
-
-With FloTorch, we aim to be a pivotal enabler of progress in the generative AI ecosystem, helping our users achieve excellence in their projects.
-
-# Using FloTorch
+- **Simple & Automatic**: Simple UI, 1,000+ combinations, no human errors, no ‘It Depends’ 
+- **Saves time**: Reduces experiments from months to hours
+- **Encourages Experiments**: Test new LLMs / capabilities in hours with automation
+- **Secure**: Your data, your AWS account, your ground truth Q&A
+- **Deterministic**: Provides accuracy, performance, costs, and safety
 
 ## Demo
 
@@ -51,40 +43,12 @@ Please refer to our [Installation guide](install.md) for the installation steps 
 Use our [usage guide](usage_guide.md) for more details on using FloTorch.
 Click [here](faq.md) for frequently asked questions.
 
-# Open Source Developer Contribution Guidelines
+## Contributing
 
-This document outlines the guidelines for contributing to the project to maintain consistency and code quality.
+For those who'd like to contribute code, see our [Contribution Guide](CONTRIBUTING.md).
 
-### Master Branch
+## Blogs
 
-- The `master` branch is the primary branch and should remain stable.
-- **Avoid pushing directly to the `master` branch.** All changes must go through the pull request process.
+- [Benchmarking Amazon Nova and GPT-4o models with FloTorch](https://aws.amazon.com/blogs/machine-learning/benchmarking-amazon-nova-and-gpt-4o-models-with-flotorch/)
+- [Speed up RAG Experiments on AWS SageMaker with DeepSeek-R1 & FloTorch](https://www.flotorch.ai/blog/speed-up-rag-experiments-on-aws-sagemaker-with-deepseek-r1-flotorch)
 
-### Feature Branches
-
-- All new feature branches must be created from the `master` branch.
-- Use descriptive names for feature branches.  
-  Example: `feature/bedrock_claude_inferencer`
-
-### Pull Requests
-
-- All code changes must be submitted as pull requests.
-- Each pull request should be reviewed by at least one other developer.
-- Keep pull requests small and focused on a specific feature or fix.
-- Include relevant information in commit messages to provide context.
-
-### Branch Hygiene
-
-- Delete feature branches after they have been successfully merged into `master`.
-
-### Testing Changes Locally
-
-- Before submitting a pull request, thoroughly test your changes locally to ensure they work as expected.
-
-### Naming Conventions
-
-- Use **snake_case** for:
-  - names
-  - Configuration variables
-  - python file names
-    Example: `example_snake_case`

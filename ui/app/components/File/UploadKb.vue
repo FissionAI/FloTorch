@@ -43,7 +43,7 @@ const onFileData = (data: any) => {
   <UButtonGroup class="w-full">
     <UInput v-model="filepath" disabled />
     <UModal v-model:open="openModal" v-model:close="openModal" title="Upload KB data files">
-      <UButton class="secondary-btn ml-2" leading-icon="i-lucide-arrow-up-to-line" label="Choose Files" variant="ghost" :loading="isUploading" @click="openModalFunction" />
+      <UButton class="reduced-secondary-btn secondary-btn ml-2" leading-icon="i-lucide-arrow-up-to-line" label="Choose Files" variant="ghost" :loading="isUploading" @click="openModalFunction" />
       
       <template #body>
         <FileUploadModal 

@@ -112,3 +112,25 @@ export const useKBConfig = () => {
     };
   }>("config");
 };
+
+export const useHumanEvalQueryExperiments = (experimentIds: any, query: string) => {
+ return useApi<{
+    data: {
+      results: any[]
+    }
+  }>("/heval/query-experiments", {
+    method: "POST",
+    body: {
+      experiment_ids: experimentIds,
+      query: query
+    }
+  });
+}
+
+export const useHumanEvalUpvote = (experimentIds: any) => {
+  return useApi("/heval/upvote", {
+    method: "POST",
+    body: experimentIds
+    
+  });
+}

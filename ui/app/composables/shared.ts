@@ -382,6 +382,11 @@ export const useProjectCreateMeta = () => {
           service: "bedrock",
         },
         {
+          label: "Anthropic/us.anthropic.claude-3-7-sonnet-20250219-v1:0",
+          value: "us.anthropic.claude-3-7-sonnet-20250219-v1:0",
+          service: "bedrock",
+        },
+        {
           type: "label",
           label: "SageMaker (Provisioned)",
         },
@@ -697,7 +702,14 @@ export const useProjectUploadConfig = () => {
         gt_data: undefined,
       },
       indexing: {
-        ...config.indexing,
+        vector_dimension: config.indexing?.vector_dimension,
+        indexing_algorithm: config.indexing?.indexing_algorithm,
+        chunking_strategy: config.indexing?.chunking_strategy,
+        ...(config.indexing?.chunking_strategy.includes('fixed') && config.indexing?.chunk_size.length > 0 ? { chunk_size: config.indexing?.chunk_size} : {}),
+        ...(config.indexing?.chunking_strategy.includes('fixed') && config.indexing?.chunk_overlap.length > 0 ? { chunk_overlap: config.indexing?.chunk_overlap} : {}),
+        ...(config.indexing?.chunking_strategy.includes('hierarchical') && config.indexing?.hierarchical_parent_chunk_size.length > 0 ? { hierarchical_parent_chunk_size: config.indexing?.hierarchical_parent_chunk_size} : {}),
+        ...(config.indexing?.chunking_strategy.includes('hierarchical') && config.indexing?.hierarchical_child_chunk_size.length > 0 ? { hierarchical_child_chunk_size: config.indexing?.hierarchical_child_chunk_size} : {}),
+        ...(config.indexing?.chunking_strategy.includes('hierarchical') && config.indexing?.hierarchical_chunk_overlap_percentage.length > 0 ? { hierarchical_chunk_overlap_percentage: config.indexing?.hierarchical_chunk_overlap_percentage} : {}),
         embedding: config.indexing?.embedding?.map((pc: any) => {
           return useGetModelData("indexing", pc.model);
         }),
@@ -747,7 +759,7 @@ export const useProjectBadgeIcon = (status: ProjectStatus) => {
   if (status === "in_progress") {
     return "i-lucide-circle-ellipsis";
   } else if (status === "completed") {
-    return "i-lucide-circle-check";
+    return "i-rivet-icons:check-circle";
   } else if (status === "not_started") {
     return "i-lucide-clock-9";
   } else if (status === "failed") {
@@ -797,7 +809,7 @@ export const useExperimentBadgeIcon = (status: ProjectExperimentStatus) => {
   if (status === "indexing_inprogress" || status === "retrieval_inprogress" || status === "eval_inprogress" || status === "in_progress") {
     return "i-lucide-circle-ellipsis";
   } else if (status === "indexing_completed" || status === "retrieval_completed" || status === "succeeded") {
-    return "i-lucide-circle-check";
+    return "i-rivet-icons:check-circle";
   } else if (status === "failed") {
     return "i-lucide-circle-x";
   }
@@ -926,11 +938,11 @@ export const useKnowledgeBaseModel = ()=>{
   return {
     kb_model : [
       {
-        label: "None",
+        label: "I don't have a Knowledge Base",
         value: "none"
       },
       {
-        label: "Bedrock Knowledge Bases",
+        label: "Use Existing Knowledge Bases",
         value: "Bedrock-Knowledge-Bases"
       },
       {

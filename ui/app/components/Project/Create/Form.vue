@@ -66,9 +66,9 @@ const nextStep = () => {
         indexing_algorithm: state.indexing?.indexing_algorithm || '',
         embedding: state.indexing?.embedding?.map((pc) => {
           return {
-            model: pc.value,
-            service: pc.service,
-            label: pc.label
+            model: pc?.value,
+            service: pc?.service,
+            label: pc?.label
           }
         }) || [{
                 "model": "",
@@ -172,7 +172,7 @@ const steps = [
       <ProjectCreateRetrievalStrategyStep :kb-model="state.prestep?.kb_model" :region="state.prestep?.region" v-model="state.retrieval" @next="nextStep" @previous="previousStep" />
     </div>
     <div v-if="currentStep === 4">
-      <ProjectCreateEvalStrategyStep :region="state.prestep?.region" :inferenceModel="state.retrieval?.retrieval?.map(model => model.value)" :embeddingModel="state.indexing?.embedding?.map(model => model.value)" v-model="state.eval" @previous="previousStep" @next="nextStep" next-button-label="Submit" />
+      <ProjectCreateEvalStrategyStep :region="state.prestep?.region" :inferenceModel="state.retrieval?.retrieval?.map(model => model.value)" :embeddingModel="state.indexing?.embedding?.map(model => model?.value)" v-model="state.eval" @previous="previousStep" @next="nextStep" next-button-label="Submit" />
     </div>
   </div>
 </template>

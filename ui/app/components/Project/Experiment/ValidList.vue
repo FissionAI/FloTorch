@@ -66,11 +66,11 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
         variant: "ghost",
         label: "Chunking",
         trailingIcon: isSorted
-          ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+          ? isSorted === "desc"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
-        class: "-mx-2.5",
+     class: "-mx-2.5 focus:font-bold hover:font-bold",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
       }),
       h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
@@ -106,10 +106,10 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
         label: "Embedding Model",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
-        class: "-mx-2.5",
+     class: "-mx-2.5 focus:font-bold hover:font-bold",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
       }),
       h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
@@ -129,10 +129,10 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
         label: "N Shot Prompts",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
-        class: "-mx-2.5",
+     class: "-mx-2.5 focus:font-bold hover:font-bold",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
       }),
       h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
@@ -152,10 +152,10 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
         label: "KNN",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
-        class: "-mx-2.5",
+     class: "-mx-2.5 focus:font-bold hover:font-bold",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
       }),
       h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
@@ -175,10 +175,10 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
         label: "Reranking Model",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
-        class: "-mx-2.5",
+     class: "-mx-2.5 focus:font-bold hover:font-bold",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
       }),
       h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
@@ -198,10 +198,10 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
         label: "Inferencing Model",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
-        class: "-mx-2.5",
+     class: "-mx-2.5 focus:font-bold hover:font-bold",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
       }),
       h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
@@ -226,10 +226,10 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
         label: "Guardrail",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
-        class: "-mx-2.5",
+     class: "-mx-2.5 focus:font-bold hover:font-bold",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
       }),
       h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
@@ -252,10 +252,10 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
         label: "Directional Cost",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
-        class: "-mx-2.5",
+     class: "-mx-2.5 focus:font-bold hover:font-bold",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
       }),
       h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
@@ -275,10 +275,10 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
         label: "Chunk Size",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
-        class: "-mx-2.5",
+     class: "-mx-2.5 focus:font-bold hover:font-bold",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
       }),
       h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
@@ -315,10 +315,10 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
         label: "Chunk Overlap Percentage",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
-        class: "-mx-2.5",
+     class: "-mx-2.5 focus:font-bold hover:font-bold",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
       }),
       h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
@@ -347,13 +347,13 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
         h(UButton, {
         color: "neutral",
         variant: "ghost",
-        label: "Vector Dimensions",
+        label: "Vector Dimension",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
-        class: "-mx-2.5",
+     class: "-mx-2.5 focus:font-bold hover:font-bold",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
       }),
       h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
@@ -361,7 +361,7 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
     },
     enableHiding: true,
     accessorKey: "vector_dimension",
-    label: 'Vector Dimensions',
+    label: 'Vector Dimension',
   },
   {
     header: ({ column }) => {
@@ -373,10 +373,10 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
         label: "Indexing Algorithm",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
-        class: "-mx-2.5",
+     class: "-mx-2.5 focus:font-bold hover:font-bold",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
       }),
       h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
@@ -396,10 +396,10 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
         label: "Inferencing Model Temperature",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
-        class: "-mx-2.5",
+     class: "-mx-2.5 focus:font-bold hover:font-bold",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
       }),
       h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
@@ -419,10 +419,10 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
         label: "Evaluation Service",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
-        class: "-mx-2.5",
+     class: "-mx-2.5 focus:font-bold hover:font-bold",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
       }),
       h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
@@ -442,10 +442,10 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
         label: "Evaluation Embedding Model",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
-        class: "-mx-2.5",
+     class: "-mx-2.5 focus:font-bold hover:font-bold",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
       }),
       h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
@@ -465,10 +465,10 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
         label: "Evaluation Inferencing Model",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
-        class: "-mx-2.5",
+     class: "-mx-2.5 focus:font-bold hover:font-bold",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
       }),
       h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
@@ -490,7 +490,7 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
   //           ? "i-lucide-arrow-up-narrow-wide"
   //           : "i-lucide-arrow-down-wide-narrow"
   //         : "i-lucide-arrow-up-down",
-  //       class: "-mx-2.5",
+  //    class: "-mx-2.5 focus:font-bold hover:font-bold",
   //       onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
   //     });
   //   },
@@ -508,10 +508,10 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
         label: "Bedrock Kb Name",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
-        class: "-mx-2.5",
+     class: "-mx-2.5 focus:font-bold hover:font-bold",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
       }),
       h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
@@ -525,6 +525,8 @@ const columns = ref<TableColumn<ValidExperiment>[]>([
     }
   }
 ])
+
+const openTooltipId = ref<string | null>(null)
 
 const columnVisibility = ref({
   select: props.selectable ?? false,
@@ -577,32 +579,19 @@ const columnVisibility = ref({
       </template>
       <template #directional_pricing-cell="{ row }">
         <div class="w-full">
-              <UTooltip   :content="{side: 'right'}">
-                <a class="text-blue-500 hover:underline" href="#">{{useHumanCurrencyAmount(row.original.directional_pricing)}}</a>
+              <UTooltip :open="openTooltipId === row.id"
+              :key="row.id" class="h-full" :content="{side: 'left'}">
+                <a @click="openTooltipId = row.id" class="underline decoration-dotted" href="#">{{useHumanCurrencyAmount(row.original.directional_pricing)}}</a>
                 <template #content>
-                  <UCard class="w-full">
-                    <table class="w-full">
-                      <tbody>
-                        <tr>
-                          <td>Indexing Cost Estimate:</td>
-                          <td>{{useHumanCurrencyAmount(row.original.indexing_cost_estimate,3)}}</td>
-                        </tr>
-                        <tr>
-                          <td>Retrieval Cost Estimate:</td>
-                          <td>{{useHumanCurrencyAmount(row.original.retrieval_cost_estimate,3)}}</td>
-                        </tr>
-                        <tr>
-                          <td>Inferencing Cost Estimate:</td>
-                          <td>{{useHumanCurrencyAmount(row.original.inferencing_cost_estimate,3)}}</td>
-                        </tr>
-                        <tr>
-                          <td>Evaluation Cost Estimate:</td>
-                          <td>{{useHumanCurrencyAmount(row.original.eval_cost_estimate,3)}}</td>
-                        </tr>
-                         
-                      </tbody>
-                    </table>
-                  </UCard>
+                  <div>
+                    <UButton @click="openTooltipId = null" variant="ghost" color="neutral" trailing-icon="i-lucide-x" />
+                    <ul>
+                      <li class="mb-2"><span class="tooltip-text-grey">Indexing Cost Estimate:</span> {{useHumanCurrencyAmount(row.original.indexing_cost_estimate,3)}}</li>
+                      <li class="mb-2"><span class="tooltip-text-grey">Retrieval Cost Estimate:</span> {{useHumanCurrencyAmount(row.original.retrieval_cost_estimate,3)}}</li>
+                      <li class="mb-2"><span class="tooltip-text-grey">Inferencing Cost Estimate:</span> {{useHumanCurrencyAmount(row.original.inferencing_cost_estimate,3)}}</li>
+                      <li class="mb-2"><span class="tooltip-text-grey">Evaluation Cost Estimate:</span> {{useHumanCurrencyAmount(row.original.eval_cost_estimate,3)}}</li>
+                    </ul>
+                  </div>
               </template>
               </UTooltip>
         </div>

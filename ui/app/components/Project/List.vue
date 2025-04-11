@@ -22,14 +22,19 @@ const columns = ref<TableColumn<ProjectListItem>[]>([
           label: "Id",
           trailingIcon: isSorted
             ? isSorted === "asc"
-              ? "i-lsicon:triangle-up-outline"
-              : "i-lsicon:triangle-down-outline"
+              ? "i-lsicon:triangle-up-filled"
+              : "i-lsicon:triangle-down-filled"
             : "i-lsicon:triangle-down-outline",
-          class: "-mx-2.5",
-          onClick: () => column.toggleSorting(),
+         class:"-mx-2.5 focus:font-bold hover:font-bold",
+          onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
         }),
         h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
       ]);
+    },
+    sortingFn: (rowA, rowB) => {
+      const a = rowA.original.id ?? 0;
+      const b = rowB.original.id ?? 0;
+      return a.localeCompare(b);
     },
   },
   {
@@ -46,10 +51,10 @@ const columns = ref<TableColumn<ProjectListItem>[]>([
           label: "Name",
           trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-              : "i-lsicon:triangle-down-outline"
-            : "i-lsicon:triangle-down-outline",
-          class: "-mx-2.5",
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
+          : "i-lsicon:triangle-down-outline",
+       class:"-mx-2.5 focus:font-bold hover:font-bold",
           onClick: () => column.toggleSorting(),
         }),
         h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
@@ -76,10 +81,10 @@ const columns = ref<TableColumn<ProjectListItem>[]>([
           label: "Region",
           trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
-        class: "-mx-2.5",
+       class:"-mx-2.5 focus:font-bold hover:font-bold",
         onClick: () => column.toggleSorting(),
       }),
       h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
@@ -100,10 +105,10 @@ const columns = ref<TableColumn<ProjectListItem>[]>([
           label: "Status",
           trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
-        class: "-mx-2.5",
+       class:"-mx-2.5 focus:font-bold hover:font-bold",
         onClick: () => column.toggleSorting(),
       }),
       h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
@@ -123,11 +128,11 @@ const columns = ref<TableColumn<ProjectListItem>[]>([
         label: "Date",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
-        class: "-mx-2.5",
-        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+       class:"-mx-2.5 focus:font-bold hover:font-bold",
+        onClick: () => column.toggleSorting(),
       });
     },
   },
@@ -135,8 +140,8 @@ const columns = ref<TableColumn<ProjectListItem>[]>([
 
 const sorting = ref([
   {
-    id: "date",
-    desc: true,
+    id: "id",
+    asc: true,
   },
 ]);
 </script>
@@ -146,7 +151,7 @@ const sorting = ref([
     <template #id-cell="{ row }">
       <NuxtLink
         :to="{ name: 'projects-id', params: { id: row.original.id } }"
-        class="text-blue-500 hover:underline"
+        class="text-blue-500 hover:text-black hover:underline"
       >
         {{ row.original.id }}
       </NuxtLink>

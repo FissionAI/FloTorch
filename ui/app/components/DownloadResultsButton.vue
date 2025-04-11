@@ -14,6 +14,8 @@ const props = withDefaults(
 
 const downloadResults = () => {
   const stringifyData = props.results.map((item) => {
+    const eval_metrics = item.eval_metrics?.M
+    const total_time = item.total_time * 60
     if (props.questionMetrics) {
       const assessments = {
         "guardrail user query assessment":
@@ -31,7 +33,11 @@ const downloadResults = () => {
         ...assessments,
       };
     } else {
-      return item;
+      return {
+        ...item,
+        eval_metrics,
+        total_time
+      };
     }
   });
   const csv = jsonToCsv(stringifyData);

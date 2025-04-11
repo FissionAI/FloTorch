@@ -43,6 +43,7 @@ useHead({
         size="xl"
       />
     </main>
+    <div class="footer-container mt-[50px]">
     <footer class="navbar text-white p-2 text-sm">
       <div class="container mx-auto flex justify-center items-center">
         <div>
@@ -60,6 +61,7 @@ useHead({
         </div>
       </div>
     </footer>
+    </div>
   </div>
 </template>
 
@@ -69,5 +71,11 @@ main.container {
   max-width: unset !important;
   min-width: unset !important;
   padding: 50px;
+}
+
+footer {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
 }
 </style>

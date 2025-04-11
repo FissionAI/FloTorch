@@ -94,6 +94,7 @@ td {
   color: var(--aws-secondary-color);
   margin-bottom: 10px;
   cursor: pointer;
+  
 
 }
 .experiment-details-tabs div button:last-child {
@@ -146,6 +147,14 @@ div.divide-y.divide-\[var\(--ui-border\)\].scroll-py-1 div[role='group'] {
   color: var(--aws-secondary-color);
 }
 
+.aws-font-grey-color {
+  color: var(--aws-font-grey-color);
+}
+
+.primary-bg-color {
+  background-color: var(--aws-primary-color);
+}
+
 .primary-btn {
   background-color: var(--aws-primary-color);
   color: var(--aws-font-grey-color);
@@ -182,10 +191,48 @@ div.divide-y.divide-\[var\(--ui-border\)\].scroll-py-1 div[role='group'] {
 
 }
 
+.reduced-secondary-btn{
+  padding: 4px 16px;
+}
+
 .secondary-btn:hover {
   background-color: var(--aws-secondary-hover-color);
   color: var(--aws-secondary-hover-font-color);
   border-color: var(--aws-secondary-hover-font-color);
+}
+
+.secondary-btn-outline {
+  background-color: grey;
+  color: white;
+  border-color: grey;
+  border-width: 2px;
+  border-end-start-radius: 20px;
+  border-end-end-radius: 20px;
+  border-start-start-radius: 20px;
+  border-start-end-radius: 20px;
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 22px;
+  padding: 4px 20px;
+}
+
+.aws-font-grey {
+  color: var(--aws-font-grey-color);
+}
+
+.tooltip-text-grey {
+  color: #545b64;
+  /* font-size: 14px; */
+  line-height: 20px;
+  font-weight: 700;
+}
+
+.table-header-grey {
+  color: var(--aws-not-started-color);
+}
+
+.table-selected-row {
+  background-color: var(--aws-secondary-hover-color);
 }
 
 .navbar {
@@ -267,6 +314,7 @@ div.divide-y.divide-\[var\(--ui-border\)\].scroll-py-1 div[role='group'] {
 
 .pending-badge {
   color: var(--aws-pending-color);
+  width: 150px !important;
 }
 
 .success-badge {
@@ -286,6 +334,7 @@ input, .primary-dropdown {
   border-bottom: 1px solid lightgray;
   margin-bottom: 0px !important;
   padding: 2px;
+  
   
 }
 
@@ -323,11 +372,46 @@ input, .primary-dropdown {
 }
 
 .github-link {
-  height: 32px !important;
+  height: 36px !important;
+  width: 36px !important;
+  justify-content: center;
 }
 
 .separator {
   height: 16px;
   width: 1px;
   background-color: #000000;
+}
+
+
+
+.arrow_box {
+	position: relative;
+	background: #ffffff;
+	border: 1px solid #d5dbdb;
+  width: 100%;
+  top: 55px;
+}
+.arrow_box:after, .arrow_box:before {
+	left: 100%;
+	top: 20%;
+	border: solid transparent;
+	content: "";
+	height: 0;
+	width: 0;
+	position: absolute;
+	pointer-events: none;
+}
+
+.arrow_box:after {
+	border-color: rgba(255, 255, 255, 0);
+	border-left-color: #ffffff;
+	border-width: 10px;
+	margin-top: -10px;
+}
+.arrow_box:before {
+	border-color: rgba(238, 238, 238, 0);
+	border-left-color: #d5dbdb;
+	border-width: 11px;
+	margin-top: -11px;
 }

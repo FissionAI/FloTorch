@@ -120,7 +120,7 @@ onMounted(() => {
             :loading="isFetchingGuardrailsList"
             multiple
             :items="guardrailsList"
-            class="w-full my-7 primary-dropdown"
+            class="w-full my-3 primary-dropdown"
             placeholder="None"
             :search-input="false"
           >

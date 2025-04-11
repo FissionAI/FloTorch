@@ -2,6 +2,13 @@
 import type { TableColumn } from '@nuxt/ui';
 
 const UButton = resolveComponent('UButton')
+const UCheckbox = resolveComponent('UCheckbox')
+
+const toast = useToast()
+
+const modelValue = defineModel<ValidExperiment[]>()
+
+
 const props = defineProps<{
   projectId: string
   experiments: ProjectExperiment[]
@@ -9,7 +16,41 @@ const props = defineProps<{
 
 const table = useTemplateRef('table')
 
+watchEffect(() => {
+  if (table?.value?.tableApi && table.value.tableApi.getFilteredSelectedRowModel().rows) {
+    modelValue.value = table.value.tableApi.getFilteredSelectedRowModel().rows.map((row: any) => {
+      return row.original
+    })
+  }
+})
+
 const columns = ref<TableColumn<ProjectExperiment>[]>([
+  {
+    id: 'select',
+    cell: ({ row }) => {
+      if(row.original.experiment_status !== 'succeeded'){
+        return null;
+      }else {
+        return h(UCheckbox, {
+      'modelValue': row.getIsSelected(),
+      'onUpdate:modelValue': (value: boolean) => {
+        const selectedRows = table.value?.tableApi?.getFilteredSelectedRowModel().rows ?? [];
+        if (value && (selectedRows.length > 2 && selectedRows.length < 3)) {
+          toast.add({
+            title: 'Min limit reached',
+            description: `You can select atleast 2 experiments and atmost 3 experiments`,
+            color: 'error'
+          })
+          return;
+        }
+        row.toggleSelected(!!value);
+      },
+          'ariaLabel': 'Select row'
+        })
+      }
+    },
+    enableHiding: false,
+  },
   {
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
@@ -20,14 +61,19 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
           label: "Id",
           trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
-        class: "-mx-2.5",
+     class: "-mx-2.5 focus:font-bold hover:font-bold",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
         }),
         h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
       ]);
+    },
+    sortingFn: (rowA, rowB) => {
+      const a = rowA.original.id ?? 0;
+      const b = rowB.original.id ?? 0;
+      return a.localeCompare(b);
     },
     accessorKey: "id",
     enableHiding: false,
@@ -43,10 +89,10 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
           label: "Status",
           trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
-        class: "-mx-2.5",
+     class: "-mx-2.5 focus:font-bold hover:font-bold",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
       }),
       h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
@@ -66,10 +112,10 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         label: "Inferencing Model",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
-        class: "-mx-2.5",
+     class: "-mx-2.5 focus:font-bold hover:font-bold",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
         }),
         h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
@@ -97,10 +143,10 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         label: "Estimated Cost",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
-        class: "-mx-2.5",
+     class: "-mx-2.5 focus:font-bold hover:font-bold",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
         }),
         h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
@@ -128,10 +174,10 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         label: "Faithfulness",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
-        class: "-mx-2.5",
+     class: "-mx-2.5 focus:font-bold hover:font-bold",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
         }),
         h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
@@ -179,10 +225,10 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         label: "Context Precision",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
-        class: "-mx-2.5",
+     class: "-mx-2.5 focus:font-bold hover:font-bold",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
         }),
         h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
@@ -228,10 +274,10 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         label: "Maliciousness",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
-        class: "-mx-2.5",
+     class: "-mx-2.5 focus:font-bold hover:font-bold",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
         }),
         h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
@@ -273,10 +319,10 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         label: "Answer Relevancy",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
-        class: "-mx-2.5",
+     class: "-mx-2.5 focus:font-bold hover:font-bold",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
         }),
         h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
@@ -318,10 +364,10 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         label: "Duration",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
-        class: "-mx-2.5",
+     class: "-mx-2.5 focus:font-bold hover:font-bold",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
         }),
         h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
@@ -349,10 +395,10 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         label: "Embedding Model",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
-        class: "-mx-2.5",
+     class: "-mx-2.5 focus:font-bold hover:font-bold",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
         }),
         h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
@@ -375,10 +421,10 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         label: "Evaluation Service",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
-        class: "-mx-2.5",
+     class: "-mx-2.5 focus:font-bold hover:font-bold",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
         }),
         h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
@@ -406,10 +452,10 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         label: "Evaluation Embedding Model",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
-        class: "-mx-2.5",
+     class: "-mx-2.5 focus:font-bold hover:font-bold",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
         }),
         h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
@@ -437,10 +483,10 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         label: "Evaluation Inferencing Model",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
-        class: "-mx-2.5",
+     class: "-mx-2.5 focus:font-bold hover:font-bold",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
         }),
         h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
@@ -468,10 +514,10 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         label: "Directional Cost",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
-        class: "-mx-2.5",
+     class: "-mx-2.5 focus:font-bold hover:font-bold",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
         }),
         h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
@@ -499,10 +545,10 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         label: "Indexing Algorithm",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
-        class: "-mx-2.5",
+     class: "-mx-2.5 focus:font-bold hover:font-bold",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
         }),
         h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
@@ -525,10 +571,10 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         label: "Chunking",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
-        class: "-mx-2.5",
+     class: "-mx-2.5 focus:font-bold hover:font-bold",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
         }),
         h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
@@ -551,10 +597,10 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         label: "Inferencing Model Temperature",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
-        class: "-mx-2.5",
+     class: "-mx-2.5 focus:font-bold hover:font-bold",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
         }),
         h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
@@ -579,10 +625,10 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         label: "Reranking Model",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
-        class: "-mx-2.5",
+     class: "-mx-2.5 focus:font-bold hover:font-bold",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
         }),
         h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
@@ -610,10 +656,10 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         label: "Guardrail",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
-        class: "-mx-2.5",
+     class: "-mx-2.5 focus:font-bold hover:font-bold",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
         }),
         h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
@@ -641,10 +687,10 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         label: "Bedrock Kb Name",
         trailingIcon: isSorted
           ? isSorted === "asc"
-            ? "i-lsicon:triangle-up-outline"
-            : "i-lsicon:triangle-down-outline"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
           : "i-lsicon:triangle-down-outline",
-        class: "-mx-2.5",
+     class: "-mx-2.5 focus:font-bold hover:font-bold",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
         }),
         h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
@@ -662,6 +708,86 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
       return row.original.config?.kb_name ? row.original.config.kb_name : "NA"
     }
   },
+  {
+    header: ({ column }) => {
+      const isSorted = column.getIsSorted();
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
+        color: "neutral",
+        variant: "ghost",
+        label: "KNN",
+        trailingIcon: isSorted
+          ? isSorted === "asc"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
+          : "i-lsicon:triangle-down-outline",
+     class: "-mx-2.5 focus:font-bold hover:font-bold",
+        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+        }),
+        h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+      ]);
+    },
+    accessorKey: "config.knn",
+    enableHiding: true,
+    label: 'KNN',
+    sortingFn: (rowA, rowB) => {
+      const a = rowA.original.config?.knn_num ?? 0;
+      const b = rowB.original.config?.knn_num ?? 0;
+      return a - b;
+    },
+    cell: ({ row }) => {
+      return row.original.config?.knn_num !== true && row.original.config?.knn_num === 0 ? "NA" : row.original.config.knn_num;
+    }
+  },
+  {
+    header: ({ column }) => {
+      const isSorted = column.getIsSorted();
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
+        color: "neutral",
+        variant: "ghost",
+        label: "N Shot Prompts",
+        trailingIcon: isSorted
+          ? isSorted === "asc"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
+          : "i-lsicon:triangle-down-outline",
+     class: "-mx-2.5 focus:font-bold hover:font-bold",
+        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+      }),
+      h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+    ]);
+    },
+    enableHiding: true,
+    accessorKey: "config.n_shot_prompts",
+    label: 'N Shot Prompts',
+  },
+  {
+    header: ({ column }) => {
+      const isSorted = column.getIsSorted();
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
+        color: "neutral",
+        variant: "ghost",
+        label: "Scores",
+        trailingIcon: isSorted
+          ? isSorted === "asc"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
+          : "i-lsicon:triangle-down-outline",
+     class: "-mx-2.5 focus:font-bold hover:font-bold",
+        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+      }),
+      h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+    ]);
+    },
+    cell: ({ row }) => {
+      return 'scores' in row.original && (row.original.scores !== 0 || Object.keys(row.original.scores).length === 0) ? row.original.scores : "NA"
+    },
+    enableHiding: true,
+    accessorKey: "scores",
+    label: 'Scores',
+  },
 ])
 
 const navigateToExperiment = (experimentId: string) => {
@@ -678,7 +804,20 @@ const hasAllExperimentsCompleted = computed(() => {
   })
 })
 
+const openTooltipId = ref<string | null>(null)
+
+
+
+const navigateHumanEvaluation = () => {
+  const experimentIds = modelValue.value?.map(experiment => experiment.id).join(',')
+  navigateTo(`/projects/${props.projectId}/humanevaluation?experiments=${experimentIds}`);
+}
+
+
+
 const columnVisibility = ref({
+  config_knn: false,
+  config_n_shot_prompts: false,
   directional_pricing: false,
   config_kb_name: false,
   config_guardrail_name: false,
@@ -690,7 +829,18 @@ const columnVisibility = ref({
   config_indexing_algorithm: false,
   config_chunking_strategy: false,
   config_embedding_model: false,
+  scores: false,
+  
 })
+
+const sorting = ref([
+  {
+    id: "id",
+    asc: true,
+  },
+]);
+
+
 </script>
 
 <template>
@@ -715,7 +865,7 @@ const columnVisibility = ref({
         <UButton label="Columns" color="neutral" variant="outline" trailing-icon="i-lucide-chevron-down" />
       </UDropdownMenu>
     </div>
-    <UTable class="h-100" sticky v-model:column-visibility="columnVisibility" ref="table" :columns="columns" :data="experiments">
+    <UTable class="h-100" sticky v-model:column-visibility="columnVisibility" v-model:sorting="sorting" ref="table" :columns="columns" :data="experiments">
        <template #empty>
         <div  class="flex flex-col items-center justify-center py-6">
           <p class="text-gray-500">No experiments found...!</p>
@@ -724,7 +874,7 @@ const columnVisibility = ref({
       <template #id-cell="{ row }">
         <a 
           href="#"
-          class="text-blue-500 hover:underline"
+          class="text-blue-500 hover:text-black hover:underline"
           @click.prevent="navigateToExperiment(row.original.id)"
         >
           {{ row.original.id }}
@@ -747,37 +897,37 @@ const columnVisibility = ref({
       </template>
       <template #directional_pricing-cell="{row}">     
         <div class="w-full">
-            <UTooltip   :content="{side: 'right'}">
-                    <a class="text-blue-500 hover:underline" href="#">{{useHumanCurrencyAmount(row.original?.config?.directional_pricing)}}</a>
-                    <template #content>
-                      <UCard class="w-full">
-                        <table class="w-full">
-                          <tbody>
-                            <tr>
-                              <td>Indexing Cost Estimate:</td>
-                              <td>{{useHumanCurrencyAmount(row.original?.config?.indexing_cost_estimate,3)}}</td>
-                            </tr>
-                            <tr>
-                              <td>Retrieval Cost Estimate:</td>
-                              <td>{{useHumanCurrencyAmount(row.original?.config?.retrieval_cost_estimate,3)}}</td>
-                            </tr>
-                            <tr>
-                              <td>Inferencing Cost Estimate:</td>
-                              <td>{{useHumanCurrencyAmount(row.original?.config?.inferencing_cost_estimate,3)}}</td>
-                            </tr>
-                            <tr>
-                              <td>Evaluation Cost Estimate:</td>
-                              <td>{{useHumanCurrencyAmount(row.original?.config?.eval_cost_estimate,3)}}</td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </UCard>
-                  </template>
-            </UTooltip>
-          </div>
+          <UTooltip 
+            :open="openTooltipId === row.original.id"
+            :key="row.original.id" 
+            :content="{side: 'right'}"
+            class="h-full"
+          >
+            <a 
+              @click="openTooltipId = openTooltipId === row.original.id ? null : row.original.id" 
+              class="underline decoration-dotted" 
+              href="#"
+            >
+              {{useHumanCurrencyAmount(row.original?.config?.directional_pricing)}}
+            </a>
+            <template #content>
+                  <div>
+              <UButton @click="openTooltipId = null" variant="ghost" color="neutral" trailing-icon="i-lucide-x" />
+
+                    <ul>
+                      <li class="mb-2"><span class="tooltip-text-grey">Indexing Cost Estimate:</span> {{useHumanCurrencyAmount(row.original.indexing_cost_estimate,3)}}</li>
+                      <li class="mb-2"><span class="tooltip-text-grey">Retrieval Cost Estimate:</span> {{useHumanCurrencyAmount(row.original.retrieval_cost_estimate,3)}}</li>
+                      <li class="mb-2"><span class="tooltip-text-grey">Inferencing Cost Estimate:</span> {{useHumanCurrencyAmount(row.original.inferencing_cost_estimate,3)}}</li>
+                      <li class="mb-2"><span class="tooltip-text-grey">Evaluation Cost Estimate:</span> {{useHumanCurrencyAmount(row.original.eval_cost_estimate,3)}}</li>
+                    </ul>
+                  </div>
+              </template>
+          </UTooltip>
+        </div>
       </template>
     </UTable>
     <div v-if="hasAllExperimentsCompleted" class="flex justify-end">
+      <UButton :disabled="modelValue && (modelValue.length <= 1 || modelValue.length > 3)" class="secondary-btn mr-2" @click="navigateHumanEvaluation">{{modelValue && modelValue.length > 1 ? 'Human Evaluation': 'Choose 2-3 experiments for Human Evaluation'}}</UButton>
       <DownloadResultsButton :results="experiments" :question-metrics="false" button-label="Download Results" />
     </div>
   </div>

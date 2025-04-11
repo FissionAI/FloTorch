@@ -190,12 +190,12 @@ Resources:
         CostComputeRepositoryUri: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/flotorch-costcompute-${TableSuffix}"
         PublicSubnet1: !GetAtt VPCStack.Outputs.PublicSubnet1
         PrivateSubnet1: !GetAtt VPCStack.Outputs.PrivateSubnet1
-        IndexingImageTag: "2.1.0"
-        RetrieverImageTag: "2.1.0"
-        AppImageTag: "2.1.0"
-        EvaluationImageTag: "2.1.0"
-        RuntimeImageTag: "2.1.0"
-        CostComputeImageTag: "2.1.0"
+        IndexingImageTag: "2.2"
+        RetrieverImageTag: "2.2"
+        AppImageTag: "2.2"
+        EvaluationImageTag: "2.2"
+        RuntimeImageTag: "2.2"
+        CostComputeImageTag: "2.2"
 
   LambdaStackNoOpenSearch:
     Type: AWS::CloudFormation::Stack
@@ -226,12 +226,12 @@ Resources:
         CostComputeRepositoryUri: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/flotorch-costcompute-${TableSuffix}"
         PublicSubnet1: !GetAtt VPCStack.Outputs.PublicSubnet1
         PrivateSubnet1: !GetAtt VPCStack.Outputs.PrivateSubnet1
-        IndexingImageTag: "2.1.0"
-        RetrieverImageTag: "2.1.0"
-        AppImageTag: "2.1.0"
-        EvaluationImageTag: "2.1.0"
-        RuntimeImageTag: "2.1.0"
-        CostComputeImageTag: "2.1.0"
+        IndexingImageTag: "2.2"
+        RetrieverImageTag: "2.2"
+        AppImageTag: "2.2"
+        EvaluationImageTag: "2.2"
+        RuntimeImageTag: "2.2"
+        CostComputeImageTag: "2.2"
 
   ECSStack:
     Type: AWS::CloudFormation::Stack
@@ -362,7 +362,7 @@ Resources:
         VpcConnectorArn: !GetAtt VPCStack.Outputs.VpcConnectorArn
         BedrockRoleArn: !GetAtt VPCStack.Outputs.BedrockRoleArn
         EcrRepositoryUri: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/flotorch-app-${TableSuffix}"
-        AppImageTag: "2.1.0"
+        AppImageTag: "2.2"
         NeedOpensearch: !Ref NeedOpensearch
 
   AppRunnerStackNoOpenSearch:
@@ -386,7 +386,7 @@ Resources:
         VpcConnectorArn: !GetAtt VPCStack.Outputs.VpcConnectorArn
         BedrockRoleArn: !GetAtt VPCStack.Outputs.BedrockRoleArn
         EcrRepositoryUri: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/flotorch-app-${TableSuffix}"
-        AppImageTag: "2.1.0"
+        AppImageTag: "2.2"
         NeedOpensearch: !Ref NeedOpensearch
 
 Outputs:
