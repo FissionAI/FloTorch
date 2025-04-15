@@ -1,0 +1,217 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Kubernetes Setup Template for Flotorch'
+
+Parameters:
+  TableSuffix:
+    Type: String
+    Description: Suffix to append to resource names
+  InstanceId:
+    Type: String
+    Description: ID of the EC2 instance to run commands on
+
+Resources:
+  KubernetesSetupRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/AmazonSSMFullAccess
+        - arn:aws:iam::aws:policy/AmazonEC2FullAccess
+
+  KubernetesSetupFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: index.handler
+      Role: !GetAtt KubernetesSetupRole.Arn
+      Code:
+        ZipFile: |
+          import boto3
+          import cfnresponse
+          import time
+          import json
+          import re
+          import botocore
+
+          def handler(event, context):
+              try:
+                  if event['RequestType'] in ['Create', 'Update']:
+                      ssm = boto3.client('ssm')
+                      ec2 = boto3.client('ec2')
+
+                      # Get the instance ID from the ResourceProperties
+                      raw_instance_id = event['ResourceProperties']['InstanceId']
+
+                      # Extract just the instance ID if there's extra text
+                      instance_id_match = re.search(r'(i-[a-z0-9]+)', raw_instance_id)
+                      if instance_id_match:
+                          instance_id = instance_id_match.group(1)
+                          print(f"Extracted instance ID: {instance_id} from {raw_instance_id}")
+                      else:
+                          instance_id = raw_instance_id
+                          print(f"Using instance ID as provided: {instance_id}")
+
+                      # Get the private IP of the instance
+                      response = ec2.describe_instances(InstanceIds=[instance_id])
+                      private_ip = response['Reservations'][0]['Instances'][0]['PrivateIpAddress']
+                      print(f"Private IP of the instance: {private_ip}")
+
+                      # Create the installation script without raw string prefix
+                      install_script = '''#!/bin/bash
+          set -e
+
+          echo "Starting Kubernetes tools installation and setup"
+
+          # Add /usr/local/bin to PATH
+          export PATH=$PATH:/usr/local/bin/
+
+          private_ip=$(hostname -I | awk '{print $1}')
+
+          # Install Helm
+          if ! command -v helm &> /dev/null; then
+            echo "Installing Helm..."
+            wget https://get.helm.sh/helm-v3.15.2-linux-amd64.tar.gz
+            tar -xvf helm-v3.15.2-linux-amd64.tar.gz
+            sudo chmod +x linux-amd64/helm
+            sudo mv linux-amd64/helm /usr/local/bin/helm
+            rm -rf linux-amd64 helm-v3.15.2-linux-amd64.tar.gz
+          else
+            echo "Helm is already installed"
+          fi
+
+          # Install RKE
+          if ! command -v rke &> /dev/null; then
+            echo "Installing RKE..."
+            wget https://github.com/rancher/rke/releases/download/v1.6.2/rke_linux-amd64
+            sudo mv rke_linux-amd64 /usr/local/bin/rke
+            sudo chmod +x /usr/local/bin/rke
+          else
+            echo "RKE is already installed"
+          fi
+
+          # Install kubectl
+          if ! command -v kubectl &> /dev/null; then
+            echo "Installing kubectl..."
+            curl -O https://s3.us-west-2.amazonaws.com/amazon-eks/1.30.2/2024-07-12/bin/linux/amd64/kubectl
+            sudo mv kubectl /usr/local/bin/kubectl
+            sudo chmod +x /usr/local/bin/kubectl
+          else
+            echo "kubectl is already installed"
+          fi
+
+          # Generate SSH key if it doesn't exist
+          if [ ! -f /home/ec2-user/.ssh/id_rsa ]; then
+            echo "Generating SSH key..."
+            mkdir -p /home/ec2-user/.ssh
+            ssh-keygen -t rsa -b 4096 -f /home/ec2-user/.ssh/id_rsa -N ""
+            
+            cat /home/ec2-user/.ssh/id_rsa.pub >> /home/ec2-user/.ssh/authorized_keys
+            chmod 600 /home/ec2-user/.ssh/authorized_keys
+            chown -R ec2-user:ec2-user /home/ec2-user/.ssh
+          else
+            echo "SSH key already exists"
+          fi
+
+          # Create cluster.yml file
+          echo "Creating cluster.yml file..."
+          echo "nodes:" > /home/ec2-user/cluster.yml
+          echo "  - address: $private_ip" >> /home/ec2-user/cluster.yml
+          echo "    user: ec2-user" >> /home/ec2-user/cluster.yml
+          echo "    role: [controlplane,worker,etcd]" >> /home/ec2-user/cluster.yml
+          echo "    ssh_key_path: /home/ec2-user/.ssh/id_rsa" >> /home/ec2-user/cluster.yml
+          echo "ingress:" >> /home/ec2-user/cluster.yml
+          echo "  provider: none" >> /home/ec2-user/cluster.yml
+
+          chown ec2-user:ec2-user /home/ec2-user/cluster.yml
+
+          # Setup Kubernetes cluster
+          echo "Setting up Kubernetes cluster..."
+          cd /home/ec2-user
+          sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && rke up --config cluster.yml'
+
+          # Setup kubectl config
+          echo "Setting up kubectl config..."
+          sudo -u ec2-user mkdir -p /home/ec2-user/.kube
+          sudo -u ec2-user cp /home/ec2-user/kube_config_cluster.yml /home/ec2-user/.kube/config
+
+          # Install nginx ingress controller
+          echo "Installing NGINX Ingress Controller..."
+          sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx'
+          sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && helm repo update'
+          sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx --namespace ingress-nginx --create-namespace --debug'
+
+          # Update ingress controller service to ClusterIP
+          echo "Updating ingress controller service type to ClusterIP..."
+          sudo -u ec2-user bash -c "export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && kubectl patch svc ingress-nginx-controller -n ingress-nginx -p '{\"spec\":{\"type\":\"ClusterIP\"}}'" || echo "Failed to patch ingress service, it may not be ready yet"
+
+          echo "Kubernetes setup completed successfully!"
+          '''
+
+                      # Run script using SSM
+                      command = ssm.send_command(
+                          InstanceIds=[instance_id],
+                          DocumentName='AWS-RunShellScript',
+                          Parameters={
+                              'commands': [install_script]
+                          }
+                      )
+
+                      command_id = command['Command']['CommandId']
+                      print(f"Command ID: {command_id}")
+                      print("Waiting for Kubernetes setup to complete...")
+
+                      while True:
+                          try:
+                              result = ssm.get_command_invocation(
+                                  CommandId=command_id,
+                                  InstanceId=instance_id
+                              )
+                              if result['Status'] in ['Success', 'Failed', 'Cancelled', 'TimedOut']:
+                                  if result['Status'] != 'Success':
+                                      error_message = result.get('StandardErrorContent', 'No error content available')
+                                      raise Exception(f"Command failed with status {result['Status']}: {error_message}")
+                                  break
+                              time.sleep(30)  # Check every 30 seconds
+                          except botocore.exceptions.ClientError as e:
+                              if "InvocationDoesNotExist" in str(e):
+                                  time.sleep(30)
+                                  continue
+                              else:
+                                  raise
+
+                      print("Kubernetes setup completed successfully!")
+                      response_data = {
+                          'Message': f'Kubernetes setup completed on EC2 instance {instance_id}',
+                          'PrivateIp': private_ip
+                      }
+                      cfnresponse.send(event, context, cfnresponse.SUCCESS, response_data)
+                  else:
+                      # For Delete or other events, just return success
+                      cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
+              except Exception as e:
+                  print(f"Error: {str(e)}")
+                  cfnresponse.send(event, context, cfnresponse.FAILED, {'Error': str(e)})
+
+      Runtime: python3.9
+      Timeout: 900
+      MemorySize: 256
+
+  KubernetesSetupResource:
+    Type: Custom::KubernetesSetup
+    Properties:
+      ServiceToken: !GetAtt KubernetesSetupFunction.Arn
+      InstanceId: !Ref InstanceId
+
+Outputs:
+  KubernetesSetupStatus:
+    Description: Status of the Kubernetes setup
+    Value: !GetAtt KubernetesSetupResource.Message
+  InstancePrivateIp:
+    Description: Private IP address of the EC2 instance
+    Value: !GetAtt KubernetesSetupResource.PrivateIp

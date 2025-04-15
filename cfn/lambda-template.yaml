@@ -295,7 +295,7 @@ Resources:
                                   'Tags': [
                                       {
                                           'Key': 'Name',
-                                          'Value': 'ECR-Image-Handler'
+                                          'Value': 'Flotorch-Enterprise'
                                       },
                                       {
                                           'Key': 'AutoTerminate',
@@ -393,67 +393,168 @@ Resources:
                       # Configure Docker to use non-interactive mode
                       export DOCKER_CLI_NO_INTERACTIVE=1
 
-                      # Login to source ECR
+                      echo "Logging into source ECR..."
                       aws ecr get-login-password --region "us-east-1" | docker login --username AWS --password-stdin "709825985650.dkr.ecr.us-east-1.amazonaws.com"
+                      if [ $? -ne 0 ]; then
+                          echo "Failed to log in to source ECR"
+                          exit 1
+                      fi
+                      echo "Successfully logged into source ECR"
+                      # Give docker login time to complete
+                      sleep 5
 
-                      # Pull images
-                      CONTAINER_IMAGES="
-                      709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-indexing:$INDEXING_IMAGE_TAG,
-                      709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-costcompute:$AI_IMAGE_TAG,
-                      709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-evaluation:$EVALUATION_IMAGE_TAG,
-                      709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-app:$APP_IMAGE_TAG,
-                      709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-runtime:$RUNTIME_IMAGE_TAG,
-                      709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-retriever:$RETRIEVER_IMAGE_TAG
-                      "
-
-                      for i in $(echo "$CONTAINER_IMAGES" | sed "s/,/ /g"); do 
-                          docker pull "$i"
+                      # Pull images in parallel
+                      echo "Starting parallel docker pull operations..."
+                      echo "Pulling Indexing image..."
+                      nohup docker pull "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-indexing:$INDEXING_IMAGE_TAG" > pull_indexing.log 2>&1 &
+                      PULL_PID1=$!
+                      
+                      echo "Pulling CostCompute image..."
+                      nohup docker pull "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-costcompute:$AI_IMAGE_TAG" > pull_costcompute.log 2>&1 &
+                      PULL_PID2=$!
+                      
+                      echo "Pulling Evaluation image..."
+                      nohup docker pull "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-evaluation:$EVALUATION_IMAGE_TAG" > pull_evaluation.log 2>&1 &
+                      PULL_PID3=$!
+                      
+                      echo "Pulling App image..."
+                      nohup docker pull "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-app:$APP_IMAGE_TAG" > pull_app.log 2>&1 &
+                      PULL_PID4=$!
+                      
+                      echo "Pulling Runtime image..."
+                      nohup docker pull "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-runtime:$RUNTIME_IMAGE_TAG" > pull_runtime.log 2>&1 &
+                      PULL_PID5=$!
+                      
+                      echo "Pulling Retriever image..."
+                      nohup docker pull "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-retriever:$RETRIEVER_IMAGE_TAG" > pull_retriever.log 2>&1 &
+                      PULL_PID6=$!
+                      
+                      # Wait for all pulls to complete
+                      echo "Waiting for all pulls to complete..."
+                      wait $PULL_PID1 $PULL_PID2 $PULL_PID3 $PULL_PID4 $PULL_PID5 $PULL_PID6
+                      
+                      # Check if any pulls failed
+                      PULL_FAILED=0
+                      for log in pull_*.log; do
+                        if grep -q "Error" $log; then
+                          echo "Pull failed: $(cat $log)"
+                          PULL_FAILED=1
+                        fi
                       done
+                      
+                      if [ $PULL_FAILED -eq 1 ]; then
+                        echo "One or more pulls failed. Check logs for details."
+                        exit 1
+                      fi
+                      
+                      echo "All images pulled successfully"
 
                       # Login to target ECR
+                      echo "Logging into target ECR..."
                       aws ecr get-login-password --region "$REGION" | docker login --username AWS --password-stdin "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com"
+                      if [ $? -ne 0 ]; then
+                          echo "Failed to log in to target ECR"
+                          exit 1
+                      fi
+                      echo "Successfully logged into target ECR"
+                      # Give docker login time to complete
+                      sleep 5
 
                       # Create repositories if they don't exist
                       for repo in flotorch-indexing-$TABLE_SUFFIX flotorch-costcompute-$TABLE_SUFFIX flotorch-evaluation-$TABLE_SUFFIX flotorch-app-$TABLE_SUFFIX flotorch-runtime-$TABLE_SUFFIX flotorch-retriever-$TABLE_SUFFIX; do
                           aws ecr describe-repositories --repository-names "$repo" --region "$REGION" || aws ecr create-repository --repository-name "$repo" --region "$REGION"
                       done
 
-                      # Tag and push indexing image with version and latest tags
+                      # Tag all images first
+                      echo "Tagging all images..."
+                      # Indexing image
                       docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-indexing:$INDEXING_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-indexing-$TABLE_SUFFIX:$INDEXING_IMAGE_TAG"
-                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-indexing-$TABLE_SUFFIX:$INDEXING_IMAGE_TAG"
                       docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-indexing:$INDEXING_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-indexing-$TABLE_SUFFIX:latest"
-                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-indexing-$TABLE_SUFFIX:latest"
 
-                      # Tag and push AI image with version and latest tags
+                      # AI/CostCompute image
                       docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-costcompute:$AI_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-costcompute-$TABLE_SUFFIX:$AI_IMAGE_TAG"
-                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-costcompute-$TABLE_SUFFIX:$AI_IMAGE_TAG"
                       docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-costcompute:$AI_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-costcompute-$TABLE_SUFFIX:latest"
-                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-costcompute-$TABLE_SUFFIX:latest"
 
-                      # Tag and push evaluation image with version and latest tags
+                      # Evaluation image
                       docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-evaluation:$EVALUATION_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-evaluation-$TABLE_SUFFIX:$EVALUATION_IMAGE_TAG"
-                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-evaluation-$TABLE_SUFFIX:$EVALUATION_IMAGE_TAG"
                       docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-evaluation:$EVALUATION_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-evaluation-$TABLE_SUFFIX:latest"
-                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-evaluation-$TABLE_SUFFIX:latest"
 
-                      # Tag and push app image with version and latest tags
+                      # App image
                       docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-app:$APP_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-app-$TABLE_SUFFIX:$APP_IMAGE_TAG"
-                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-app-$TABLE_SUFFIX:$APP_IMAGE_TAG"
                       docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-app:$APP_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-app-$TABLE_SUFFIX:latest"
-                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-app-$TABLE_SUFFIX:latest"
 
-                      # Tag and push runtime image with version and latest tags
+                      # Runtime image
                       docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-runtime:$RUNTIME_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-runtime-$TABLE_SUFFIX:$RUNTIME_IMAGE_TAG"
-                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-runtime-$TABLE_SUFFIX:$RUNTIME_IMAGE_TAG"
                       docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-runtime:$RUNTIME_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-runtime-$TABLE_SUFFIX:latest"
-                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-runtime-$TABLE_SUFFIX:latest"
 
-                      # Tag and push retriever image with version and latest tags
+                      # Retriever image
                       docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-retriever:$RETRIEVER_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-retriever-$TABLE_SUFFIX:$RETRIEVER_IMAGE_TAG"
-                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-retriever-$TABLE_SUFFIX:$RETRIEVER_IMAGE_TAG"
                       docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-retriever:$RETRIEVER_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-retriever-$TABLE_SUFFIX:latest"
-                      docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-retriever-$TABLE_SUFFIX:latest"
 
+                      # Push all images in parallel
+                      echo "Starting parallel docker push operations..."
+
+                      # Push Indexing images
+                      echo "Pushing Indexing images..."
+                      nohup docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-indexing-$TABLE_SUFFIX:$INDEXING_IMAGE_TAG" > push_indexing_tag.log 2>&1 &
+                      PUSH_PID1=$!
+                      nohup docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-indexing-$TABLE_SUFFIX:latest" > push_indexing_latest.log 2>&1 &
+                      PUSH_PID2=$!
+                      
+                      # Push CostCompute images
+                      echo "Pushing CostCompute images..."
+                      nohup docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-costcompute-$TABLE_SUFFIX:$AI_IMAGE_TAG" > push_costcompute_tag.log 2>&1 &
+                      PUSH_PID3=$!
+                      nohup docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-costcompute-$TABLE_SUFFIX:latest" > push_costcompute_latest.log 2>&1 &
+                      PUSH_PID4=$!
+                      
+                      # Push Evaluation images
+                      echo "Pushing Evaluation images..."
+                      nohup docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-evaluation-$TABLE_SUFFIX:$EVALUATION_IMAGE_TAG" > push_evaluation_tag.log 2>&1 &
+                      PUSH_PID5=$!
+                      nohup docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-evaluation-$TABLE_SUFFIX:latest" > push_evaluation_latest.log 2>&1 &
+                      PUSH_PID6=$!
+                      
+                      # Push App images
+                      echo "Pushing App images..."
+                      nohup docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-app-$TABLE_SUFFIX:$APP_IMAGE_TAG" > push_app_tag.log 2>&1 &
+                      PUSH_PID7=$!
+                      nohup docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-app-$TABLE_SUFFIX:latest" > push_app_latest.log 2>&1 &
+                      PUSH_PID8=$!
+                      
+                      # Push Runtime images
+                      echo "Pushing Runtime images..."
+                      nohup docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-runtime-$TABLE_SUFFIX:$RUNTIME_IMAGE_TAG" > push_runtime_tag.log 2>&1 &
+                      PUSH_PID9=$!
+                      nohup docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-runtime-$TABLE_SUFFIX:latest" > push_runtime_latest.log 2>&1 &
+                      PUSH_PID10=$!
+                      
+                      # Push Retriever images
+                      echo "Pushing Retriever images..."
+                      nohup docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-retriever-$TABLE_SUFFIX:$RETRIEVER_IMAGE_TAG" > push_retriever_tag.log 2>&1 &
+                      PUSH_PID11=$!
+                      nohup docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-retriever-$TABLE_SUFFIX:latest" > push_retriever_latest.log 2>&1 &
+                      PUSH_PID12=$!
+                      
+                      # Wait for all pushes to complete
+                      echo "Waiting for all pushes to complete..."
+                      wait $PUSH_PID1 $PUSH_PID2 $PUSH_PID3 $PUSH_PID4 $PUSH_PID5 $PUSH_PID6 $PUSH_PID7 $PUSH_PID8 $PUSH_PID9 $PUSH_PID10 $PUSH_PID11 $PUSH_PID12
+                      
+                      # Check if any pushes failed
+                      PUSH_FAILED=0
+                      for log in push_*.log; do
+                        if grep -q "Error" $log; then
+                          echo "Push failed: $(cat $log)"
+                          PUSH_FAILED=1
+                        fi
+                      done
+                      
+                      if [ $PUSH_FAILED -eq 1 ]; then
+                        echo "One or more pushes failed. Check logs for details."
+                        exit 1
+                      fi
+                      
+                      echo "All images pushed successfully"
                       echo "Docker operations completed successfully"
                       '''
                       
@@ -497,9 +598,12 @@ Resources:
                           raise Exception(f"Command failed: {result.get('StandardErrorContent', '')}")
                       
                       # Terminate instance
-                      ec2.terminate_instances(InstanceIds=[instance_id])
+                      # ec2.terminate_instances(InstanceIds=[instance_id])
                       
-                      response_data = {'Message': f'EC2 instance {instance_id} completed Docker operations'}
+                      response_data = {
+                          'Message': f'EC2 instance {instance_id} completed Docker operations',
+                          'InstanceId': instance_id
+                      }
                       cfnresponse.send(event, context, cfnresponse.SUCCESS, response_data)
                   else:
                       cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
@@ -681,3 +785,10 @@ Outputs:
   LambdaSecurityGroupId:
     Description: ID of the Lambda security group
     Value: !Ref LambdaSecurityGroup
+  EC2InstanceId:
+    Description: ID of the EC2 instance created by DockerPullPushFunction
+    Condition: PrerequisitesMet
+    Value: 
+      Fn::GetAtt:
+        - DockerPullPushResource
+        - Message

@@ -1,0 +1,12 @@
+{
+    "version": "latest",
+    "project_name": "Harsha",
+    "table_suffix": "harsha",
+    "client_name": "harsha",
+    "opensearch_user": "admin",
+    "opensearch_password": "Flotorch@123",
+    "nginx_password": "Flotorch@123",
+    "region": "us-east-1",
+    "prerequisites_met": "no",
+    "need_opensearch": "no"
+}

@@ -1,0 +1,165 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: clickhouse
+  labels:
+    app: clickhouse
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+spec:
+  ports:
+  - port: 8123
+    targetPort: 8123
+    protocol: TCP
+    name: http
+  - port: 9000
+    targetPort: 9000
+    protocol: TCP
+    name: native
+  selector:
+    app: clickhouse
+    release: {{ .Release.Name }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clickhouse
+  labels:
+    app: clickhouse
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: clickhouse
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: clickhouse
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+      - name: clickhouse
+        image: "{{ .Values.clickhouse.image.repository }}:{{ .Values.clickhouse.image.tag }}"
+        imagePullPolicy: IfNotPresent
+        readinessProbe:
+          tcpSocket:
+            port: 9000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        ports:
+        - name: http
+          containerPort: 8123
+          protocol: TCP
+        - name: native
+          containerPort: 9000
+          protocol: TCP
+        env:
+        - name: CLICKHOUSE_DB
+          value: flotorch
+        - name: CLICKHOUSE_USER
+          value: {{ .Values.clickhouse.auth.username }}
+        - name: CLICKHOUSE_PASSWORD
+          value: {{ .Values.clickhouse.auth.password }}
+        - name: CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT
+          value: "1"
+        lifecycle:
+          postStart:
+            exec:
+              command: ["bash", "-c", "until clickhouse-client --host=localhost --query=\"SELECT 1\" 2>/dev/null; do echo \"Waiting for ClickHouse to start...\"; sleep 2; done;"]
+        volumeMounts:
+        - name: clickhouse-data
+          mountPath: /var/lib/clickhouse
+        - name: clickhouse-logs
+          mountPath: /var/log/clickhouse-server
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 2048Mi
+          requests:
+            cpu: 200m
+            memory: 512Mi
+      - name: migrations
+        image: yandex/clickhouse-client:latest
+        command: ["bash", "-c"]
+        args:
+        - |
+          echo "Waiting for main ClickHouse container to be ready..."
+          sleep 30
+          
+          # Check if main container is ready by trying multiple connection methods
+          MAX_ATTEMPTS=60
+          ATTEMPT=0
+          echo "Starting connection attempts to ClickHouse..."
+          
+          # Try different connection methods
+          while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
+            # First try: connect to the local container
+            if clickhouse-client --host=127.0.0.1 --query="SELECT 1" 2>/dev/null; then
+              echo "Successfully connected to ClickHouse via 127.0.0.1!"
+              CLICKHOUSE_HOST="127.0.0.1"
+              break
+            fi
+            
+            # Second try: connect via localhost
+            if clickhouse-client --host=localhost --query="SELECT 1" 2>/dev/null; then
+              echo "Successfully connected to ClickHouse via localhost!"
+              CLICKHOUSE_HOST="localhost"
+              break
+            fi
+            
+            # Third try: use the service name
+            if clickhouse-client --host=clickhouse --query="SELECT 1" 2>/dev/null; then
+              echo "Successfully connected to ClickHouse via service name!"
+              CLICKHOUSE_HOST="clickhouse"
+              break
+            fi
+            
+            echo "Waiting for ClickHouse server... (Attempt $ATTEMPT/$MAX_ATTEMPTS)"
+            sleep 5
+            ATTEMPT=$((ATTEMPT+1))
+          done
+          
+          if [ $ATTEMPT -eq $MAX_ATTEMPTS ]; then
+            echo "ClickHouse server did not become ready in time"
+            exit 1
+          fi
+          
+          # Check if we have migration files
+          if [ -z "$(ls -A /migrations/*.sql 2>/dev/null)" ]; then
+            echo "No migration files found in /migrations/"
+            echo "Contents of /migrations/: $(ls -la /migrations/)"
+            sleep 3600  # Keep container running for debugging
+            exit 0
+          fi
+          
+          # Run all migration scripts in order
+          for file in $(ls -v /migrations/*.sql); do
+            echo "Running migration: $file"
+            clickhouse-client --host=$CLICKHOUSE_HOST --multiquery < $file
+            if [ $? -ne 0 ]; then
+              echo "Error running migration script $file"
+              exit 1
+            fi
+            echo "Migration $file completed successfully"
+          done
+          
+          echo "All ClickHouse migrations completed successfully"
+          
+          # Keep the container running to allow checking logs
+          sleep 3600
+        volumeMounts:
+        - name: clickhouse-migrations-volume
+          mountPath: /migrations
+      volumes:
+      - name: clickhouse-data
+        persistentVolumeClaim:
+          claimName: clickhouse-data-pvc
+      - name: clickhouse-logs
+        persistentVolumeClaim:
+          claimName: clickhouse-logs-pvc
+      - name: clickhouse-migrations-volume
+        configMap:
+          name: clickhouse-migrations
