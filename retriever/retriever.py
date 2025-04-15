@@ -23,6 +23,40 @@ logger.setLevel(logging.INFO)
 from typing import List, Dict, Any, Optional, Tuple, Union
 from dataclasses import asdict
 
+def calculate_guardrail_units(text: str,
+                            use_content_filters: bool = False,
+                            use_denied_topics: bool = False,
+                            use_contextual_grounding: bool = False,
+                            source: str = "",
+                            query: str = "") -> dict:
+    """
+    Calculate text units for enabled guardrail policies.
+    1000 characters = 1 text unit. Partial units round up.
+    """
+    CHARS_PER_TEXT_UNIT = 1000
+    result = {'total_text_units': 0, 'breakdown': {}}
+    
+    if not text:
+        return result
+        
+    text_units = (len(text) + CHARS_PER_TEXT_UNIT - 1) // CHARS_PER_TEXT_UNIT
+    
+    if use_content_filters:
+        result['breakdown']['content_filters'] = text_units
+        result['total_text_units'] += text_units
+        
+    if use_denied_topics:
+        result['breakdown']['denied_topics'] = text_units
+        result['total_text_units'] += text_units
+    
+    if use_contextual_grounding:
+        grounding_units = (len(source) + len(query) + len(text) + 
+                         CHARS_PER_TEXT_UNIT - 1) // CHARS_PER_TEXT_UNIT
+        result['breakdown']['contextual_grounding'] = grounding_units
+        result['total_text_units'] += grounding_units
+        
+    return result
+
 def retrieve(config: Config, experimentalConfig: ExperimentalConfig) -> None:
     """
     Execute the retrieval process for question answering experiments.
@@ -88,8 +122,8 @@ def initialize_components(config: Config, experimentalConfig: ExperimentalConfig
     """Initialize all required components for the retrieval process."""
     try:
         # Initialize embedding processor if required
-        if experimentalConfig.bedrock_knowledge_base or not experimentalConfig.knowledge_base:
-            logger.info("Skipping embed processor initialization")
+        if experimentalConfig.bedrock_knowledge_base:
+            logger.info("Setting up knowledge base retriever")
             embed_processor = None
             
         else:
@@ -101,20 +135,19 @@ def initialize_components(config: Config, experimentalConfig: ExperimentalConfig
         inference_processor = InferenceProcessor(experimentalConfig)
         
         # Initialize vector database
-        vector_database = None
-        if experimentalConfig.knowledge_base:
-            if experimentalConfig.bedrock_knowledge_base:
-                logger.info("Connecting to Knowledge base")
-                vector_database = KnowledgeBaseVectorDatabase(region=experimentalConfig.aws_region)
-            else:
-                logger.info(f"Connecting to OpenSearch at {config.opensearch_host}")
-                vector_database = OpenSearchVectorDatabase(
-                    host=config.opensearch_host,
-                    is_serverless=config.opensearch_serverless,
-                    region=config.aws_region,
-                    username=config.opensearch_username,
-                    password=config.opensearch_password
-                )
+        
+        if experimentalConfig.bedrock_knowledge_base:
+            logger.info("Connecting to Knowledge base")
+            vector_database = KnowledgeBaseVectorDatabase(region=experimentalConfig.aws_region)
+        else:
+            logger.info(f"Connecting to OpenSearch at {config.opensearch_host}")
+            vector_database = OpenSearchVectorDatabase(
+                host=config.opensearch_host,
+                is_serverless=config.opensearch_serverless,
+                region=config.aws_region,
+                username=config.opensearch_username,
+                password=config.opensearch_password
+            )
         
         # Initialize DynamoDB connections
         logger.info("Initializing DynamoDB connections")
@@ -195,13 +228,14 @@ def process_questions(
             logger.debug(f"Processing question {idx+1}: {question}")
 
             # Generate embeddings
-            if experimentalConfig.bedrock_knowledge_base or not experimentalConfig.knowledge_base:
-                query_metadata, query_embedding = {'inputTokens': '0', 'latencyMs': '0'}, None                
-            else:
+            if not experimentalConfig.bedrock_knowledge_base:
                 logger.info("Generating embeddings for the question using provided embedder")
                 query_metadata, query_embedding = components["embed_processor"].embed_text(
                     question
                 )
+            else:
+                query_metadata, query_embedding = {'inputTokens': '0', 'latencyMs': '0'}, None
+            
                 
             query_results=None
             guardrail_input_assessment = None
@@ -209,9 +243,55 @@ def process_questions(
             guardrail_context_assessment = None
             guardrail_id = None
             guardrail_blocked = None
+            guardrail_input_usage = None
+            guardrail_output_usage = None
+            guardrail_context_usage = None
+            has_content_filters = None
+            has_denied_topics = None
+            has_contextual_grounding = None
 
             answer_metadata = {}
             answer = ""
+
+            # Get guardrail configuration
+            try:
+                guardrail_client = components['guardrails']['client']
+                guardrail_response = guardrail_client.get_guardrail(
+                    guardrailIdentifier=guardrail_id,
+                    guardrailVersion=components['guardrails'].get('version', 'latest')
+                )
+                
+                # Check if guardrail is in READY state
+                if guardrail_response.get('status') != 'READY':
+                    logger.warning(f"Guardrail {guardrail_id} is not in READY state. Current status: {guardrail_response.get('status')}")
+                
+                # Determine which types of checks are enabled
+                has_content_filters = bool(guardrail_response.get('contentPolicy', {}).get('filters', []))
+                has_denied_topics = bool(guardrail_response.get('topicPolicy', {}).get('topics', []))
+                has_contextual_grounding = bool(guardrail_response.get('contextualGroundingPolicy', {}).get('filters', []))
+                
+                # Calculate usage based on actual guardrail settings
+                guardrail_usage = calculate_guardrail_units(
+                    text=question,
+                    use_content_filters=has_content_filters,
+                    use_denied_topics=has_denied_topics,
+                    use_contextual_grounding=has_contextual_grounding,
+                    source=' '.join(record['text'] for record in query_results) if query_results else "",
+                    query=question
+                )
+                
+                logger.info(f"Guardrail usage for question {idx+1}: {guardrail_usage}")
+                
+            except Exception as e:
+                logger.error(f"Error getting guardrail configuration: {str(e)}", exc_info=True)
+                guardrail_usage = calculate_guardrail_units(
+                    text=question,
+                    use_content_filters=False,
+                    use_denied_topics=False,
+                    use_contextual_grounding=False
+                )
+                guardrail_metadata = {'guardrail_usage': guardrail_usage}
+            
 
             # Retrieval query embed is not provided by knowledge base
             retrieval_query_embed_tokens += int(query_metadata.get("inputTokens", 0) if query_embedding else 0)
@@ -225,6 +305,14 @@ def process_questions(
 
                 # Apply INPUT guardrails
                 if experimentalConfig.enable_prompt_guardrails:
+                    guardrail_input_usage = calculate_guardrail_units(
+                        text=question,
+                        use_content_filters=has_content_filters,
+                        use_denied_topics=has_denied_topics,
+                        use_contextual_grounding=has_contextual_grounding,
+                        source="",
+                        query=question
+                    )
                     blocked, modified_question, guardrail_input_assessment = apply_guardrail_check(
                         components,
                         guardrail_id,
@@ -238,87 +326,7 @@ def process_questions(
 
                 # Apply CONTEXT guardrails if not already blocked
                 if experimentalConfig.enable_context_guardrails and guardrail_blocked == 'NONE':
-                    if experimentalConfig.knowledge_base:
-                        # Search for relevant context once
-                        if isinstance(components["vector_database"], OpenSearchVectorDatabase):
-                            query_results = components["vector_database"].search(
-                                experimentalConfig.index_id, query_embedding, experimentalConfig.knn_num
-                            )
-                        elif isinstance(components["vector_database"], KnowledgeBaseVectorDatabase):
-                            query_results = components["vector_database"].search(
-                                question, experimentalConfig.kb_data, experimentalConfig.knn_num
-                            )
-
-                        if experimentalConfig.chunking_strategy.lower() == 'hierarchical':
-                            query_results = __duplicate_removal_for_heirarchical_config(query_results)
-
-                        if experimentalConfig.rerank_model_id and experimentalConfig.rerank_model_id.lower() != 'none':
-                            #Rerank the query results
-                            query_results = __rerank_query_result(query_results, question, experimentalConfig, idx)
-
-
-                    if query_results:
-                        context = ' '.join(record['text'] for record in query_results)
-                        blocked, modified_context, guardrail_context_assessment = apply_guardrail_check(
-                            components,
-                            guardrail_id,
-                            content={'text': context},
-                            source='INPUT',
-                            log_prefix="Context"
-                        )
-                        if blocked:
-                            answer = modified_context
-                            guardrail_blocked = 'CONTEXT'
-
-                # Generate and check answer if not blocked
-                if guardrail_blocked == 'NONE':
-                    # Fetch context if not already done
-                    if query_results is None:
-                        if experimentalConfig.knowledge_base:
-                            if isinstance(components["vector_database"], OpenSearchVectorDatabase):
-                                query_results = components["vector_database"].search(
-                                    experimentalConfig.index_id, query_embedding, experimentalConfig.knn_num
-                            )
-                            elif isinstance(components["vector_database"], KnowledgeBaseVectorDatabase):
-                                query_results = components["vector_database"].search(
-                                    question, experimentalConfig.kb_data, experimentalConfig.knn_num
-                                )
-                            if experimentalConfig.chunking_strategy.lower() == 'hierarchical':
-                                query_results = __duplicate_removal_for_heirarchical_config(query_results)
-                            if experimentalConfig.rerank_model_id and experimentalConfig.rerank_model_id.lower() != 'none':
-                                #Rerank the query results
-                                query_results = __rerank_query_result(query_results, question, experimentalConfig, idx)
-
-                   # Generate answer
-                    if experimentalConfig.knowledge_base:
-                        answer_metadata, answer = components["inference_processor"].generate_text(
-                        user_query=question,
-                        context=query_results,
-                        default_prompt=config.inference_system_prompt,
-                    )
-                    else:
-                        answer_metadata, answer = components["inference_processor"].generate_text(
-                            user_query=question,
-                            default_prompt=config.inference_system_prompt,
-                        )
-                    retrieval_input_tokens += int(answer_metadata["inputTokens"])
-                    retrieval_output_tokens += int(answer_metadata["outputTokens"])
-
-                    # Apply OUTPUT guardrails if enabled
-                    if experimentalConfig.enable_response_guardrails:
-                        blocked, modified_answer, guardrail_output_assessment = apply_guardrail_check(
-                            components,
-                            guardrail_id,
-                            content={'text': answer},
-                            source='OUTPUT',
-                            log_prefix="Answer"
-                        )
-                        if blocked:
-                            answer = modified_answer
-                            guardrail_blocked = 'OUTPUT'
-            else:
-                if experimentalConfig.knowledge_base:
-                    # Search for relevant context
+                    # Search for relevant context once
                     if isinstance(components["vector_database"], OpenSearchVectorDatabase):
                         query_results = components["vector_database"].search(
                             experimentalConfig.index_id, query_embedding, experimentalConfig.knn_num
@@ -335,18 +343,101 @@ def process_questions(
                         #Rerank the query results
                         query_results = __rerank_query_result(query_results, question, experimentalConfig, idx)
 
-                # Generate answer
-                if experimentalConfig.knowledge_base:
+
+                    if query_results:
+                        guardrail_context_usage = calculate_guardrail_units(
+                            text=query_results,
+                            use_content_filters=has_content_filters,
+                            use_denied_topics=has_denied_topics,
+                            use_contextual_grounding=has_contextual_grounding,
+                            source="",
+                            query=query_results
+                        )
+                        context = ' '.join(record['text'] for record in query_results)
+                        blocked, modified_context, guardrail_context_assessment = apply_guardrail_check(
+                            components,
+                            guardrail_id,
+                            content={'text': context},
+                            source='INPUT',
+                            log_prefix="Context"
+                        )
+                        if blocked:
+                            answer = modified_context
+                            guardrail_blocked = 'CONTEXT'
+
+                # Generate and check answer if not blocked
+                if guardrail_blocked == 'NONE':
+                    # Fetch context if not already done
+                    if query_results is None:
+                        if isinstance(components["vector_database"], OpenSearchVectorDatabase):
+                            query_results = components["vector_database"].search(
+                                experimentalConfig.index_id, query_embedding, experimentalConfig.knn_num
+                        )
+                    elif isinstance(components["vector_database"], KnowledgeBaseVectorDatabase):
+                        query_results = components["vector_database"].search(
+                            question, experimentalConfig.kb_data, experimentalConfig.knn_num
+                        )
+
+                        if experimentalConfig.chunking_strategy.lower() == 'hierarchical':
+                            query_results = __duplicate_removal_for_heirarchical_config(query_results)
+
+                        if experimentalConfig.rerank_model_id and experimentalConfig.rerank_model_id.lower() != 'none':
+                            #Rerank the query results
+                            query_results = __rerank_query_result(query_results, question, experimentalConfig, idx)
+
+                    # Generate answer
                     answer_metadata, answer = components["inference_processor"].generate_text(
                         user_query=question,
                         context=query_results,
                         default_prompt=config.inference_system_prompt,
                     )
-                else:
-                    answer_metadata, answer = components["inference_processor"].generate_text(
-                        user_query=question,
-                        default_prompt=config.inference_system_prompt
+                    retrieval_input_tokens += int(answer_metadata["inputTokens"])
+                    retrieval_output_tokens += int(answer_metadata["outputTokens"])
+
+                    # Apply OUTPUT guardrails if enabled
+                    if experimentalConfig.enable_response_guardrails:
+                        guardrail_output_usage = calculate_guardrail_units(
+                            text=answer,
+                            use_content_filters=has_content_filters,
+                            use_denied_topics=has_denied_topics,
+                            use_contextual_grounding=has_contextual_grounding,
+                            source=query_results,
+                            query=question
+                        )
+                        blocked, modified_answer, guardrail_output_assessment = apply_guardrail_check(
+                            components,
+                            guardrail_id,
+                            content={'text': answer},
+                            source='OUTPUT',
+                            log_prefix="Answer"
+                        )
+                        if blocked:
+                            answer = modified_answer
+                            guardrail_blocked = 'OUTPUT'
+            else:
+                # Search for relevant context
+                if isinstance(components["vector_database"], OpenSearchVectorDatabase):
+                        query_results = components["vector_database"].search(
+                            experimentalConfig.index_id, query_embedding, experimentalConfig.knn_num
+                        )
+                elif isinstance(components["vector_database"], KnowledgeBaseVectorDatabase):
+                    query_results = components["vector_database"].search(
+                        question, experimentalConfig.kb_data, experimentalConfig.knn_num
                     )
+
+                if experimentalConfig.chunking_strategy.lower() == 'hierarchical':
+                    query_results = __duplicate_removal_for_heirarchical_config(query_results)
+
+                if experimentalConfig.rerank_model_id and experimentalConfig.rerank_model_id.lower() != 'none':
+                    #Rerank the query results
+                    query_results = __rerank_query_result(query_results, question, experimentalConfig, idx)
+
+                # Generate answer
+                answer_metadata, answer = components["inference_processor"].generate_text(
+                    user_query=question,
+                    context=query_results,
+                    default_prompt=config.inference_system_prompt,
+                )
                 retrieval_input_tokens += int(answer_metadata["inputTokens"])
                 retrieval_output_tokens += int(answer_metadata["outputTokens"])
 
