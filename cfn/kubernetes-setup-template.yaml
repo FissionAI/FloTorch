@@ -60,7 +60,11 @@ Resources:
                       # Get the private IP of the instance
                       response = ec2.describe_instances(InstanceIds=[instance_id])
                       private_ip = response['Reservations'][0]['Instances'][0]['PrivateIpAddress']
+                      availability_zone = response['Reservations'][0]['Instances'][0]['Placement']['AvailabilityZone']
+                      # Extract region from AZ (remove the last character)
+                      region = availability_zone[:-1]
                       print(f"Private IP of the instance: {private_ip}")
+                      print(f"Region of the instance: {region}")
 
                       # Create the installation script without raw string prefix
                       install_script = '''#!/bin/bash
@@ -72,6 +76,9 @@ Resources:
           export PATH=$PATH:/usr/local/bin/
 
           private_ip=$(hostname -I | awk '{print $1}')
+          region=$(aws ec2 describe-instances --instance-ids $(curl -s http://169.254.169.254/latest/meta-data/instance-id) --query 'Reservations[0].Instances[0].Placement.AvailabilityZone' --output text | sed 's/.$//')
+          echo "Region: $region"
+          echo "Private IP: $private_ip"
 
           # Install Helm
           if ! command -v helm &> /dev/null; then
@@ -128,7 +135,33 @@ Resources:
           echo "ingress:" >> /home/ec2-user/cluster.yml
           echo "  provider: none" >> /home/ec2-user/cluster.yml
 
+          rm -rf /home/ec2-user/nginx-ingress-service.yml
+
+          # Create nginx-ingress-service.yml
+          echo "Creating nginx-ingress-service.yml..."
+          echo "apiVersion: v1"  >> /home/ec2-user/nginx-ingress-service.yml
+          echo "kind: Service"  >> /home/ec2-user/nginx-ingress-service.yml
+          echo "metadata:"  >> /home/ec2-user/nginx-ingress-service.yml
+          echo "  name: nginx-ingress-nodeport"  >> /home/ec2-user/nginx-ingress-service.yml
+          echo "  namespace: ingress-nginx"  >> /home/ec2-user/nginx-ingress-service.yml
+          echo "spec:"  >> /home/ec2-user/nginx-ingress-service.yml
+          echo "  type: NodePort"  >> /home/ec2-user/nginx-ingress-service.yml
+          echo "  selector:"  >> /home/ec2-user/nginx-ingress-service.yml
+          echo "    app.kubernetes.io/name: ingress-nginx"  >> /home/ec2-user/nginx-ingress-service.yml
+          echo "  ports:"  >> /home/ec2-user/nginx-ingress-service.yml
+          echo "    - name: http80"  >> /home/ec2-user/nginx-ingress-service.yml
+          echo "      protocol: TCP"  >> /home/ec2-user/nginx-ingress-service.yml
+          echo "      port: 80"  >> /home/ec2-user/nginx-ingress-service.yml
+          echo "      targetPort: 80"  >> /home/ec2-user/nginx-ingress-service.yml
+          echo "      nodePort: 30080"  >> /home/ec2-user/nginx-ingress-service.yml
+          echo "    - name: https443"  >> /home/ec2-user/nginx-ingress-service.yml
+          echo "      protocol: TCP"  >> /home/ec2-user/nginx-ingress-service.yml
+          echo "      port: 443"  >> /home/ec2-user/nginx-ingress-service.yml
+          echo "      targetPort: 443"  >> /home/ec2-user/nginx-ingress-service.yml
+          echo "      nodePort: 30443"  >> /home/ec2-user/nginx-ingress-service.yml
+
           chown ec2-user:ec2-user /home/ec2-user/cluster.yml
+          chown ec2-user:ec2-user /home/ec2-user/nginx-ingress-service.yml
 
           # Setup Kubernetes cluster
           echo "Setting up Kubernetes cluster..."
@@ -144,11 +177,42 @@ Resources:
           echo "Installing NGINX Ingress Controller..."
           sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx'
           sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && helm repo update'
-          sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx --namespace ingress-nginx --create-namespace --debug'
+          sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx --namespace ingress-nginx --create-namespace'
+          sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && kubectl patch svc ingress-nginx-controller -n ingress-nginx -p '{\"spec\":{\"type\":\"ClusterIP\"}}' || echo "Failed to patch ingress service, it may not be ready yet"'
+          
+          # Apply nginx-ingress-service.yml to create NodePort service
+          echo "Applying nginx-ingress-service.yml to create NodePort service..."
+          sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && kubectl apply -f /home/ec2-user/nginx-ingress-service.yml'
+
+          # Add FloTorch Helm repo
+          echo "Adding FloTorch Helm repo..."
+          sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && helm repo add flotorch https://balasriharsha-ch.github.io/FloTorch/charts'
+          sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && helm repo update'
+
+          # Create AWS ECR credentials secret
+          echo "Creating AWS ECR credentials secret..."
+          # Get AWS account number and region from instance metadata
+          AWS_ACCOUNT_NUMBER=$(aws sts get-caller-identity --query Account --output text)
+          
+          # Create the docker registry secret
+          # Create the registry credentials file for better parameter handling
+          echo "Creating AWS ECR secret..."
+          # Note: We avoid nested command substitution problems by using direct kubectl command
+          # without wrapping it in sudo -u ec2-user bash -c
+          # First get the ECR login password
+          ECR_PASSWORD=$(aws ecr get-login-password --region $region)
+          # Then create a temporary file to avoid complex escaping issues
+          echo "Creating credentials in Docker format..."
+          # Make kubectl run by ec2-user directly
+          sudo -u ec2-user bash -c "export PATH=\$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && kubectl create secret docker-registry aws-ecr-credentials --docker-server=${AWS_ACCOUNT_NUMBER}.dkr.ecr.${region}.amazonaws.com --docker-username=AWS --docker-password=\"${ECR_PASSWORD}\" --dry-run=client -o yaml | kubectl apply -f -"
+
+          # Install FloTorch Helm chart
+          echo "Installing FloTorch Helm chart..."
+          sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && helm upgrade --install flotorch flotorch/flotorch'
 
           # Update ingress controller service to ClusterIP
           echo "Updating ingress controller service type to ClusterIP..."
-          sudo -u ec2-user bash -c "export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && kubectl patch svc ingress-nginx-controller -n ingress-nginx -p '{\"spec\":{\"type\":\"ClusterIP\"}}'" || echo "Failed to patch ingress service, it may not be ready yet"
+          sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && kubectl patch svc ingress-nginx-controller -n ingress-nginx -p "{\"spec\":{\"type\":\"ClusterIP\"}}"' || echo "Failed to patch ingress service, it may not be ready yet"
 
           echo "Kubernetes setup completed successfully!"
           '''
