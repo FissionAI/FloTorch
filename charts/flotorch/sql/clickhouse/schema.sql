@@ -98,8 +98,8 @@ TTL toDateTime(timestamp) + INTERVAL 360 DAY
 SETTINGS index_granularity = 8192;
 
 -- Add indices for guardrail_logs
-ALTER TABLE guardrail_logs ADD INDEX IF NOT EXISTS idx_action (action) TYPE minmax;
-ALTER TABLE guardrail_logs ADD INDEX IF NOT EXISTS idx_severity (severity) TYPE minmax;
+ALTER TABLE guardrail_logs ADD INDEX IF NOT EXISTS idx_action (action) TYPE minmax GRANULARITY 1;
+ALTER TABLE guardrail_logs ADD INDEX IF NOT EXISTS idx_severity (severity) TYPE minmax GRANULARITY 1;
 
 -- Add projection for guardrail analysis
 ALTER TABLE guardrail_logs ADD PROJECTION IF NOT EXISTS guardrail_summary
@@ -153,10 +153,10 @@ TTL toDateTime(timestamp) + INTERVAL 120 DAY
 SETTINGS index_granularity = 8192;
 
 -- Create indices for request traces for better query performance
-ALTER TABLE request_traces ADD INDEX IF NOT EXISTS idx_sequence (sequence) TYPE minmax;
-ALTER TABLE request_traces ADD INDEX IF NOT EXISTS idx_request_sequence (requestUid, sequence) TYPE minmax;
-ALTER TABLE request_traces ADD INDEX IF NOT EXISTS idx_request_timestamp (requestUid, timestamp) TYPE minmax;
-ALTER TABLE request_traces ADD INDEX IF NOT EXISTS idx_stage (stage) TYPE minmax;
+ALTER TABLE request_traces ADD INDEX IF NOT EXISTS idx_sequence (sequence) TYPE minmax GRANULARITY 1;
+ALTER TABLE request_traces ADD INDEX IF NOT EXISTS idx_request_sequence (requestUid, sequence) TYPE minmax GRANULARITY 1;
+ALTER TABLE request_traces ADD INDEX IF NOT EXISTS idx_request_timestamp (requestUid, timestamp) TYPE minmax GRANULARITY 1;
+ALTER TABLE request_traces ADD INDEX IF NOT EXISTS idx_stage (stage) TYPE minmax GRANULARITY 1;
 
 -- Add projection for stage timing analysis
 ALTER TABLE request_traces ADD PROJECTION IF NOT EXISTS stage_timing
