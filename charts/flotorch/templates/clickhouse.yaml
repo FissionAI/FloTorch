@@ -135,8 +135,26 @@ spec:
             exit 0
           fi
           
-          # Run all migration scripts in order
-          for file in $(ls -v /migrations/*.sql); do
+          # Make sure schema runs first, then analytics_views
+          # This ensures tables are created before views that reference them
+          SCHEMA_FILE="/migrations/schema.sql"
+          VIEWS_FILE="/migrations/analytics_views.sql"
+          
+          # First run schema.sql if it exists
+          if [ -f $SCHEMA_FILE ]; then
+            echo "Running schema migration first: $SCHEMA_FILE"
+            clickhouse-client --host=localhost --port=9000 --user=$CH_USER --password=$CH_PASSWORD --multiquery < $SCHEMA_FILE
+            if [ $? -ne 0 ]; then
+              echo "Error running schema migration script $SCHEMA_FILE"
+              exit 1
+            fi
+            echo "Schema migration completed successfully"
+          else
+            echo "WARNING: Schema file $SCHEMA_FILE not found!"
+          fi
+          
+          # Then run any other migrations (including views)
+          for file in $(ls -v /migrations/*.sql | grep -v 'schema.sql'); do
             echo "Running migration: $file"
             clickhouse-client --host=localhost --port=9000 --user=$CH_USER --password=$CH_PASSWORD --multiquery < $file
             if [ $? -ne 0 ]; then
