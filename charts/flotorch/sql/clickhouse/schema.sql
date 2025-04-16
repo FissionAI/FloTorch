@@ -44,9 +44,9 @@ TTL toDateTime(timestamp) + INTERVAL 360 DAY
 SETTINGS index_granularity = 8192;
 
 -- Add indices with IF NOT EXISTS
-ALTER TABLE request_logs ADD INDEX IF NOT EXISTS idx_model (model) TYPE minmax;
-ALTER TABLE request_logs ADD INDEX IF NOT EXISTS idx_status (status) TYPE minmax;
-ALTER TABLE request_logs ADD INDEX IF NOT EXISTS idx_provider (providerName) TYPE minmax;
+ALTER TABLE request_logs ADD INDEX IF NOT EXISTS idx_model (model) TYPE minmax GRANULARITY 1;
+ALTER TABLE request_logs ADD INDEX IF NOT EXISTS idx_status (status) TYPE minmax GRANULARITY 1;
+ALTER TABLE request_logs ADD INDEX IF NOT EXISTS idx_provider (providerName) TYPE minmax GRANULARITY 1;
 
 -- Add projections for common query patterns with IF NOT EXISTS
 ALTER TABLE request_logs ADD PROJECTION IF NOT EXISTS cost_by_model
