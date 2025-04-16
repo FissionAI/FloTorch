@@ -63,17 +63,17 @@ Resources:
                       experimentation_username = event['ResourceProperties'].get('ExperimentationUsername', 'admin')
                       experimentation_password = event['ResourceProperties'].get('ExperimentationPassword', '')
                       
-                      print(f"Experimentation Host: {experimentation_host}")
-                      print(f"Experimentation Username: {experimentation_username}")
+                      print("Experimentation Host: " + experimentation_host)
+                      print("Experimentation Username: " + experimentation_username)
                       
                       # Extract just the instance ID if there's extra text
                       instance_id_match = re.search(r'(i-[a-z0-9]+)', raw_instance_id)
                       if instance_id_match:
                           instance_id = instance_id_match.group(1)
-                          print(f"Extracted instance ID: {instance_id} from {raw_instance_id}")
+                          print("Extracted instance ID: " + instance_id + " from " + raw_instance_id)
                       else:
                           instance_id = raw_instance_id
-                          print(f"Using instance ID as provided: {instance_id}")
+                          print("Using instance ID as provided: " + instance_id)
 
                       # Get the private IP of the instance
                       response = ec2.describe_instances(InstanceIds=[instance_id])
@@ -81,16 +81,20 @@ Resources:
                       availability_zone = response['Reservations'][0]['Instances'][0]['Placement']['AvailabilityZone']
                       # Extract region from AZ (remove the last character)
                       region = availability_zone[:-1]
-                      print(f"Private IP of the instance: {private_ip}")
-                      print(f"Region of the instance: {region}")
+                      print("Private IP of the instance: " + private_ip)
+                      print("Region of the instance: " + region)
 
-                      # Create the installation script with experimentation parameters
-                      install_script = '''#!/bin/bash
+                      # Create a base script template
+                      script_template = '''#!/bin/bash
           # Set experimentation parameters from CloudFormation
-          experimentation_host="{experimentation_host}"
-          experimentation_username="{experimentation_username}"
-          experimentation_password="{experimentation_password}"
-          set -e
+          experimentation_host="{}"
+          experimentation_username="{}"
+          experimentation_password="{}"
+          set -e'''
+                      
+                      # Format the template with the actual values
+                      install_script = script_template.format(experimentation_host, experimentation_username, experimentation_password) + '''
+
 
           echo "Starting Kubernetes tools installation and setup"
 
@@ -200,7 +204,8 @@ Resources:
           sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx'
           sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && helm repo update'
           sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx --namespace ingress-nginx --create-namespace'
-          sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && kubectl patch svc ingress-nginx-controller -n ingress-nginx -p '{\"spec\":{\"type\":\"ClusterIP\"}}' || echo "Failed to patch ingress service, it may not be ready yet"'
+          
+          sudo -u ec2-user bash -c "export PATH=\$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && kubectl patch svc ingress-nginx-controller -n ingress-nginx -p '{\"spec\":{\"type\":\"ClusterIP\"}}' || echo 'Failed to patch ingress service, it may not be ready yet'"
           
           # Apply nginx-ingress-service.yml to create NodePort service
           echo "Applying nginx-ingress-service.yml to create NodePort service..."
@@ -255,7 +260,7 @@ Resources:
 
           # Update ingress controller service to ClusterIP
           echo "Updating ingress controller service type to ClusterIP..."
-          sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && kubectl patch svc ingress-nginx-controller -n ingress-nginx -p "{\"spec\":{\"type\":\"ClusterIP\"}}"' || echo "Failed to patch ingress service, it may not be ready yet"
+          sudo -u ec2-user bash -c "export PATH=\$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && kubectl patch svc ingress-nginx-controller -n ingress-nginx -p '{\"spec\":{\"type\":\"ClusterIP\"}}' || echo 'Failed to patch ingress service, it may not be ready yet'"
 
           # Wait for all pods to be in Ready state before proceeding with database setup
           echo "Waiting for all pods to be in Ready state..."
@@ -274,7 +279,7 @@ Resources:
                       )
 
                       command_id = command['Command']['CommandId']
-                      print(f"Command ID: {command_id}")
+                      print("Command ID: " + command_id)
                       print("Waiting for Kubernetes setup to complete...")
 
                       while True:
