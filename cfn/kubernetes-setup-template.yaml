@@ -247,7 +247,7 @@ Resources:
           console:
             domain: "$PUBLIC_DNS"
             experimentation:
-              host: "$experimentation_host"
+              host: "https://$experimentation_host/api"
               username: "$experimentation_username"
               password: "$experimentation_password"
           EOF
@@ -257,10 +257,6 @@ Resources:
           
           # Use the values file instead of --set arguments
           sudo -u ec2-user bash -c "export PATH=\$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && helm upgrade --install flotorch flotorch/flotorch -f /home/ec2-user/override-values.yaml"
-
-          # Update ingress controller service to ClusterIP
-          echo "Updating ingress controller service type to ClusterIP..."
-          sudo -u ec2-user bash -c "export PATH=\$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && kubectl patch svc ingress-nginx-controller -n ingress-nginx -p '{\"spec\":{\"type\":\"ClusterIP\"}}' || echo 'Failed to patch ingress service, it may not be ready yet'"
 
           # Wait for all pods to be in Ready state before proceeding with database setup
           echo "Waiting for all pods to be in Ready state..."
