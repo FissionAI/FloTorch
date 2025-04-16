@@ -138,25 +138,6 @@ Resources:
             echo "kubectl is already installed"
           fi
 
-          # Fetch IMDSv2 token for metadata
-          TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" \
-            -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
-          # Retrieve public hostname directly
-          PUBLIC_HOSTNAME=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
-            http://169.254.169.254/latest/meta-data/public-hostname)
-          if [ -n "$PUBLIC_HOSTNAME" ]; then
-            PUBLIC_DNS="$PUBLIC_HOSTNAME"
-          else
-            # Fallback: get public IPv4 and construct DNS format
-            PUBLIC_IP=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
-              http://169.254.169.254/latest/meta-data/public-ipv4)
-            PUBLIC_DNS="ec2-${PUBLIC_IP//./-}.compute-1.amazonaws.com"
-          fi
-          echo "Using Public DNS: $PUBLIC_DNS"
-
-          # Get the EC2 instance's public DNS name to use as console domain
-          echo "Detected Public DNS: $PUBLIC_DNS"
-
           # Generate SSH key if it doesn't exist
           if [ ! -f /home/ec2-user/.ssh/id_rsa ]; then
             echo "Generating SSH key..."
@@ -241,25 +222,17 @@ Resources:
           AWS_ACCOUNT_NUMBER=$(aws sts get-caller-identity --query Account --output text)
           
           # Create the docker registry secret
-          # Create the registry credentials file for better parameter handling
           echo "Creating AWS ECR secret..."
-          # Note: We avoid nested command substitution problems by using direct kubectl command
-          # without wrapping it in sudo -u ec2-user bash -c
-          # First get the ECR login password
           ECR_PASSWORD=$(aws ecr get-login-password --region $region)
-          # Then create a temporary file to avoid complex escaping issues
           echo "Creating credentials in Docker format..."
-          # Make kubectl run by ec2-user directly
           sudo -u ec2-user bash -c "export PATH=\$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && kubectl create secret docker-registry aws-ecr-credentials --docker-server=${AWS_ACCOUNT_NUMBER}.dkr.ecr.${region}.amazonaws.com --docker-username=AWS --docker-password=\"${ECR_PASSWORD}\" --dry-run=client -o yaml | kubectl apply -f -"
 
           # Install FloTorch Helm chart with dynamic values
           echo "Installing FloTorch Helm chart..."
           # Create a values override file to avoid escaping issues
+          rm -rf /home/ec2-user/override-values.yaml
           cat > /home/ec2-user/override-values.yaml << EOF
-          global:
-            consoleDomain: "$PUBLIC_DNS"
           console:
-            domain: "$PUBLIC_DNS"
             experimentation:
               host: "https://$experimentation_host/api"
               username: "$experimentation_username"
@@ -312,10 +285,9 @@ Resources:
                                   raise
 
                       print("Kubernetes setup completed successfully!")
-                      response_data = {
-                          'Message': f'Kubernetes setup completed on EC2 instance {instance_id}',
-                          'PrivateIp': private_ip
-                      }
+                      # Only include minimal response data to avoid oversize errors
+                      # Never return large amounts of data from Lambda custom resources
+                      response_data = {'Message': 'Kubernetes setup completed successfully'}
                       cfnresponse.send(event, context, cfnresponse.SUCCESS, response_data)
                   else:
                       # For Delete or other events, just return success
@@ -341,6 +313,3 @@ Outputs:
   KubernetesSetupStatus:
     Description: Status of the Kubernetes setup
     Value: !GetAtt KubernetesSetupResource.Message
-  InstancePrivateIp:
-    Description: Private IP address of the EC2 instance
-    Value: !GetAtt KubernetesSetupResource.PrivateIp
