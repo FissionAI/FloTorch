@@ -102,7 +102,7 @@ Resources:
           export PATH=$PATH:/usr/local/bin/
 
           private_ip=$(hostname -I | awk '{print $1}')
-          region=$(aws ec2 describe-instances --instance-ids $(curl -s http://169.254.169.254/latest/meta-data/instance-id) --query 'Reservations[0].Instances[0].Placement.AvailabilityZone' --output text | sed 's/.$//')
+          region=$(aws ec2 describe-instances --instance-ids $(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/instance-id) --query 'Reservations[0].Instances[0].Placement.AvailabilityZone' --output text | sed 's/.$//')
           echo "Region: $region"
           echo "Private IP: $private_ip"
 
@@ -138,18 +138,24 @@ Resources:
             echo "kubectl is already installed"
           fi
 
-          # Get the EC2 instance's public DNS name to use as console domain
-          INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
-          PUBLIC_DNS=$(aws ec2 describe-instances --instance-ids $INSTANCE_ID --query 'Reservations[0].Instances[0].PublicDnsName' --output text)
-          echo "Detected Public DNS: $PUBLIC_DNS"
-
-          # Verify DNS and make sure it's not empty
-          if [ -z "$PUBLIC_DNS" ] || [ "$PUBLIC_DNS" = "None" ]; then
-            echo "WARNING: Could not retrieve valid Public DNS, trying alternate method..."
-            PUBLIC_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)
-            PUBLIC_DNS=$(dig +short -x $PUBLIC_IP | sed 's/\.$//') || PUBLIC_DNS="ec2-${PUBLIC_IP//./-}.compute-1.amazonaws.com"
-            echo "Using generated Public DNS: $PUBLIC_DNS"
+          # Fetch IMDSv2 token for metadata
+          TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" \
+            -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+          # Retrieve public hostname directly
+          PUBLIC_HOSTNAME=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
+            http://169.254.169.254/latest/meta-data/public-hostname)
+          if [ -n "$PUBLIC_HOSTNAME" ]; then
+            PUBLIC_DNS="$PUBLIC_HOSTNAME"
+          else
+            # Fallback: get public IPv4 and construct DNS format
+            PUBLIC_IP=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
+              http://169.254.169.254/latest/meta-data/public-ipv4)
+            PUBLIC_DNS="ec2-${PUBLIC_IP//./-}.compute-1.amazonaws.com"
           fi
+          echo "Using Public DNS: $PUBLIC_DNS"
+
+          # Get the EC2 instance's public DNS name to use as console domain
+          echo "Detected Public DNS: $PUBLIC_DNS"
 
           # Generate SSH key if it doesn't exist
           if [ ! -f /home/ec2-user/.ssh/id_rsa ]; then
