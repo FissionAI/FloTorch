@@ -3,7 +3,7 @@
 # Global settings
 global:
   # Domains
-  consoleDomain: "{{ .Values.consoleDomain }}"
+  consoleDomain: "console.flotorch.com"
   gatewayDomain: gateway.flotorch.com
   
   # Image registry
@@ -48,15 +48,15 @@ console:
   image:
     repository: flotorch/console
     tag: 139
-  # These values will be provided dynamically during deployment
-  domain: "{{ .Values.consoleDomain }}"
+  # These values can be overridden during deployment
+  domain: "console.flotorch.com"
   sessionPassword: h3dPidJQENDRR5RrzL8SMRPGGaeFdEC8
   encryptionKey: GXQA5xxSYm38c37zaDnE4gCd9MBJhfDX
   pairingKey: iazRs8LdRkYS7nmxRrqqbrtXShrDdFEe
   experimentation:
-    host: "{{ .Values.experimentationHost }}"
-    username: "{{ .Values.experimentationUsername }}"
-    password: "{{ .Values.experimentationPassword }}"
+    host: "https://tpm7t72ern.us-east-1.awsapprunner.com/api"
+    username: "admin"
+    password: "Flotorch@123"
   service:
     port: 3000
     targetPort: 3000

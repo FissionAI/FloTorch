@@ -85,7 +85,7 @@ Resources:
                       print(f"Region of the instance: {region}")
 
                       # Create the installation script with experimentation parameters
-                      install_script = f'''#!/bin/bash
+                      install_script = '''#!/bin/bash
           # Set experimentation parameters from CloudFormation
           experimentation_host="{experimentation_host}"
           experimentation_username="{experimentation_username}"
@@ -235,7 +235,23 @@ Resources:
 
           # Install FloTorch Helm chart with dynamic values
           echo "Installing FloTorch Helm chart..."
-          sudo -u ec2-user bash -c "export PATH=\$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && helm upgrade --install flotorch flotorch/flotorch --set consoleDomain=\"$PUBLIC_DNS\" --set experimentationHost=\"${experimentation_host}\" --set experimentationUsername=\"${experimentation_username}\" --set experimentationPassword=\"${experimentation_password}\""
+          # Create a values override file to avoid escaping issues
+          cat > /home/ec2-user/override-values.yaml << EOF
+          global:
+            consoleDomain: "$PUBLIC_DNS"
+          console:
+            domain: "$PUBLIC_DNS"
+            experimentation:
+              host: "$experimentation_host"
+              username: "$experimentation_username"
+              password: "$experimentation_password"
+          EOF
+          
+          # Make sure ec2-user owns the file
+          chown ec2-user:ec2-user /home/ec2-user/override-values.yaml
+          
+          # Use the values file instead of --set arguments
+          sudo -u ec2-user bash -c "export PATH=\$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && helm upgrade --install flotorch flotorch/flotorch -f /home/ec2-user/override-values.yaml"
 
           # Update ingress controller service to ClusterIP
           echo "Updating ingress controller service type to ClusterIP..."
@@ -245,8 +261,6 @@ Resources:
           echo "Waiting for all pods to be in Ready state..."
           sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && kubectl wait --for=condition=Ready pods --all --timeout=600s'
 
-          # kubectl exec <pod> -- env PGPASSWORD=u6RLCfL9AJBYvkfB psql -U postgres -d flotorch -c "INSERT INTO public.users (\"firstName\", \"lastName\", \"email\", \"password\", \"isActive\", \"isSuperAdmin\") VALUES ('FloTorch', 'Super Admin', 'superadmin@flotorch.local', '\$scrypt\$n=16384,r=8,p=1\$Ktirgah7om+nQfFxLVjz2w\$bcyhDfzjJL4ABdFnRcl2ACNUqcVUth/GcqDWfKNDeRKIrhxtdV4bUrVq+76kpERsNi90nDrazOvoKDAjRTBkQQ', 't', 't') ON CONFLICT (email) DO NOTHING;"
-          
           echo "Kubernetes setup completed successfully!"
           '''
 
