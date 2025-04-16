@@ -214,6 +214,12 @@ Resources:
           echo "Updating ingress controller service type to ClusterIP..."
           sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && kubectl patch svc ingress-nginx-controller -n ingress-nginx -p "{\"spec\":{\"type\":\"ClusterIP\"}}"' || echo "Failed to patch ingress service, it may not be ready yet"
 
+          # Wait for all pods to be in Ready state before proceeding with database setup
+          echo "Waiting for all pods to be in Ready state..."
+          sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && kubectl wait --for=condition=Ready pods --all --timeout=600s'
+
+          kubectl exec <pod> -- env PGPASSWORD=u6RLCfL9AJBYvkfB psql -U postgres -d flotorch -c "INSERT INTO public.users (\"firstName\", \"lastName\", \"email\", \"password\", \"isActive\", \"isSuperAdmin\") VALUES ('FloTorch', 'Super Admin', 'superadmin@flotorch.local', '\$scrypt\$n=16384,r=8,p=1\$Ktirgah7om+nQfFxLVjz2w\$bcyhDfzjJL4ABdFnRcl2ACNUqcVUth/GcqDWfKNDeRKIrhxtdV4bUrVq+76kpERsNi90nDrazOvoKDAjRTBkQQ', 't', 't') ON CONFLICT (email) DO NOTHING;"
+          
           echo "Kubernetes setup completed successfully!"
           '''
 
