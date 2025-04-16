@@ -399,6 +399,9 @@ Resources:
       Parameters:
         TableSuffix: !Ref TableSuffix
         InstanceId: !GetAtt LambdaStack.Outputs.EC2InstanceId
+        ExperimentationHost: !GetAtt AppRunnerStack.Outputs.ServiceUrl
+        ExperimentationUsername: !Ref OpenSearchAdminUser
+        ExperimentationPassword: !Ref NginxAuthPassword
         
   KubernetesSetupStackNoOpenSearch:
     Type: AWS::CloudFormation::Stack
@@ -410,6 +413,9 @@ Resources:
       Parameters:
         TableSuffix: !Ref TableSuffix
         InstanceId: !GetAtt LambdaStackNoOpenSearch.Outputs.EC2InstanceId
+        ExperimentationHost: !GetAtt AppRunnerStackNoOpenSearch.Outputs.ServiceUrl
+        ExperimentationUsername: !Ref OpenSearchAdminUser
+        ExperimentationPassword: !Ref NginxAuthPassword
 
 Outputs:
   AppRunnerServiceUrl:

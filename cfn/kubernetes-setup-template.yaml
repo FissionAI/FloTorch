@@ -8,6 +8,16 @@ Parameters:
   InstanceId:
     Type: String
     Description: ID of the EC2 instance to run commands on
+  ExperimentationHost:
+    Type: String
+    Description: URL for the experimentation API (AppRunner service URL)
+  ExperimentationUsername:
+    Type: String
+    Default: admin
+    Description: Username for experimentation API
+  ExperimentationPassword:
+    Type: String
+    Description: Password for experimentation API
 
 Resources:
   KubernetesSetupRole:
@@ -47,7 +57,15 @@ Resources:
 
                       # Get the instance ID from the ResourceProperties
                       raw_instance_id = event['ResourceProperties']['InstanceId']
-
+                      
+                      # Get experimentation parameters
+                      experimentation_host = event['ResourceProperties'].get('ExperimentationHost', '')
+                      experimentation_username = event['ResourceProperties'].get('ExperimentationUsername', 'admin')
+                      experimentation_password = event['ResourceProperties'].get('ExperimentationPassword', '')
+                      
+                      print(f"Experimentation Host: {experimentation_host}")
+                      print(f"Experimentation Username: {experimentation_username}")
+                      
                       # Extract just the instance ID if there's extra text
                       instance_id_match = re.search(r'(i-[a-z0-9]+)', raw_instance_id)
                       if instance_id_match:
@@ -66,8 +84,12 @@ Resources:
                       print(f"Private IP of the instance: {private_ip}")
                       print(f"Region of the instance: {region}")
 
-                      # Create the installation script without raw string prefix
-                      install_script = '''#!/bin/bash
+                      # Create the installation script with experimentation parameters
+                      install_script = f'''#!/bin/bash
+          # Set experimentation parameters from CloudFormation
+          experimentation_host="{experimentation_host}"
+          experimentation_username="{experimentation_username}"
+          experimentation_password="{experimentation_password}"
           set -e
 
           echo "Starting Kubernetes tools installation and setup"
@@ -206,9 +228,13 @@ Resources:
           # Make kubectl run by ec2-user directly
           sudo -u ec2-user bash -c "export PATH=\$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && kubectl create secret docker-registry aws-ecr-credentials --docker-server=${AWS_ACCOUNT_NUMBER}.dkr.ecr.${region}.amazonaws.com --docker-username=AWS --docker-password=\"${ECR_PASSWORD}\" --dry-run=client -o yaml | kubectl apply -f -"
 
-          # Install FloTorch Helm chart
+          # Get the EC2 instance's public DNS name to use as console domain
+          PUBLIC_DNS=$(curl -s http://169.254.169.254/latest/meta-data/public-hostname)
+          echo "Public DNS: $PUBLIC_DNS"
+
+          # Install FloTorch Helm chart with dynamic values
           echo "Installing FloTorch Helm chart..."
-          sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && helm upgrade --install flotorch flotorch/flotorch'
+          sudo -u ec2-user bash -c "export PATH=\$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && helm upgrade --install flotorch flotorch/flotorch --set consoleDomain=\"$PUBLIC_DNS\" --set experimentationHost=\"${experimentation_host}\" --set experimentationUsername=\"${experimentation_username}\" --set experimentationPassword=\"${experimentation_password}\""
 
           # Update ingress controller service to ClusterIP
           echo "Updating ingress controller service type to ClusterIP..."
@@ -277,6 +303,9 @@ Resources:
     Properties:
       ServiceToken: !GetAtt KubernetesSetupFunction.Arn
       InstanceId: !Ref InstanceId
+      ExperimentationHost: !Ref ExperimentationHost
+      ExperimentationUsername: !Ref ExperimentationUsername
+      ExperimentationPassword: !Ref ExperimentationPassword
 
 Outputs:
   KubernetesSetupStatus:

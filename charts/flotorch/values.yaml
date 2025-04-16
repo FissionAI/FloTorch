@@ -3,7 +3,7 @@
 # Global settings
 global:
   # Domains
-  consoleDomain: console.flotorch.com
+  consoleDomain: "{{ .Values.consoleDomain }}"
   gatewayDomain: gateway.flotorch.com
   
   # Image registry
@@ -47,14 +47,16 @@ postgres:
 console:
   image:
     repository: flotorch/console
-    tag: 53
+    tag: 139
+  # These values will be provided dynamically during deployment
+  domain: "{{ .Values.consoleDomain }}"
   sessionPassword: h3dPidJQENDRR5RrzL8SMRPGGaeFdEC8
   encryptionKey: GXQA5xxSYm38c37zaDnE4gCd9MBJhfDX
   pairingKey: iazRs8LdRkYS7nmxRrqqbrtXShrDdFEe
   experimentation:
-    host: https://tpm7t72ern.us-east-1.awsapprunner.com/api
-    username: admin
-    password: Flotorch@123
+    host: "{{ .Values.experimentationHost }}"
+    username: "{{ .Values.experimentationUsername }}"
+    password: "{{ .Values.experimentationPassword }}"
   service:
     port: 3000
     targetPort: 3000
@@ -63,7 +65,7 @@ console:
 gateway:
   image:
     repository: flotorch/gateway
-    tag: 5
+    tag: 12
   name: prod-gateway
   service:
     port: 3000
