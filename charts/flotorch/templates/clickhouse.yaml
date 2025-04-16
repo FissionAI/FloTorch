@@ -49,6 +49,18 @@ spec:
             port: 9000
           initialDelaySeconds: 5
           periodSeconds: 10
+        livenessProbe:
+          tcpSocket:
+            port: 9000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          failureThreshold: 3
+        startupProbe:
+          tcpSocket:
+            port: 9000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          failureThreshold: 12
         ports:
         - name: http
           containerPort: 8123
@@ -87,40 +99,24 @@ spec:
         args:
         - |
           echo "Waiting for main ClickHouse container to be ready..."
-          # Increased initial delay before attempting connections
-          sleep 60
+          # Wait longer to ensure ClickHouse is fully initialized
+          sleep 45
           
-          # Check if main container is ready by trying multiple connection methods
-          MAX_ATTEMPTS=60
+          # Simplified connection check that mirrors PostgreSQL approach
+          MAX_ATTEMPTS=120  # Double the attempts due to ClickHouse slower startup
           ATTEMPT=0
           echo "Starting connection attempts to ClickHouse..."
           
-          # Set connection parameters with authentication
-          CLICKHOUSE_ARGS="--user=flotorch --password={{ .Values.clickhouse.auth.password }}"
+          # Set auth parameters once for all commands
+          CH_USER="flotorch"
+          CH_PASSWORD="{{ .Values.clickhouse.auth.password }}"
           
-          # Try different connection methods
+          # Simple retry loop with only localhost connection
           while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
-            # Try connecting via service name with specific port and auth
-            if clickhouse-client $CLICKHOUSE_ARGS --host=localhost --port=9000 --query="SELECT 1" 2>/dev/null; then
-              echo "Successfully connected to ClickHouse via localhost:9000!"
-              CLICKHOUSE_HOST="localhost"
+            if clickhouse-client --host=localhost --port=9000 --user=$CH_USER --password=$CH_PASSWORD --query="SELECT 1" 2>/dev/null; then
+              echo "ClickHouse server is ready!"
               break
             fi
-            
-            # Try connecting via service DNS name
-            if clickhouse-client $CLICKHOUSE_ARGS --host=clickhouse --port=9000 --query="SELECT 1" 2>/dev/null; then
-              echo "Successfully connected to ClickHouse via service name!"
-              CLICKHOUSE_HOST="clickhouse"
-              break
-            fi
-            
-            # Try connecting via pod IP
-            if clickhouse-client $CLICKHOUSE_ARGS --host=127.0.0.1 --port=9000 --query="SELECT 1" 2>/dev/null; then
-              echo "Successfully connected to ClickHouse via 127.0.0.1!"
-              CLICKHOUSE_HOST="127.0.0.1"
-              break
-            fi
-            
             echo "Waiting for ClickHouse server... (Attempt $ATTEMPT/$MAX_ATTEMPTS)"
             sleep 5
             ATTEMPT=$((ATTEMPT+1))
@@ -142,7 +138,7 @@ spec:
           # Run all migration scripts in order
           for file in $(ls -v /migrations/*.sql); do
             echo "Running migration: $file"
-            clickhouse-client $CLICKHOUSE_ARGS --host=$CLICKHOUSE_HOST --port=9000 --multiquery < $file
+            clickhouse-client --host=localhost --port=9000 --user=$CH_USER --password=$CH_PASSWORD --multiquery < $file
             if [ $? -ne 0 ]; then
               echo "Error running migration script $file"
               exit 1

@@ -3,12 +3,12 @@ entries:
   flotorch:
   - apiVersion: v2
     appVersion: 1.0.0
-    created: "2025-04-16T18:23:28.92992+05:30"
+    created: "2025-04-16T18:53:43.793119+05:30"
     description: A Helm chart for Flotorch Enterprise
-    digest: d7ba07692c99ba2246858b194bacca0540581a007492081a91f7fb1997407420
+    digest: b9e9aa057b92dae2a062f6e3c1107db04dd28de22241b0c5b2a3ee952f495535
     name: flotorch
     type: application
     urls:
     - https://balasriharsha-ch.github.io/FloTorch/charts/flotorch-0.1.0.tgz
     version: 0.1.0
-generated: "2025-04-16T18:23:28.928347+05:30"
+generated: "2025-04-16T18:53:43.792016+05:30"
