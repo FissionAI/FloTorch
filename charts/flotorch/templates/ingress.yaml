@@ -12,7 +12,7 @@ metadata:
 spec:
   ingressClassName: {{ .Values.ingress.className }}
   rules:
-  - host: {{ .Values.ingress.hosts.console.host }}
+  - host: {{ .Values.global.consoleDomain }}
     http:
       paths:
       {{- range .Values.ingress.hosts.console.paths }}
@@ -38,7 +38,7 @@ metadata:
 spec:
   ingressClassName: {{ .Values.ingress.className }}
   rules:
-  - host: {{ .Values.ingress.hosts.gateway.host }}
+  - host: {{ .Values.global.gatewayDomain }}
     http:
       paths:
       {{- range .Values.ingress.hosts.gateway.paths }}

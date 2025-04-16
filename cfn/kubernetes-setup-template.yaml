@@ -138,6 +138,19 @@ Resources:
             echo "kubectl is already installed"
           fi
 
+          # Get the EC2 instance's public DNS name to use as console domain
+          INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
+          PUBLIC_DNS=$(aws ec2 describe-instances --instance-ids $INSTANCE_ID --query 'Reservations[0].Instances[0].PublicDnsName' --output text)
+          echo "Detected Public DNS: $PUBLIC_DNS"
+
+          # Verify DNS and make sure it's not empty
+          if [ -z "$PUBLIC_DNS" ] || [ "$PUBLIC_DNS" = "None" ]; then
+            echo "WARNING: Could not retrieve valid Public DNS, trying alternate method..."
+            PUBLIC_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)
+            PUBLIC_DNS=$(dig +short -x $PUBLIC_IP | sed 's/\.$//') || PUBLIC_DNS="ec2-${PUBLIC_IP//./-}.compute-1.amazonaws.com"
+            echo "Using generated Public DNS: $PUBLIC_DNS"
+          fi
+
           # Generate SSH key if it doesn't exist
           if [ ! -f /home/ec2-user/.ssh/id_rsa ]; then
             echo "Generating SSH key..."
@@ -232,11 +245,6 @@ Resources:
           echo "Creating credentials in Docker format..."
           # Make kubectl run by ec2-user directly
           sudo -u ec2-user bash -c "export PATH=\$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && kubectl create secret docker-registry aws-ecr-credentials --docker-server=${AWS_ACCOUNT_NUMBER}.dkr.ecr.${region}.amazonaws.com --docker-username=AWS --docker-password=\"${ECR_PASSWORD}\" --dry-run=client -o yaml | kubectl apply -f -"
-
-          # Get the EC2 instance's public DNS name to use as console domain
-          INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
-          PUBLIC_DNS=$(aws ec2 describe-instances --instance-ids $INSTANCE_ID --query 'Reservations[0].Instances[0].PublicDnsName' --output text)
-          echo "Public DNS: $PUBLIC_DNS"
 
           # Install FloTorch Helm chart with dynamic values
           echo "Installing FloTorch Helm chart..."
