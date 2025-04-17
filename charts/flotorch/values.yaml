@@ -47,7 +47,7 @@ postgres:
 console:
   image:
     repository: flotorch/console
-    tag: 162
+    tag: 178
   # These values can be overridden during deployment
   domain: "console.flotorch.com"
   sessionPassword: h3dPidJQENDRR5RrzL8SMRPGGaeFdEC8
