@@ -5,9 +5,17 @@ Parameters:
   TableSuffix:
     Type: String
     Description: Suffix to append to resource names
-  InstanceId:
+  VpcId:
     Type: String
-    Description: ID of the EC2 instance to run commands on
+    Description: ID of the VPC where the instance will be created
+  SubnetId:
+    Type: String
+    Description: ID of the subnet where the instance will be created
+  # KeyName parameter removed as we'll create a new key pair for each deployment
+  InstanceType:
+    Type: String
+    Default: t2.large
+    Description: EC2 instance type
   ExperimentationHost:
     Type: String
     Description: URL for the experimentation API (AppRunner service URL)
@@ -20,6 +28,145 @@ Parameters:
     Description: Password for experimentation API
 
 Resources:
+  EC2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for FloTorch Kubernetes EC2 instance
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+          Description: SSH access
+        - IpProtocol: tcp
+          FromPort: 30080
+          ToPort: 30080
+          CidrIp: 0.0.0.0/0
+          Description: HTTP NodePort access
+        - IpProtocol: tcp
+          FromPort: 30443
+          ToPort: 30443
+          CidrIp: 0.0.0.0/0
+          Description: HTTPS NodePort access
+
+  EC2InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMFullAccess
+        - arn:aws:iam::aws:policy/AmazonEC2FullAccess
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess
+
+  EC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref EC2InstanceRole
+
+  # Create a unique key name using a timestamp to avoid name conflicts
+  EC2KeyPairName:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Type: String
+      Value: !Sub 'flotorch-k8s-${AWS::StackName}-${AWS::Region}-${AWS::AccountId}-${!Timestamp}'
+      Description: 'Parameter store for the EC2 key pair name'
+  
+  EC2KeyPair:
+    Type: AWS::EC2::KeyPair
+    DependsOn: EC2KeyPairName
+    Properties:
+      KeyName: !GetAtt EC2KeyPairName.Value
+
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    DependsOn: EC2KeyPair
+    Properties:
+      InstanceType: !Ref InstanceType
+      ImageId: !If 
+        - IsUsEast1Region
+        - ami-01816d07b1128cd2d  # Amazon Linux 2023 AMI for us-east-1
+        - ami-093a4ad9a8cc370f4  # Amazon Linux 2023 AMI for other regions
+      KeyName: !Ref EC2KeyPair
+      IamInstanceProfile: !Ref EC2InstanceProfile
+      SubnetId: !Ref SubnetId
+      SecurityGroupIds:
+        - !Ref EC2SecurityGroup
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeSize: 48
+            VolumeType: gp3
+            DeleteOnTermination: true
+      Tags:
+        - Key: Name
+          Value: !Sub FloTorch-K8S-${AWS::StackName}
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+          yum update -y
+          sudo su ec2-user
+          cd /home/ec2-user
+          # Install Helm
+          if ! command -v helm &> /dev/null; then
+            echo "Installing Helm..."
+            wget https://get.helm.sh/helm-v3.15.2-linux-amd64.tar.gz
+            tar -xvf helm-v3.15.2-linux-amd64.tar.gz
+            sudo chmod +x linux-amd64/helm
+            sudo mv linux-amd64/helm /usr/local/bin/helm
+            rm -rf linux-amd64 helm-v3.15.2-linux-amd64.tar.gz
+          else
+            echo "Helm is already installed"
+          fi
+
+          # Install RKE
+          if ! command -v rke &> /dev/null; then
+            echo "Installing RKE..."
+            wget https://github.com/rancher/rke/releases/download/v1.6.2/rke_linux-amd64
+            sudo mv rke_linux-amd64 /usr/local/bin/rke
+            sudo chmod +x /usr/local/bin/rke
+          else
+            echo "RKE is already installed"
+          fi
+
+          # Install kubectl
+          if ! command -v kubectl &> /dev/null; then
+            echo "Installing kubectl..."
+            curl -O https://s3.us-west-2.amazonaws.com/amazon-eks/1.30.2/2024-07-12/bin/linux/amd64/kubectl
+            sudo mv kubectl /usr/local/bin/kubectl
+            sudo chmod +x /usr/local/bin/kubectl
+          else
+            echo "kubectl is already installed"
+          fi
+
+          # Install docker
+          if ! command -v docker &> /dev/null; then
+            echo "Installing docker..."
+            sudo yum install -y docker
+            sudo systemctl start docker
+            sudo systemctl enable docker
+            sudo usermod -aG docker ec2-user
+            newgrp docker
+          else
+            echo "docker is already installed"
+          fi
+
+          # Install git
+          if ! command -v git &> /dev/null; then
+            echo "Installing Git..."
+            sudo yum install -y git
+          else
+            echo "Git is already installed"
+          fi
+
   KubernetesSetupRole:
     Type: AWS::IAM::Role
     Properties:
@@ -34,9 +181,12 @@ Resources:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
         - arn:aws:iam::aws:policy/AmazonSSMFullAccess
         - arn:aws:iam::aws:policy/AmazonEC2FullAccess
+        - arn:aws:iam::aws:policy/AWSCloudFormationFullAccess
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
 
   KubernetesSetupFunction:
     Type: AWS::Lambda::Function
+    DependsOn: EC2Instance
     Properties:
       Handler: index.handler
       Role: !GetAtt KubernetesSetupRole.Arn
@@ -55,8 +205,21 @@ Resources:
                       ssm = boto3.client('ssm')
                       ec2 = boto3.client('ec2')
 
-                      # Get the instance ID from the ResourceProperties
-                      raw_instance_id = event['ResourceProperties']['InstanceId']
+                      # Get the instance ID from the EC2 instance created in this stack
+                      ec2_instance_logical_id = 'EC2Instance'
+                      stack_id = event['StackId']
+                      stack_name = stack_id.split('/')[1]
+                      print(f"Getting EC2 instance ID from stack {stack_name}")
+                      
+                      # Describe the stack resources to get the physical ID of the EC2 instance
+                      cfn = boto3.client('cloudformation')
+                      response = cfn.describe_stack_resource(
+                          StackName=stack_name,
+                          LogicalResourceId=ec2_instance_logical_id
+                      )
+                      
+                      raw_instance_id = response['StackResourceDetail']['PhysicalResourceId']
+                      print(f"Using EC2 instance ID: {raw_instance_id}")
                       
                       # Get experimentation parameters
                       experimentation_host = event['ResourceProperties'].get('ExperimentationHost', '')
@@ -101,42 +264,59 @@ Resources:
           # Add /usr/local/bin to PATH
           export PATH=$PATH:/usr/local/bin/
 
-          private_ip=$(hostname -I | awk '{print $1}')
-          region=$(aws ec2 describe-instances --instance-ids $(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/instance-id) --query 'Reservations[0].Instances[0].Placement.AvailabilityZone' --output text | sed 's/.$//')
-          echo "Region: $region"
-          echo "Private IP: $private_ip"
-
-          # Install Helm
-          if ! command -v helm &> /dev/null; then
-            echo "Installing Helm..."
-            wget https://get.helm.sh/helm-v3.15.2-linux-amd64.tar.gz
-            tar -xvf helm-v3.15.2-linux-amd64.tar.gz
-            sudo chmod +x linux-amd64/helm
-            sudo mv linux-amd64/helm /usr/local/bin/helm
-            rm -rf linux-amd64 helm-v3.15.2-linux-amd64.tar.gz
+          if command -v rke &> /dev/null; then
+            echo "rke is already installed"
           else
-            echo "Helm is already installed"
+            sleep 30
           fi
 
-          # Install RKE
-          if ! command -v rke &> /dev/null; then
-            echo "Installing RKE..."
-            wget https://github.com/rancher/rke/releases/download/v1.6.2/rke_linux-amd64
-            sudo mv rke_linux-amd64 /usr/local/bin/rke
-            sudo chmod +x /usr/local/bin/rke
+          if command -v helm &> /dev/null; then
+            echo "helm is already installed"
           else
-            echo "RKE is already installed"
+            sleep 30
           fi
 
-          # Install kubectl
-          if ! command -v kubectl &> /dev/null; then
+          if command -v kubectl &> /dev/null; then
+            echo "kubectl is already installed"
+          else
             echo "Installing kubectl..."
             curl -O https://s3.us-west-2.amazonaws.com/amazon-eks/1.30.2/2024-07-12/bin/linux/amd64/kubectl
             sudo mv kubectl /usr/local/bin/kubectl
             sudo chmod +x /usr/local/bin/kubectl
-          else
-            echo "kubectl is already installed"
           fi
+
+          if command -v docker &> /dev/null; then
+            echo "docker is already installed"
+          else
+            echo "Installing docker..."
+            sudo yum install -y docker
+            sudo systemctl start docker
+            sudo systemctl enable docker
+            sudo usermod -aG docker ec2-user
+            newgrp docker
+          fi
+
+          if command -v aws &> /dev/null; then
+            echo "aws is already installed"
+          else
+            # Install awscli
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            sudo yum install -y unzip
+            unzip awscliv2.zip
+            sudo ./aws/install
+            rm -rf aws awscliv2.zip
+          fi
+
+          if command -v git &> /dev/null; then
+            echo "git is already installed"
+          else
+            sleep 30
+          fi
+
+          private_ip=$(hostname -I | awk '{print $1}')
+          region=$(aws ec2 describe-instances --instance-ids $(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/instance-id) --query 'Reservations[0].Instances[0].Placement.AvailabilityZone' --output text | sed 's/.$//')
+          echo "Region: $region"
+          echo "Private IP: $private_ip"
 
           # Generate SSH key if it doesn't exist
           if [ ! -f /home/ec2-user/.ssh/id_rsa ]; then
@@ -199,17 +379,17 @@ Resources:
           sudo -u ec2-user mkdir -p /home/ec2-user/.kube
           sudo -u ec2-user cp /home/ec2-user/kube_config_cluster.yml /home/ec2-user/.kube/config
 
-          # Install nginx ingress controller
-          echo "Installing NGINX Ingress Controller..."
-          sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx'
-          sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && helm repo update'
-          sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx --namespace ingress-nginx --create-namespace'
+          # # Install nginx ingress controller
+          # echo "Installing NGINX Ingress Controller..."
+          # sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx'
+          # sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && helm repo update'
+          # sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx --namespace ingress-nginx --create-namespace'
           
-          sudo -u ec2-user bash -c "export PATH=\$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && kubectl patch svc ingress-nginx-controller -n ingress-nginx -p '{\"spec\":{\"type\":\"ClusterIP\"}}' || echo 'Failed to patch ingress service, it may not be ready yet'"
+          # sudo -u ec2-user bash -c "export PATH=\$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && kubectl patch svc ingress-nginx-controller -n ingress-nginx -p '{\"spec\":{\"type\":\"ClusterIP\"}}' || echo 'Failed to patch ingress service, it may not be ready yet'"
           
-          # Apply nginx-ingress-service.yml to create NodePort service
-          echo "Applying nginx-ingress-service.yml to create NodePort service..."
-          sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && kubectl apply -f /home/ec2-user/nginx-ingress-service.yml'
+          # # Apply nginx-ingress-service.yml to create NodePort service
+          # echo "Applying nginx-ingress-service.yml to create NodePort service..."
+          # sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && kubectl apply -f /home/ec2-user/nginx-ingress-service.yml'
 
           # Add FloTorch Helm repo
           echo "Adding FloTorch Helm repo..."
@@ -226,6 +406,26 @@ Resources:
           ECR_PASSWORD=$(aws ecr get-login-password --region $region)
           echo "Creating credentials in Docker format..."
           sudo -u ec2-user bash -c "export PATH=\$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && kubectl create secret docker-registry aws-ecr-credentials --docker-server=${AWS_ACCOUNT_NUMBER}.dkr.ecr.${region}.amazonaws.com --docker-username=AWS --docker-password=\"${ECR_PASSWORD}\" --dry-run=client -o yaml | kubectl apply -f -"
+
+          # Install Nginx Ingress Controller first
+          echo "Installing Nginx Ingress Controller..."
+          
+          # Add the ingress-nginx repository
+          sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx'
+          sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && helm repo update'
+          
+          # Check and clean up previous ingress-nginx installations if they exist
+          echo "Checking for previous ingress-nginx installations..."
+          sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && if helm list -n ingress-nginx | grep -q ingress-nginx; then helm uninstall ingress-nginx -n ingress-nginx; fi'
+          sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && if kubectl get namespace ingress-nginx >/dev/null 2>&1; then kubectl delete namespace ingress-nginx; fi'
+          
+          # Install ingress-nginx with specific namespace and node ports
+          echo "Installing ingress-nginx in ingress-nginx namespace..."
+          sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx --namespace ingress-nginx --create-namespace --set controller.service.type=NodePort --set controller.service.nodePorts.http=30080 --set controller.service.nodePorts.https=30443'
+          
+          # Wait for ingress controller to be ready
+          echo "Waiting for Nginx ingress controller to be ready..."
+          sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=120s'
 
           # Install FloTorch Helm chart with dynamic values
           echo "Installing FloTorch Helm chart..."
@@ -304,12 +504,35 @@ Resources:
     Type: Custom::KubernetesSetup
     Properties:
       ServiceToken: !GetAtt KubernetesSetupFunction.Arn
-      InstanceId: !Ref InstanceId
       ExperimentationHost: !Ref ExperimentationHost
       ExperimentationUsername: !Ref ExperimentationUsername
       ExperimentationPassword: !Ref ExperimentationPassword
+
+Conditions:
+  IsUsEast1Region: !Equals 
+    - !Ref AWS::Region
+    - us-east-1
 
 Outputs:
   KubernetesSetupStatus:
     Description: Status of the Kubernetes setup
     Value: !GetAtt KubernetesSetupResource.Message
+  EC2InstanceId:
+    Description: ID of the EC2 instance running Kubernetes
+    Value: !Ref EC2Instance
+  EC2PublicDNS:
+    Description: Public DNS of the EC2 instance
+    Value: !GetAtt EC2Instance.PublicDnsName
+  HTTPSNodePort:
+    Description: HTTPS NodePort URL
+    Value: !Sub https://${EC2Instance.PublicDnsName}:30443
+  EC2KeyPairName:
+    Description: Name of the generated EC2 key pair
+    Value: !Ref EC2KeyPair
+  EC2PrivateKey:
+    Description: Instructions to access the private key material
+    Value: The private key can be downloaded from EC2 console after launching the instance
+
+  EC2PublicIP:
+    Description: Public IP address of the EC2 instance
+    Value: !GetAtt EC2Instance.PublicIp

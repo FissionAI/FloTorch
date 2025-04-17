@@ -599,7 +599,7 @@ Resources:
                           raise Exception(f"Command failed: {result.get('StandardErrorContent', '')}")
                       
                       # Terminate instance
-                      # ec2.terminate_instances(InstanceIds=[instance_id])
+                      ec2.terminate_instances(InstanceIds=[instance_id])
                       
                       response_data = {
                           'Message': f'EC2 instance {instance_id} completed Docker operations',
