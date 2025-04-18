@@ -1,0 +1,183 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: clickhouse
+  labels:
+    app: clickhouse
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+spec:
+  ports:
+  - port: 8123
+    targetPort: 8123
+    protocol: TCP
+    name: http
+  - port: 9000
+    targetPort: 9000
+    protocol: TCP
+    name: native
+  selector:
+    app: clickhouse
+    release: {{ .Release.Name }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clickhouse
+  labels:
+    app: clickhouse
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: clickhouse
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: clickhouse
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+      - name: clickhouse
+        image: "{{ .Values.clickhouse.image.repository }}:{{ .Values.clickhouse.image.tag }}"
+        imagePullPolicy: IfNotPresent
+        readinessProbe:
+          tcpSocket:
+            port: 9000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          tcpSocket:
+            port: 9000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          failureThreshold: 3
+        startupProbe:
+          tcpSocket:
+            port: 9000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          failureThreshold: 12
+        ports:
+        - name: http
+          containerPort: 8123
+          protocol: TCP
+        - name: native
+          containerPort: 9000
+          protocol: TCP
+        env:
+        - name: CLICKHOUSE_DB
+          value: flotorch
+        - name: CLICKHOUSE_USER
+          value: {{ .Values.clickhouse.auth.username }}
+        - name: CLICKHOUSE_PASSWORD
+          value: {{ .Values.clickhouse.auth.password }}
+        - name: CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT
+          value: "1"
+        lifecycle:
+          postStart:
+            exec:
+              command: ["bash", "-c", "until clickhouse-client --host=localhost --query=\"SELECT 1\" 2>/dev/null; do echo \"Waiting for ClickHouse to start...\"; sleep 2; done;"]
+        volumeMounts:
+        - name: clickhouse-data
+          mountPath: /var/lib/clickhouse
+        - name: clickhouse-logs
+          mountPath: /var/log/clickhouse-server
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 2048Mi
+          requests:
+            cpu: 200m
+            memory: 512Mi
+      - name: migrations
+        image: yandex/clickhouse-client:latest
+        command: ["bash", "-c"]
+        args:
+        - |
+          echo "Waiting for main ClickHouse container to be ready..."
+          # Wait longer to ensure ClickHouse is fully initialized
+          sleep 45
+          
+          # Simplified connection check that mirrors PostgreSQL approach
+          MAX_ATTEMPTS=120  # Double the attempts due to ClickHouse slower startup
+          ATTEMPT=0
+          echo "Starting connection attempts to ClickHouse..."
+          
+          # Set auth parameters once for all commands
+          CH_USER="flotorch"
+          CH_PASSWORD="{{ .Values.clickhouse.auth.password }}"
+          
+          # Simple retry loop with only localhost connection
+          while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
+            if clickhouse-client --host=localhost --port=9000 --user=$CH_USER --password=$CH_PASSWORD --query="SELECT 1" 2>/dev/null; then
+              echo "ClickHouse server is ready!"
+              break
+            fi
+            echo "Waiting for ClickHouse server... (Attempt $ATTEMPT/$MAX_ATTEMPTS)"
+            sleep 5
+            ATTEMPT=$((ATTEMPT+1))
+          done
+          
+          if [ $ATTEMPT -eq $MAX_ATTEMPTS ]; then
+            echo "ClickHouse server did not become ready in time"
+            exit 1
+          fi
+          
+          # Check if we have migration files
+          if [ -z "$(ls -A /migrations/*.sql 2>/dev/null)" ]; then
+            echo "No migration files found in /migrations/"
+            echo "Contents of /migrations/: $(ls -la /migrations/)"
+            sleep 3600  # Keep container running for debugging
+            exit 0
+          fi
+          
+          # Make sure schema runs first, then analytics_views
+          # This ensures tables are created before views that reference them
+          SCHEMA_FILE="/migrations/schema.sql"
+          VIEWS_FILE="/migrations/analytics_views.sql"
+          
+          # First run schema.sql if it exists
+          if [ -f $SCHEMA_FILE ]; then
+            echo "Running schema migration first: $SCHEMA_FILE"
+            clickhouse-client --host=localhost --port=9000 --user=$CH_USER --password=$CH_PASSWORD --multiquery < $SCHEMA_FILE
+            if [ $? -ne 0 ]; then
+              echo "Error running schema migration script $SCHEMA_FILE"
+              exit 1
+            fi
+            echo "Schema migration completed successfully"
+          else
+            echo "WARNING: Schema file $SCHEMA_FILE not found!"
+          fi
+          
+          # Then run any other migrations (including views)
+          for file in $(ls -v /migrations/*.sql | grep -v 'schema.sql'); do
+            echo "Running migration: $file"
+            clickhouse-client --host=localhost --port=9000 --user=$CH_USER --password=$CH_PASSWORD --multiquery < $file
+            if [ $? -ne 0 ]; then
+              echo "Error running migration script $file"
+              exit 1
+            fi
+            echo "Migration $file completed successfully"
+          done
+          
+          echo "All ClickHouse migrations completed successfully"
+          
+          # Keep the container running to allow checking logs
+          sleep 3600
+        volumeMounts:
+        - name: clickhouse-migrations-volume
+          mountPath: /migrations
+      volumes:
+      - name: clickhouse-data
+        persistentVolumeClaim:
+          claimName: clickhouse-data-pvc
+      - name: clickhouse-logs
+        persistentVolumeClaim:
+          claimName: clickhouse-logs-pvc
+      - name: clickhouse-migrations-volume
+        configMap:
+          name: clickhouse-migrations

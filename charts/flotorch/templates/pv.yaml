@@ -1,0 +1,159 @@
+# Redis PV
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: flotorch-redis-data-pv
+  labels:
+    type: local
+    app: redis
+    volume-type: redis-data
+    release: {{ .Release.Name }}
+spec:
+  storageClassName: manual
+  capacity:
+    storage: {{ .Values.redis.persistence.size }}
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  claimRef:
+    name: redis-data-pvc
+    namespace: default
+  hostPath:
+    path: "/mnt/data/redis"
+---
+# Redis PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redis-data-pvc
+  labels:
+    app: redis
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.redis.persistence.size }}
+---
+# ClickHouse Data PV
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: flotorch-clickhouse-data-pv
+  labels:
+    type: local
+    app: clickhouse
+    volume-type: clickhouse-data
+    release: {{ .Release.Name }}
+spec:
+  storageClassName: manual
+  capacity:
+    storage: {{ .Values.clickhouse.persistence.dataSize }}
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  claimRef:
+    name: clickhouse-data-pvc
+    namespace: default
+  hostPath:
+    path: "/mnt/data/clickhouse-data"
+---
+# ClickHouse Data PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: clickhouse-data-pvc
+  labels:
+    app: clickhouse
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.clickhouse.persistence.dataSize }}
+---
+# ClickHouse Logs PV
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: flotorch-clickhouse-logs-pv
+  labels:
+    type: local
+    app: clickhouse
+    volume-type: clickhouse-logs
+    release: {{ .Release.Name }}
+spec:
+  storageClassName: manual
+  capacity:
+    storage: {{ .Values.clickhouse.persistence.logsSize }}
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  claimRef:
+    name: clickhouse-logs-pvc
+    namespace: default
+  hostPath:
+    path: "/mnt/data/clickhouse-logs"
+---
+# ClickHouse Logs PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: clickhouse-logs-pvc
+  labels:
+    app: clickhouse
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.clickhouse.persistence.logsSize }}
+---
+# PostgreSQL PV
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: flotorch-postgres-data-pv
+  labels:
+    type: local
+    app: postgres
+    volume-type: postgres-data
+    release: {{ .Release.Name }}
+spec:
+  storageClassName: manual
+  capacity:
+    storage: {{ .Values.postgres.persistence.size }}
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  claimRef:
+    name: postgres-data-pvc
+    namespace: default
+  hostPath:
+    path: "/mnt/data/postgres"
+---
+# PostgreSQL PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-data-pvc
+  labels:
+    app: postgres
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.postgres.persistence.size }}

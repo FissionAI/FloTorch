@@ -1,0 +1,106 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: console
+  labels:
+    app: console
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+spec:
+  ports:
+  - port: {{ .Values.console.service.port }}
+    targetPort: {{ .Values.console.service.targetPort }}
+    protocol: TCP
+    name: http
+  selector:
+    app: console
+    release: {{ .Release.Name }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: console
+  labels:
+    app: console
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: console
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: console
+        release: {{ .Release.Name }}
+    spec:
+      initContainers:
+      - name: wait-for-redis
+        image: busybox:latest
+        command: ['sh', '-c', 'until nc -z redis 6379; do echo waiting for redis; sleep 2; done;']
+      - name: wait-for-postgres
+        image: busybox:latest
+        command: ['sh', '-c', 'until nc -z postgres 5432; do echo waiting for postgres; sleep 2; done;']
+      - name: wait-for-clickhouse
+        image: busybox:latest
+        command: ['sh', '-c', 'until nc -z clickhouse 8123; do echo waiting for clickhouse; sleep 2; done;']
+      imagePullSecrets:
+      - name: aws-ecr-credentials
+      containers:
+      - name: console
+        image: "{{ .Values.global.imageRegistry }}/{{ .Values.console.image.repository }}:{{ .Values.console.image.tag }}"
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: {{ .Values.console.service.targetPort }}
+          protocol: TCP
+        env:
+        - name: FLOTORCH_CONSOLE_PUBLIC_URL
+          value: http://console:{{ .Values.console.service.port }}
+        - name: FLOTORCH_CONSOLE_SESSION_PASSWORD
+          value: {{ .Values.console.sessionPassword }}
+        - name: FLOTORCH_CONSOLE_ENCRYPTION_KEY
+          value: {{ .Values.console.encryptionKey }}
+        - name: FLOTORCH_CONSOLE_DATABASE_URL
+          value: postgres://{{ .Values.postgres.auth.username }}:{{ .Values.postgres.auth.password }}@postgres:5432/{{ .Values.postgres.auth.database }}
+        - name: FLOTORCH_CONSOLE_CLICKHOUSE_URL
+          value: http://{{ .Values.clickhouse.auth.username }}:{{ .Values.clickhouse.auth.password }}@clickhouse:8123/flotorch
+        - name: FLOTORCH_CONSOLE_EXPERIMENTATION_HOST
+          value: {{ .Values.console.experimentation.host }}
+        - name: FLOTORCH_CONSOLE_EXPERIMENTATION_AUTH_USERNAME
+          value: {{ .Values.console.experimentation.username }}
+        - name: FLOTORCH_CONSOLE_EXPERIMENTATION_AUTH_PASSWORD
+          value: {{ .Values.console.experimentation.password }}
+        - name: FLOTORCH_CONSOLE_GATEWAY_URL
+          value: http://gateway:{{ .Values.gateway.service.port }}
+        - name: FLOTORCH_CONSOLE_REDIS_URL
+          value: redis://redis:6379
+        - name: FLOTORCH_CONSOLE_PAIRING_KEY
+          value: {{ .Values.console.pairingKey }}
+        - name: REDIS_HOST
+          value: redis
+        - name: REDIS_PORT
+          value: "6379"
+        - name: REDIS_URL
+          value: redis://redis:6379
+        - name: REDIS_CONNECTION_STRING
+          value: redis://redis:6379
+        - name: DATABASE_HOST
+          value: postgres
+        - name: DATABASE_PORT
+          value: "5432"
+        - name: DATABASE_NAME
+          value: {{ .Values.postgres.auth.database }}
+        - name: DATABASE_USER
+          value: {{ .Values.postgres.auth.username }}
+        - name: DATABASE_PASSWORD
+          value: {{ .Values.postgres.auth.password }}
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 1024Mi
+          requests:
+            cpu: 200m
+            memory: 256Mi

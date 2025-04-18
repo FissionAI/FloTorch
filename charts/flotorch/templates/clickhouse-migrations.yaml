@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: clickhouse-migrations
+  labels:
+    app: clickhouse
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+data:
+  # SQL files will be populated here by the GitHub Action
+  {{- range $path, $_ := .Files.Glob "sql/clickhouse/*.sql" }}
+  {{ base $path }}: |
+    {{- $.Files.Get $path | nindent 4 }}
+  {{- end }}
