@@ -1,14 +1,10 @@
+from abc import abstractmethod
 from core.eval.ragas.ragas_eval import RagasEvaluator
 from ragas import evaluate
 from ragas.dataset_schema import SingleTurnSample, EvaluationDataset
-from ragas.metrics._string import NonLLMStringSimilarity
-from ragas.metrics import Faithfulness, AspectCritic, LLMContextPrecisionWithoutReference, ResponseRelevancy, LLMContextPrecisionWithReference
-from langchain_aws import ChatBedrockConverse, BedrockEmbeddings
-from ragas.embeddings import LangchainEmbeddingsWrapper
-from ragas.llms import LangchainLLMWrapper
+from ragas.metrics import Faithfulness, AspectCritic, ResponseRelevancy, LLMContextPrecisionWithReference
 from baseclasses.base_classes import ExperimentQuestionMetrics, EvaluationMetrics
 from typing import Optional, List
-from core.eval.eval_factory import EvalFactory
 
 import logging
 
@@ -21,21 +17,11 @@ class RagasLLMEvaluator(RagasEvaluator):
         self._initialze_llm()
         self._initialize_scorers()
 
-
-    def _initialze_llm(self):
-        self.evaluator_llm = LangchainLLMWrapper(ChatBedrockConverse(
-            region_name=self.experimental_config.aws_region,
-            base_url=f"https://bedrock-runtime.{self.experimental_config.aws_region}.amazonaws.com",
-            model=self.experimental_config.eval_retrieval_model,
-            temperature=self.experimental_config.eval_retrieval_temperature,
-        ))
-
-        self.embedding_llm = LangchainEmbeddingsWrapper(BedrockEmbeddings(
-            region_name=self.experimental_config.aws_region,
-            model_id=self.experimental_config.eval_embedding_model,
-        ))
-
-
+    @abstractmethod
+    def _initialze_llm(self) -> None:
+        """Initialize the appropriate scorers"""
+        pass
+    
     def _initialize_scorers(self):
         """Initialize all metric scorers"""
         self.faithfulness = Faithfulness(llm=self.evaluator_llm)
@@ -48,9 +34,6 @@ class RagasLLMEvaluator(RagasEvaluator):
 
         self.answers_relevancy = ResponseRelevancy(llm=self.evaluator_llm,
                                                    embeddings=self.embedding_llm)
-
-    def get_questions(self, experiment_id):
-        return super().get_questions(experiment_id)
 
     def evaluate(self, experiment_id: str):
         """Perform evaluation for all questions in an experiment"""
@@ -126,6 +109,3 @@ class RagasLLMEvaluator(RagasEvaluator):
         except Exception as e:
             logger.error(f"Error processing sample {metrics_record.id}: {e}")
             return {}
-
-
-EvalFactory.register_evaluator('ragas', 'llm', RagasLLMEvaluator)

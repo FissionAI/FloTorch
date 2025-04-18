@@ -259,6 +259,9 @@ def generate_all_combinations(data):
     parameters_all.update(parsed_data["retrieval"])
     if "guardrails" in parsed_data and parsed_data["guardrails"]:
         parameters_all.update({"guardrails": parsed_data["guardrails"]})
+    parameters_all['gateway_enabled'] = [parsed_data.get('gateway_enabled', False)]
+    parameters_all['gateway_api_key'] = [parsed_data.get('gateway_api_key', "")]
+    parameters_all['gateway_url'] = [parsed_data.get('gateway_url', "")]
     parameters_all.update(parsed_data["evaluation"])
     parameters_all = add_kb_info(parameters_all)
     parameters_all = {key: value if isinstance(value, list) else [value] for key, value in parameters_all.items()}
@@ -336,11 +339,14 @@ def generate_all_combinations(data):
                 configuration["indexing_cost_estimate"] += estimate_sagemaker_price(indexing_time)
 
             #Calculate the inferencing price - doesn't include OpenSearch pricing
-            if configuration["retrieval_service"] == "bedrock":
-                inferencing_price = estimate_retrieval_model_bedrock_price(bedrock_price_df, configuration, avg_prompt_length, num_prompts)
-                configuration["inferencing_cost_estimate"] += inferencing_price
+            if configuration.get('gateway_enabled', False):
+                configuration["inferencing_cost_estimate"] += 0
             else:
-                configuration["inferencing_cost_estimate"] += estimate_sagemaker_price(retrieval_time)
+                if configuration["retrieval_service"] == "bedrock":
+                    inferencing_price = estimate_retrieval_model_bedrock_price(bedrock_price_df, configuration, avg_prompt_length, num_prompts)
+                    configuration["inferencing_cost_estimate"] += inferencing_price
+                else:
+                    configuration["inferencing_cost_estimate"] += estimate_sagemaker_price(retrieval_time)
 
             # evaluation price for ragas not added at the moment considering 
             # tokens information is not being returned
@@ -352,7 +358,7 @@ def generate_all_combinations(data):
                 configuration["eval_cost_estimate"] += estimate_sagemaker_price(eval_time)
             
             # adding fargate container costs
-            if not configuration["bedrock_knowledge_base"]:
+            if not configuration["bedrock_knowledge_base"] and configuration.get('knowledge_base'):
                 configuration["indexing_cost_estimate"] += estimate_fargate_price(indexing_time)
             configuration["retrieval_cost_estimate"] += estimate_fargate_price(retrieval_time)
             configuration["eval_cost_estimate"] += estimate_fargate_price(eval_time)

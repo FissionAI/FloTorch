@@ -358,10 +358,6 @@ class BaseEvaluator(ABC):
         pass 
 
     @abstractmethod
-    def get_questions(self, experiment_id: str) -> List[Dict]:
-        pass
-
-    @abstractmethod
     def update_experiment_metrics(self, experiment_id: str, metrics_list: List['EvaluationMetrics']):
         pass
 

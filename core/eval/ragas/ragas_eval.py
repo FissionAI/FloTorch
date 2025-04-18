@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from baseclasses.base_classes import BaseEvaluator, EvaluationMetrics
 from core.dynamodb import DynamoDBOperations
 from typing import List, Dict
@@ -24,6 +25,11 @@ class RagasEvaluator(BaseEvaluator):
             region=self.config.aws_region,
             table_name=self.config.experiment_table
         )
+    
+    @abstractmethod
+    def _initialize_scorers(self) -> None:
+        """Initialize the appropriate scorers"""
+        pass
     
     def get_all_questions(self, experiment_id: str) -> List[Dict]:
         """Fetch all questions for a given experiment"""

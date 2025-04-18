@@ -140,8 +140,8 @@ const columns = ref<TableColumn<ProjectListItem>[]>([
 
 const sorting = ref([
   {
-    id: "id",
-    asc: true,
+    id: "date",
+    desc: true,
   },
 ]);
 </script>

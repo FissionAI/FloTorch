@@ -25,6 +25,9 @@ def estimate_effective_kb_tokens(configuration, num_tokens_kb_data):
 
 def estimate_embedding_model_bedrock_price(file_path, configuration, effective_kb_tokens):
     try:
+        if configuration.get('gateway_enabled', False):
+            return 0
+
         df = file_path.copy()
         # return df
     except Exception as e:
@@ -47,6 +50,9 @@ def estimate_embedding_model_bedrock_price(file_path, configuration, effective_k
 def estimate_retrieval_model_bedrock_price(file_path, configuration, avg_prompt_length,
                                            num_prompts):
     try:
+        if configuration.get('gateway_enabled', False):
+            return 0
+            
         df = file_path.copy()
         # return df
     except Exception as e:
@@ -119,6 +125,9 @@ def estimate_sagemaker_price(time, number_of_instances = 1):
 
 def estimate_times(no_of_kb_tokens, num_prompts, configuration):
     # For every 50,000 tokens of kb data and 50 prompts of gt data, estimated time in mins
+    if configuration.get('gateway_enabled', False):
+        return 0,0,0
+
     estimated_time = {
         "indexing": {"sagemaker" : 2, "bedrock" : 1},
         "retrieval": {"sagemaker": 3, "bedrock": 3},

@@ -47,6 +47,9 @@ class ExperimentalConfig(BaseModel):
     bedrock_knowledge_base: bool = False
     knowledge_base: bool = True
     is_opensearch: bool = True
+    gateway_enabled: bool = False
+    gateway_url: Optional[str] = Field(alias="gateway_url")
+    gateway_api_key: Optional[str] = Field(alias="gateway_api_key")
     class Config:
         alias_generator = lambda string: string.replace("-", "_")
         populate_by_name = True
