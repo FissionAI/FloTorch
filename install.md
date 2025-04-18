@@ -147,6 +147,7 @@ Access CloudWatch dashboards from the AWS console to view performance metrics an
 | Step Functions | $0.50-$2.00 | • $0.025/1,000 state transitions |
 | ECS (Fargate) | $2.00-$5.00 | • vCPU: $0.04048/hour<br>• Memory: $0.004445/GB-hour |
 | Bedrock | $5.00-$10.00 | • Input: $0.0001/1K tokens<br>• Output: $0.0002/1K tokens |
+| EC2(t2.large) | $3.84 | • 1 vCPU, 2GB memory: $0.16/hour × 24 hours |
 
 **Total Estimated Cost (Approx)**: $56.53-$75.69/day (varies with usage)
 
