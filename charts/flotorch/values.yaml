@@ -46,7 +46,7 @@ postgres:
 # Console configuration
 console:
   image:
-    repository: flotorch/console
+    repository: flotorch-console
     tag: 178
   # These values can be overridden during deployment
   domain: "console.flotorch.com"
@@ -64,7 +64,7 @@ console:
 # Gateway configuration
 gateway:
   image:
-    repository: flotorch/gateway
+    repository: flotorch-gateway
     tag: 12
   name: prod-gateway
   service:

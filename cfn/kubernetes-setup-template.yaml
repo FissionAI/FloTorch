@@ -26,6 +26,12 @@ Parameters:
   ExperimentationPassword:
     Type: String
     Description: Password for experimentation API
+  ConsoleImageTag:
+    Type: String
+    Description: Tag for console image
+  GatewayImageTag:
+    Type: String
+    Description: Tag for gateway image
 
 Resources:
   EC2SecurityGroup:
@@ -225,6 +231,8 @@ Resources:
                       experimentation_host = event['ResourceProperties'].get('ExperimentationHost', '')
                       experimentation_username = event['ResourceProperties'].get('ExperimentationUsername', 'admin')
                       experimentation_password = event['ResourceProperties'].get('ExperimentationPassword', '')
+                      console_image_tag = event['ResourceProperties'].get('ConsoleImageTag', '')
+                      gateway_image_tag = event['ResourceProperties'].get('GatewayImageTag', '')
                       
                       print("Experimentation Host: " + experimentation_host)
                       print("Experimentation Username: " + experimentation_username)
@@ -253,10 +261,12 @@ Resources:
           experimentation_host="{}"
           experimentation_username="{}"
           experimentation_password="{}"
+          console_image_tag="{}"
+          gateway_image_tag="{}"
           set -e'''
                       
                       # Format the template with the actual values
-                      install_script = script_template.format(experimentation_host, experimentation_username, experimentation_password) + '''
+                      install_script = script_template.format(experimentation_host, experimentation_username, experimentation_password, console_image_tag, gateway_image_tag) + '''
 
 
           echo "Starting Kubernetes tools installation and setup"
@@ -442,6 +452,11 @@ Resources:
               host: "https://$experimentation_host/api"
               username: "$experimentation_username"
               password: "$experimentation_password"
+            image:
+              tag: "$console_image_tag"
+          gateway:
+            image:
+              tag: "$gateway_image_tag"
           EOF
           
           # Make sure ec2-user owns the file
