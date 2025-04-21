@@ -153,6 +153,20 @@ Resources:
       RepositoryName: !Sub "flotorch-costcompute-${TableSuffix}"
       EmptyOnDelete: true
 
+  ConsoleRepository:
+    Type: AWS::ECR::Repository
+    DependsOn: ConsoleRepositoryCleanup
+    Properties:
+      RepositoryName: !Sub "flotorch-console-${TableSuffix}"
+      EmptyOnDelete: true
+  
+  GatewayRepository:
+    Type: AWS::ECR::Repository
+    DependsOn: GatewayRepositoryCleanup
+    Properties:
+      RepositoryName: !Sub "flotorch-gateway-${TableSuffix}"
+      EmptyOnDelete: true
+
 Outputs:
   AppRepositoryURI:
     Value: !GetAtt AppRepository.RepositoryUri

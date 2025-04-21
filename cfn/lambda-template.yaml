@@ -92,6 +92,12 @@ Parameters:
   CostComputeImageTag:
     Type: String
     Description: Tag for the AI image
+  ConsoleImageTag:
+    Type: String
+    Description: Tag for the console image
+  GatewayImageTag:
+    Type: String
+    Description: Tag for the gateway image
 
 Conditions:
   PrerequisitesMet: !Equals [!Ref PrerequisitesMet, "yes"]
@@ -272,6 +278,8 @@ Resources:
                       evaluation_image_tag = event['ResourceProperties']['EvaluationImageTag']
                       runtime_image_tag = event['ResourceProperties']['RuntimeImageTag']
                       ai_image_tag = event['ResourceProperties']['CostComputeImageTag']
+                      console_image_tag = event['ResourceProperties']['ConsoleImageTag']
+                      gateway_image_tag = event['ResourceProperties']['GatewayImageTag']
                       
                       # Create EC2 instance
                       response = ec2.run_instances(
@@ -328,7 +336,9 @@ Resources:
                       export EVALUATION_IMAGE_TAG="{event['ResourceProperties']['EvaluationImageTag']}"
                       export RUNTIME_IMAGE_TAG="{event['ResourceProperties']['RuntimeImageTag']}"
                       export AI_IMAGE_TAG="{event['ResourceProperties']['CostComputeImageTag']}"
-
+                      export CONSOLE_IMAGE_TAG="{event['ResourceProperties']['ConsoleImageTag']}"
+                      export GATEWAY_IMAGE_TAG="{event['ResourceProperties']['GatewayImageTag']}"
+                      
                       detect_os() {{
                           if [ -f /etc/os-release ]; then
                               . /etc/os-release
@@ -429,10 +439,18 @@ Resources:
                       echo "Pulling Retriever image..."
                       nohup docker pull "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-retriever:$RETRIEVER_IMAGE_TAG" > pull_retriever.log 2>&1 &
                       PULL_PID6=$!
+
+                      echo "Pulling Console image..."
+                      nohup docker pull "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-console:$CONSOLE_IMAGE_TAG" > pull_console.log 2>&1 &
+                      PULL_PID7=$!
+
+                      echo "Pulling Gateway image..."
+                      nohup docker pull "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-gateway:$GATEWAY_IMAGE_TAG" > pull_gateway.log 2>&1 &
+                      PULL_PID8=$!
                       
                       # Wait for all pulls to complete
                       echo "Waiting for all pulls to complete..."
-                      wait $PULL_PID1 $PULL_PID2 $PULL_PID3 $PULL_PID4 $PULL_PID5 $PULL_PID6
+                      wait $PULL_PID1 $PULL_PID2 $PULL_PID3 $PULL_PID4 $PULL_PID5 $PULL_PID6 $PULL_PID7 $PULL_PID8
                       
                       # Check if any pulls failed
                       PULL_FAILED=0
@@ -492,6 +510,14 @@ Resources:
                       docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-retriever:$RETRIEVER_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-retriever-$TABLE_SUFFIX:$RETRIEVER_IMAGE_TAG"
                       docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-retriever:$RETRIEVER_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-retriever-$TABLE_SUFFIX:latest"
 
+                      # Console image
+                      docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-console:$CONSOLE_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-console-$TABLE_SUFFIX:$CONSOLE_IMAGE_TAG"
+                      docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-console:$CONSOLE_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-console-$TABLE_SUFFIX:latest"
+
+                      # Gateway image
+                      docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-gateway:$GATEWAY_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-gateway-$TABLE_SUFFIX:$GATEWAY_IMAGE_TAG"
+                      docker tag "709825985650.dkr.ecr.us-east-1.amazonaws.com/fission-labs/flotorch-gateway:$GATEWAY_IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-gateway-$TABLE_SUFFIX:latest"
+
                       # Push all images in parallel
                       echo "Starting parallel docker push operations..."
 
@@ -536,10 +562,24 @@ Resources:
                       PUSH_PID11=$!
                       nohup docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-retriever-$TABLE_SUFFIX:latest" > push_retriever_latest.log 2>&1 &
                       PUSH_PID12=$!
+
+                      # Push Console images
+                      echo "Pushing Console images..."
+                      nohup docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-console-$TABLE_SUFFIX:$CONSOLE_IMAGE_TAG" > push_console_tag.log 2>&1 &
+                      PUSH_PID13=$!
+                      nohup docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-console-$TABLE_SUFFIX:latest" > push_console_latest.log 2>&1 &
+                      PUSH_PID14=$!
+
+                      # Push Gateway images
+                      echo "Pushing Gateway images..."
+                      nohup docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-gateway-$TABLE_SUFFIX:$GATEWAY_IMAGE_TAG" > push_gateway_tag.log 2>&1 &
+                      PUSH_PID15=$!
+                      nohup docker push "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/flotorch-gateway-$TABLE_SUFFIX:latest" > push_gateway_latest.log 2>&1 &
+                      PUSH_PID16=$!
                       
                       # Wait for all pushes to complete
                       echo "Waiting for all pushes to complete..."
-                      wait $PUSH_PID1 $PUSH_PID2 $PUSH_PID3 $PUSH_PID4 $PUSH_PID5 $PUSH_PID6 $PUSH_PID7 $PUSH_PID8 $PUSH_PID9 $PUSH_PID10 $PUSH_PID11 $PUSH_PID12
+                      wait $PUSH_PID1 $PUSH_PID2 $PUSH_PID3 $PUSH_PID4 $PUSH_PID5 $PUSH_PID6 $PUSH_PID7 $PUSH_PID8 $PUSH_PID9 $PUSH_PID10 $PUSH_PID11 $PUSH_PID12 $PUSH_PID13 $PUSH_PID14 $PUSH_PID15 $PUSH_PID16
                       
                       # Check if any pushes failed
                       PUSH_FAILED=0

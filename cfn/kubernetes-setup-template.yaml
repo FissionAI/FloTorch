@@ -429,9 +429,14 @@ Resources:
 
           # Install FloTorch Helm chart with dynamic values
           echo "Installing FloTorch Helm chart..."
+          # Get AWS account ID for ECR registry
+          account_id=$(aws sts get-caller-identity --query Account --output text)
+          
           # Create a values override file to avoid escaping issues
           rm -rf /home/ec2-user/override-values.yaml
           cat > /home/ec2-user/override-values.yaml << EOF
+          global:
+            imageRegistry: "${account_id}.dkr.ecr.${region}.amazonaws.com"
           console:
             experimentation:
               host: "https://$experimentation_host/api"

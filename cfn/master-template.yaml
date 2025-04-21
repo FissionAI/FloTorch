@@ -196,6 +196,8 @@ Resources:
         EvaluationImageTag: "3.0.0.1"
         RuntimeImageTag: "3.0.0.1"
         CostComputeImageTag: "3.0.0.1"
+        ConsoleImageTag: "test-cfn"
+        GatewayImageTag: "test-cfn"
 
   LambdaStackNoOpenSearch:
     Type: AWS::CloudFormation::Stack
@@ -232,6 +234,8 @@ Resources:
         EvaluationImageTag: "3.0.0.1"
         RuntimeImageTag: "3.0.0.1"
         CostComputeImageTag: "3.0.0.1"
+        ConsoleImageTag: "test-cfn"
+        GatewayImageTag: "test-cfn"
 
   ECSStack:
     Type: AWS::CloudFormation::Stack
