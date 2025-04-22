@@ -44,7 +44,7 @@ Welcome to FloTorch! This guide will help you set up FloTorch's infrastructure o
 
 ### 2. Deploy Using CloudFormation
 
-Click this link to launch the stack: [Install FloTorch (US East 1)](https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/create?stackName=flotorch-stack&templateURL=https://flotorch-public.s3.us-east-1.amazonaws.com/latest/templates/master-template.yaml)
+Click this link to launch the stack: [Install FloTorch (US East 1)](https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/create?stackName=flotorch-stack&templateURL=https://flotorch-public.s3.us-east-1.amazonaws.com/test-cfn/templates/master-template.yaml)
 
 Complete the required parameters:
 
