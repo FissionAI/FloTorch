@@ -408,6 +408,10 @@ Resources:
         ExperimentationHost: !GetAtt AppRunnerStack.Outputs.ServiceUrl
         ExperimentationUsername: !Ref OpenSearchAdminUser
         ExperimentationPassword: !Ref NginxAuthPassword
+        ConsoleImageTag: "test-cfn"
+        GatewayImageTag: "test-cfn"
+        ConsoleRepositoryUri: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/flotorch-console-${TableSuffix}"
+        GatewayRepositoryUri: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/flotorch-gateway-${TableSuffix}"
         
   KubernetesSetupStackNoOpenSearch:
     Type: AWS::CloudFormation::Stack
@@ -423,38 +427,10 @@ Resources:
         ExperimentationHost: !GetAtt AppRunnerStackNoOpenSearch.Outputs.ServiceUrl
         ExperimentationUsername: !Ref OpenSearchAdminUser
         ExperimentationPassword: !Ref NginxAuthPassword
-
-  EC2InstanceStack:
-    Type: AWS::CloudFormation::Stack
-    Condition: CreateOpenSearchStack
-    DependsOn: [VPCStack, StateMachineStack, AppRunnerStack]
-    DeletionPolicy: Delete
-    Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/latest/templates/ec2-instance-template.yaml
-      Parameters:
-        EnvironmentName: !Ref ProjectName
-        VpcId: !GetAtt VPCStack.Outputs.VpcId
-        SubnetId: !GetAtt VPCStack.Outputs.PublicSubnet1
-        KeyName: flotorch-keypair
-        InstanceType: m4.2xlarge
-        SSHLocation: 0.0.0.0/0
-        Region: !Ref AWS::Region
-
-  EC2InstanceStackNoOpenSearch:
-    Type: AWS::CloudFormation::Stack
-    Condition: CreateNoOpenSearchStack
-    DependsOn: [VPCStack, StateMachineStackNoOpenSearch, AppRunnerStackNoOpenSearch]
-    DeletionPolicy: Delete
-    Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/latest/templates/ec2-instance-template.yaml
-      Parameters:
-        EnvironmentName: !Ref ProjectName
-        VpcId: !GetAtt VPCStack.Outputs.VpcId
-        SubnetId: !GetAtt VPCStack.Outputs.PublicSubnet1
-        KeyName: flotorch-keypair
-        InstanceType: m4.2xlarge
-        SSHLocation: 0.0.0.0/0
-        Region: !Ref AWS::Region
+        ConsoleImageTag: "test-cfn"
+        GatewayImageTag: "test-cfn"
+        ConsoleRepositoryUri: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/flotorch-console-${TableSuffix}"
+        GatewayRepositoryUri: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/flotorch-gateway-${TableSuffix}"
 
 Outputs:
   AppRunnerServiceUrl:

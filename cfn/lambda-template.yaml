@@ -678,6 +678,8 @@ Resources:
       EvaluationImageTag: !Ref EvaluationImageTag
       RuntimeImageTag: !Ref RuntimeImageTag
       CostComputeImageTag: !Ref CostComputeImageTag
+      ConsoleImageTag: !Ref ConsoleImageTag
+      GatewayImageTag: !Ref GatewayImageTag
 
   RuntimeLambdaFunctionWithPrereqs:
     Type: AWS::Lambda::Function

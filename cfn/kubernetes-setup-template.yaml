@@ -32,6 +32,12 @@ Parameters:
   GatewayImageTag:
     Type: String
     Description: Tag for gateway image
+  ConsoleRepositoryUri:
+    Type: String
+    Description: URI for the console repository
+  GatewayRepositoryUri:
+    Type: String
+    Description: URI for the gateway repository
 
 Resources:
   EC2SecurityGroup:
@@ -233,6 +239,9 @@ Resources:
                       experimentation_password = event['ResourceProperties'].get('ExperimentationPassword', '')
                       console_image_tag = event['ResourceProperties'].get('ConsoleImageTag', '')
                       gateway_image_tag = event['ResourceProperties'].get('GatewayImageTag', '')
+                      console_repository_uri = event['ResourceProperties'].get('ConsoleRepositoryUri', '')
+                      gateway_repository_uri = event['ResourceProperties'].get('GatewayRepositoryUri', '')
+                      table_suffix = event['ResourceProperties'].get('TableSuffix', '')
                       
                       print("Experimentation Host: " + experimentation_host)
                       print("Experimentation Username: " + experimentation_username)
@@ -257,16 +266,18 @@ Resources:
 
                       # Create a base script template
                       script_template = '''#!/bin/bash
-          # Set experimentation parameters from CloudFormation
           experimentation_host="{}"
           experimentation_username="{}"
           experimentation_password="{}"
           console_image_tag="{}"
           gateway_image_tag="{}"
+          console_repository_uri="{}"
+          gateway_repository_uri="{}"
+          table_suffix="{}"
           set -e'''
                       
                       # Format the template with the actual values
-                      install_script = script_template.format(experimentation_host, experimentation_username, experimentation_password, console_image_tag, gateway_image_tag) + '''
+                      install_script = script_template.format(experimentation_host, experimentation_username, experimentation_password, console_image_tag, gateway_image_tag, console_repository_uri, gateway_repository_uri, table_suffix) + '''
 
 
           echo "Starting Kubernetes tools installation and setup"
@@ -444,6 +455,7 @@ Resources:
           
           # Create a values override file to avoid escaping issues
           rm -rf /home/ec2-user/override-values.yaml
+          
           cat > /home/ec2-user/override-values.yaml << EOF
           global:
             imageRegistry: "${account_id}.dkr.ecr.${region}.amazonaws.com"
@@ -453,9 +465,11 @@ Resources:
               username: "$experimentation_username"
               password: "$experimentation_password"
             image:
+              repository: "flotorch-console-$table_suffix"
               tag: "$console_image_tag"
           gateway:
             image:
+              repository: "flotorch-gateway-$table_suffix"
               tag: "$gateway_image_tag"
           EOF
           
@@ -527,6 +541,11 @@ Resources:
       ExperimentationHost: !Ref ExperimentationHost
       ExperimentationUsername: !Ref ExperimentationUsername
       ExperimentationPassword: !Ref ExperimentationPassword
+      TableSuffix: !Ref TableSuffix
+      ConsoleImageTag: !Ref ConsoleImageTag
+      GatewayImageTag: !Ref GatewayImageTag
+      ConsoleRepositoryUri: !Ref ConsoleRepositoryUri
+      GatewayRepositoryUri: !Ref GatewayRepositoryUri
 
 Conditions:
   IsUsEast1Region: !Equals 
