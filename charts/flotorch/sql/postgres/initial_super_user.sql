@@ -1,0 +1,1 @@
+INSERT INTO "public"."users" ("firstName", "lastName", "email", "password", "isActive", "isSuperAdmin") VALUES ('FloTorch', 'Super Admin', 'superadmin@flotorch.local', '$scrypt$n=16384,r=8,p=1$Ktirgah7om+nQfFxLVjz2w$bcyhDfzjJL4ABdFnRcl2ACNUqcVUth/GcqDWfKNDeRKIrhxtdV4bUrVq+76kpERsNi90nDrazOvoKDAjRTBkQQ', 't', 't');

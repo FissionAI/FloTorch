@@ -1,0 +1,172 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  labels:
+    app: postgres
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+spec:
+  ports:
+  - port: 5432
+    targetPort: 5432
+    protocol: TCP
+    name: postgres
+  selector:
+    app: postgres
+    release: {{ .Release.Name }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  labels:
+    app: postgres
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: postgres
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+      - name: postgres
+        image: "{{ .Values.postgres.image.repository }}:{{ .Values.postgres.image.tag }}"
+        imagePullPolicy: IfNotPresent
+        readinessProbe:
+          exec:
+            command: ["pg_isready", "-U", "{{ .Values.postgres.auth.username }}"]
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        # Explicit command to run Postgres
+        command: ["docker-entrypoint.sh"]
+        args: ["postgres"]
+        ports:
+        - name: postgres
+          containerPort: 5432
+          protocol: TCP
+        env:
+        - name: POSTGRES_USER
+          value: {{ .Values.postgres.auth.username }}
+        - name: POSTGRES_PASSWORD
+          value: {{ .Values.postgres.auth.password }}
+        - name: POSTGRES_DB
+          value: {{ .Values.postgres.auth.database }}
+        - name: PGUSER
+          value: {{ .Values.postgres.auth.username }}
+        - name: PGPASSWORD
+          value: {{ .Values.postgres.auth.password }}
+        - name: PGDATABASE
+          value: {{ .Values.postgres.auth.database }}
+        - name: LANG
+          value: en_US.utf8
+        - name: LC_ALL
+          value: en_US.utf8
+        - name: POSTGRES_INITDB_ARGS
+          value: "--data-checksums --encoding=UTF8 --locale=en_US.UTF-8"
+        - name: POSTGRES_HOST_AUTH_METHOD
+          value: "trust"
+        volumeMounts:
+        - name: postgres-data
+          mountPath: /var/lib/postgresql/data
+        readinessProbe:
+          exec:
+            command: ["sh", "-c", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB"]
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+        livenessProbe:
+          exec:
+            command: ["sh", "-c", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB"]
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+        startupProbe:
+          exec:
+            command: ["sh", "-c", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB"]
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 12
+          successThreshold: 1
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 1024Mi
+          requests:
+            cpu: 200m
+            memory: 256Mi
+      - name: migrations
+        image: postgres:{{ .Values.postgres.image.tag }}
+        command: ["bash", "-c"]
+        args:
+        - |
+          echo "Waiting for main PostgreSQL container to be ready..."
+          sleep 30
+          
+          # Check if main container is ready by testing the connection
+          MAX_ATTEMPTS=60
+          ATTEMPT=0
+          while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
+            if pg_isready -h localhost -U {{ .Values.postgres.auth.username }}; then
+              echo "PostgreSQL server is ready!"
+              break
+            fi
+            echo "Waiting for PostgreSQL server... (Attempt $ATTEMPT/$MAX_ATTEMPTS)"
+            sleep 5
+            ATTEMPT=$((ATTEMPT+1))
+          done
+          
+          if [ $ATTEMPT -eq $MAX_ATTEMPTS ]; then
+            echo "PostgreSQL server did not become ready in time"
+            exit 1
+          fi
+          
+          # Set up environment for psql
+          export PGPASSWORD={{ .Values.postgres.auth.password }}
+          
+          # Check if we have migration files
+          if [ -z "$(ls -A /migrations/*.sql 2>/dev/null)" ]; then
+            echo "No migration files found in /migrations/"
+            echo "Contents of /migrations/: $(ls -la /migrations/)"
+            sleep 3600  # Keep container running for debugging
+            exit 0
+          fi
+          
+          # Run all migration scripts in order
+          echo "Found the following migration files: $(ls -la /migrations/)"
+          for file in $(ls -v /migrations/*.sql); do
+            echo "Running migration: $file"
+            psql -h localhost -U {{ .Values.postgres.auth.username }} -d {{ .Values.postgres.auth.database }} -f $file
+            if [ $? -ne 0 ]; then
+              echo "Error running migration script $file"
+              exit 1
+            fi
+            echo "Migration $file completed successfully"
+          done
+          
+          echo "All PostgreSQL migrations completed successfully"
+          
+          # Keep the container running to allow checking logs
+          sleep 3600
+        volumeMounts:
+        - name: postgres-migrations-volume
+          mountPath: /migrations
+      volumes:
+      - name: postgres-data
+        persistentVolumeClaim:
+          claimName: postgres-data-pvc
+      - name: postgres-migrations-volume
+        configMap:
+          name: postgres-migrations
