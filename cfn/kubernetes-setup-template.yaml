@@ -255,13 +255,57 @@ Resources:
                           instance_id = raw_instance_id
                           print("Using instance ID as provided: " + instance_id)
 
-                      # Get the private IP of the instance
+                      # Wait for the instance to be in running state
+                      print("Waiting for instance to reach running state...")
+                      waiter = ec2.get_waiter('instance_running')
+                      waiter.wait(InstanceIds=[instance_id])
+                      print("Instance is now running. Waiting for status checks to pass...")
+                      
+                      # Wait for the instance status checks to pass
+                      waiter = ec2.get_waiter('instance_status_ok')
+                      waiter.wait(InstanceIds=[instance_id])
+                      print("Instance status checks passed. Waiting for SSM agent to come online...")
+                      
+                      # Wait for the SSM agent to be online
+                      ssm_online = False
+                      max_retries = 30  # Try for about 5 minutes (10 seconds between retries)
+                      retry_count = 0
+                      
+                      while not ssm_online and retry_count < max_retries:
+                          try:
+                              # Check if the instance is SSM-managed (connected)
+                              response = ssm.describe_instance_information(
+                                  Filters=[{
+                                      'Key': 'InstanceIds',
+                                      'Values': [instance_id]
+                                  }]
+                              )
+                              
+                              if response['InstanceInformationList']:
+                                  ssm_online = True
+                                  print("SSM agent is online and instance is ready for commands.")
+                              else:
+                                  print(f"Waiting for SSM agent to come online... (Attempt {retry_count + 1}/{max_retries})")
+                                  time.sleep(10)  # Wait 10 seconds before trying again
+                                  retry_count += 1
+                          except Exception as e:
+                              print(f"Error checking SSM status: {str(e)}")
+                              time.sleep(10)
+                              retry_count += 1
+                      
+                      if not ssm_online:
+                          raise Exception("Timed out waiting for SSM agent to come online")
+                      
+                      # Get the instance details after it's fully initialized
                       response = ec2.describe_instances(InstanceIds=[instance_id])
                       private_ip = response['Reservations'][0]['Instances'][0]['PrivateIpAddress']
+                      # Get the public IP address
+                      public_ip = response['Reservations'][0]['Instances'][0]['PublicIpAddress']
                       availability_zone = response['Reservations'][0]['Instances'][0]['Placement']['AvailabilityZone']
                       # Extract region from AZ (remove the last character)
                       region = availability_zone[:-1]
                       print("Private IP of the instance: " + private_ip)
+                      print("Public IP of the instance: " + public_ip)
                       print("Region of the instance: " + region)
 
                       # Create a base script template
@@ -274,10 +318,11 @@ Resources:
           console_repository_uri="{}"
           gateway_repository_uri="{}"
           table_suffix="{}"
+          public_ip="{}"
           set -e'''
                       
                       # Format the template with the actual values
-                      install_script = script_template.format(experimentation_host, experimentation_username, experimentation_password, console_image_tag, gateway_image_tag, console_repository_uri, gateway_repository_uri, table_suffix) + '''
+                      install_script = script_template.format(experimentation_host, experimentation_username, experimentation_password, console_image_tag, gateway_image_tag, console_repository_uri, gateway_repository_uri, table_suffix, public_ip) + '''
 
 
           echo "Starting Kubernetes tools installation and setup"
@@ -458,6 +503,7 @@ Resources:
           
           cat > /home/ec2-user/override-values.yaml << EOF
           global:
+            consoleDomain: "$table_suffix.flotorch.cloud"
             imageRegistry: "${account_id}.dkr.ecr.${region}.amazonaws.com"
           console:
             experimentation:
@@ -482,6 +528,25 @@ Resources:
           # Wait for all pods to be in Ready state before proceeding with database setup
           echo "Waiting for all pods to be in Ready state..."
           sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && kubectl wait --for=condition=Ready pods --all --timeout=600s'
+
+          # Create Cloudflare DNS record for subdomain
+          echo "Creating Cloudflare DNS record for ${table_suffix}.flotorch.cloud..."
+          # Use the public IP passed from the Lambda function
+          PUBLIC_IP="${public_ip}"
+          CLOUDFLARE_API_TOKEN="gXtnJiUVhXk76gRzR6NDjiVRWOww8HJFR8hanMqY"
+          CLOUDFLARE_ZONE_ID=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones?name=flotorch.cloud" \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            -H "Content-Type: application/json" | jq -r '.result[0].id')
+          
+          # Create the JSON payload with proper variable substitution
+          JSON_PAYLOAD="{\"type\":\"A\",\"name\":\"$table_suffix\",\"content\":\"$PUBLIC_IP\",\"ttl\":1,\"proxied\":true}"
+          
+          curl -s -X POST "https://api.cloudflare.com/client/v4/zones/$CLOUDFLARE_ZONE_ID/dns_records" \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            -H "Content-Type: application/json" \
+            --data "$JSON_PAYLOAD" | jq .
+          
+          echo "DNS record for $table_suffix.flotorch.cloud created and pointing to $PUBLIC_IP"
 
           echo "Kubernetes setup completed successfully!"
           '''
