@@ -11,4 +11,4 @@ pandas
 PyPDF2==3.0.1
 pymupdf
 openai
-FloTorch-core==2.7.0
+FloTorch-core==2.9.3
