@@ -1,0 +1,1 @@
+ALTER TABLE "models" DROP CONSTRAINT "models_name_unique";
