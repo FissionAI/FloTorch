@@ -25,6 +25,17 @@ def compute_actual_price_breakdown(
 ):
     """Compute the actual price based on the given configuration and token/time inputs."""
 
+
+    is_gateway_enabled = configuration.get("config", {}).get("gateway_enabled", False)
+    if is_gateway_enabled:
+        overall_metadata = {'total_cost': 0.0, 'total_time': total_time, 'order': ['total_time', 'total_cost']}
+        indexing_metadata = {'runtime': indexing_time, 'model': '', 'service': '', 'sagemaker_cost': 0.0, 'ecs_cost': 0.0, 'total_cost': 0.0, 'order': ['model', 'service', 'knowledge_base_tokens', 'bedrock_cost', 'runtime', 'sagemaker_cost', 'ecs_cost', 'opensearch_cost', 'total_cost']}
+        retriever_metadata = {'runtime': retrieval_time, 'ecs_cost': 0.0, 'total_cost': 0.0, 'order': ['no_of_questions', 'rerank_model', 'reranker_queries', 'reranking_cost', 'runtime', 'ecs_cost', 'opensearch_cost', 'total_cost']}
+        inferencer_metadata = {'model': configuration.get("config", {}).get("retrieval_model", ""), 'service': '', 'runtime': retrieval_time, 'sagemaker_cost': 0.0, 'sagemaker_embedding_cost': 0.0, 'total_cost': 0.0, 'order': ['model', 'service', 'no_of_questions', 'input_tokens', 'output_tokens', 'query_embed_tokens', 'input_tokens_cost', 'output_tokens_cost', 'query_embed_tokens_cost', 'average_latency', 'runtime', 'sagemaker_embedding_cost', 'sagemaker_cost', 'total_cost']}
+        evaluator_metadata = {'runtime': eval_time, 'ecs_cost': 0.0, 'total_cost': 0.0, 'order': ['runtime', 'ecs_cost', 'opensearch_cost', 'sagemaker_embedding_cost', 'sagemaker_inferencer_cost', 'total_cost']}
+
+        return overall_metadata, indexing_metadata, retriever_metadata, inferencer_metadata, evaluator_metadata
+
     is_input_valid, input_missing = validate_params(
         configuration=configuration
     )

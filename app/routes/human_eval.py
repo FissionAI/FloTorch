@@ -172,11 +172,15 @@ async def query_experiments(
                     )
                     if not bedrock_knowledge_base else None
                 ),
-                opensearch_host=config.get_opensearch_host(),
-                opensearch_port=config.get_opensearch_port(),
-                opensearch_username=config.get_opensearch_username(),
-                opensearch_password=config.get_opensearch_password(),
-                index_id=exp_config_data.get("index_id"),
+                **(
+                    {
+                        "opensearch_host": config.get_opensearch_host(),
+                        "opensearch_port": config.get_opensearch_port(),
+                        "opensearch_username": config.get_opensearch_username(),
+                        "opensearch_password": config.get_opensearch_password(),
+                        "index_id": exp_config_data.get("index_id"),
+                    } if not bedrock_knowledge_base else {}
+                ),
                 knowledge_base_id=exp_config.get("kb_data"),
                 aws_region=aws_region
             )

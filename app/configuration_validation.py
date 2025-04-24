@@ -206,12 +206,14 @@ def remove_invalid_combinations_keys(combinations):
     return combinations
 
 
-def unpack_knowledebases(combinations):
+def unpack_knowledebases(combinations, is_gateway_enabled):
     for combination in combinations:
         kb_data = combination.get('kb_data')
         if isinstance(kb_data, dict):
             combination["kb_name"] = kb_data.get("name", "")
             combination["kb_data"] = kb_data.get("id", "")
+            if is_gateway_enabled:
+                combination["flotorch_kb_id"] = kb_data.get("flotorch_kb_id", "")
             
         elif isinstance(kb_data, str):
             combination["kb_data"] = kb_data
@@ -235,17 +237,22 @@ def unpack_guardrails(combinations):
 
     return combinations
 
-def add_kb_info(parameters_all):
+def add_kb_info(parameters_all, is_gateway_enabled):
     if 'kb_data' in parameters_all:
         if parameters_all['bedrock_knowledge_base']:
             kb_ids = parameters_all['kb_data']
             kb_data = []
             for kb_id in kb_ids:
-                kb_name = KnowledgeBaseUtils(parameters_all['region']).get_kb_name(kb_id)
-                kb_data.append({
-                    "id": kb_id,
-                    "name": kb_name
-                })
+
+                kb_name = KnowledgeBaseUtils(parameters_all['region']).get_kb_name(kb_id if not is_gateway_enabled else kb_id.get("kb_id", ""))
+                full_kb_data = {
+                    "id": kb_id if not is_gateway_enabled else kb_id.get("kb_id", ""),
+                    "name": kb_name,
+                }
+                if is_gateway_enabled:
+                    full_kb_data["flotorch_kb_id"] = kb_id.get("flotorch_kb_id", "")
+
+                kb_data.append(full_kb_data)
             parameters_all['kb_data'] = kb_data 
     return parameters_all
     
@@ -253,6 +260,19 @@ def generate_all_combinations(data):
     
     # Parse the DynamoDB-style JSON
     parsed_data = {k: parse_dynamodb(v) for k, v in data.items()}
+
+    is_gateway_enabled = parsed_data.get('gateway_enabled', False)
+
+    if is_gateway_enabled and parsed_data.get("prestep").get("bedrock_knowledge_base"):
+        kb_data = parsed_data["prestep"]['kb_data']
+        kb_ids = kb_data.get("kb_id", [])
+        gateway_kb_ids = kb_data.get("flotorch_kb_id", [])
+
+        result_kb_ids = []
+        for index in range(len(gateway_kb_ids)):
+            result_kb_ids.append({'kb_id': kb_ids[index], 'flotorch_kb_id': gateway_kb_ids[index]})
+
+        parsed_data["prestep"]['kb_data'] = result_kb_ids
 
     parameters_all = parsed_data["prestep"]
     parameters_all.update(parsed_data["indexing"])
@@ -263,7 +283,7 @@ def generate_all_combinations(data):
     parameters_all['gateway_api_key'] = [parsed_data.get('gateway_api_key', "")]
     parameters_all['gateway_url'] = [parsed_data.get('gateway_url', "")]
     parameters_all.update(parsed_data["evaluation"])
-    parameters_all = add_kb_info(parameters_all)
+    parameters_all = add_kb_info(parameters_all, is_gateway_enabled)
     parameters_all = {key: value if isinstance(value, list) else [value] for key, value in parameters_all.items()}
     # Convert single values to lists and replace empty values with [0]
     parameters_all = {key: value if isinstance(value, list) else [value] for key, value in parameters_all.items()}
@@ -273,7 +293,7 @@ def generate_all_combinations(data):
     combinations = [dict(zip(keys, values)) for values in itertools.product(*parameters_all.values())]
     combinations = remove_invalid_combinations_keys(combinations)
     combinations = unpack_guardrails(combinations)
-    combinations = unpack_knowledebases(combinations)
+    combinations = unpack_knowledebases(combinations, is_gateway_enabled)
     
     gt_data = parameters_all["gt_data"][0]
     [num_prompts, num_chars] = read_gt_data(gt_data)

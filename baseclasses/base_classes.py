@@ -386,7 +386,8 @@ class Execution(BaseModel):
     config: Dict[str, Any]
     status: str = "not_started"
     gt_data: str
-    kb_data: Union[str, List[str]]
+    kb_data: Optional[Union[str, List[str]]] = None
+    gateway_kb_data: Optional[Dict[str, List[Any]]] = None
     region: str
     name: str
 
