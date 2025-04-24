@@ -61,35 +61,49 @@ Complete the required parameters:
 
 ### 3. Configure DNS for Application Access
 
-After deployment completes, get the EC2 instance's public IP:
-
-```bash
-aws cloudformation describe-stacks \
-  --stack-name YOUR_PROJECT_NAME-KubernetesSetupStack \
-  --query "Stacks[0].Outputs[?OutputKey=='InstancePublicIp'].OutputValue" \
-  --output text
-```
+After deployment completes, get the EC2 instance's public IP from the CloudFormation stack outputs of the `<YOUR_PROJECT_NAME>-KubernetesSetupStack`.
 
 Map the FloTorch domain to this IP in your hosts file:
 
 - **Linux users**:
   ```bash
-  echo "<EC2_PUBLIC_IP> console.flotorch.com" | sudo tee -a /etc/resolv.conf
+  echo "<EC2_PUBLIC_IP> <table_suffix>.flotorch.cloud" | sudo tee -a /etc/resolv.conf
   ```
 
 - **macOS users**:
   ```bash
   sudo vi /private/etc/hosts
-  # Add: <EC2_PUBLIC_IP> console.flotorch.com
+  # Add: <EC2_PUBLIC_IP> <table_suffix>.flotorch.cloud
   sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder
   ```
 
 ### 4. Access Your FloTorch Console
 
 Once DNS is configured, access your FloTorch console at:
-- https://console.flotorch.com
+- https://<table_suffix>.flotorch.cloud:30443/
 
-Log in with the credentials you specified in the CloudFormation parameters.
+### 5. Login Credentials
+
+#### Superuser Login
+
+A default superuser account is created automatically and stored in AWS Systems Manager Parameter Store:
+
+- **Username**: `superadmin@flotorch.local` (stored at `/flotorch/<table_suffix>/console/superuser/username`)
+- **Password**: `Password2025!` (stored at `/flotorch/<table_suffix>/console/superuser/password`)
+
+You can retrieve these credentials using AWS CLI:
+
+```bash
+# Get username
+aws ssm get-parameter --name /flotorch/<YOUR_TABLE_SUFFIX>/console/superuser/username --query Parameter.Value --output text
+
+# Get password
+aws ssm get-parameter --name /flotorch/<YOUR_TABLE_SUFFIX>/console/superuser/password --query Parameter.Value --output text
+```
+
+Or view them in the CloudFormation stack outputs for your `<YOUR_PROJECT_NAME>-KubernetesSetupStack`.
+
+> **Important**: Change the default password after your first login for security purposes.
 
 ## What's New
 
@@ -116,7 +130,7 @@ aws cloudformation describe-stack-events --stack-name YOUR_PROJECT_NAME
 
 After successful deployment, you'll have access to:
 
-1. **FloTorch Console**: https://console.flotorch.com
+1. **FloTorch Console**: https://<table_suffix>.flotorch.cloud
 2. **AppRunner Service**: For API requests (URL in CloudFormation outputs)
 3. **OpenSearch Dashboard**: For data exploration (if enabled)
 

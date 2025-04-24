@@ -612,6 +612,25 @@ Resources:
       ConsoleRepositoryUri: !Ref ConsoleRepositoryUri
       GatewayRepositoryUri: !Ref GatewayRepositoryUri
 
+  # SSM Parameters for superuser credentials
+  SuperUserUsernameParameter:
+    Type: AWS::SSM::Parameter
+    DependsOn: KubernetesSetupResource
+    Properties:
+      Name: !Sub /flotorch/${TableSuffix}/console/superuser/username
+      Type: String
+      Value: superadmin@flotorch.local
+      Description: FloTorch console superuser username
+
+  SuperUserPasswordParameter:
+    Type: AWS::SSM::Parameter
+    DependsOn: KubernetesSetupResource
+    Properties:
+      Name: !Sub /flotorch/${TableSuffix}/console/superuser/password
+      Type: String
+      Value: Password2025!
+      Description: FloTorch console superuser password
+
 Conditions:
   IsUsEast1Region: !Equals 
     - !Ref AWS::Region
@@ -640,3 +659,19 @@ Outputs:
   EC2PublicIP:
     Description: Public IP address of the EC2 instance
     Value: !GetAtt EC2Instance.PublicIp
+
+  ConsoleSubdomain:
+    Description: Subdomain for the console
+    Value: !Sub ${TableSuffix}.flotorch.cloud
+  
+  SuperUserUsername:
+    Description: Superuser username for console login stored in SSM Parameter
+    Value: !Ref SuperUserUsernameParameter
+    
+  SuperUserUsernameParameter:
+    Description: SSM Parameter path for superuser username
+    Value: !Sub /flotorch/${TableSuffix}/console/superuser/username
+
+  SuperUserPasswordParameter:
+    Description: SSM Parameter path for superuser password
+    Value: !Sub /flotorch/${TableSuffix}/console/superuser/password
