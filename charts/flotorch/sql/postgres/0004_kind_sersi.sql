@@ -1,0 +1,1 @@
+ALTER TABLE "ragendpoints" ALTER COLUMN "vectorStorageId" DROP NOT NULL;

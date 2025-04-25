@@ -393,13 +393,51 @@ Resources:
         AppImageTag: "3.0.0.1"
         NeedOpensearch: !Ref NeedOpensearch
         
-  KubernetesSetupStackWithOpenSearch:
+  # KubernetesSetupStackWithOpenSearch:
+  #   Type: AWS::CloudFormation::Stack
+  #   Condition: CreateOpenSearchStack
+  #   DependsOn: [AppRunnerStack]
+  #   DeletionPolicy: Delete
+  #   Properties:
+  #     TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/test-cfn/templates/kubernetes-setup-template.yaml
+  #     Parameters:
+  #       TableSuffix: !Ref TableSuffix
+  #       VpcId: !GetAtt VPCStack.Outputs.VpcId
+  #       SubnetId: !GetAtt VPCStack.Outputs.PublicSubnet1
+  #       InstanceType: t2.large
+  #       ExperimentationHost: !GetAtt AppRunnerStack.Outputs.ServiceUrl
+  #       ExperimentationUsername: !Ref OpenSearchAdminUser
+  #       ExperimentationPassword: !Ref NginxAuthPassword
+  #       ConsoleImageTag: "test-cfn"
+  #       GatewayImageTag: "test-cfn"
+  #       ConsoleRepositoryUri: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/flotorch-console-${TableSuffix}"
+  #       GatewayRepositoryUri: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/flotorch-gateway-${TableSuffix}"
+        
+  # KubernetesSetupStackNoOpenSearch:
+  #   Type: AWS::CloudFormation::Stack
+  #   Condition: CreateNoOpenSearchStack
+  #   DependsOn: [AppRunnerStackNoOpenSearch]
+  #   Properties:
+  #     TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/test-cfn/templates/kubernetes-setup-template.yaml
+  #     Parameters:
+  #       TableSuffix: !Ref TableSuffix
+  #       VpcId: !GetAtt VPCStack.Outputs.VpcId
+  #       SubnetId: !GetAtt VPCStack.Outputs.PublicSubnet1
+  #       InstanceType: t2.large
+  #       ExperimentationHost: !GetAtt AppRunnerStackNoOpenSearch.Outputs.ServiceUrl
+  #       ExperimentationUsername: !Ref OpenSearchAdminUser
+  #       ExperimentationPassword: !Ref NginxAuthPassword
+  #       ConsoleImageTag: "test-cfn"
+  #       GatewayImageTag: "test-cfn"
+  #       ConsoleRepositoryUri: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/flotorch-console-${TableSuffix}"
+  #       GatewayRepositoryUri: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/flotorch-gateway-${TableSuffix}"
+
+  DockerEnterpriseSetupStackWithOpenSearch:
     Type: AWS::CloudFormation::Stack
     Condition: CreateOpenSearchStack
     DependsOn: [AppRunnerStack]
-    DeletionPolicy: Delete
     Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/test-cfn/templates/kubernetes-setup-template.yaml
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/test-enterprise/templates/docker-enterprise-setup.yaml
       Parameters:
         TableSuffix: !Ref TableSuffix
         VpcId: !GetAtt VPCStack.Outputs.VpcId
@@ -412,13 +450,13 @@ Resources:
         GatewayImageTag: "test-cfn"
         ConsoleRepositoryUri: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/flotorch-console-${TableSuffix}"
         GatewayRepositoryUri: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/flotorch-gateway-${TableSuffix}"
-        
-  KubernetesSetupStackNoOpenSearch:
+
+  DockerEnterpriseSetupStackNoOpenSearch:
     Type: AWS::CloudFormation::Stack
     Condition: CreateNoOpenSearchStack
     DependsOn: [AppRunnerStackNoOpenSearch]
     Properties:
-      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/test-cfn/templates/kubernetes-setup-template.yaml
+      TemplateURL: !Sub https://flotorch-public.s3.us-east-1.amazonaws.com/test-enterprise/templates/docker-enterprise-setup.yaml
       Parameters:
         TableSuffix: !Ref TableSuffix
         VpcId: !GetAtt VPCStack.Outputs.VpcId
@@ -442,26 +480,6 @@ Outputs:
     Description: URL of the App Runner service
     Condition: CreateNoOpenSearchStack
     Value: !GetAtt AppRunnerStackNoOpenSearch.Outputs.ServiceUrl
-
-  KubernetesConsoleUrl:
-    Description: URL for Kubernetes Console access
-    Condition: CreateOpenSearchStack
-    Value: !GetAtt KubernetesSetupStackWithOpenSearch.Outputs.HTTPSNodePort
-
-  KubernetesConsoleUrlNoOpenSearch:
-    Description: URL for Kubernetes Console access
-    Condition: CreateNoOpenSearchStack
-    Value: !GetAtt KubernetesSetupStackNoOpenSearch.Outputs.HTTPSNodePort
-
-  KubernetesEC2KeyPairWithOpenSearch:
-    Description: Name of the key pair for the Kubernetes EC2 instance with OpenSearch
-    Condition: CreateOpenSearchStack
-    Value: !GetAtt KubernetesSetupStackWithOpenSearch.Outputs.EC2KeyPairName
-
-  KubernetesEC2KeyPairNoOpenSearch:
-    Description: Name of the key pair for the Kubernetes EC2 instance without OpenSearch
-    Condition: CreateNoOpenSearchStack
-    Value: !GetAtt KubernetesSetupStackNoOpenSearch.Outputs.EC2KeyPairName
 
   OpenSearchDashboardsUrl:
     Description: URL for OpenSearch Dashboards

@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'Kubernetes Setup Template for Flotorch'
+Description: 'Docker Setup Template for Flotorch'
 
 Parameters:
   TableSuffix:
@@ -43,7 +43,7 @@ Resources:
   EC2SecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Security group for FloTorch Kubernetes EC2 instance
+      GroupDescription: Security group for FloTorch Docker EC2 instance
       VpcId: !Ref VpcId
       SecurityGroupIngress:
         - IpProtocol: tcp
@@ -52,15 +52,35 @@ Resources:
           CidrIp: 0.0.0.0/0
           Description: SSH access
         - IpProtocol: tcp
-          FromPort: 30080
-          ToPort: 30080
+          FromPort: 80
+          ToPort: 80
           CidrIp: 0.0.0.0/0
           Description: HTTP NodePort access
         - IpProtocol: tcp
-          FromPort: 30443
-          ToPort: 30443
+          FromPort: 443
+          ToPort: 443
           CidrIp: 0.0.0.0/0
           Description: HTTPS NodePort access
+        - IpProtocol: tcp
+          FromPort: 8000
+          ToPort: 8000
+          CidrIp: 0.0.0.0/0
+          Description: Console NodePort access
+        - IpProtocol: tcp
+          FromPort: 3000
+          ToPort: 3000
+          CidrIp: 0.0.0.0/0
+          Description: Gateway NodePort access
+        - IpProtocol: tcp
+          FromPort: 6739
+          ToPort: 6739
+          CidrIp: 0.0.0.0/0
+          Description: Redis NodePort access
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: 0.0.0.0/0
+          Description: Postgres NodePort access
 
   EC2InstanceRole:
     Type: AWS::IAM::Role
@@ -127,38 +147,6 @@ Resources:
           yum update -y
           sudo su ec2-user
           cd /home/ec2-user
-          # Install Helm
-          if ! command -v helm &> /dev/null; then
-            echo "Installing Helm..."
-            wget https://get.helm.sh/helm-v3.15.2-linux-amd64.tar.gz
-            tar -xvf helm-v3.15.2-linux-amd64.tar.gz
-            sudo chmod +x linux-amd64/helm
-            sudo mv linux-amd64/helm /usr/local/bin/helm
-            rm -rf linux-amd64 helm-v3.15.2-linux-amd64.tar.gz
-          else
-            echo "Helm is already installed"
-          fi
-
-          # Install RKE
-          if ! command -v rke &> /dev/null; then
-            echo "Installing RKE..."
-            wget https://github.com/rancher/rke/releases/download/v1.6.2/rke_linux-amd64
-            sudo mv rke_linux-amd64 /usr/local/bin/rke
-            sudo chmod +x /usr/local/bin/rke
-          else
-            echo "RKE is already installed"
-          fi
-
-          # Install kubectl
-          if ! command -v kubectl &> /dev/null; then
-            echo "Installing kubectl..."
-            curl -O https://s3.us-west-2.amazonaws.com/amazon-eks/1.30.2/2024-07-12/bin/linux/amd64/kubectl
-            sudo mv kubectl /usr/local/bin/kubectl
-            sudo chmod +x /usr/local/bin/kubectl
-          else
-            echo "kubectl is already installed"
-          fi
-
           # Install docker
           if ! command -v docker &> /dev/null; then
             echo "Installing docker..."
@@ -171,6 +159,16 @@ Resources:
             echo "docker is already installed"
           fi
 
+          # Install docker compose
+          if ! command -v docker-compose &> /dev/null; then
+            echo "Installing docker compose..."
+            sudo curl -L https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose
+            sudo chmod +x /usr/local/bin/docker-compose
+            docker-compose version
+          else
+            echo "docker compose is already installed"
+          fi
+
           # Install git
           if ! command -v git &> /dev/null; then
             echo "Installing Git..."
@@ -179,7 +177,7 @@ Resources:
             echo "Git is already installed"
           fi
 
-  KubernetesSetupRole:
+  DockerSetupRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -196,12 +194,12 @@ Resources:
         - arn:aws:iam::aws:policy/AWSCloudFormationFullAccess
         - arn:aws:iam::aws:policy/AmazonS3FullAccess
 
-  KubernetesSetupFunction:
+  DockerSetupFunction:
     Type: AWS::Lambda::Function
     DependsOn: EC2Instance
     Properties:
       Handler: index.handler
-      Role: !GetAtt KubernetesSetupRole.Arn
+      Role: !GetAtt DockerSetupRole.Arn
       Code:
         ZipFile: |
           import boto3
@@ -325,31 +323,10 @@ Resources:
                       install_script = script_template.format(experimentation_host, experimentation_username, experimentation_password, console_image_tag, gateway_image_tag, console_repository_uri, gateway_repository_uri, table_suffix, public_ip) + '''
 
 
-          echo "Starting Kubernetes tools installation and setup"
+          echo "Starting Docker tools installation and setup"
 
           # Add /usr/local/bin to PATH
           export PATH=$PATH:/usr/local/bin/
-
-          if command -v rke &> /dev/null; then
-            echo "rke is already installed"
-          else
-            sleep 30
-          fi
-
-          if command -v helm &> /dev/null; then
-            echo "helm is already installed"
-          else
-            sleep 30
-          fi
-
-          if command -v kubectl &> /dev/null; then
-            echo "kubectl is already installed"
-          else
-            echo "Installing kubectl..."
-            curl -O https://s3.us-west-2.amazonaws.com/amazon-eks/1.30.2/2024-07-12/bin/linux/amd64/kubectl
-            sudo mv kubectl /usr/local/bin/kubectl
-            sudo chmod +x /usr/local/bin/kubectl
-          fi
 
           if command -v docker &> /dev/null; then
             echo "docker is already installed"
@@ -360,6 +337,24 @@ Resources:
             sudo systemctl enable docker
             sudo usermod -aG docker ec2-user
             newgrp docker
+          fi
+
+          # Install docker compose
+          if command -v docker-compose &> /dev/null; then
+            echo "docker compose is already installed"
+          else
+            echo "Installing docker compose..."
+            sudo curl -L https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose
+            sudo chmod +x /usr/local/bin/docker-compose
+            docker-compose version
+          fi
+
+          # Install git
+          if ! command -v git &> /dev/null; then
+            echo "Git is already installed"
+          else
+            echo "Installing Git..."
+            sudo yum install -y git
           fi
 
           if command -v aws &> /dev/null; then
@@ -373,161 +368,209 @@ Resources:
             rm -rf aws awscliv2.zip
           fi
 
-          if command -v git &> /dev/null; then
-            echo "git is already installed"
-          else
-            sleep 30
-          fi
-
           private_ip=$(hostname -I | awk '{print $1}')
           region=$(aws ec2 describe-instances --instance-ids $(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/instance-id) --query 'Reservations[0].Instances[0].Placement.AvailabilityZone' --output text | sed 's/.$//')
           echo "Region: $region"
           echo "Private IP: $private_ip"
 
-          # Generate SSH key if it doesn't exist
-          if [ ! -f /home/ec2-user/.ssh/id_rsa ]; then
-            echo "Generating SSH key..."
-            mkdir -p /home/ec2-user/.ssh
-            ssh-keygen -t rsa -b 4096 -f /home/ec2-user/.ssh/id_rsa -N ""
-            
-            cat /home/ec2-user/.ssh/id_rsa.pub >> /home/ec2-user/.ssh/authorized_keys
-            chmod 600 /home/ec2-user/.ssh/authorized_keys
-            chown -R ec2-user:ec2-user /home/ec2-user/.ssh
-          else
-            echo "SSH key already exists"
-          fi
+          aws s3 cp s3://flotorch-public/docker-compose.yaml /home/ec2-user/docker-compose.yaml
 
-          # Create cluster.yml file
-          echo "Creating cluster.yml file..."
-          echo "nodes:" > /home/ec2-user/cluster.yml
-          echo "  - address: $private_ip" >> /home/ec2-user/cluster.yml
-          echo "    user: ec2-user" >> /home/ec2-user/cluster.yml
-          echo "    role: [controlplane,worker,etcd]" >> /home/ec2-user/cluster.yml
-          echo "    ssh_key_path: /home/ec2-user/.ssh/id_rsa" >> /home/ec2-user/cluster.yml
-          echo "ingress:" >> /home/ec2-user/cluster.yml
-          echo "  provider: none" >> /home/ec2-user/cluster.yml
-
-          rm -rf /home/ec2-user/nginx-ingress-service.yml
-
-          # Create nginx-ingress-service.yml
-          echo "Creating nginx-ingress-service.yml..."
-          echo "apiVersion: v1"  >> /home/ec2-user/nginx-ingress-service.yml
-          echo "kind: Service"  >> /home/ec2-user/nginx-ingress-service.yml
-          echo "metadata:"  >> /home/ec2-user/nginx-ingress-service.yml
-          echo "  name: nginx-ingress-nodeport"  >> /home/ec2-user/nginx-ingress-service.yml
-          echo "  namespace: ingress-nginx"  >> /home/ec2-user/nginx-ingress-service.yml
-          echo "spec:"  >> /home/ec2-user/nginx-ingress-service.yml
-          echo "  type: NodePort"  >> /home/ec2-user/nginx-ingress-service.yml
-          echo "  selector:"  >> /home/ec2-user/nginx-ingress-service.yml
-          echo "    app.kubernetes.io/name: ingress-nginx"  >> /home/ec2-user/nginx-ingress-service.yml
-          echo "  ports:"  >> /home/ec2-user/nginx-ingress-service.yml
-          echo "    - name: http80"  >> /home/ec2-user/nginx-ingress-service.yml
-          echo "      protocol: TCP"  >> /home/ec2-user/nginx-ingress-service.yml
-          echo "      port: 80"  >> /home/ec2-user/nginx-ingress-service.yml
-          echo "      targetPort: 80"  >> /home/ec2-user/nginx-ingress-service.yml
-          echo "      nodePort: 30080"  >> /home/ec2-user/nginx-ingress-service.yml
-          echo "    - name: https443"  >> /home/ec2-user/nginx-ingress-service.yml
-          echo "      protocol: TCP"  >> /home/ec2-user/nginx-ingress-service.yml
-          echo "      port: 443"  >> /home/ec2-user/nginx-ingress-service.yml
-          echo "      targetPort: 443"  >> /home/ec2-user/nginx-ingress-service.yml
-          echo "      nodePort: 30443"  >> /home/ec2-user/nginx-ingress-service.yml
-
-          chown ec2-user:ec2-user /home/ec2-user/cluster.yml
-          chown ec2-user:ec2-user /home/ec2-user/nginx-ingress-service.yml
-
-          # Setup Kubernetes cluster
-          echo "Setting up Kubernetes cluster..."
-          cd /home/ec2-user
-          sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && rke up --config cluster.yml'
-
-          # Setup kubectl config
-          echo "Setting up kubectl config..."
-          sudo -u ec2-user mkdir -p /home/ec2-user/.kube
-          sudo -u ec2-user cp /home/ec2-user/kube_config_cluster.yml /home/ec2-user/.kube/config
-
-          # # Install nginx ingress controller
-          # echo "Installing NGINX Ingress Controller..."
-          # sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx'
-          # sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && helm repo update'
-          # sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx --namespace ingress-nginx --create-namespace'
-          
-          # sudo -u ec2-user bash -c "export PATH=\$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && kubectl patch svc ingress-nginx-controller -n ingress-nginx -p '{\"spec\":{\"type\":\"ClusterIP\"}}' || echo 'Failed to patch ingress service, it may not be ready yet'"
-          
-          # # Apply nginx-ingress-service.yml to create NodePort service
-          # echo "Applying nginx-ingress-service.yml to create NodePort service..."
-          # sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && kubectl apply -f /home/ec2-user/nginx-ingress-service.yml'
-
-          # Add FloTorch Helm repo
-          echo "Adding FloTorch Helm repo..."
-          sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && helm repo add flotorch https://balasriharsha-ch.github.io/FloTorch/charts'
-          sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && helm repo update'
-
-          # Create AWS ECR credentials secret
-          echo "Creating AWS ECR credentials secret..."
-          # Get AWS account number and region from instance metadata
-          AWS_ACCOUNT_NUMBER=$(aws sts get-caller-identity --query Account --output text)
-          
-          # Create the docker registry secret
-          echo "Creating AWS ECR secret..."
-          ECR_PASSWORD=$(aws ecr get-login-password --region $region)
-          echo "Creating credentials in Docker format..."
-          sudo -u ec2-user bash -c "export PATH=\$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && kubectl create secret docker-registry aws-ecr-credentials --docker-server=${AWS_ACCOUNT_NUMBER}.dkr.ecr.${region}.amazonaws.com --docker-username=AWS --docker-password=\"${ECR_PASSWORD}\" --dry-run=client -o yaml | kubectl apply -f -"
-
-          # Install Nginx Ingress Controller first
-          echo "Installing Nginx Ingress Controller..."
-          
-          # Add the ingress-nginx repository
-          sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx'
-          sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && helm repo update'
-          
-          # Check and clean up previous ingress-nginx installations if they exist
-          echo "Checking for previous ingress-nginx installations..."
-          sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && if helm list -n ingress-nginx | grep -q ingress-nginx; then helm uninstall ingress-nginx -n ingress-nginx; fi'
-          sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && if kubectl get namespace ingress-nginx >/dev/null 2>&1; then kubectl delete namespace ingress-nginx; fi'
-          
-          # Install ingress-nginx with specific namespace and node ports
-          echo "Installing ingress-nginx in ingress-nginx namespace..."
-          sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx --namespace ingress-nginx --create-namespace --set controller.service.type=NodePort --set controller.service.nodePorts.http=30080 --set controller.service.nodePorts.https=30443'
-          
-          # Wait for ingress controller to be ready
-          echo "Waiting for Nginx ingress controller to be ready..."
-          sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=120s'
-
-          # Install FloTorch Helm chart with dynamic values
-          echo "Installing FloTorch Helm chart..."
-          # Get AWS account ID for ECR registry
-          account_id=$(aws sts get-caller-identity --query Account --output text)
-          
           # Create a values override file to avoid escaping issues
-          rm -rf /home/ec2-user/override-values.yaml
+          rm -rf /home/ec2-user/.env
           
-          cat > /home/ec2-user/override-values.yaml << EOF
-          global:
-            consoleDomain: "$table_suffix.flotorch.cloud"
-            imageRegistry: "${account_id}.dkr.ecr.${region}.amazonaws.com"
-          console:
-            experimentation:
-              host: "https://$experimentation_host/api"
-              username: "$experimentation_username"
-              password: "$experimentation_password"
-            image:
-              repository: "flotorch-console-$table_suffix"
-              tag: "$console_image_tag"
-          gateway:
-            image:
-              repository: "flotorch-gateway-$table_suffix"
-              tag: "$gateway_image_tag"
+          cat > /home/ec2-user/.env << EOF
+          CLICKHOUSE_USER=flotorch
+          CLICKHOUSE_PASSWORD=ad59165b73960e4c9b3e5a58ababad07
+          CONSOLE_DB_USER=postgres
+          CONSOLE_DB_PASSWORD=u6RLCfL9AJBYvkfB
+          CONSOLE_DB_NAME=flotorch
+          CONSOLE_DOMAIN=$table_suffix-console.flotorch.cloud
+          GATEWAY_DOMAIN=$table_suffix-gateway.flotorch.cloud
+          CONSOLE_SESSION_PASSWORD=h3dPidJQENDRR5RrzL8SMRPGGaeFdEC8
+          CONSOLE_ENCRYPTION_KEY=GXQA5xxSYm38c37zaDnE4gCd9MBJhfDX
+          EXPERIMENTATION_HOST=$experimentation_host
+          EXPERIMENTATION_USERNAME=$experimentation_username
+          EXPERIMENTATION_PASSWORD=$experimentation_password
+          PAIRING_KEY=iazRs8LdRkYS7nmxRrqqbrtXShrDdFEe
+          GATEWAY_NAME=$table_suffix-gateway
           EOF
           
           # Make sure ec2-user owns the file
-          chown ec2-user:ec2-user /home/ec2-user/override-values.yaml
-          
-          # Use the values file instead of --set arguments
-          sudo -u ec2-user bash -c "export PATH=\$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && helm upgrade --install flotorch flotorch/flotorch -f /home/ec2-user/override-values.yaml"
+          chown ec2-user:ec2-user /home/ec2-user/.env
 
-          # Wait for all pods to be in Ready state before proceeding with database setup
-          echo "Waiting for all pods to be in Ready state..."
-          sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && kubectl wait --for=condition=Ready pods --all --timeout=600s'
+          # Get AWS account ID
+          AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          
+          # Update image names in docker-compose.yaml
+          echo "Updating image names in docker-compose.yaml..."
+          # Replace console image
+          sed -i "s|image: .*flotorch\/console.*$|image: $AWS_ACCOUNT_ID.dkr.ecr.$region.amazonaws.com/flotorch-console-$table_suffix:test-cfn|g" /home/ec2-user/docker-compose.yaml
+          
+          # Replace gateway image
+          sed -i "s|image: .*flotorch\/gateway.*$|image: $AWS_ACCOUNT_ID.dkr.ecr.$region.amazonaws.com/flotorch-gateway-$table_suffix:test-cfn|g" /home/ec2-user/docker-compose.yaml
+          
+          # Print updated image names for verification
+          echo "Updated image names in docker-compose.yaml:"
+          grep -E 'image:.*flotorch-(console|gateway)' /home/ec2-user/docker-compose.yaml
+
+          aws ecr get-login-password --region $region | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$region.amazonaws.com
+
+          # Verify docker-compose.yaml exists and is valid
+          echo "Checking if docker-compose.yaml exists..."
+          if [ -f /home/ec2-user/docker-compose.yaml ]; then
+            echo "docker-compose.yaml found, proceeding with deployment..."
+            cd /home/ec2-user
+            export PATH=$PATH:/usr/local/bin
+            # Add debugging info
+            echo "Current directory: $(pwd)"
+            echo "Docker compose file contents (first 10 lines):"
+            head -10 docker-compose.yaml
+            # Add domain entries to /etc/hosts for proper service discovery
+            echo "127.0.0.1 $table_suffix-console.flotorch.cloud" | sudo tee -a /etc/hosts
+            echo "127.0.0.1 $table_suffix-gateway.flotorch.cloud" | sudo tee -a /etc/hosts
+            
+            # Make docker socket accessible
+            sudo chmod 666 /var/run/docker.sock
+            
+            # Verify the docker-compose file format 
+            echo "Verifying docker-compose.yaml format..."
+            cat /home/ec2-user/docker-compose.yaml | grep -q "^version:" || {
+              echo "WARNING: No version found in docker-compose.yaml, adding version header..."
+              echo 'version: "3"' | cat - /home/ec2-user/docker-compose.yaml > /home/ec2-user/temp && mv /home/ec2-user/temp /home/ec2-user/docker-compose.yaml
+            }
+            
+            # Make docker socket accessible and ensure we're using version 1 of compose command
+            sudo chmod 666 /var/run/docker.sock
+            echo "Starting services with docker-compose..."
+            
+            # First try with sudo
+            if sudo docker-compose -f /home/ec2-user/docker-compose.yaml up -d; then
+              echo "Docker Compose started successfully with sudo docker-compose"
+            else
+              echo "Trying alternate docker compose command..."
+              # If that fails, try with docker compose (V2 syntax)
+              if sudo docker compose -f /home/ec2-user/docker-compose.yaml up -d; then
+                echo "Docker Compose started successfully with sudo docker compose"
+              else
+                echo "ERROR: Failed to start with docker compose, trying one last approach"
+                # Last resort, use full path
+                sudo -E /usr/local/bin/docker-compose -f /home/ec2-user/docker-compose.yaml up -d
+              fi
+            fi
+          else
+            echo "ERROR: docker-compose.yaml not found at /home/ec2-user/docker-compose.yaml"
+            ls -la /home/ec2-user/
+            exit 1
+          fi
+
+          # Clone repository to get the SQL migration files
+          echo "Cloning FloTorch repository for migration files..."
+          if [ ! -d "FloTorch" ]; then
+            rm -rf FloTorch
+            git clone https://github.com/FissionAI/FloTorch.git
+            cd FloTorch
+            git config --global --add safe.directory /home/ec2-user/FloTorch
+            git checkout v3.0.1
+            if [ $? -ne 0 ]; then
+              echo "Failed to clone repository"
+              exit 1
+            fi
+            cd ..
+          fi
+          
+          # Wait for containers to start and be ready
+          echo "Waiting for services to be ready..."
+          sleep 30
+          
+          # Run Clickhouse migrations
+          echo "Running Clickhouse migrations..."
+          CLICKHOUSE_CONTAINER_ID=$(docker ps -f name=clickhouse -q)
+          if [ -n "$CLICKHOUSE_CONTAINER_ID" ]; then
+            # Check if ClickHouse is accepting connections
+            RETRY_COUNT=0
+            MAX_RETRIES=10
+            CLICKHOUSE_READY=false
+            
+            while [ $RETRY_COUNT -lt $MAX_RETRIES ] && [ "$CLICKHOUSE_READY" = "false" ]; do
+              if docker exec -i clickhouse clickhouse-client --user flotorch --password ad59165b73960e4c9b3e5a58ababad07 --query "SELECT 1" > /dev/null 2>&1; then
+                CLICKHOUSE_READY=true
+                echo "ClickHouse is ready for connections"
+              else
+                RETRY_COUNT=$((RETRY_COUNT + 1))
+                echo "Waiting for ClickHouse to be ready... Attempt $RETRY_COUNT of $MAX_RETRIES"
+                sleep 5
+              fi
+            done
+            
+            if [ "$CLICKHOUSE_READY" = "false" ]; then
+              echo "ERROR: ClickHouse is not ready after waiting"
+              docker logs clickhouse
+            else
+              # Run migrations
+              CLICKHOUSE_MIGRATION_FILES=$(find /home/ec2-user/FloTorch/charts/flotorch/sql/clickhouse -type f -name "*.sql" | sort)
+              for file in $CLICKHOUSE_MIGRATION_FILES; do
+                echo "Applying ClickHouse migration: $file"
+                docker exec -i clickhouse clickhouse-client --user flotorch --password ad59165b73960e4c9b3e5a58ababad07 --database flotorch < "$file"
+                if [ $? -ne 0 ]; then
+                  echo "WARNING: Error applying migration: $file"
+                fi
+              done
+            fi
+          else
+            echo "ERROR: ClickHouse container not found"
+          fi
+          
+          # Run Postgres migrations
+          echo "Running Postgres migrations..."
+          POSTGRES_CONTAINER_ID=$(docker ps -f name=postgres -q)
+          if [ -n "$POSTGRES_CONTAINER_ID" ]; then
+            # Check if Postgres is accepting connections
+            RETRY_COUNT=0
+            MAX_RETRIES=10
+            POSTGRES_READY=false
+            
+            while [ $RETRY_COUNT -lt $MAX_RETRIES ] && [ "$POSTGRES_READY" = "false" ]; do
+              if docker exec -i postgres pg_isready -U postgres > /dev/null 2>&1; then
+                POSTGRES_READY=true
+                echo "PostgreSQL is ready for connections"
+              else
+                RETRY_COUNT=$((RETRY_COUNT + 1))
+                echo "Waiting for PostgreSQL to be ready... Attempt $RETRY_COUNT of $MAX_RETRIES"
+                sleep 5
+              fi
+            done
+            
+            if [ "$POSTGRES_READY" = "false" ]; then
+              echo "ERROR: PostgreSQL is not ready after waiting"
+              docker logs postgres
+            else
+              # Run migrations
+              POSTGRES_MIGRATION_FILES=$(find /home/ec2-user/FloTorch/charts/flotorch/sql/postgres -type f -name "*.sql" | sort)
+              for file in $POSTGRES_MIGRATION_FILES; do
+                echo "Applying PostgreSQL migration: $file"
+                docker exec -i postgres psql -U postgres -d flotorch < "$file" || echo "WARNING: Error applying migration: $file"
+              done
+            fi
+          else
+            echo "ERROR: PostgreSQL container not found"
+          fi
+
+          # Final check to ensure all containers are still running
+          echo "Performing final check on container status..."
+          RUNNING_CONTAINERS=$(docker ps --format "{{.Names}}" | grep -E 'postgres|redis|clickhouse|console|gateway|reverse-proxy' | wc -l)
+          echo "Found $RUNNING_CONTAINERS running containers"
+          
+          if [ "$RUNNING_CONTAINERS" -ge "6" ]; then
+            echo "All containers are running successfully!"
+            
+            # Test connectivity between console and gateway
+            echo "Testing connectivity between console and gateway..."
+            # Try to connect from console to gateway
+            docker exec console curl -s -I http://gateway:3000 || echo "WARNING: Console cannot directly connect to gateway"
+          else
+            echo "WARNING: Not all containers are running. Current status:"
+            docker ps
+          fi
 
           # Create Cloudflare DNS record for subdomain
           echo "Creating Cloudflare DNS record for ${table_suffix}.flotorch.cloud..."
@@ -538,17 +581,23 @@ Resources:
             -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
             -H "Content-Type: application/json" | jq -r '.result[0].id')
           
-          # Create the JSON payload with proper variable substitution
-          JSON_PAYLOAD="{\"type\":\"A\",\"name\":\"$table_suffix\",\"content\":\"$PUBLIC_IP\",\"ttl\":1,\"proxied\":true}"
-          
+          # Create the properly escaped JSON payload directly
+          echo "Creating Cloudflare DNS record with type A, name $table_suffix, pointing to $PUBLIC_IP"
           curl -s -X POST "https://api.cloudflare.com/client/v4/zones/$CLOUDFLARE_ZONE_ID/dns_records" \
             -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
             -H "Content-Type: application/json" \
-            --data "$JSON_PAYLOAD" | jq .
+            -d '{"type":"A","name":"'"$table_suffix"-console"'","content":"'"$PUBLIC_IP"'","ttl":120,"proxied":true}'
           
-          echo "DNS record for $table_suffix.flotorch.cloud created and pointing to $PUBLIC_IP"
+          echo "DNS record for $table_suffix-console.flotorch.cloud created and pointing to $PUBLIC_IP"
 
-          echo "Kubernetes setup completed successfully!"
+          curl -s -X POST "https://api.cloudflare.com/client/v4/zones/$CLOUDFLARE_ZONE_ID/dns_records" \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{"type":"A","name":"'"$table_suffix"-gateway"'","content":"'"$PUBLIC_IP"'","ttl":120,"proxied":true}'
+          
+          echo "DNS record for $table_suffix-gateway.flotorch.cloud created and pointing to $PUBLIC_IP"
+
+          echo "Docker setup completed successfully!"
           '''
 
                       # Run script using SSM
@@ -562,7 +611,7 @@ Resources:
 
                       command_id = command['Command']['CommandId']
                       print("Command ID: " + command_id)
-                      print("Waiting for Kubernetes setup to complete...")
+                      print("Waiting for Docker setup to complete...")
 
                       while True:
                           try:
@@ -583,10 +632,10 @@ Resources:
                               else:
                                   raise
 
-                      print("Kubernetes setup completed successfully!")
+                      print("Docker setup completed successfully!")
                       # Only include minimal response data to avoid oversize errors
                       # Never return large amounts of data from Lambda custom resources
-                      response_data = {'Message': 'Kubernetes setup completed successfully'}
+                      response_data = {'Message': 'Docker setup completed successfully'}
                       cfnresponse.send(event, context, cfnresponse.SUCCESS, response_data)
                   else:
                       # For Delete or other events, just return success
@@ -599,10 +648,10 @@ Resources:
       Timeout: 900
       MemorySize: 256
 
-  KubernetesSetupResource:
-    Type: Custom::KubernetesSetup
+  DockerSetupResource:
+    Type: Custom::DockerSetup
     Properties:
-      ServiceToken: !GetAtt KubernetesSetupFunction.Arn
+      ServiceToken: !GetAtt DockerSetupFunction.Arn
       ExperimentationHost: !Ref ExperimentationHost
       ExperimentationUsername: !Ref ExperimentationUsername
       ExperimentationPassword: !Ref ExperimentationPassword
@@ -615,7 +664,7 @@ Resources:
   # SSM Parameters for superuser credentials
   SuperUserUsernameParameter:
     Type: AWS::SSM::Parameter
-    DependsOn: KubernetesSetupResource
+    DependsOn: DockerSetupResource
     Properties:
       Name: !Sub /flotorch/${TableSuffix}/console/superuser/username
       Type: String
@@ -624,7 +673,7 @@ Resources:
 
   SuperUserPasswordParameter:
     Type: AWS::SSM::Parameter
-    DependsOn: KubernetesSetupResource
+    DependsOn: DockerSetupResource
     Properties:
       Name: !Sub /flotorch/${TableSuffix}/console/superuser/password
       Type: String
@@ -637,25 +686,6 @@ Conditions:
     - us-east-1
 
 Outputs:
-  KubernetesSetupStatus:
-    Description: Status of the Kubernetes setup
-    Value: !GetAtt KubernetesSetupResource.Message
-  EC2InstanceId:
-    Description: ID of the EC2 instance running Kubernetes
-    Value: !Ref EC2Instance
-  EC2PublicDNS:
-    Description: Public DNS of the EC2 instance
-    Value: !GetAtt EC2Instance.PublicDnsName
-  HTTPSNodePort:
-    Description: HTTPS NodePort URL
-    Value: !Sub https://${EC2Instance.PublicDnsName}:30443
-  EC2KeyPairName:
-    Description: Name of the generated EC2 key pair
-    Value: !Ref EC2KeyPair
-  EC2PrivateKey:
-    Description: Instructions to access the private key material
-    Value: The private key can be downloaded from EC2 console after launching the instance
-
   EC2PublicIP:
     Description: Public IP address of the EC2 instance
     Value: !GetAtt EC2Instance.PublicIp
