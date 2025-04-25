@@ -1,0 +1,707 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Docker Setup Template for Flotorch'
+
+Parameters:
+  TableSuffix:
+    Type: String
+    Description: Suffix to append to resource names
+  VpcId:
+    Type: String
+    Description: ID of the VPC where the instance will be created
+  SubnetId:
+    Type: String
+    Description: ID of the subnet where the instance will be created
+  # KeyName parameter removed as we'll create a new key pair for each deployment
+  InstanceType:
+    Type: String
+    Default: t2.large
+    Description: EC2 instance type
+  ExperimentationHost:
+    Type: String
+    Description: URL for the experimentation API (AppRunner service URL)
+  ExperimentationUsername:
+    Type: String
+    Default: admin
+    Description: Username for experimentation API
+  ExperimentationPassword:
+    Type: String
+    Description: Password for experimentation API
+  ConsoleImageTag:
+    Type: String
+    Description: Tag for console image
+  GatewayImageTag:
+    Type: String
+    Description: Tag for gateway image
+  ConsoleRepositoryUri:
+    Type: String
+    Description: URI for the console repository
+  GatewayRepositoryUri:
+    Type: String
+    Description: URI for the gateway repository
+
+Resources:
+  EC2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for FloTorch Docker EC2 instance
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+          Description: SSH access
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+          Description: HTTP NodePort access
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+          Description: HTTPS NodePort access
+        - IpProtocol: tcp
+          FromPort: 8000
+          ToPort: 8000
+          CidrIp: 0.0.0.0/0
+          Description: Console NodePort access
+        - IpProtocol: tcp
+          FromPort: 3000
+          ToPort: 3000
+          CidrIp: 0.0.0.0/0
+          Description: Gateway NodePort access
+        - IpProtocol: tcp
+          FromPort: 6739
+          ToPort: 6739
+          CidrIp: 0.0.0.0/0
+          Description: Redis NodePort access
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: 0.0.0.0/0
+          Description: Postgres NodePort access
+
+  EC2InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMFullAccess
+        - arn:aws:iam::aws:policy/AmazonEC2FullAccess
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess
+
+  EC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref EC2InstanceRole
+
+  # Create a unique key name using a timestamp to avoid name conflicts
+  EC2KeyPairName:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Type: String
+      Value: !Sub 'flotorch-k8s-${AWS::StackName}-${AWS::Region}-${AWS::AccountId}-${!Timestamp}'
+      Description: 'Parameter store for the EC2 key pair name'
+  
+  EC2KeyPair:
+    Type: AWS::EC2::KeyPair
+    DependsOn: EC2KeyPairName
+    Properties:
+      KeyName: !GetAtt EC2KeyPairName.Value
+
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    DependsOn: EC2KeyPair
+    Properties:
+      InstanceType: !Ref InstanceType
+      ImageId: !If 
+        - IsUsEast1Region
+        - ami-01816d07b1128cd2d  # Amazon Linux 2023 AMI for us-east-1
+        - ami-093a4ad9a8cc370f4  # Amazon Linux 2023 AMI for other regions
+      KeyName: !Ref EC2KeyPair
+      IamInstanceProfile: !Ref EC2InstanceProfile
+      SubnetId: !Ref SubnetId
+      SecurityGroupIds:
+        - !Ref EC2SecurityGroup
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeSize: 48
+            VolumeType: gp3
+            DeleteOnTermination: true
+      Tags:
+        - Key: Name
+          Value: !Sub FloTorch-K8S-${AWS::StackName}
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+          yum update -y
+          sudo su ec2-user
+          cd /home/ec2-user
+          # Install docker
+          if ! command -v docker &> /dev/null; then
+            echo "Installing docker..."
+            sudo yum install -y docker
+            sudo systemctl start docker
+            sudo systemctl enable docker
+            sudo usermod -aG docker ec2-user
+            newgrp docker
+          else
+            echo "docker is already installed"
+          fi
+
+          # Install docker compose
+          if ! command -v docker-compose &> /dev/null; then
+            echo "Installing docker compose..."
+            sudo curl -L https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose
+            sudo chmod +x /usr/local/bin/docker-compose
+            docker-compose version
+          else
+            echo "docker compose is already installed"
+          fi
+
+          # Install git
+          if ! command -v git &> /dev/null; then
+            echo "Installing Git..."
+            sudo yum install -y git
+          else
+            echo "Git is already installed"
+          fi
+
+  DockerSetupRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/AmazonSSMFullAccess
+        - arn:aws:iam::aws:policy/AmazonEC2FullAccess
+        - arn:aws:iam::aws:policy/AWSCloudFormationFullAccess
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+
+  DockerSetupFunction:
+    Type: AWS::Lambda::Function
+    DependsOn: EC2Instance
+    Properties:
+      Handler: index.handler
+      Role: !GetAtt DockerSetupRole.Arn
+      Code:
+        ZipFile: |
+          import boto3
+          import cfnresponse
+          import time
+          import json
+          import re
+          import botocore
+
+          def handler(event, context):
+              try:
+                  if event['RequestType'] in ['Create', 'Update']:
+                      ssm = boto3.client('ssm')
+                      ec2 = boto3.client('ec2')
+
+                      # Get the instance ID from the EC2 instance created in this stack
+                      ec2_instance_logical_id = 'EC2Instance'
+                      stack_id = event['StackId']
+                      stack_name = stack_id.split('/')[1]
+                      print(f"Getting EC2 instance ID from stack {stack_name}")
+                      
+                      # Describe the stack resources to get the physical ID of the EC2 instance
+                      cfn = boto3.client('cloudformation')
+                      response = cfn.describe_stack_resource(
+                          StackName=stack_name,
+                          LogicalResourceId=ec2_instance_logical_id
+                      )
+                      
+                      raw_instance_id = response['StackResourceDetail']['PhysicalResourceId']
+                      print(f"Using EC2 instance ID: {raw_instance_id}")
+                      
+                      # Get experimentation parameters
+                      experimentation_host = event['ResourceProperties'].get('ExperimentationHost', '')
+                      experimentation_username = event['ResourceProperties'].get('ExperimentationUsername', 'admin')
+                      experimentation_password = event['ResourceProperties'].get('ExperimentationPassword', '')
+                      console_image_tag = event['ResourceProperties'].get('ConsoleImageTag', '')
+                      gateway_image_tag = event['ResourceProperties'].get('GatewayImageTag', '')
+                      console_repository_uri = event['ResourceProperties'].get('ConsoleRepositoryUri', '')
+                      gateway_repository_uri = event['ResourceProperties'].get('GatewayRepositoryUri', '')
+                      table_suffix = event['ResourceProperties'].get('TableSuffix', '')
+                      
+                      print("Experimentation Host: " + experimentation_host)
+                      print("Experimentation Username: " + experimentation_username)
+                      
+                      # Extract just the instance ID if there's extra text
+                      instance_id_match = re.search(r'(i-[a-z0-9]+)', raw_instance_id)
+                      if instance_id_match:
+                          instance_id = instance_id_match.group(1)
+                          print("Extracted instance ID: " + instance_id + " from " + raw_instance_id)
+                      else:
+                          instance_id = raw_instance_id
+                          print("Using instance ID as provided: " + instance_id)
+
+                      # Wait for the instance to be in running state
+                      print("Waiting for instance to reach running state...")
+                      waiter = ec2.get_waiter('instance_running')
+                      waiter.wait(InstanceIds=[instance_id])
+                      print("Instance is now running. Waiting for status checks to pass...")
+                      
+                      # Wait for the instance status checks to pass
+                      waiter = ec2.get_waiter('instance_status_ok')
+                      waiter.wait(InstanceIds=[instance_id])
+                      print("Instance status checks passed. Waiting for SSM agent to come online...")
+                      
+                      # Wait for the SSM agent to be online
+                      ssm_online = False
+                      max_retries = 30  # Try for about 5 minutes (10 seconds between retries)
+                      retry_count = 0
+                      
+                      while not ssm_online and retry_count < max_retries:
+                          try:
+                              # Check if the instance is SSM-managed (connected)
+                              response = ssm.describe_instance_information(
+                                  Filters=[{
+                                      'Key': 'InstanceIds',
+                                      'Values': [instance_id]
+                                  }]
+                              )
+                              
+                              if response['InstanceInformationList']:
+                                  ssm_online = True
+                                  print("SSM agent is online and instance is ready for commands.")
+                              else:
+                                  print(f"Waiting for SSM agent to come online... (Attempt {retry_count + 1}/{max_retries})")
+                                  time.sleep(10)  # Wait 10 seconds before trying again
+                                  retry_count += 1
+                          except Exception as e:
+                              print(f"Error checking SSM status: {str(e)}")
+                              time.sleep(10)
+                              retry_count += 1
+                      
+                      if not ssm_online:
+                          raise Exception("Timed out waiting for SSM agent to come online")
+                      
+                      # Get the instance details after it's fully initialized
+                      response = ec2.describe_instances(InstanceIds=[instance_id])
+                      private_ip = response['Reservations'][0]['Instances'][0]['PrivateIpAddress']
+                      # Get the public IP address
+                      public_ip = response['Reservations'][0]['Instances'][0]['PublicIpAddress']
+                      availability_zone = response['Reservations'][0]['Instances'][0]['Placement']['AvailabilityZone']
+                      # Extract region from AZ (remove the last character)
+                      region = availability_zone[:-1]
+                      print("Private IP of the instance: " + private_ip)
+                      print("Public IP of the instance: " + public_ip)
+                      print("Region of the instance: " + region)
+
+                      # Create a base script template
+                      script_template = '''#!/bin/bash
+          experimentation_host="{}"
+          experimentation_username="{}"
+          experimentation_password="{}"
+          console_image_tag="{}"
+          gateway_image_tag="{}"
+          console_repository_uri="{}"
+          gateway_repository_uri="{}"
+          table_suffix="{}"
+          public_ip="{}"
+          set -e'''
+                      
+                      # Format the template with the actual values
+                      install_script = script_template.format(experimentation_host, experimentation_username, experimentation_password, console_image_tag, gateway_image_tag, console_repository_uri, gateway_repository_uri, table_suffix, public_ip) + '''
+
+
+          echo "Starting Docker tools installation and setup"
+
+          # Add /usr/local/bin to PATH
+          export PATH=$PATH:/usr/local/bin/
+
+          if command -v docker &> /dev/null; then
+            echo "docker is already installed"
+          else
+            echo "Installing docker..."
+            sudo yum install -y docker
+            sudo systemctl start docker
+            sudo systemctl enable docker
+            sudo usermod -aG docker ec2-user
+            newgrp docker
+          fi
+
+          # Install docker compose
+          if command -v docker-compose &> /dev/null; then
+            echo "docker compose is already installed"
+          else
+            echo "Installing docker compose..."
+            sudo curl -L https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose
+            sudo chmod +x /usr/local/bin/docker-compose
+            docker-compose version
+          fi
+
+          # Install git
+          if ! command -v git &> /dev/null; then
+            echo "Git is already installed"
+          else
+            echo "Installing Git..."
+            sudo yum install -y git
+          fi
+
+          if command -v aws &> /dev/null; then
+            echo "aws is already installed"
+          else
+            # Install awscli
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            sudo yum install -y unzip
+            unzip awscliv2.zip
+            sudo ./aws/install
+            rm -rf aws awscliv2.zip
+          fi
+
+          private_ip=$(hostname -I | awk '{print $1}')
+          region=$(aws ec2 describe-instances --instance-ids $(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/instance-id) --query 'Reservations[0].Instances[0].Placement.AvailabilityZone' --output text | sed 's/.$//')
+          echo "Region: $region"
+          echo "Private IP: $private_ip"
+
+          aws s3 cp s3://flotorch-public/docker-compose.yaml /home/ec2-user/docker-compose.yaml
+
+          # Create a values override file to avoid escaping issues
+          rm -rf /home/ec2-user/.env
+          
+          cat > /home/ec2-user/.env << EOF
+          CLICKHOUSE_USER=flotorch
+          CLICKHOUSE_PASSWORD=ad59165b73960e4c9b3e5a58ababad07
+          CONSOLE_DB_USER=postgres
+          CONSOLE_DB_PASSWORD=u6RLCfL9AJBYvkfB
+          CONSOLE_DB_NAME=flotorch
+          CONSOLE_DOMAIN=$table_suffix-console.flotorch.cloud
+          GATEWAY_DOMAIN=$table_suffix-gateway.flotorch.cloud
+          CONSOLE_SESSION_PASSWORD=h3dPidJQENDRR5RrzL8SMRPGGaeFdEC8
+          CONSOLE_ENCRYPTION_KEY=GXQA5xxSYm38c37zaDnE4gCd9MBJhfDX
+          EXPERIMENTATION_HOST=$experimentation_host
+          EXPERIMENTATION_USERNAME=$experimentation_username
+          EXPERIMENTATION_PASSWORD=$experimentation_password
+          PAIRING_KEY=iazRs8LdRkYS7nmxRrqqbrtXShrDdFEe
+          GATEWAY_NAME=$table_suffix-gateway
+          EOF
+          
+          # Make sure ec2-user owns the file
+          chown ec2-user:ec2-user /home/ec2-user/.env
+
+          # Get AWS account ID
+          AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          
+          # Update image names in docker-compose.yaml
+          echo "Updating image names in docker-compose.yaml..."
+          # Replace console image
+          sed -i "s|image: .*flotorch\/console.*$|image: $AWS_ACCOUNT_ID.dkr.ecr.$region.amazonaws.com/flotorch-console-$table_suffix:test-cfn|g" /home/ec2-user/docker-compose.yaml
+          
+          # Replace gateway image
+          sed -i "s|image: .*flotorch\/gateway.*$|image: $AWS_ACCOUNT_ID.dkr.ecr.$region.amazonaws.com/flotorch-gateway-$table_suffix:test-cfn|g" /home/ec2-user/docker-compose.yaml
+          
+          # Print updated image names for verification
+          echo "Updated image names in docker-compose.yaml:"
+          grep -E 'image:.*flotorch-(console|gateway)' /home/ec2-user/docker-compose.yaml
+
+          aws ecr get-login-password --region $region | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$region.amazonaws.com
+
+          # Verify docker-compose.yaml exists and is valid
+          echo "Checking if docker-compose.yaml exists..."
+          if [ -f /home/ec2-user/docker-compose.yaml ]; then
+            echo "docker-compose.yaml found, proceeding with deployment..."
+            cd /home/ec2-user
+            export PATH=$PATH:/usr/local/bin
+            # Add debugging info
+            echo "Current directory: $(pwd)"
+            echo "Docker compose file contents (first 10 lines):"
+            head -10 docker-compose.yaml
+            # Add domain entries to /etc/hosts for proper service discovery
+            echo "127.0.0.1 $table_suffix-console.flotorch.cloud" | sudo tee -a /etc/hosts
+            echo "127.0.0.1 $table_suffix-gateway.flotorch.cloud" | sudo tee -a /etc/hosts
+            
+            # Make docker socket accessible
+            sudo chmod 666 /var/run/docker.sock
+            
+            # Verify the docker-compose file format 
+            echo "Verifying docker-compose.yaml format..."
+            cat /home/ec2-user/docker-compose.yaml | grep -q "^version:" || {
+              echo "WARNING: No version found in docker-compose.yaml, adding version header..."
+              echo 'version: "3"' | cat - /home/ec2-user/docker-compose.yaml > /home/ec2-user/temp && mv /home/ec2-user/temp /home/ec2-user/docker-compose.yaml
+            }
+            
+            # Make docker socket accessible and ensure we're using version 1 of compose command
+            sudo chmod 666 /var/run/docker.sock
+            echo "Starting services with docker-compose..."
+            
+            # First try with sudo
+            if sudo docker-compose -f /home/ec2-user/docker-compose.yaml up -d; then
+              echo "Docker Compose started successfully with sudo docker-compose"
+            else
+              echo "Trying alternate docker compose command..."
+              # If that fails, try with docker compose (V2 syntax)
+              if sudo docker compose -f /home/ec2-user/docker-compose.yaml up -d; then
+                echo "Docker Compose started successfully with sudo docker compose"
+              else
+                echo "ERROR: Failed to start with docker compose, trying one last approach"
+                # Last resort, use full path
+                sudo -E /usr/local/bin/docker-compose -f /home/ec2-user/docker-compose.yaml up -d
+              fi
+            fi
+          else
+            echo "ERROR: docker-compose.yaml not found at /home/ec2-user/docker-compose.yaml"
+            ls -la /home/ec2-user/
+            exit 1
+          fi
+
+          # Clone repository to get the SQL migration files
+          echo "Cloning FloTorch repository for migration files..."
+          if [ ! -d "FloTorch" ]; then
+            rm -rf FloTorch
+            git clone https://github.com/FissionAI/FloTorch.git
+            cd FloTorch
+            git config --global --add safe.directory /home/ec2-user/FloTorch
+            git checkout v3.0.1
+            if [ $? -ne 0 ]; then
+              echo "Failed to clone repository"
+              exit 1
+            fi
+            cd ..
+          fi
+          
+          # Wait for containers to start and be ready
+          echo "Waiting for services to be ready..."
+          sleep 30
+          
+          # Run Clickhouse migrations
+          echo "Running Clickhouse migrations..."
+          CLICKHOUSE_CONTAINER_ID=$(docker ps -f name=clickhouse -q)
+          if [ -n "$CLICKHOUSE_CONTAINER_ID" ]; then
+            # Check if ClickHouse is accepting connections
+            RETRY_COUNT=0
+            MAX_RETRIES=10
+            CLICKHOUSE_READY=false
+            
+            while [ $RETRY_COUNT -lt $MAX_RETRIES ] && [ "$CLICKHOUSE_READY" = "false" ]; do
+              if docker exec -i clickhouse clickhouse-client --user flotorch --password ad59165b73960e4c9b3e5a58ababad07 --query "SELECT 1" > /dev/null 2>&1; then
+                CLICKHOUSE_READY=true
+                echo "ClickHouse is ready for connections"
+              else
+                RETRY_COUNT=$((RETRY_COUNT + 1))
+                echo "Waiting for ClickHouse to be ready... Attempt $RETRY_COUNT of $MAX_RETRIES"
+                sleep 5
+              fi
+            done
+            
+            if [ "$CLICKHOUSE_READY" = "false" ]; then
+              echo "ERROR: ClickHouse is not ready after waiting"
+              docker logs clickhouse
+            else
+              # Run migrations
+              CLICKHOUSE_MIGRATION_FILES=$(find /home/ec2-user/FloTorch/charts/flotorch/sql/clickhouse -type f -name "*.sql" | sort)
+              for file in $CLICKHOUSE_MIGRATION_FILES; do
+                echo "Applying ClickHouse migration: $file"
+                docker exec -i clickhouse clickhouse-client --user flotorch --password ad59165b73960e4c9b3e5a58ababad07 --database flotorch < "$file"
+                if [ $? -ne 0 ]; then
+                  echo "WARNING: Error applying migration: $file"
+                fi
+              done
+            fi
+          else
+            echo "ERROR: ClickHouse container not found"
+          fi
+          
+          # Run Postgres migrations
+          echo "Running Postgres migrations..."
+          POSTGRES_CONTAINER_ID=$(docker ps -f name=postgres -q)
+          if [ -n "$POSTGRES_CONTAINER_ID" ]; then
+            # Check if Postgres is accepting connections
+            RETRY_COUNT=0
+            MAX_RETRIES=10
+            POSTGRES_READY=false
+            
+            while [ $RETRY_COUNT -lt $MAX_RETRIES ] && [ "$POSTGRES_READY" = "false" ]; do
+              if docker exec -i postgres pg_isready -U postgres > /dev/null 2>&1; then
+                POSTGRES_READY=true
+                echo "PostgreSQL is ready for connections"
+              else
+                RETRY_COUNT=$((RETRY_COUNT + 1))
+                echo "Waiting for PostgreSQL to be ready... Attempt $RETRY_COUNT of $MAX_RETRIES"
+                sleep 5
+              fi
+            done
+            
+            if [ "$POSTGRES_READY" = "false" ]; then
+              echo "ERROR: PostgreSQL is not ready after waiting"
+              docker logs postgres
+            else
+              # Run migrations
+              POSTGRES_MIGRATION_FILES=$(find /home/ec2-user/FloTorch/charts/flotorch/sql/postgres -type f -name "*.sql" | sort)
+              for file in $POSTGRES_MIGRATION_FILES; do
+                echo "Applying PostgreSQL migration: $file"
+                docker exec -i postgres psql -U postgres -d flotorch < "$file" || echo "WARNING: Error applying migration: $file"
+              done
+            fi
+          else
+            echo "ERROR: PostgreSQL container not found"
+          fi
+
+          # Final check to ensure all containers are still running
+          echo "Performing final check on container status..."
+          RUNNING_CONTAINERS=$(docker ps --format "{{.Names}}" | grep -E 'postgres|redis|clickhouse|console|gateway|reverse-proxy' | wc -l)
+          echo "Found $RUNNING_CONTAINERS running containers"
+          
+          if [ "$RUNNING_CONTAINERS" -ge "6" ]; then
+            echo "All containers are running successfully!"
+            
+            # Test connectivity between console and gateway
+            echo "Testing connectivity between console and gateway..."
+            # Try to connect from console to gateway
+            docker exec console curl -s -I http://gateway:3000 || echo "WARNING: Console cannot directly connect to gateway"
+          else
+            echo "WARNING: Not all containers are running. Current status:"
+            docker ps
+          fi
+
+          # Create Cloudflare DNS record for subdomain
+          echo "Creating Cloudflare DNS record for ${table_suffix}.flotorch.cloud..."
+          # Use the public IP passed from the Lambda function
+          PUBLIC_IP="${public_ip}"
+          CLOUDFLARE_API_TOKEN="gXtnJiUVhXk76gRzR6NDjiVRWOww8HJFR8hanMqY"
+          CLOUDFLARE_ZONE_ID=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones?name=flotorch.cloud" \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            -H "Content-Type: application/json" | jq -r '.result[0].id')
+          
+          # Create the properly escaped JSON payload directly
+          echo "Creating Cloudflare DNS record with type A, name $table_suffix, pointing to $PUBLIC_IP"
+          curl -s -X POST "https://api.cloudflare.com/client/v4/zones/$CLOUDFLARE_ZONE_ID/dns_records" \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{"type":"A","name":"'"$table_suffix"-console"'","content":"'"$PUBLIC_IP"'","ttl":120,"proxied":true}'
+          
+          echo "DNS record for $table_suffix-console.flotorch.cloud created and pointing to $PUBLIC_IP"
+
+          curl -s -X POST "https://api.cloudflare.com/client/v4/zones/$CLOUDFLARE_ZONE_ID/dns_records" \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{"type":"A","name":"'"$table_suffix"-gateway"'","content":"'"$PUBLIC_IP"'","ttl":120,"proxied":true}'
+          
+          echo "DNS record for $table_suffix-gateway.flotorch.cloud created and pointing to $PUBLIC_IP"
+
+          echo "Docker setup completed successfully!"
+          '''
+
+                      # Run script using SSM
+                      command = ssm.send_command(
+                          InstanceIds=[instance_id],
+                          DocumentName='AWS-RunShellScript',
+                          Parameters={
+                              'commands': [install_script]
+                          }
+                      )
+
+                      command_id = command['Command']['CommandId']
+                      print("Command ID: " + command_id)
+                      print("Waiting for Docker setup to complete...")
+
+                      while True:
+                          try:
+                              result = ssm.get_command_invocation(
+                                  CommandId=command_id,
+                                  InstanceId=instance_id
+                              )
+                              if result['Status'] in ['Success', 'Failed', 'Cancelled', 'TimedOut']:
+                                  if result['Status'] != 'Success':
+                                      error_message = result.get('StandardErrorContent', 'No error content available')
+                                      raise Exception(f"Command failed with status {result['Status']}: {error_message}")
+                                  break
+                              time.sleep(30)  # Check every 30 seconds
+                          except botocore.exceptions.ClientError as e:
+                              if "InvocationDoesNotExist" in str(e):
+                                  time.sleep(30)
+                                  continue
+                              else:
+                                  raise
+
+                      print("Docker setup completed successfully!")
+                      # Only include minimal response data to avoid oversize errors
+                      # Never return large amounts of data from Lambda custom resources
+                      response_data = {'Message': 'Docker setup completed successfully'}
+                      cfnresponse.send(event, context, cfnresponse.SUCCESS, response_data)
+                  else:
+                      # For Delete or other events, just return success
+                      cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
+              except Exception as e:
+                  print(f"Error: {str(e)}")
+                  cfnresponse.send(event, context, cfnresponse.FAILED, {'Error': str(e)})
+
+      Runtime: python3.9
+      Timeout: 900
+      MemorySize: 256
+
+  DockerSetupResource:
+    Type: Custom::DockerSetup
+    Properties:
+      ServiceToken: !GetAtt DockerSetupFunction.Arn
+      ExperimentationHost: !Ref ExperimentationHost
+      ExperimentationUsername: !Ref ExperimentationUsername
+      ExperimentationPassword: !Ref ExperimentationPassword
+      TableSuffix: !Ref TableSuffix
+      ConsoleImageTag: !Ref ConsoleImageTag
+      GatewayImageTag: !Ref GatewayImageTag
+      ConsoleRepositoryUri: !Ref ConsoleRepositoryUri
+      GatewayRepositoryUri: !Ref GatewayRepositoryUri
+
+  # SSM Parameters for superuser credentials
+  SuperUserUsernameParameter:
+    Type: AWS::SSM::Parameter
+    DependsOn: DockerSetupResource
+    Properties:
+      Name: !Sub /flotorch/${TableSuffix}/console/superuser/username
+      Type: String
+      Value: superadmin@flotorch.local
+      Description: FloTorch console superuser username
+
+  SuperUserPasswordParameter:
+    Type: AWS::SSM::Parameter
+    DependsOn: DockerSetupResource
+    Properties:
+      Name: !Sub /flotorch/${TableSuffix}/console/superuser/password
+      Type: String
+      Value: Password2025!
+      Description: FloTorch console superuser password
+
+Conditions:
+  IsUsEast1Region: !Equals 
+    - !Ref AWS::Region
+    - us-east-1
+
+Outputs:
+  EC2PublicIP:
+    Description: Public IP address of the EC2 instance
+    Value: !GetAtt EC2Instance.PublicIp
+
+  ConsoleSubdomain:
+    Description: Subdomain for the console
+    Value: !Sub ${TableSuffix}.flotorch.cloud
+  
+  SuperUserUsername:
+    Description: Superuser username for console login stored in SSM Parameter
+    Value: !Ref SuperUserUsernameParameter
+    
+  SuperUserUsernameParameter:
+    Description: SSM Parameter path for superuser username
+    Value: !Sub /flotorch/${TableSuffix}/console/superuser/username
+
+  SuperUserPasswordParameter:
+    Description: SSM Parameter path for superuser password
+    Value: !Sub /flotorch/${TableSuffix}/console/superuser/password
