@@ -11,6 +11,7 @@ MODELS = {
     "bedrock_us.amazon.nova-lite-v1:0": 35,
     "bedrock_us.amazon.nova-micro-v1:0": 35,
     "bedrock_us.amazon.nova-pro-v1:0": 12,
+    "bedrock_us.amazon.nova-premier-v1:0": 12,
     "bedrock_amazon.titan-text-lite-v1": 14,
     "bedrock_amazon.titan-text-express-v1": 14,
     "bedrock_us.anthropic.claude-3-5-sonnet-20241022-v2:0": 5,
