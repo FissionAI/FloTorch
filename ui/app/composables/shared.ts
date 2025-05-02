@@ -327,6 +327,11 @@ export const useProjectCreateMeta = () => {
           service: "bedrock",
         },
         {
+          label: "Amazon/us.amazon.nova-premier-v1:0",
+          value: "us.amazon.nova-premier-v1:0",
+          service: "bedrock"
+        },
+        {
           label: "Anthropic/anthropic.claude-3-5-sonnet-20241022-v2:0",
           value: "us.anthropic.claude-3-5-sonnet-20241022-v2:0",
           service: "bedrock",
@@ -563,6 +568,11 @@ export const useProjectCreateMeta = () => {
           label: "Amazon/amazon.nova-pro-v1:0",
           value:"us.amazon.nova-pro-v1:0",
           service: "bedrock",
+        },
+        {
+          label: "Amazon/us.amazon.nova-premier-v1:0",
+          value: "us.amazon.nova-premier-v1:0",
+          service: "bedrock"
         },
         {
           label: "Anthropic/anthropic.claude-3-5-sonnet-20241022-v2:0",
