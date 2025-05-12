@@ -273,7 +273,7 @@ export const ProjectCreateEvalSchema = z.object({
         enable_context_guardrails:z.boolean(),
         enable_response_guardrails: z.boolean(),
   })).min(1, {
-    message: "At least one guardrail is required",
+    message: "At least one option is required",
   })
 });
 
