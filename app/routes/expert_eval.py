@@ -10,6 +10,7 @@ from fastapi.responses import JSONResponse
 
 from config.config import get_config
 from util.s3util import S3Util
+from ..dependencies.database import get_experiment_db
 
 from flotorch_core.inferencer.inferencer_provider_factory import InferencerProviderFactory
 from flotorch_core.storage.db.vector.vector_storage_factory import VectorStorageFactory
@@ -18,6 +19,7 @@ from flotorch_core.storage.db.dynamodb import DynamoDB
 from flotorch_core.config.config import Config
 from flotorch_core.config.env_config_provider import EnvConfigProvider
 from flotorch_core.chunking.chunking import Chunk
+from flotorch_core.storage.db.db_storage import DBStorage
 
 from flotorch_core.embedding.titanv2_embedding import TitanV2Embedding
 from flotorch_core.embedding.titanv1_embedding import TitanV1Embedding
@@ -90,16 +92,12 @@ def get_model_question_prices(file_path, model, input_tokens, output_tokens, reg
         logger.error(f"Error reading the CSV file: {e}")
         return None
     
-    
-def get_experiment_db():
-    return DynamoDB(config.get_experiment_table_name())
-
-def get_experiment_configs(experiment_db: DynamoDB, experiment_ids: List[str]) -> List[Dict]:
+def get_experiment_configs(experiment_db: DBStorage, experiment_ids: List[str]) -> List[Dict]:
     """
     Get the experiment configs for all experiments using their IDs.
 
     Args:
-        experiment_db: Instance of DynamoDB.
+        experiment_db: Instance of DBStorage.
         experiment_ids (List[str]): List of experiment IDs.
 
     Returns:
@@ -119,7 +117,7 @@ def get_experiment_configs(experiment_db: DynamoDB, experiment_ids: List[str]) -
 @router.post("/heval/query-experiments", tags=["heval"])
 async def query_experiments(
     query: ExperimentQuery,
-    experiment_db: DynamoDB = Depends(get_experiment_db)
+    experiment_db: DBStorage=Depends(get_experiment_db)
 ):
     num_experiments = len(query.experiment_ids)
     if not (2 <= num_experiments <= 3):
@@ -212,7 +210,7 @@ async def query_experiments(
             "metadata": metadata
         }
 
-    results = await asyncio.gather(*[run_experiment(exp) for exp in experiment_configs])
+    results = await asyncio.gather(*[run_experiment(exp[0]) for exp in experiment_configs])
 
     return JSONResponse(content={"results": results})
 
@@ -220,7 +218,7 @@ async def query_experiments(
 @router.post("/heval/upvote", tags=["heval"])
 async def vote(
     vote_data: VotePayload,
-    experiment_db: DynamoDB = Depends(get_experiment_db)
+    experiment_db: DBStorage=Depends(get_experiment_db)
     ):
     
     # Validate payload is not empty
@@ -245,8 +243,11 @@ async def vote(
             item = experiment_db.read(key)
             
             if item:
+                item = item[0]
                 # Record exists, update the score
                 current_score = item.get("scores", 0)
+                if current_score is None:
+                    current_score = 0
                 new_score = current_score + vote
                 
                 # Prepare data for update
