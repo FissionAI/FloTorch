@@ -327,6 +327,8 @@ def generate_all_combinations(data):
                 "embedding_model": configuration["embedding"]["model"],
                 "retrieval_service": configuration["retrieval"]["service"],
                 "retrieval_model": configuration["retrieval"]["model"],
+                "retrieval_model_input_token_cost": configuration["retrieval"].get("input_token_cost", 0),
+                "retrieval_model_output_token_cost": configuration["retrieval"].get("output_token_cost", 0),
                 "eval_service": configuration["evaluation"]["service"],
                 "eval_embedding_model": configuration["evaluation"]["embedding_model"],
                 "eval_retrieval_model": configuration["evaluation"]["retrieval_model"],
@@ -360,7 +362,9 @@ def generate_all_combinations(data):
 
             #Calculate the inferencing price - doesn't include OpenSearch pricing
             if configuration.get('gateway_enabled', False):
-                configuration["inferencing_cost_estimate"] += 0
+                configuration["inferencing_cost_estimate"] += estimate_retrieval_model_bedrock_price(bedrock_price_df, configuration, avg_prompt_length, num_prompts, 
+                                                                                                         input_price=configuration.get("retrieval_model_input_token_cost"),
+                                                                                                         output_price=configuration.get("retrieval_model_output_token_cost"))
             else:
                 if configuration["retrieval_service"] == "bedrock":
                     inferencing_price = estimate_retrieval_model_bedrock_price(bedrock_price_df, configuration, avg_prompt_length, num_prompts)

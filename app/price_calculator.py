@@ -48,11 +48,8 @@ def estimate_embedding_model_bedrock_price(file_path, configuration, effective_k
 
 
 def estimate_retrieval_model_bedrock_price(file_path, configuration, avg_prompt_length,
-                                           num_prompts):
+                                           num_prompts, input_token_cost=None, output_token_cost=None):
     try:
-        if configuration.get('gateway_enabled', False):
-            return 0
-            
         df = file_path.copy()
         # return df
     except Exception as e:
@@ -72,25 +69,31 @@ def estimate_retrieval_model_bedrock_price(file_path, configuration, avg_prompt_
     gen_model = configuration["retrieval_model"]
     n_shot_prompts = configuration["n_shot_prompts"]
     k = configuration["knn_num"]
-
-    gen_model_price = df[(df['model'] == gen_model) & (df['Region'] == region)]['input_price']
-    if gen_model_price.empty:
-        logger.warning("Returning price as Zero, as model is not present in Sheet")
-        return 0
+    if input_token_cost != None and output_token_cost != None:
+        gen_model_input_price = float(input_token_cost)
+        gen_model_output_price = float(output_token_cost)
     else:
-        gen_model_price = float(gen_model_price.values[0])  # this price is in millions of tokens
-        gen_model_out_price = df[(df['model'] == gen_model) & (df['Region'] == region)]['output_price']
-        gen_model_out_price = float(gen_model_out_price.values[0])  # this price is in millions of tokens
-        context_len = k * chunk_size
-        prompt_len = (n_shot_prompts + 1) * avg_prompt_length
-        total_input_tokens = (context_len + prompt_len) * num_prompts
-        retrieval_input_price = gen_model_price * float(total_input_tokens) / 1000000
-        total_output_tokens = avg_prompt_length
-        retrieval_output_price = gen_model_out_price * float(total_output_tokens) / 1000000
-        retrieval_price = retrieval_input_price + retrieval_output_price
-        return retrieval_price
+        gen_model_price_series = df[(df['model'] == gen_model) & (df['Region'] == region)]['input_price']
+        if gen_model_price_series.empty:
+            logger.warning("Returning price as Zero, as input price for model is not present in Sheet")
+            return 0
+        else:
+            gen_model_input_price = float(gen_model_price_series.values[0])
 
-
+        gen_model_out_price_series = df[(df['model'] == gen_model) & (df['Region'] == region)]['output_price']
+        if gen_model_out_price_series.empty:
+            logger.warning("Returning price as Zero, as output price for model is not present in Sheet")
+            return 0
+        else:
+            gen_model_output_price = float(gen_model_out_price_series.values[0])
+    context_len = k * chunk_size
+    prompt_len = (n_shot_prompts + 1) * avg_prompt_length
+    total_input_tokens = (context_len + prompt_len) * num_prompts
+    retrieval_input_price = gen_model_input_price * float(total_input_tokens) / 1000000
+    total_output_tokens = avg_prompt_length 
+    retrieval_output_price = gen_model_output_price * float(total_output_tokens) / 1000000
+    retrieval_price = retrieval_input_price + retrieval_output_price
+    return retrieval_price
 
 def estimate_fargate_price(total_time, vpc=8, mem=16):
     #Fargate pricing
