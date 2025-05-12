@@ -292,17 +292,25 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
     accessorKey: "eval_metrics.aspect_critic_score",
     enableHiding: true,
     sortingFn: (rowA, rowB) => {
-      if ("M" in rowA.original.eval_metrics) {
-        const a = rowA.original.eval_metrics?.M?.aspect_critic_score ?? 0;
-        const b = rowB.original.eval_metrics?.M?.aspect_critic_score ?? 0;
-        return Number(a) - Number(b);
-      }
-      if ("aspect_critic_score" in rowA.original.eval_metrics) {
-        const a = rowA.original.eval_metrics?.aspect_critic_score ?? 0;
-        const b = rowB.original.eval_metrics?.aspect_critic_score ?? 0;
-        return Number(a) - Number(b);
-      }
-      return 0;
+      const getScore = (row: any) => {
+        let score = 0;
+        if ("M" in row.original.eval_metrics) {
+          score = row.original.eval_metrics?.M?.aspect_critic_score ?? 0;
+        } else if ("aspect_critic_score" in row.original.eval_metrics) {
+          score = row.original.eval_metrics?.aspect_critic_score ?? 0;
+        }
+        return Number(score);
+      };
+
+      const a = getScore(rowA);
+      const b = getScore(rowB);
+
+      // Handle NaN values by placing them at the end
+      if (isNaN(a) && isNaN(b)) return 0;
+      if (isNaN(a)) return 1;
+      if (isNaN(b)) return -1;
+      
+      return a - b;
     },
     cell: ({ row }) => {
       if ("aspect_critic_score" in row.original.eval_metrics) {

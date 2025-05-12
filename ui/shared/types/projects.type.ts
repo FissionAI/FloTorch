@@ -272,7 +272,9 @@ export const ProjectCreateEvalSchema = z.object({
         enable_prompt_guardrails: z.boolean(),
         enable_context_guardrails:z.boolean(),
         enable_response_guardrails: z.boolean(),
-  })).optional()
+  })).min(1, {
+    message: "At least one option is required",
+  })
 });
 
 export type ProjectCreateEval = z.infer<typeof ProjectCreateEvalSchema>;

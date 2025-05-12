@@ -18,11 +18,11 @@ const downloadResults = () => {
     const total_time = item.total_time * 60
     if (props.questionMetrics) {
       const assessments = {
-        "guardrail user query assessment":
+        "Guardrail User Query":
           JSON.stringify(item.guardrail_input_assessment) || "-",
-        "guardrail context assessment":
+        "Guardrail Context":
           JSON.stringify(item.guardrail_context_assessment) || "-",
-        "guardrail model response assessment":
+        "Guardrail Model Response":
           JSON.stringify(item.guardrail_output_assessment) || "-",
       };
       delete item["guardrail_input_assessment"];
@@ -35,41 +35,41 @@ const downloadResults = () => {
       };
     } else {
       const results = {
-        id: item.id,
-        status: item.experiment_status,
-        inferencing_model: item.config.retrieval_model,
-        estimated_cost: item.cost || (item.cost === 0 ? 0 : "NA"),
-        faithfulness: item.eval_metrics?.M?.faithfulness_score ||item.eval_metrics?.faithfulness_score || (item.eval_metrics?.M?.faithfulness_score === 0 ? 0 : "-"),
-        context_precision:
-        eval_metrics?.M?.context_precision_score || eval_metrics?.context_precision_score || (eval_metrics?.M?.context_precision_score === 0 ? 0 : "-"),
-        maliciousness:
+        "ID": item.id,
+        "Status": item.experiment_status,
+        "Inferencing Model": item.config.retrieval_model,
+        "Estimated Cost": item.cost || (item.cost === 0 ? 0 : "NA"),
+        "Faithfulness": item.eval_metrics?.M?.faithfulness_score ||item.eval_metrics?.faithfulness_score || (item.eval_metrics?.M?.faithfulness_score === 0 ? 0 : "-"),
+        "Context Precision":
+        item.eval_metrics?.M?.context_precision_score || item.eval_metrics?.context_precision_score || (item.eval_metrics?.M?.context_precision_score === 0 ? 0 : "-"),
+        "Maliciousness":
           item.eval_metrics?.M?.aspect_critic_score ||item.eval_metrics?.aspect_critic_score || (item.eval_metrics?.M?.aspect_critic_score === 0 ? 0 : "-"),
-        answer_relevance:
+        "Answer Relevancy":
           item.eval_metrics?.M?.answers_relevancy_score ||item.eval_metrics?.answers_relevancy_score || (item.eval_metrics?.M?.answers_relevancy_score === 0 ? 0 : "-"),
-        duration: item.total_time || (item.total_time === 0 ? 0 : "-"),
-        embedding_model: item.config.embedding_model || "NA",
-        evaluation_service: item.config.eval_service,
-        evaluation_embedding_model:
+        "Duration": item.total_time || (item.total_time === 0 ? 0 : "-"),
+        "Embedding Model": item.config.embedding_model || "NA",
+        "Evaluation Service": item.config.eval_service,
+        "Evaluation Embedding Model":
           item.config.eval_embedding_model,
-        evaluation_inference_model:
+        "Evaluation Inferencing Model":
           item.config.eval_retrieval_model,
-        directional_cost: item.config.directional_pricing || (item.config.directional_pricing === 0 ? 0 : "NA"),
-        indexing_algorithm: item.config.indexing_algorithm || "NA",
-        chunking: item.config.chunking_strategy || "NA",
-        inferencing_model_temperature: item.config.temp_retrieval_llm || (item.config.temp_retrieval_llm === 0 ? 0 : "NA"),
-        reranking_model: item.config.reranking_model_id || "NA",
-        guardrail: item.config?.guardrail_name || "NA",
-        bedrock_kb_name: item.config?.kb_name || "NA",
-        knn: item.config?.knn_num || (item.config?.knn_num === 0 ? 0 : "NA"),
-        n_shots_prompts: item.config.n_shot_prompts || (item.config.n_shot_prompts === 0 ? 0 : "NA"),
-        expert_evaluation_scores: item.scores || (item.scores === 0 ? 0 : "NA"),
+        "Directional Cost": item.config.directional_pricing || (item.config.directional_pricing === 0 ? 0 : "NA"),
+        "Indexing Algorithm": item.config.indexing_algorithm || "NA",
+        "Chunking": item.config.chunking_strategy || "NA",
+        "Inferencing Model Temperature": item.config.temp_retrieval_llm || (item.config.temp_retrieval_llm === 0 ? 0 : "NA"),
+        "Reranking Model": item.config.rerank_model_id || "NA",
+        "Guardrail": item.config?.guardrail_name || "NA",
+        "Bedrock KB Name": item.config?.kb_name || "NA",
+        "KNN": item.config?.knn_num || (item.config?.knn_num === 0 ? 0 : "NA"),
+        "N Shot Prompts": item.config.n_shot_prompts || (item.config.n_shot_prompts === 0 ? 0 : "NA"),
+        "Expert Evaluation Scores": item.scores || (item.scores === 0 ? 0 : "NA"),
       }
 
       return results;
     }
   });
   if (!props.questionMetrics) {
-    stringifyData.sort((a, b) => a.id.localeCompare(b.id));
+    stringifyData.sort((a, b) => a.ID.localeCompare(b.ID));
   }
   const csv = jsonToCsv(stringifyData);
   const blob = new Blob([csv], { type: "text/csv" });
