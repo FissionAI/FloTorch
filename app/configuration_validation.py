@@ -374,15 +374,14 @@ def generate_all_combinations_in_background(execution_id: str, execution_config_
     Generate all possible valid experiment configurations for a given execution and stores result in S3.
     Progress status and result s3 url is stored in execution db under valid execution_id
     """
-
+    db_client_generator = get_execution_db()
+    db_client = None
     try:
-        # update status of execution_id to InProgress
-        get_execution_db().update_item(
-            key={"id": execution_id}, 
-            update_expression="SET validation_status = :status_value", 
-            expression_values={":status_value": ValidationStatus.INPROGRESS.value}
+        db_client = next(db_client_generator)
+        db_client.update(
+            key={"id": execution_id},
+            data={"validation_status": ValidationStatus.INPROGRESS.value}
         )
-
         combinations = generate_all_combinations(execution_config_data)
         deserialized_combinations_data = []
         for combination in combinations:
@@ -393,18 +392,22 @@ def generate_all_combinations_in_background(execution_id: str, execution_config_
             deserialized_combinations_data.append(updated_combination)
 
         S3Util().write_json_to_s3(f"experiment_combination/{execution_id}.json", S3_BUCKET, deserialized_combinations_data)
-
-        # update status of execution id to Completed
-        get_execution_db().update_item(
-            key={"id": execution_id}, 
-            update_expression="SET validation_status = :status_value", 
-            expression_values={":status_value": ValidationStatus.COMPLETED.value}
-        ) 
+        db_client.update(
+            key={"id": execution_id},
+            data={"validation_status": ValidationStatus.COMPLETED.value}
+        )
+    except StopIteration:
+        print("Generator did not yield a DB client during startup.")
     except Exception as e:
         # update status of execution id to failed
         logger.error(f"Error in generate_all_combinations_in_background: {e}")
-        get_execution_db().update_item(
-            key={"id": execution_id}, 
-            update_expression="SET validation_status = :status_value", 
-            expression_values={":status_value": ValidationStatus.FAILED.value}
+        db_client.update(
+            key={"id": execution_id},
+            data={"validation_status": ValidationStatus.FAILED.value}
         )
+    finally:
+        if db_client_generator:
+            try:
+                db_client_generator.close()
+            except Exception as e:
+                print(f"Error closing DB client generator during startup: {e}")

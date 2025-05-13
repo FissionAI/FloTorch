@@ -1,4 +1,3 @@
-from core.dynamodb import DynamoDBOperations
 import json
 import boto3
 from decimal import Decimal
