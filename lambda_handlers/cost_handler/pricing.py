@@ -27,14 +27,6 @@ def compute_actual_price_breakdown(
 
 
     is_gateway_enabled = configuration.get("config", {}).get("gateway_enabled", False)
-    if is_gateway_enabled:
-        overall_metadata = {'total_cost': 0.0, 'total_time': total_time, 'order': ['total_time', 'total_cost']}
-        indexing_metadata = {'runtime': indexing_time, 'model': '', 'service': '', 'sagemaker_cost': 0.0, 'ecs_cost': 0.0, 'total_cost': 0.0, 'order': ['model', 'service', 'knowledge_base_tokens', 'bedrock_cost', 'runtime', 'sagemaker_cost', 'ecs_cost', 'opensearch_cost', 'total_cost']}
-        retriever_metadata = {'runtime': retrieval_time, 'ecs_cost': 0.0, 'total_cost': 0.0, 'order': ['no_of_questions', 'rerank_model', 'reranker_queries', 'reranking_cost', 'runtime', 'ecs_cost', 'opensearch_cost', 'total_cost']}
-        inferencer_metadata = {'model': configuration.get("config", {}).get("retrieval_model", ""), 'service': '', 'runtime': retrieval_time, 'sagemaker_cost': 0.0, 'sagemaker_embedding_cost': 0.0, 'total_cost': 0.0, 'order': ['model', 'service', 'no_of_questions', 'input_tokens', 'output_tokens', 'query_embed_tokens', 'input_tokens_cost', 'output_tokens_cost', 'query_embed_tokens_cost', 'average_latency', 'runtime', 'sagemaker_embedding_cost', 'sagemaker_cost', 'total_cost']}
-        evaluator_metadata = {'runtime': eval_time, 'ecs_cost': 0.0, 'total_cost': 0.0, 'order': ['runtime', 'ecs_cost', 'opensearch_cost', 'sagemaker_embedding_cost', 'sagemaker_inferencer_cost', 'total_cost']}
-
-        return overall_metadata, indexing_metadata, retriever_metadata, inferencer_metadata, evaluator_metadata
 
     is_input_valid, input_missing = validate_params(
         configuration=configuration
@@ -57,6 +49,8 @@ def compute_actual_price_breakdown(
         retrieval_model = configuration.get("config", {}).get("retrieval_model", "")
         embedding_service = configuration.get("config", {}).get("embedding_service", "")
         retrieval_service = configuration.get("config", {}).get("retrieval_service", "")
+        retrieval_model_input_token_cost = configuration.get("config", {}).get("retrieval_model_input_token_cost", 0)
+        retrieval_model_output_token_cost = configuration.get("config", {}).get("retrieval_model_output_token_cost", 0)
         bedrock_knowledge_base = configuration.get("config", {}).get("bedrock_knowledge_base", False)
         rerank_model_id = configuration.get("config", {}).get("rerank_model_id", None)
         is_opensearch = configuration.get("config", {}).get("is_opensearch", True)
@@ -88,92 +82,105 @@ def compute_actual_price_breakdown(
         embedding_model_price = 0
 
         # Calculating indexing, inferencing and evaluation costs for bedrock/Sagemaker
-        if not bedrock_knowledge_base:
-            indexing_metadata['runtime'] = indexing_time
-            indexing_metadata['model'] = embedding_model
-            indexing_metadata['service'] = embedding_service
-            if embedding_service == "bedrock" :
-                embedding_model_price = df[(df["model"] == embedding_model) & (df["Region"] == aws_region)]["input_price"]
-                if embedding_model_price.empty:
-                    logger.error(f"No embedding model {embedding_model} price found.")
-                    return None
-                embedding_model_price = float(embedding_model_price.values[0])  # Price per 1000 tokens
-                indexing_cost = (embedding_model_price * float(index_embed_tokens)) / THOUSAND
-                indexing_metadata['knowledge_base_tokens'] = index_embed_tokens
-                indexing_metadata['bedrock_cost'] = indexing_cost
-            else:
-                indexing_cost = sagemaker_cost(indexing_time)
-                indexing_metadata['sagemaker_cost'] = indexing_cost
+        if is_gateway_enabled:
+            indexing_metadata = {'runtime': indexing_time, 'model': '', 'service': '', 'sagemaker_cost': 0.0, 'ecs_cost': 0.0, 'total_cost': 0.0}
+        else:
+            if not bedrock_knowledge_base:
+                indexing_metadata['runtime'] = indexing_time
+                indexing_metadata['model'] = embedding_model
+                indexing_metadata['service'] = embedding_service
+                if embedding_service == "bedrock" :
+                    embedding_model_price = df[(df["model"] == embedding_model) & (df["Region"] == aws_region)]["input_price"]
+                    if embedding_model_price.empty:
+                        logger.error(f"No embedding model {embedding_model} price found.")
+                        return None
+                    embedding_model_price = float(embedding_model_price.values[0])  # Price per 1000 tokens
+                    indexing_cost = (embedding_model_price * float(index_embed_tokens)) / THOUSAND
+                    indexing_metadata['knowledge_base_tokens'] = index_embed_tokens
+                    indexing_metadata['bedrock_cost'] = indexing_cost
+                else:
+                    indexing_cost = sagemaker_cost(indexing_time)
+                    indexing_metadata['sagemaker_cost'] = indexing_cost
         
         retriever_metadata['runtime'] = retrieval_time
 
         inferencer_metadata['model'] = retrieval_model
         inferencer_metadata['service'] = retrieval_service
-        if retrieval_service == "bedrock" :
-            inferencer_metadata['input_tokens'] = input_tokens
-            inferencer_metadata['output_tokens'] = output_tokens
-            question_details = calculate_experiment_question_details(experiment_question_metrics_items)
-            retriever_metadata['no_of_questions'] = question_details["total_questions"]
-
-            inferencer_metadata['no_of_questions'] = question_details["total_questions"]
-            inferencer_metadata['inference_time'] = question_details["overall_inferencer_time"]
-            inferencer_metadata['average_latency'] = question_details["average_inferencer_time"]
-
-            reranking_cost = 0
-
-            retrieval_model_input_price = df[
-                (df["model"] == retrieval_model) & (df["Region"] == aws_region)
-            ]["input_price"]
-            retrieval_model_output_price = df[
-                (df["model"] == retrieval_model) & (df["Region"] == aws_region)
-            ]["output_price"]
-
-            if retrieval_model_input_price.empty:
-                logger.error(f"No retrieval model {retrieval_model} input price found.")
-                return None
-            
-            if retrieval_model_output_price.empty:
-                logger.error(f"No retrieval model {retrieval_model} output price found.")
-                return None
-            
-            retrieval_model_input_price = float(retrieval_model_input_price.values[0])  # Price per million tokens
-            retrieval_model_output_price = float(retrieval_model_output_price.values[0])  # Price per million tokens
-            # Calculate costs
-            
+        if is_gateway_enabled:
+            inferencer_metadata = {'model': configuration.get("config", {}).get("retrieval_model", ""), 'service': '', 'runtime': retrieval_time, 'sagemaker_cost': 0.0, 'sagemaker_embedding_cost': 0.0, 'total_cost': 0.0}
+            retrieval_model_input_price = float(retrieval_model_input_token_cost)  
+            retrieval_model_output_price = float(retrieval_model_output_token_cost) 
             retrieval_model_input_actual_cost = (retrieval_model_input_price * float(input_tokens)) / MILLION
             retrieval_model_output_actual_cost = (retrieval_model_output_price * float(output_tokens)) / MILLION
             inferencer_metadata['input_tokens_cost'] = retrieval_model_input_actual_cost
             inferencer_metadata['output_tokens_cost'] = retrieval_model_output_actual_cost
-            if (not bedrock_knowledge_base) and embedding_service == "bedrock":
-                query_embedding_cost = (embedding_model_price * float(query_embed_tokens)) / THOUSAND
-                inferencer_metadata['query_embed_tokens'] = query_embed_tokens
-                inferencer_metadata['query_embed_tokens_cost'] = query_embedding_cost
-            if rerank_model_id and rerank_model_id != "none" :
-                retriever_metadata['rerank_model'] = rerank_model_id
-                retriever_metadata['reranker_queries'] = question_details["reranker_queries"]
-                reranker_model_price = df[(df["model"] == rerank_model_id) & (df["Region"] == aws_region)]["input_price"]
-                if reranker_model_price.empty:
-                    logger.error(f"No reranker model {rerank_model_id} price found.")
-                    return None
-                reranker_model_price = float(reranker_model_price.values[0])  # Price per 1000 queries
-                reranking_cost = (reranker_model_price * float(question_details['reranker_queries'])) / THOUSAND
-                retriever_metadata['reranking_cost'] = reranking_cost
-                retrieval_cost += reranking_cost
             inferencing_cost = retrieval_model_input_actual_cost + retrieval_model_output_actual_cost + query_embedding_cost
         else:
-            inferencer_metadata['runtime'] = retrieval_time
-            inferencing_cost = sagemaker_cost(retrieval_time)
-            inferencer_metadata['sagemaker_cost'] = inferencing_cost
-            if not bedrock_knowledge_base:
-                if embedding_service == "bedrock":
+            if retrieval_service == "bedrock" :
+                inferencer_metadata['input_tokens'] = input_tokens
+                inferencer_metadata['output_tokens'] = output_tokens
+                question_details = calculate_experiment_question_details(experiment_question_metrics_items)
+                retriever_metadata['no_of_questions'] = question_details["total_questions"]
+
+                inferencer_metadata['no_of_questions'] = question_details["total_questions"]
+                inferencer_metadata['inference_time'] = question_details["overall_inferencer_time"]
+                inferencer_metadata['average_latency'] = question_details["average_inferencer_time"]
+
+                reranking_cost = 0
+
+                retrieval_model_input_price = df[
+                    (df["model"] == retrieval_model) & (df["Region"] == aws_region)
+                ]["input_price"]
+                retrieval_model_output_price = df[
+                    (df["model"] == retrieval_model) & (df["Region"] == aws_region)
+                ]["output_price"]
+
+                if retrieval_model_input_price.empty:
+                    logger.error(f"No retrieval model {retrieval_model} input price found.")
+                    return None
+                
+                if retrieval_model_output_price.empty:
+                    logger.error(f"No retrieval model {retrieval_model} output price found.")
+                    return None
+                
+                retrieval_model_input_price = float(retrieval_model_input_price.values[0])  # Price per million tokens
+                retrieval_model_output_price = float(retrieval_model_output_price.values[0])  # Price per million tokens
+                # Calculate costs
+                
+                retrieval_model_input_actual_cost = (retrieval_model_input_price * float(input_tokens)) / MILLION
+                retrieval_model_output_actual_cost = (retrieval_model_output_price * float(output_tokens)) / MILLION
+                inferencer_metadata['input_tokens_cost'] = retrieval_model_input_actual_cost
+                inferencer_metadata['output_tokens_cost'] = retrieval_model_output_actual_cost
+                if (not bedrock_knowledge_base) and embedding_service == "bedrock":
                     query_embedding_cost = (embedding_model_price * float(query_embed_tokens)) / THOUSAND
-                    inferencing_cost += query_embedding_cost
                     inferencer_metadata['query_embed_tokens'] = query_embed_tokens
                     inferencer_metadata['query_embed_tokens_cost'] = query_embedding_cost
-                else:
-                    embedding_sagemaker_cost = sagemaker_cost(retrieval_time)
-                    inferencing_cost += embedding_sagemaker_cost
-                    inferencer_metadata['sagemaker_embedding_cost'] = embedding_sagemaker_cost
+                if rerank_model_id and rerank_model_id != "none" :
+                    retriever_metadata['rerank_model'] = rerank_model_id
+                    retriever_metadata['reranker_queries'] = question_details["reranker_queries"]
+                    reranker_model_price = df[(df["model"] == rerank_model_id) & (df["Region"] == aws_region)]["input_price"]
+                    if reranker_model_price.empty:
+                        logger.error(f"No reranker model {rerank_model_id} price found.")
+                        return None
+                    reranker_model_price = float(reranker_model_price.values[0])  # Price per 1000 queries
+                    reranking_cost = (reranker_model_price * float(question_details['reranker_queries'])) / THOUSAND
+                    retriever_metadata['reranking_cost'] = reranking_cost
+                    retrieval_cost += reranking_cost
+                inferencing_cost = retrieval_model_input_actual_cost + retrieval_model_output_actual_cost + query_embedding_cost
+            else:
+                inferencer_metadata['runtime'] = retrieval_time
+                inferencing_cost = sagemaker_cost(retrieval_time)
+                inferencer_metadata['sagemaker_cost'] = inferencing_cost
+                if not bedrock_knowledge_base:
+                    if embedding_service == "bedrock":
+                        query_embedding_cost = (embedding_model_price * float(query_embed_tokens)) / THOUSAND
+                        inferencing_cost += query_embedding_cost
+                        inferencer_metadata['query_embed_tokens'] = query_embed_tokens
+                        inferencer_metadata['query_embed_tokens_cost'] = query_embedding_cost
+                    else:
+                        embedding_sagemaker_cost = sagemaker_cost(retrieval_time)
+                        inferencing_cost += embedding_sagemaker_cost
+                        inferencer_metadata['sagemaker_embedding_cost'] = embedding_sagemaker_cost
 
         inferencer_metadata['total_cost'] = inferencing_cost
         # Eval costs doesn't include ragas at the moment
