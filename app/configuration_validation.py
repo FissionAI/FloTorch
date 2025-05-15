@@ -2,6 +2,7 @@ import itertools
 import os
 import shutil
 import logging
+import traceback
 from util.s3util import S3Util
 from util.bedrock_utils import KnowledgeBaseUtils
 from config.config import get_config
@@ -314,7 +315,6 @@ def generate_all_combinations(data):
         
         if experiment_count >= MAX_VALID_EXPERIMENTS:
             break  # Exit the loop when the limit is reached
-       
         configuration = {
             **combination
         }
@@ -363,8 +363,8 @@ def generate_all_combinations(data):
             #Calculate the inferencing price - doesn't include OpenSearch pricing
             if configuration.get('gateway_enabled', False):
                 configuration["inferencing_cost_estimate"] += estimate_retrieval_model_bedrock_price(bedrock_price_df, configuration, avg_prompt_length, num_prompts, 
-                                                                                                         input_price=configuration.get("retrieval_model_input_token_cost"),
-                                                                                                         output_price=configuration.get("retrieval_model_output_token_cost"))
+                                                                                                        input_token_cost=configuration.get("retrieval_model_input_token_cost"),
+                                                                                                        output_token_cost=configuration.get("retrieval_model_output_token_cost"))
             else:
                 if configuration["retrieval_service"] == "bedrock":
                     inferencing_price = estimate_retrieval_model_bedrock_price(bedrock_price_df, configuration, avg_prompt_length, num_prompts)
@@ -396,7 +396,6 @@ def generate_all_combinations(data):
             configuration["directional_pricing"] = configuration["indexing_cost_estimate"] + configuration["retrieval_cost_estimate"] + configuration["inferencing_cost_estimate"] + configuration["eval_cost_estimate"]
             configuration["directional_pricing"] +=configuration["directional_pricing"]*0.05 #extra
             configuration["directional_pricing"] = round(configuration["directional_pricing"],2)    
-
     return valid_configurations
 
 def generate_all_combinations_in_background(execution_id: str, execution_config_data):
