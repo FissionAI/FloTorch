@@ -2,7 +2,6 @@ import itertools
 import os
 import shutil
 import logging
-import traceback
 from util.s3util import S3Util
 from util.bedrock_utils import KnowledgeBaseUtils
 from config.config import get_config
