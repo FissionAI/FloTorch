@@ -1,5 +1,6 @@
 import json
 from abc import ABC, abstractmethod
+import sys
 from flotorch_core.logger.global_logger import get_logger
 
 logger = get_logger()
@@ -24,13 +25,12 @@ class BaseFargateTaskProcessor(ABC):
         """
         raise NotImplementedError("Subclasses must implement the process method.")
 
-    def send_task_success(self, output: dict):
+    def send_task_success(self):
         """
         Sends task success signal.
-        Args:
-            output (dict): The output data to send.
         """
-        pass
+        print(json.dumps({"status": "success", "output": "Retrieval completed successfully"}))
+        sys.exit(0)
 
     def send_task_failure(self, error_message: str):
         """
@@ -38,4 +38,5 @@ class BaseFargateTaskProcessor(ABC):
         Args:
             error_message (str): The error message to send.
         """
-        pass
+        print(json.dumps({"status": "failure", "output": "Retrieval Failed", "error": error_message}))
+        sys.exit(1)

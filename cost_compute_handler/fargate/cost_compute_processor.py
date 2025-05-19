@@ -162,29 +162,17 @@ class RetrieverProcessor(BaseFargateTaskProcessor):
             except Exception as e:
                 logger.error(f"Error updating DB: {e}")
                 raise
-
-            return {
-                "statusCode": 200,
-                "body": json.dumps(
-                    {
-                        "total_cost": total_cost,
-                        "dynamodb_update_count": len(experiment_items),
-                    }
-                ),
-            }
+            self.send_task_success()
 
         except ValueError as ve:
             logger.error(f"Validation error: {ve}")
-            return {"statusCode": 400, "body": json.dumps({"error": str(ve)})}
+            self.send_task_failure(str(ve))
         except EnvironmentError as ee:
             logger.error(f"Environment error: {ee}")
-            return {"statusCode": 500, "body": json.dumps({"error": str(ee)})}
+            self.send_task_failure(str(ee))
         except Exception as e:
             logger.error(f"Unhandled error: {e}")
-            return {
-                "statusCode": 500,
-                "body": json.dumps({"error": "Internal server error"}),
-            }
+            self.send_task_failure(str(e))
 
 def convert_floats_to_decimal(obj):
     if isinstance(obj, float):
