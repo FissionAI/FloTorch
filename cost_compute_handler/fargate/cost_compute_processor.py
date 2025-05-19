@@ -36,7 +36,7 @@ def fetch_data_from_db(table_name, key, value, index_name=None):
                 items = db_client.read(keys={key: value})
 
         elif db_type == "POSTGRESDB":
-            db_client = PostgresDB(dbname=config.get_postgres_db(), user=config.get_postgres_user(), password=config.get_postgres_password, table_name=table_name, host=config.get_postgres_host(), port=config.get_postgres_port())
+            db_client = PostgresDB(dbname=config.get_postgres_db(), user=config.get_postgres_user(), password=config.get_postgres_password(), table_name=table_name, host=config.get_postgres_host(), port=config.get_postgres_port())
             items = db_client.read(key={key: value})
         return items            
     except Exception as e:
@@ -155,7 +155,7 @@ class RetrieverProcessor(BaseFargateTaskProcessor):
                 if db_type == "DYNAMODB":
                     db_client = DynamoDB(table_name=experiment_table, region_name=config.get_region())
                 elif db_type == "POSTGRESDB":
-                    db_client = PostgresDB(dbname=config.get_postgres_db(), user=config.get_postgres_user(), password=config.get_postgres_password, table_name=experiment_table, host=config.get_postgres_host(), port=config.get_postgres_port())
+                    db_client = PostgresDB(dbname=config.get_postgres_db(), user=config.get_postgres_user(), password=config.get_postgres_password(), table_name=experiment_table, host=config.get_postgres_host(), port=config.get_postgres_port())
 
                 db_client.update(key, data)
                     
