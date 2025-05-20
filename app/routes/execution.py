@@ -3,6 +3,9 @@ import logging
 import random
 import string
 from typing import Optional
+import requests
+import os
+from dotenv import load_dotenv
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from fastapi.responses import JSONResponse
@@ -21,6 +24,7 @@ from ..dependencies.database import (
 )
 router = APIRouter(tags=["execution"])
 config = get_config()
+load_dotenv()
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -244,19 +248,6 @@ async def execute_experiments(
     """
     try:
 
-        in_progress_items = execution_db.read({"status": "in_progress"})
-        if in_progress_items:
-            # Fetch the first in-progress item
-            in_progress_item = in_progress_items[0]
-
-            # Raise an HTTPException with a detailed error message
-            raise HTTPException(
-                status_code=StatusCodes.BAD_REQUEST,
-                detail=create_error_response(
-                    ErrorTypes.VALIDATION_ERROR,
-                    f"Another project '{in_progress_item['name']}' execution is currently in progress. Please wait until it completes.",
-                ),
-            )
         execution = execution_db.read({"id": execution_id})
         if execution:
             execution = execution[0]
@@ -268,16 +259,23 @@ async def execute_experiments(
                     "No project found for the provided ID",
                 ),
             )
+        if execution.get('status') == "in_progress":
+            raise HTTPException(
+                status_code=StatusCodes.BAD_REQUEST,
+                detail=create_error_response(
+                    ErrorTypes.VALIDATION_ERROR,
+                    "An exection with execution ID {execution_id} is already in progress",
+                ),
+            )
         
-        response = orchestrator.run_experiment_orchestration(execution_id)
-       
-        execution["status"] = "in_progress"
-        execution_db.write(execution)
+        payload = {"execution_id": execution_id}
+        temporal_launcher_url = os.getenv("TEMPORAL_LAUNCHER_API")
+        response = requests.post(temporal_launcher_url, json=payload, timeout=10)
 
         return {
-            "status": "success",
+            "status": response.status_code,
             "message": f"Orchestration started for execution ID {execution_id}",
-            "execution_arn": response['executionArn']
+            "Response JSON": response.json()
         }
     except HTTPException as http_exc:
         # Re-raise the HTTPException with the same status code and detail
