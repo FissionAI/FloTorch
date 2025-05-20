@@ -72,7 +72,7 @@ def seed_models(execution_model_invocations_db) -> int:
             if not model_limit or model_limit <= 0:
                 logger.error(f"Model limit {model_limit} is invalid for {model_id}")
                 model_limit = 5
-            execution_model_invocations_db.put_item({
+            execution_model_invocations_db.write({
                 "execution_model_id": model_id, 
                 "invocations": 0, 
                 "limit": model_limit

@@ -3,16 +3,17 @@ from typing import List, Optional
 import random
 import string
 import traceback
+import logging
 
 from baseclasses.base_classes import Experiment
-from core.dynamodb import DynamoDBOperations
 from .cost_and_duration_calculation import calculate_duration, calculate_cost
 from ..dependencies.database import (
     get_experiment_db, get_question_metrics_db, get_execution_db
 )
 from util.error_handling import create_error_response
 from constants import ErrorTypes, StatusCodes
-import logging
+
+from flotorch_core.storage.db.db_storage import DBStorage
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -24,8 +25,8 @@ async def post_experiment(
         execution_id: str,
         experiments: List[dict],
         status: Optional[str] = None,
-        experiment_db: DynamoDBOperations=Depends(get_experiment_db),
-        execution_db: DynamoDBOperations=Depends(get_execution_db)
+        experiment_db: DBStorage=Depends(get_experiment_db),
+        execution_db: DBStorage=Depends(get_execution_db)
 ):
     """
     Add experiments to an execution, with an optional status filter.
@@ -41,9 +42,10 @@ async def post_experiment(
     try:
 
         # Fetch execution details
-        execution = execution_db.get_item({"id": execution_id})
-
-        if not execution:
+        execution = execution_db.read({"id": execution_id})
+        if execution:
+            execution = execution[0]
+        else:
             raise HTTPException(
                 status_code=StatusCodes.BAD_REQUEST,
                 detail=create_error_response(
@@ -60,20 +62,12 @@ async def post_experiment(
                     "Cannot add the experiment once the execution is started",
                 ),
             )
-
-        filter_expression = "#execution_id = :execution_id"
-        expression_values = {":execution_id": execution_id}
-        expression_attribute_names = {"#execution_id": "execution_id"}
-
-        existing_experiments = experiment_db.scan_all(
-            filter_expression=filter_expression,
-            expression_values=expression_values,
-            expression_attribute_names=expression_attribute_names,
-        )
+        
+        existing_experiments = experiment_db.read({"execution_id": execution_id})
         # Delete any existing experiments associated with this execution
-        for experiment in existing_experiments.get("Items", []):
-            experiment_db.delete_item({"id": experiment["id"]})
-            
+        for experiment in existing_experiments:
+            experiment_db.delete({"id": experiment["id"]})
+
         experiment_ids = []
         for data in experiments:
             if data["bedrock_knowledge_base"]:
@@ -122,7 +116,7 @@ async def post_experiment(
                 retrieval_status="not_started",
                 eval_status="not_started"
             )
-            experiment_db.put_item(experiment.dict())
+            experiment_db.write(experiment.dict())
             experiment_ids.append(experiment_id)
 
         return {"status": "success", "experiment_ids": experiment_ids}
@@ -158,22 +152,12 @@ async def get_experiments(
         List[Dict]: A list of experiments matching the criteria.
     """
     try:
-        filter_expression = "#execution_id = :execution_id"
-        expression_values = {":execution_id": execution_id}
-        expression_attribute_names = {"#execution_id": "execution_id"}
-
+        filter_expression = {"execution_id": execution_id}
         if status:
-            filter_expression += " AND #experiment_status = :experiment_status"
-            expression_values[":experiment_status"] = status
-            expression_attribute_names["#experiment_status"] = "experiment_status"
+            filter_expression["experiment_status"] = status
 
-        response = experiment_db.scan_all(
-            filter_expression=filter_expression,
-            expression_values=expression_values,
-            expression_attribute_names=expression_attribute_names,
-        )
-        final_response = response.get("Items", [])
-        final_response_with_duration = calculate_duration(final_response)
+        response = experiment_db.read(filter_expression)
+        final_response_with_duration = calculate_duration(response)
         # final_response_with_cost = calculate_cost(final_response_with_duration)
         return final_response_with_duration
     except Exception as e:
@@ -193,8 +177,10 @@ async def get_experiment(
         experiment_id: str,
         experiment_db=Depends(get_experiment_db)
 ):
-    experiment = experiment_db.get_item({"id": experiment_id})
-    if not experiment:
+    experiment = experiment_db.read({"id": experiment_id})
+    if experiment:
+        experiment = experiment[0]
+    else:
         raise HTTPException(
             status_code=StatusCodes.BAD_REQUEST,
             detail=create_error_response(
@@ -220,7 +206,7 @@ async def get_question_metrics(
     question_metrics_db=Depends(get_question_metrics_db),
 ):
     """
-    Retrieve all question metrics for a specific execution and experiment by iterating over DynamoDB pages.
+    Retrieve all question metrics for a specific execution and experiment.
 
     Args:
         execution_id (str): The execution ID.
@@ -230,36 +216,12 @@ async def get_question_metrics(
         dict: All question metrics.
     """
     try:
-        all_questions = []
-        last_evaluated_key = None
+        query_params = {"execution_id": execution_id,
+                        "experiment_id": experiment_id}
 
-        while True:
-            # Query parameters
-            
-            query_params = {
-                "key_condition_expression": "execution_id = :execution_id AND experiment_id = :experiment_id",
-                "expression_values": {
-                    ":execution_id": execution_id,
-                    ":experiment_id": experiment_id,
-                },
-                "index_name":"execution_id-experiment_id-index",
-                "projection": "generated_answer, gt_answer, question, id, guardrail_input_assessment, guardrail_context_assessment, guardrail_output_assessment",
-            }
+        response = question_metrics_db.read(query_params)
 
-            if last_evaluated_key:
-                query_params["exclusive_start_key"] = last_evaluated_key
-
-            # Query DynamoDB
-            response = question_metrics_db.query(**query_params)
-
-            # Append items to the result list
-            all_questions.extend(response.get("Items", []))
-
-            # Check if there are more items to fetch
-            last_evaluated_key = response.get("LastEvaluatedKey")
-            if not last_evaluated_key:
-                break
-        return {"question_metrics": all_questions}
+        return {"question_metrics": response}
     except Exception as e:
         logger.error(f"Failed to retrieve experiment: {str(e)}")
         raise HTTPException(

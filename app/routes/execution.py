@@ -1,25 +1,30 @@
-from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
+import asyncio
+import logging
+import random
+import string
 from typing import Optional
+import requests
+import os
+from dotenv import load_dotenv
+
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+from fastapi.responses import JSONResponse
 
 from baseclasses.base_classes import Execution
+from config.config import get_config
+from constants import ErrorTypes, StatusCodes
 from constants.validation_status import ValidationStatus
+from flotorch_core.storage.db.db_storage import DBStorage
+from util.error_handling import create_error_response
+from util.s3util import S3Util
 from ..configuration_validation import generate_all_combinations_in_background
 from ..dependencies.database import (
     get_execution_db,
     get_step_function_orchestrator
 )
-import asyncio
-import random
-import string
-from config.config import get_config
-from util.error_handling import create_error_response
-from constants import ErrorTypes, StatusCodes
-import logging
-from fastapi.responses import JSONResponse
-from util.s3util import S3Util
-
 router = APIRouter(tags=["execution"])
 config = get_config()
+load_dotenv()
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -29,7 +34,7 @@ logger = logging.getLogger("Execution")
 async def post_execution(
         payload: dict,
         status: Optional[str] = None,
-        execution_db=Depends(get_execution_db)
+        execution_db: DBStorage=Depends(get_execution_db)
 ):
     """
     Create a new execution, ensuring no other execution is currently in progress.
@@ -57,7 +62,7 @@ async def post_execution(
         )
 
         # Save to DynamoDB
-        execution_db.put_item(execution.dict())
+        execution_db.write(execution.dict())
         return {"status": "success", "execution_id": execution_id}
     except Exception as e:
         logger.error(f"Failed to create execution: {str(e)}")
@@ -72,7 +77,7 @@ async def post_execution(
 @router.get("/execution")
 async def list_executions(
         status: Optional[str] = None,
-        execution_db=Depends(get_execution_db)
+        execution_db: DBStorage=Depends(get_execution_db)
 ):
     """
     List all executions, optionally filtered by status.
@@ -84,13 +89,9 @@ async def list_executions(
     """
     try:
         if status:
-            response = execution_db.scan(
-                filter_expression="#status = :status",
-                expression_values={":status": status},
-                expression_attribute_names={"#status": "status"}
-            )
+            response = execution_db.read({"status": status})
         else:
-            response = execution_db.scan()
+            response = execution_db.read()
 
         executions = [
             {
@@ -102,7 +103,7 @@ async def list_executions(
                 "region": item.get("region", ""),
                 "name": item.get("name", "")
             }
-            for item in response.get("Items", [])
+            for item in response
         ]
         return executions
     except Exception as e:
@@ -127,8 +128,10 @@ async def get_execution(id: str, execution_db=Depends(get_execution_db)):
         Execution details.
     """
     try:
-        execution = execution_db.get_item({"id": id})
-        if not execution:
+        execution = execution_db.read({"id": id})
+        if execution:
+            execution = execution[0]
+        else:
             raise HTTPException(
                 status_code=StatusCodes.BAD_REQUEST,
                 detail=create_error_response(
@@ -166,7 +169,7 @@ async def get_execution(id: str, execution_db=Depends(get_execution_db)):
 async def update_execution(
         id: str,
         payload: dict,
-        execution_db=Depends(get_execution_db)
+        execution_db: DBStorage=Depends(get_execution_db)
 ):
     """
     Update an existing execution with new configuration details.
@@ -179,8 +182,10 @@ async def update_execution(
         dict: Status and updated execution details.
     """
     try:
-        execution = execution_db.get_item({"id": id})
-        if not execution:
+        execution = execution_db.read({"id": id})
+        if execution:
+            execution = execution[0]
+        else:
             raise HTTPException(
                 status_code=StatusCodes.BAD_REQUEST,
                 detail=create_error_response(
@@ -206,7 +211,7 @@ async def update_execution(
             region=payload.get("prestep", {}).get("region", execution["region"]),
             name=payload["name"]
         )
-        execution_db.put_item(updated_execution.dict())
+        execution_db.write(updated_execution.dict())
 
         return {
             "status": "success",
@@ -229,7 +234,7 @@ async def update_execution(
 @router.post("/execution/{execution_id}/execute")
 async def execute_experiments(
         execution_id: str,
-        execution_db=Depends(get_execution_db),
+        execution_db: DBStorage=Depends(get_execution_db),
         orchestrator=Depends(get_step_function_orchestrator)
 ):
     """
@@ -242,27 +247,11 @@ async def execute_experiments(
         A success message if orchestration is started.
     """
     try:
-        in_progress = execution_db.scan(
-            filter_expression="#status = :status",
-            expression_values={":status": "in_progress"},
-            expression_attribute_names={"#status": "status"}
-        )
 
-        in_progress_items = in_progress.get("Items", [])
-        if in_progress_items:
-            # Fetch the first in-progress item
-            in_progress_item = in_progress_items[0]
-
-            # Raise an HTTPException with a detailed error message
-            raise HTTPException(
-                status_code=StatusCodes.BAD_REQUEST,
-                detail=create_error_response(
-                    ErrorTypes.VALIDATION_ERROR,
-                    f"Another project '{in_progress_item['name']}' execution is currently in progress. Please wait until it completes.",
-                ),
-            )
-        execution = execution_db.get_item({"id": execution_id})
-        if not execution:
+        execution = execution_db.read({"id": execution_id})
+        if execution:
+            execution = execution[0]
+        else:
             raise HTTPException(
                 status_code=StatusCodes.BAD_REQUEST,
                 detail=create_error_response(
@@ -270,16 +259,23 @@ async def execute_experiments(
                     "No project found for the provided ID",
                 ),
             )
+        if execution.get('status') == "in_progress":
+            raise HTTPException(
+                status_code=StatusCodes.BAD_REQUEST,
+                detail=create_error_response(
+                    ErrorTypes.VALIDATION_ERROR,
+                    "An exection with execution ID {execution_id} is already in progress",
+                ),
+            )
         
-        response = orchestrator.run_experiment_orchestration(execution_id)
-       
-        execution["status"] = "in_progress"
-        execution_db.put_item(execution)
+        payload = {"execution_id": execution_id}
+        temporal_launcher_url = os.getenv("TEMPORAL_LAUNCHER_API")
+        response = requests.post(temporal_launcher_url, json=payload, timeout=10)
 
         return {
-            "status": "success",
+            "status": response.status_code,
             "message": f"Orchestration started for execution ID {execution_id}",
-            "execution_arn": response['executionArn']
+            "Response JSON": response.json()
         }
     except HTTPException as http_exc:
         # Re-raise the HTTPException with the same status code and detail
@@ -298,14 +294,17 @@ async def execute_experiments(
 async def generate_config(
         execution_id: str,
         background_tasks: BackgroundTasks,
-        execution_db=Depends(get_execution_db)
+        execution_db: DBStorage=Depends(get_execution_db)
 ):
     """
     Generate all possible valid experiment configurations for a given execution ID.
     """
     try:
-        execution = execution_db.get_item({"id": execution_id})
-        if not execution:
+        # execution = execution_db.get_item({"id": execution_id})
+        execution = execution_db.read({"id": execution_id})
+        if execution:
+            execution = execution[0]
+        else:
             raise HTTPException(
                 status_code=StatusCodes.BAD_REQUEST,
                 detail=create_error_response(
@@ -314,14 +313,13 @@ async def generate_config(
                 ),
             )
         
-        execution_db.update_item(
-            key={"id": execution_id}, 
-            update_expression="SET validation_status = :status_value", 
-            expression_values={":status_value": ValidationStatus.QUEUED.value}
+        execution_db.update(
+            key={"id": execution_id},
+            data={"validation_status": ValidationStatus.QUEUED.value} 
         )
             
         parameter_options = execution.get('config')
-        background_tasks.add_task(generate_all_combinations_in_background, execution_id, parameter_options)
+        background_tasks.add_task(generate_all_combinations_in_background, execution_id, parameter_options) #TODO Needs work
         return JSONResponse(status_code=StatusCodes.SUCCESS, content={"message": "Fetching valid experiments."})
     except HTTPException as http_exc:
         # Re-raise the HTTPException with the same status code and detail
@@ -340,11 +338,21 @@ async def generate_config(
 @router.get("/execution/{execution_id}/valid_experiment/poll")
 async def get_valid_experiment_result(
     execution_id: str,
-    execution_db=Depends(get_execution_db)
+    execution_db: DBStorage=Depends(get_execution_db)
 ):
     "Polling API to poll the result for the `/execution/{execution_id}/valid_experiment` API"
     try:
-        execution = execution_db.get_item({"id": execution_id})
+        execution = execution_db.read({"id": execution_id})
+        if execution:
+            execution = execution[0]
+        else:
+            raise HTTPException(
+                status_code=StatusCodes.BAD_REQUEST,
+                detail=create_error_response(
+                    ErrorTypes.VALIDATION_ERROR,
+                    "No project found for the provided ID",
+                ),
+            )
         if "validation_status" not in execution:
             raise HTTPException(
                 status_code=StatusCodes.BAD_REQUEST,
