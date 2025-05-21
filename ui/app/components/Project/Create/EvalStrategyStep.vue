@@ -46,6 +46,7 @@ const { mutateAsync: getGuardrailsList, isPending: isFetchingGuardrailsList } =
   useMutation({
     mutationFn: async () => {
       const response = await useGuardrailsList(props.region);
+      console.log(response)
       guardrailsList.value = response?.map((item) => {
         return {
           label: item.name + ' - ' + item.version,
@@ -106,6 +107,7 @@ onMounted(() => {
           :label="`Guardrails ${state?.guardrails?.length ? `(${state?.guardrails?.length})` : ''}`"
           name="guardrails"
           class="text-ellipsis overflow-hidden flex-11"
+          required
         >
           <template #label="{ label }">
             <div class="flex items-center">
@@ -120,7 +122,6 @@ onMounted(() => {
             multiple
             :items="guardrailsList"
             class="w-full my-3 primary-dropdown"
-            placeholder="None"
             :search-input="false"
           >
           
