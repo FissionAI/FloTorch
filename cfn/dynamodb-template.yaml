@@ -160,7 +160,7 @@ Resources:
   DataBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub "flotorch-data-${TableSuffix}"
+      BucketName: !Sub "flotorch-data-${TableSuffix}-${AWS::AccountId}-${AWS::Region}"
       VersioningConfiguration:
         Status: Enabled
       PublicAccessBlockConfiguration:
