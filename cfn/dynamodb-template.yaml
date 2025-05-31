@@ -214,6 +214,84 @@ Resources:
               StringEquals:
                 aws:PrincipalAccount: !Ref AWS::AccountId
 
+  CleanupBucketRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+      Policies:
+        - PolicyName: S3BucketCleanupPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 's3:ListBucket'
+                  - 's3:DeleteObject'
+                  - 's3:DeleteObjectVersion'
+                  - 's3:ListBucketVersions'
+                Resource:
+                  - !Sub "arn:aws:s3:::${DataBucket}"
+                  - !Sub "arn:aws:s3:::${DataBucket}/*"
+
+  # Lambda Function for Cleanup
+  CleanupBucketFunction:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      Handler: 'index.handler'
+      Role: !GetAtt CleanupBucketRole.Arn
+      Code:
+        ZipFile: |
+          import boto3
+          import cfnresponse
+          def handler(event, context):
+              try:
+                  if event['RequestType'] in ['Delete']:
+                      s3 = boto3.client('s3')
+                      bucket_name = event['ResourceProperties']['BucketName']
+                      
+                      # List and delete all versions
+                      paginator = s3.get_paginator('list_object_versions')
+                      for page in paginator.paginate(Bucket=bucket_name):
+                          # Delete versions
+                          if 'Versions' in page:
+                              for version in page['Versions']:
+                                  s3.delete_object(
+                                      Bucket=bucket_name,
+                                      Key=version['Key'],
+                                      VersionId=version['VersionId']
+                                  )
+                          # Delete markers
+                          if 'DeleteMarkers' in page:
+                              for marker in page['DeleteMarkers']:
+                                  s3.delete_object(
+                                      Bucket=bucket_name,
+                                      Key=marker['Key'],
+                                      VersionId=marker['VersionId']
+                                  )
+                      
+                  cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
+              except Exception as e:
+                  print(e)
+                  cfnresponse.send(event, context, cfnresponse.FAILED, {})
+      Runtime: python3.9
+      Timeout: 300
+      MemorySize: 128
+
+  # Custom Resource for Cleanup
+  BucketCleanup:
+    Type: 'Custom::BucketCleanup'
+    Properties:
+      ServiceToken: !GetAtt CleanupBucketFunction.Arn
+      BucketName: !Ref DataBucket
+
   CopyBedrockLimitsFunction:
     Type: AWS::Lambda::Function
     Properties:
