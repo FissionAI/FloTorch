@@ -1,0 +1,83 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway
+  labels:
+    app: gateway
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+spec:
+  ports:
+  - port: {{ .Values.gateway.service.port }}
+    targetPort: {{ .Values.gateway.service.targetPort }}
+    protocol: TCP
+    name: http
+  selector:
+    app: gateway
+    release: {{ .Release.Name }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+  labels:
+    app: gateway
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gateway
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: gateway
+        release: {{ .Release.Name }}
+    spec:
+      initContainers:
+      - name: wait-for-redis
+        image: busybox:latest
+        command: ['sh', '-c', 'until nc -z redis 6379; do echo waiting for redis; sleep 2; done;']
+      - name: wait-for-console
+        image: busybox:latest
+        command: ['sh', '-c', 'until nc -z console {{ .Values.console.service.port }}; do echo waiting for console; sleep 2; done;']
+      imagePullSecrets:
+      - name: aws-ecr-credentials
+      containers:
+      - name: gateway
+        image: "{{ .Values.global.imageRegistry }}/{{ .Values.gateway.image.repository }}:{{ .Values.gateway.image.tag }}"
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: {{ .Values.gateway.service.targetPort }}
+          protocol: TCP
+        env:
+        - name: FLOTORCH_GATEWAY_URL
+          value: http://gateway:{{ .Values.gateway.service.port }}
+        - name: FLOTORCH_GATEWAY_PAIRING_HOST
+          value: http://console:{{ .Values.console.service.port }}
+        - name: FLOTORCH_GATEWAY_PAIRING_KEY
+          value: {{ .Values.console.pairingKey }}
+        - name: FLOTORCH_GATEWAY_NAME
+          value: {{ .Values.gateway.name }}
+        - name: FLOTORCH_HOST
+          value: http://console:{{ .Values.console.service.port }}
+        - name: REDIS_HOST
+          value: redis
+        - name: REDIS_PORT
+          value: "6379"
+        - name: FLOTORCH_GATEWAY_REDIS_URL
+          value: redis://redis:6379
+        - name: REDIS_URL
+          value: redis://redis:6379
+        - name: REDIS_CONNECTION_STRING
+          value: redis://redis:6379
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 1024Mi
+          requests:
+            cpu: 200m
+            memory: 256Mi

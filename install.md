@@ -1,263 +1,136 @@
 # FloTorch Installation guide
 
+Welcome to FloTorch! This guide will help you set up FloTorch's infrastructure on AWS.
 
-Welcome to FloTorch! This guide will help you set up FloTorch's infrastructure on AWS. There are two approaches for setting up and we will guide you through the steps.
+## Prerequisites
 
-Irrespective of the approach, below are the pre-requisites:
-
-
-### 1. AWS Account and Tools
-
-1. AWS Account and a user with the following permissions in AWS
-
-```json
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": [
-                "cloudformation:*",
-                "s3:*",
-                "ec2:*",
-                "iam:*",
-                "lambda:*",
-                "dynamodb:*",
-                "events:*",
-                "sagemaker:*",
-                "opensearch:*",
-                "ecr:*",
-                "apprunner:*",
-                "cloudwatch:*",
-                "logs:*",
-                "ssm:*",
-                "es:*",
-                "bedrock:*",
-                "sts:*",
-                "kms:*",
-                "secretsmanager:*",
-                "ecs:*",
-                "states:*",
-                "elasticloadbalancing:*",
-                "application-autoscaling:*",
-                "acm:*",
-                "sns:*",
-                "vpc-lattice:*"
-            ],
-            "Resource": "*"
-        }
-    ]
+1. **AWS Account and IAM User** with these permissions:
+   ```json
+   {
+       "Version": "2012-10-17",
+       "Statement": [
+           {
+               "Effect": "Allow",
+               "Action": [
+                   "cloudformation:*", "s3:*", "ec2:*", "iam:*", "lambda:*",
+                   "dynamodb:*", "events:*", "sagemaker:*", "opensearch:*",
+                   "ecr:*", "apprunner:*", "cloudwatch:*", "logs:*",
+                   "ssm:*", "es:*", "bedrock:*", "sts:*", "kms:*",
+                   "secretsmanager:*", "ecs:*", "states:*",
+                   "elasticloadbalancing:*", "application-autoscaling:*",
+                   "acm:*", "sns:*", "vpc-lattice:*"
+               ],
+               "Resource": "*"
+           }
+       ]
    }
    ```
-2. AWS CLI installed and configured on your computer
+2. **AWS CLI** installed and configured on your computer
+3. **Required AWS Service Quotas**:
+   - VPC, Lambda, EventBridge, SageMaker, OpenSearch
+   - DynamoDB, ECR, AppRunner
 
-
-### 2. Required AWS Service Quotas
-
-| Service | Resource Type |
-|---------|--------------|
-| VPC | Networking resources |
-| Lambda | Functions |
-| EventBridge | Rules |
-| SageMaker | Endpoints |
-| OpenSearch | Domains |
-| DynamoDB | Tables |
-| ECR | Repositories |
-| AppRunner | Services |
-
-### 3. Required Bedrock Model Access
-
-| Purpose | Model Name |
-|---------|------------|
-| **Embedding** | Amazon/amazon.titan-embed-text-v2:0 |
-| | Amazon/amazon.titan-embed-image-v1 |
-| | Cohere/cohere.embed-english-v3 |
-| | Cohere/cohere.embed-multilingual-v3 |
-| **Retrieval** | Amazon/amazon.titan-text-lite-v1 |
-| | Amazon/amazon.titan-text-express-v1 |
-| | Amazon/amazon.nova-lite-v1:0 |
-| | Amazon/amazon.nova-micro-v1:0 |
-| | Amazon/amazon.nova-pro-v1:0 |
-| | Anthropic/anthropic.claude-3-5-sonnet-20241022-v2:0 |
-| | Anthropic/anthropic.claude-3-5-sonnet-20240620-v1:0 |
-| | Cohere/cohere.command-r-plus-v1:0 |
-| | Cohere/cohere.command-r-v1:0 |
-| | Meta/meta.llama3-2-1b-instruct-v1:0 |
-| | Meta/meta.llama3-2-3b-instruct-v1:0 |
-| | Meta/meta.llama3-2-11b-instruct-v1:0 |
-| | Meta/meta.llama3-2-90b-instruct-v1:0 |
-| | Mistral AI/mistral.mistral-7b-instruct-v0:2 |
-| | Mistral AI/mistral.mistral-large-2402-v1:0 |
-
-
-## Installation Guide
-
-## Required Parameters to be met in both approaches.
-
-| Parameter | Example | Requirements |
-|-----------|----------|--------------|
-| PrerequisitesMet | "yes" | Set this to 'yes' only after completing above steps. |
-| ProjectName | "flotorch" | Your project name |
-| TableSuffix | "abctry" | 6 lowercase characters only alphabets allowed |
-| ClientName | "acmecorp" | Must be lowercase |
-| OpenSearchAdminUser | "admin" | Admin username |
-| OpenSearchAdminPassword | "YourSecurePassword123!" | 12-41 chars with letters, numbers, specialchars |
-| NginxAuthPassword | "YourNginxPassword123!" | 12-41 chars with letters, numbers, specialchars |
-
-### Approach #1: AWS Cloudformation Template 
-
-Before starting the installation, please subscribe to FloTorch:
-
-1. Visit the [FloTorch AWS Marketplace page](https://aws.amazon.com/marketplace/pp/prodview-z5zcvloh7l3ky?ref_=aws-mp-console-subscription-detail-payg)
-2. Click on the "View Purchase options" button
-3. After subscribing, click on 'Continue to Configuration'
-4. Select your preferred fulfillment option and Software Version
-
-
-Post subscribing, please click this link: [Install FloTorch (US East 1)](https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/create?stackName=flotorch-stack&templateURL=https://flotorch-public.s3.us-east-1.amazonaws.com/latest/templates/master-template.yaml)
-
-### Approach #2: Command Line Installation
-
-Please ensure the following pre-requisites are met:
-
-1. Python 3.9+
-2. AWS CLI configured
-3. docker installed and running
-
+4. **Bedrock Model Access** - Enable these models in your AWS account:
+   - **Embedding**: Amazon Titan Embed (text/image), Cohere Embed
+   - **Retrieval**: Amazon Titan/Nova, Claude, Cohere Command, Llama, Mistral
 ## Installation Steps
 
-1. Clone the repository:
-```bash
-git clone https://github.com/FissionAI/FloTorch.git
-cd FloTorch
-```
+### 1. Subscribe to FloTorch on AWS Marketplace
 
-2. Make the provision script executable:
-```bash
-chmod +x provision.sh
-```
+1. Visit the [FloTorch AWS Marketplace page](https://aws.amazon.com/marketplace/pp/prodview-z5zcvloh7l3ky?ref_=aws-mp-console-subscription-detail-payg)
+2. Click "View Purchase options"
+3. Click "Continue to Configuration" after subscribing
+4. Select your preferred fulfillment option and software version
 
-3. Run the provision script:
-```bash
-./provision.sh
-```
+### 2. Deploy Using CloudFormation
 
-## Configuration Steps
+Click this link to launch the stack: [Install FloTorch (US East 1)](https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/create?stackName=flotorch-stack&templateURL=https://flotorch-public.s3.us-east-1.amazonaws.com/test-cfn/templates/master-template.yaml)
 
-When you run the provision script, it will first check if there are any existing environments. If there are, you'll be asked if you want to create a new environment or update an existing one.
+Complete the required parameters:
 
-For a new environment, or if no existing environments are found, the script will prompt you for the following information:
+| Parameter | Example | Description |
+|-----------|---------|-------------|
+| PrerequisitesMet | "yes" | Confirm prerequisites completion |
+| NeedOpensearch | "yes" | Whether to deploy OpenSearch cluster |
+| ProjectName | "flotorch" | Name for your stack and resources |
+| TableSuffix | "abctry" | 6 lowercase letters for unique resources |
+| ClientName | "acmecorp" | Your organization name (lowercase) |
+| OpenSearchAdminUser | "admin" | Admin username for OpenSearch |
+| OpenSearchAdminPassword | "YourSecurePass123!" | Secure password (12-41 chars) |
+| NginxAuthPassword | "YourNginxPass123!" | Secure password (12-41 chars) |
 
-### 1. AWS Marketplace Subscription
-- Answer `yes` if you have an active subscription to FloTorch on AWS Marketplace
-- Answer `no` if you haven't subscribed (this will build and push Docker images)
+### 3. Configure DNS for Application Access
 
-```bash
-Subscribed to FloTorch on AWS Marketplace? (yes/no):
-```
-
-### 2. OpenSearch Configuration
-- Choose whether you need OpenSearch for your deployment
-- Default: `yes`
+After deployment completes, get the EC2 instance's public IP:
 
 ```bash
-Do you need OpenSearch? (yes/no) [yes]:
+aws cloudformation describe-stacks \
+  --stack-name YOUR_PROJECT_NAME-KubernetesSetupStack \
+  --query "Stacks[0].Outputs[?OutputKey=='InstancePublicIp'].OutputValue" \
+  --output text
 ```
 
-### 3. Stack Parameters
-- Project Name: Used as your CloudFormation stack name. Must be unique within your AWS account
-- Default: `flotorch`
+Map the FloTorch domain to this IP in your hosts file:
 
-```bash
-Enter project name [flotorch]:
-```
+- **Linux users**:
+  ```bash
+  echo "<EC2_PUBLIC_IP> console.flotorch.com" | sudo tee -a /etc/resolv.conf
+  ```
 
-- Table Suffix: Used to create resources with unique suffix
-- Must be exactly 6 lowercase letters
+- **macOS users**:
+  ```bash
+  sudo vi /private/etc/hosts
+  # Add: <EC2_PUBLIC_IP> console.flotorch.com
+  sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder
+  ```
 
-```bash
-Enter Table suffix (exactly 6 lowercase letters):
-```
+### 4. Access Your FloTorch Console
 
-- Client/Organization Name: Your organization or team name used for resource tagging
-- Must be 3-20 lowercase letters, numbers, or hyphens
-- Default: `flotorch`
+Once DNS is configured, access your FloTorch console at:
+- https://console.flotorch.com
 
-```bash
-Enter client/organization name [flotorch]:
-```
+Log in with the credentials you specified in the CloudFormation parameters.
 
-### 4. OpenSearch Configuration (if enabled)
-- OpenSearch Admin Username
-- Default: `admin`
+## What's New
 
-```bash
-Enter OpenSearch admin username [admin]:
-```
+- **Security Improvements**: IMDSv2 tokens and SSM parameters for secure metadata access
+- **Kubernetes Setup**: 
+  - Nginx Ingress Controller with automatic cleanup and NodePort configuration
+  - FloTorch Helm chart with properly formatted values for dynamic credentials
+  - Ingress controller readiness verification before deployment
+- **Infrastructure**: 
+  - Split EC2 stacks for with/without OpenSearch deployments
+  - Console image updated to tag 178
+  - Added new PostgreSQL migration scripts
 
-- OpenSearch Admin Password
-- Must be 8-41 characters with at least one letter, one number, and one special character
+## Monitoring & Management
 
-```bash
-Enter OpenSearch admin password:
-```
+### Deployment Status
 
-### 5. NGINX Authentication
-- NGINX Password for accessing the FloTorch App
-- Must be 8-41 characters with at least one letter, one number, and one special character
-
-```bash
-Enter NGINX password:
-```
-
-### 6. AWS Region
-- Choose AWS region for deployment
-- Default: `us-east-1`
-
-```bash
-Enter AWS region [us-east-1]:
-```
-
-## Environment Management
-
-The script automatically saves your configuration to a JSON file in the `.envs` directory. This allows you to:
-1. Create multiple environments with different configurations
-2. Update existing environments without re-entering all parameters
-3. Keep track of your deployments
-
-When updating an existing environment:
-- The script will show current values in brackets
-- Press Enter to keep the current value, or type a new value
-- Table suffix cannot be changed during an update
-
-## Deployment
-
-The script will:
-1. Create a CloudFormation stack with your project name
-2. Build Docker Images in your local and pushes to ECR, if there is no marketplace subscription.
-3. Deploy all necessary resources
-4. Output the AppRunner URL when complete
-
-To monitor the deployment:
+Monitor your CloudFormation deployment progress:
 ```bash
 aws cloudformation describe-stack-events --stack-name YOUR_PROJECT_NAME
 ```
 
 ## Post-Installation
 
-After successful deployment, you'll receive:
-1. AppRunner URL for making requests
-2. OpenSearch endpoint (if enabled)
-3. Monitoring dashboard URL
+After successful deployment, you'll have access to:
 
-Store these URLs securely for future use.
+1. **FloTorch Console**: https://console.flotorch.com
+2. **AppRunner Service**: For API requests (URL in CloudFormation outputs)
+3. **OpenSearch Dashboard**: For data exploration (if enabled)
 
-## Monitor your setup
+### Performance Monitoring
 
-| AWS Service | You can view |
-|-----------|----------------|
-| CloudWatch Metrics | • Lambda execution<br>• SageMaker endpoint usage<br>• AppRunner service metrics |
-| CloudWatch Logs | • Lambda function logs<br>• AppRunner application logs<br>• OpenSearch logs |
+Monitor your FloTorch deployment using AWS services:
+
+| AWS Service | Monitoring Capabilities |
+|------------|--------------------------|
+| CloudWatch | • Lambda execution metrics<br>• SageMaker endpoint usage<br>• AppRunner performance<br>• Application logs |
+| CloudFormation | • Stack events<br>• Resource status |
+| OpenSearch | • Query performance<br>• Cluster health |
+
+Access CloudWatch dashboards from the AWS console to view performance metrics and logs.
 
 ## Cost Overview
 
@@ -274,6 +147,7 @@ Store these URLs securely for future use.
 | Step Functions | $0.50-$2.00 | • $0.025/1,000 state transitions |
 | ECS (Fargate) | $2.00-$5.00 | • vCPU: $0.04048/hour<br>• Memory: $0.004445/GB-hour |
 | Bedrock | $5.00-$10.00 | • Input: $0.0001/1K tokens<br>• Output: $0.0002/1K tokens |
+| EC2(t2.large) | $3.84 | • 1 vCPU, 2GB memory: $0.16/hour × 24 hours |
 
 **Total Estimated Cost (Approx)**: $56.53-$75.69/day (varies with usage)
 

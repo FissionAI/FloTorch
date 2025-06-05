@@ -63,6 +63,8 @@ def get_model_question_prices(file_path, model, input_tokens, output_tokens, reg
     """
     MILLION = 1_000_000
     try:
+        if '/' in model:
+            model = model.split('/')[1]
         # Create copy of pricing dataframe
         df = file_path.copy()
         
@@ -137,15 +139,18 @@ async def query_experiments(
         # Configurations        
         inference_model = exp_config.get("retrieval_model")
         inference_service = exp_config.get("retrieval_service")
-        inference_temperature = float(exp_config.get("temp_retrieval_llm"))
+        inference_temperature = float(exp_config.get("temp_retrieval_llm", 0.1))
 
         aws_region = exp_config.get("region")
         knowledge_base = exp_config.get("knowledge_base", False)
         bedrock_knowledge_base = exp_config.get("bedrock_knowledge_base", False)
+        gateway_url = f'{exp_config.get("gateway_url", "")}/api/openai/v1'
 
         # Inferencer Initialization
         inferencer = InferencerProviderFactory.create_inferencer_provider(
-            False, "", "",
+            exp_config.get("gateway_enabled"),
+            gateway_url,
+            exp_config.get("gateway_api_key", ""),
             inference_service,
             inference_model,
             aws_region,

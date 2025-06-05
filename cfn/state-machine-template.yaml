@@ -465,6 +465,9 @@ Resources:
                           "rerank_model_id.$": "$.Item.Item.config.M.rerank_model_id.S",
                           "bedrock_knowledge_base.$": "$.Item.Item.config.M.bedrock_knowledge_base.Bool",
                           "knowledge_base.$": "$.Item.Item.config.M.knowledge_base.Bool",
+                          "gateway_enabled.$": "$.Item.Item.config.M.gateway_enabled.Bool",
+                          "gateway_url.$": "$.Item.Item.config.M.gateway_url.S",
+                          "gateway_api_key.$": "$.Item.Item.config.M.gateway_api_key.S",
                           "guardrail_id.$":"$.Item.Item.config.M.guardrail_id.S", 
                           "guardrail_version.$":"$.Item.Item.config.M.guardrail_version.S",
                           "enable_guardrails.$":"$.Item.Item.config.M.enable_guardrails.Bool",
@@ -668,7 +671,7 @@ Resources:
                                   "Value.$": "$.parsedConfig.parsed_config.execution_id"
                                 },
                                 {
-                                  "Name": "aws_region",
+                                  "Name": "AWS_REGION",
                                   "Value": "${AWS::Region}"
                                 },
                                 {
@@ -688,15 +691,15 @@ Resources:
                                   "Value": "${ModelInvocationsTableName}"
                                 },
                                 {
-                                  "Name": "opensearch_host",
+                                  "Name": "OPENSEARCH_HOST",
                                   "Value": "${OpenSearchEndpoint}"
                                 },
                                 {
-                                  "Name": "opensearch_username",
+                                  "Name": "OPENSEARCH_USERNAME",
                                   "Value": "${OpenSearchAdminUser}"
                                 },
                                 {
-                                  "Name": "opensearch_password",
+                                  "Name": "OPENSEARCH_PASSWORD",
                                   "Value": "${OpenSearchAdminPassword}"
                                 },
                                 {
@@ -886,7 +889,7 @@ Resources:
                                   "Value.$": "$.parsedConfig.parsed_config.execution_id"
                                 },
                                 {
-                                  "Name": "aws_region",
+                                  "Name": "AWS_REGION",
                                   "Value": "${AWS::Region}"
                                 },
                                 {
@@ -906,15 +909,15 @@ Resources:
                                   "Value": "${ModelInvocationsTableName}"
                                 },
                                 {
-                                  "Name": "opensearch_host",
+                                  "Name": "OPENSEARCH_HOST",
                                   "Value": "${OpenSearchEndpoint}"
                                 },
                                 {
-                                  "Name": "opensearch_username",
+                                  "Name": "OPENSEARCH_USERNAME",
                                   "Value": "${OpenSearchAdminUser}"
                                 },
                                 {
-                                  "Name": "opensearch_password",
+                                  "Name": "OPENSEARCH_PASSWORD",
                                   "Value": "${OpenSearchAdminPassword}"
                                 },
                                 {
@@ -1012,22 +1015,80 @@ Resources:
                       }
                     },
                     "Retrieval Model Check": {
-                      "Next": "Evaluate Retrieval Model Check",
                       "Type": "Task",
-                      "ResultPath": "$.retrieval_invocations",
-                      "ResultSelector": {
-                        "invocations.$": "States.MathAdd(States.StringToJson($.Item.invocations.N), 0)",
-                        "limit.$": "States.MathAdd(States.StringToJson($.Item.limit.N), 0)"
-                      },
+                      "ResultPath": "$.retrievalModelRaw",
                       "Resource": "arn:aws:states:::aws-sdk:dynamodb:getItem",
                       "Parameters": {
-                        "TableName": "${ModelInvocationsTableName}",
-                        "Key": {
-                          "execution_model_id": {
-                            "S.$": "States.Format('{}_{}', $.parsedConfig.parsed_config.retrieval_service, $.parsedConfig.parsed_config.retrieval_model)"
-                          }
+                      "TableName": "${ModelInvocationsTableName}",
+                      "Key": {
+                        "execution_model_id": {
+                        "S.$": "States.Format('{}_{}', $.parsedConfig.parsed_config.retrieval_service, $.parsedConfig.parsed_config.retrieval_model)"
                         }
                       }
+                      },
+                      "Catch": [
+                      {
+                        "ErrorEquals": ["States.ALL"],
+                        "Next": "Retrieval Model Defaults"
+                      }
+                      ],
+                      "Next": "Check if Retrieval Model Exists"
+                    },
+                    "Check if Retrieval Model Exists": {
+                      "Type": "Choice",
+                      "Choices": [
+                      {
+                        "Variable": "$.retrievalModelRaw.Item",
+                        "IsPresent": true,
+                        "Next": "Normalize Retrieval Model Result"
+                      }
+                      ],
+                      "Default": "Retrieval Model Defaults"
+                    },
+                    "Normalize Retrieval Model Result": {
+                      "Type": "Pass",
+                      "Parameters": {
+                      "invocations.$": "States.StringToJson($.retrievalModelRaw.Item.invocations.N)",
+                      "limit.$": "States.StringToJson($.retrievalModelRaw.Item.limit.N)"
+                      },
+                      "ResultPath": "$.retrieval_invocations",
+                      "Next": "Evaluate Retrieval Model Check"
+                    },
+                    "Retrieval Model Defaults": {
+                      "Type": "Task",
+                      "Resource": "arn:aws:states:::aws-sdk:dynamodb:putItem",
+                      "Parameters": {
+                      "TableName": "${ModelInvocationsTableName}",
+                      "Item": {
+                        "execution_model_id": {
+                        "S.$": "States.Format('{}_{}', $.parsedConfig.parsed_config.retrieval_service, $.parsedConfig.parsed_config.retrieval_model)"
+                        },
+                        "invocations": {
+                        "N": "0"
+                        },
+                        "limit": {
+                        "N": "10"
+                        },
+                        "timestamp": {
+                        "S.$": "$$.State.EnteredTime"
+                        },
+                        "last_updated": {
+                        "S.$": "$$.State.EnteredTime"
+                        }
+                      },
+                      "ConditionExpression": "attribute_not_exists(execution_model_id)"
+                      },
+                      "ResultPath": null,
+                      "Next": "Inject Retrieval Invocation Defaults"
+                    },
+                    "Inject Retrieval Invocation Defaults": {
+                      "Type": "Pass",
+                      "Result": {
+                      "invocations": 0,
+                      "limit": 10
+                      },
+                      "ResultPath": "$.retrieval_invocations",
+                      "Next": "Retrieval Model Invocation Update"
                     },
                     "Wait for Retrieval Model Update": {
                       "Type": "Wait",
@@ -1208,22 +1269,80 @@ Resources:
                       }
                     },
                     "Eval Model Check": {
-                      "Next": "Evaluate eval model check",
                       "Type": "Task",
-                      "ResultPath": "$.eval_invocations",
-                      "ResultSelector": {
-                        "invocations.$": "States.MathAdd(States.StringToJson($.Item.invocations.N), 0)",
-                        "limit.$": "States.MathAdd(States.StringToJson($.Item.limit.N), 0)"
-                      },
+                      "ResultPath": "$.evalModelRaw",
                       "Resource": "arn:aws:states:::aws-sdk:dynamodb:getItem",
                       "Parameters": {
-                        "TableName": "${ModelInvocationsTableName}",
-                        "Key": {
-                          "execution_model_id": {
-                            "S.$": "States.Format('{}_{}', 'bedrock', $.parsedConfig.parsed_config.eval_embedding_model)"
-                          }
+                      "TableName": "${ModelInvocationsTableName}",
+                      "Key": {
+                        "execution_model_id": {
+                        "S.$": "States.Format('{}_{}', 'bedrock', $.parsedConfig.parsed_config.eval_embedding_model)"
                         }
                       }
+                      },
+                      "Catch": [
+                      {
+                        "ErrorEquals": ["States.ALL"],
+                        "Next": "Eval Model Defaults"
+                      }
+                      ],
+                      "Next": "Check if Eval Model Exists"
+                    },
+                    "Check if Eval Model Exists": {
+                      "Type": "Choice",
+                      "Choices": [
+                      {
+                        "Variable": "$.evalModelRaw.Item",
+                        "IsPresent": true,
+                        "Next": "Normalize Eval Model Result"
+                      }
+                      ],
+                      "Default": "Eval Model Defaults"
+                    },
+                    "Normalize Eval Model Result": {
+                      "Type": "Pass",
+                      "Parameters": {
+                      "invocations.$": "States.StringToJson($.evalModelRaw.Item.invocations.N)",
+                      "limit.$": "States.StringToJson($.evalModelRaw.Item.limit.N)"
+                      },
+                      "ResultPath": "$.eval_invocations",
+                      "Next": "Evaluate eval model check"
+                    },
+                    "Eval Model Defaults": {
+                      "Type": "Task",
+                      "Resource": "arn:aws:states:::aws-sdk:dynamodb:putItem",
+                      "Parameters": {
+                      "TableName": "${ModelInvocationsTableName}",
+                      "Item": {
+                        "execution_model_id": {
+                        "S.$": "States.Format('{}_{}', 'bedrock', $.parsedConfig.parsed_config.eval_embedding_model)"
+                        },
+                        "invocations": {
+                        "N": "0"
+                        },
+                        "limit": {
+                        "N": "10"
+                        },
+                        "timestamp": {
+                        "S.$": "$$.State.EnteredTime"
+                        },
+                        "last_updated": {
+                        "S.$": "$$.State.EnteredTime"
+                        }
+                      },
+                      "ConditionExpression": "attribute_not_exists(execution_model_id)"
+                      },
+                      "ResultPath": null,
+                      "Next": "Inject Eval Invocation Defaults"
+                    },
+                    "Inject Eval Invocation Defaults": {
+                      "Type": "Pass",
+                      "Result": {
+                      "invocations": 0,
+                      "limit": 10
+                      },
+                      "ResultPath": "$.eval_invocations",
+                      "Next": "Evaluate eval model check"
                     },
                     "Eval Model Invocation Update": {
                       "Next": "Update eval status in progress",
@@ -1589,6 +1708,15 @@ Resources:
                           "hierarchical_parent_chunk_size.$": "$.Item.Item.config.M.hierarchical_parent_chunk_size.N",
                           "hierarchical_child_chunk_size.$": "$.Item.Item.config.M.hierarchical_child_chunk_size.N",
                           "hierarchical_chunk_overlap_percentage.$": "$.Item.Item.config.M.hierarchical_chunk_overlap_percentage.N",
+                          "gateway_enabled.$": "$.Item.Item.config.M.gateway_enabled.Bool",
+                          "gateway_url.$": "$.Item.Item.config.M.gateway_url.S",
+                          "gateway_api_key.$": "$.Item.Item.config.M.gateway_api_key.S",
+                          "guardrail_id.$":"$.Item.Item.config.M.guardrail_id.S", 
+                          "guardrail_version.$":"$.Item.Item.config.M.guardrail_version.S",
+                          "enable_guardrails.$":"$.Item.Item.config.M.enable_guardrails.Bool",
+                          "enable_prompt_guardrails.$":"$.Item.Item.config.M.enable_prompt_guardrails.Bool", 
+                          "enable_context_guardrails.$":"$.Item.Item.config.M.enable_context_guardrails.Bool",  
+                          "enable_response_guardrails.$":"$.Item.Item.config.M.enable_response_guardrails.Bool",
                           "ClusterArn": "${EcsClusterArn}",
                           "IndexingTaskDefinitionArn": "${IndexingTaskDefinitionArn}",
                           "RetrieverTaskDefinitionArn": "${RetrieverTaskDefinitionArn}",

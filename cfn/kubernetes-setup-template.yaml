@@ -1,0 +1,642 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Kubernetes Setup Template for Flotorch'
+
+Parameters:
+  TableSuffix:
+    Type: String
+    Description: Suffix to append to resource names
+  VpcId:
+    Type: String
+    Description: ID of the VPC where the instance will be created
+  SubnetId:
+    Type: String
+    Description: ID of the subnet where the instance will be created
+  # KeyName parameter removed as we'll create a new key pair for each deployment
+  InstanceType:
+    Type: String
+    Default: t2.large
+    Description: EC2 instance type
+  ExperimentationHost:
+    Type: String
+    Description: URL for the experimentation API (AppRunner service URL)
+  ExperimentationUsername:
+    Type: String
+    Default: admin
+    Description: Username for experimentation API
+  ExperimentationPassword:
+    Type: String
+    Description: Password for experimentation API
+  ConsoleImageTag:
+    Type: String
+    Description: Tag for console image
+  GatewayImageTag:
+    Type: String
+    Description: Tag for gateway image
+  ConsoleRepositoryUri:
+    Type: String
+    Description: URI for the console repository
+  GatewayRepositoryUri:
+    Type: String
+    Description: URI for the gateway repository
+
+Resources:
+  EC2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for FloTorch Kubernetes EC2 instance
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+          Description: SSH access
+        - IpProtocol: tcp
+          FromPort: 30080
+          ToPort: 30080
+          CidrIp: 0.0.0.0/0
+          Description: HTTP NodePort access
+        - IpProtocol: tcp
+          FromPort: 30443
+          ToPort: 30443
+          CidrIp: 0.0.0.0/0
+          Description: HTTPS NodePort access
+
+  EC2InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMFullAccess
+        - arn:aws:iam::aws:policy/AmazonEC2FullAccess
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess
+
+  EC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref EC2InstanceRole
+
+  # Create a unique key name using a timestamp to avoid name conflicts
+  EC2KeyPairName:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Type: String
+      Value: !Sub 'flotorch-k8s-${AWS::StackName}-${AWS::Region}-${AWS::AccountId}-${!Timestamp}'
+      Description: 'Parameter store for the EC2 key pair name'
+  
+  EC2KeyPair:
+    Type: AWS::EC2::KeyPair
+    DependsOn: EC2KeyPairName
+    Properties:
+      KeyName: !GetAtt EC2KeyPairName.Value
+
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    DependsOn: EC2KeyPair
+    Properties:
+      InstanceType: !Ref InstanceType
+      ImageId: !If 
+        - IsUsEast1Region
+        - ami-01816d07b1128cd2d  # Amazon Linux 2023 AMI for us-east-1
+        - ami-093a4ad9a8cc370f4  # Amazon Linux 2023 AMI for other regions
+      KeyName: !Ref EC2KeyPair
+      IamInstanceProfile: !Ref EC2InstanceProfile
+      SubnetId: !Ref SubnetId
+      SecurityGroupIds:
+        - !Ref EC2SecurityGroup
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeSize: 48
+            VolumeType: gp3
+            DeleteOnTermination: true
+      Tags:
+        - Key: Name
+          Value: !Sub FloTorch-K8S-${AWS::StackName}
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+          yum update -y
+          sudo su ec2-user
+          cd /home/ec2-user
+          # Install Helm
+          if ! command -v helm &> /dev/null; then
+            echo "Installing Helm..."
+            wget https://get.helm.sh/helm-v3.15.2-linux-amd64.tar.gz
+            tar -xvf helm-v3.15.2-linux-amd64.tar.gz
+            sudo chmod +x linux-amd64/helm
+            sudo mv linux-amd64/helm /usr/local/bin/helm
+            rm -rf linux-amd64 helm-v3.15.2-linux-amd64.tar.gz
+          else
+            echo "Helm is already installed"
+          fi
+
+          # Install RKE
+          if ! command -v rke &> /dev/null; then
+            echo "Installing RKE..."
+            wget https://github.com/rancher/rke/releases/download/v1.6.2/rke_linux-amd64
+            sudo mv rke_linux-amd64 /usr/local/bin/rke
+            sudo chmod +x /usr/local/bin/rke
+          else
+            echo "RKE is already installed"
+          fi
+
+          # Install kubectl
+          if ! command -v kubectl &> /dev/null; then
+            echo "Installing kubectl..."
+            curl -O https://s3.us-west-2.amazonaws.com/amazon-eks/1.30.2/2024-07-12/bin/linux/amd64/kubectl
+            sudo mv kubectl /usr/local/bin/kubectl
+            sudo chmod +x /usr/local/bin/kubectl
+          else
+            echo "kubectl is already installed"
+          fi
+
+          # Install docker
+          if ! command -v docker &> /dev/null; then
+            echo "Installing docker..."
+            sudo yum install -y docker
+            sudo systemctl start docker
+            sudo systemctl enable docker
+            sudo usermod -aG docker ec2-user
+            newgrp docker
+          else
+            echo "docker is already installed"
+          fi
+
+          # Install git
+          if ! command -v git &> /dev/null; then
+            echo "Installing Git..."
+            sudo yum install -y git
+          else
+            echo "Git is already installed"
+          fi
+
+  KubernetesSetupRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/AmazonSSMFullAccess
+        - arn:aws:iam::aws:policy/AmazonEC2FullAccess
+        - arn:aws:iam::aws:policy/AWSCloudFormationFullAccess
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+
+  KubernetesSetupFunction:
+    Type: AWS::Lambda::Function
+    DependsOn: EC2Instance
+    Properties:
+      Handler: index.handler
+      Role: !GetAtt KubernetesSetupRole.Arn
+      Code:
+        ZipFile: |
+          import boto3
+          import cfnresponse
+          import time
+          import json
+          import re
+          import botocore
+
+          def handler(event, context):
+              try:
+                  if event['RequestType'] in ['Create', 'Update']:
+                      ssm = boto3.client('ssm')
+                      ec2 = boto3.client('ec2')
+
+                      # Get the instance ID from the EC2 instance created in this stack
+                      ec2_instance_logical_id = 'EC2Instance'
+                      stack_id = event['StackId']
+                      stack_name = stack_id.split('/')[1]
+                      print(f"Getting EC2 instance ID from stack {stack_name}")
+                      
+                      # Describe the stack resources to get the physical ID of the EC2 instance
+                      cfn = boto3.client('cloudformation')
+                      response = cfn.describe_stack_resource(
+                          StackName=stack_name,
+                          LogicalResourceId=ec2_instance_logical_id
+                      )
+                      
+                      raw_instance_id = response['StackResourceDetail']['PhysicalResourceId']
+                      print(f"Using EC2 instance ID: {raw_instance_id}")
+                      
+                      # Get experimentation parameters
+                      experimentation_host = event['ResourceProperties'].get('ExperimentationHost', '')
+                      experimentation_username = event['ResourceProperties'].get('ExperimentationUsername', 'admin')
+                      experimentation_password = event['ResourceProperties'].get('ExperimentationPassword', '')
+                      console_image_tag = event['ResourceProperties'].get('ConsoleImageTag', '')
+                      gateway_image_tag = event['ResourceProperties'].get('GatewayImageTag', '')
+                      console_repository_uri = event['ResourceProperties'].get('ConsoleRepositoryUri', '')
+                      gateway_repository_uri = event['ResourceProperties'].get('GatewayRepositoryUri', '')
+                      table_suffix = event['ResourceProperties'].get('TableSuffix', '')
+                      
+                      print("Experimentation Host: " + experimentation_host)
+                      print("Experimentation Username: " + experimentation_username)
+                      
+                      # Extract just the instance ID if there's extra text
+                      instance_id_match = re.search(r'(i-[a-z0-9]+)', raw_instance_id)
+                      if instance_id_match:
+                          instance_id = instance_id_match.group(1)
+                          print("Extracted instance ID: " + instance_id + " from " + raw_instance_id)
+                      else:
+                          instance_id = raw_instance_id
+                          print("Using instance ID as provided: " + instance_id)
+
+                      # Wait for the instance to be in running state
+                      print("Waiting for instance to reach running state...")
+                      waiter = ec2.get_waiter('instance_running')
+                      waiter.wait(InstanceIds=[instance_id])
+                      print("Instance is now running. Waiting for status checks to pass...")
+                      
+                      # Wait for the instance status checks to pass
+                      waiter = ec2.get_waiter('instance_status_ok')
+                      waiter.wait(InstanceIds=[instance_id])
+                      print("Instance status checks passed. Waiting for SSM agent to come online...")
+                      
+                      # Wait for the SSM agent to be online
+                      ssm_online = False
+                      max_retries = 30  # Try for about 5 minutes (10 seconds between retries)
+                      retry_count = 0
+                      
+                      while not ssm_online and retry_count < max_retries:
+                          try:
+                              # Check if the instance is SSM-managed (connected)
+                              response = ssm.describe_instance_information(
+                                  Filters=[{
+                                      'Key': 'InstanceIds',
+                                      'Values': [instance_id]
+                                  }]
+                              )
+                              
+                              if response['InstanceInformationList']:
+                                  ssm_online = True
+                                  print("SSM agent is online and instance is ready for commands.")
+                              else:
+                                  print(f"Waiting for SSM agent to come online... (Attempt {retry_count + 1}/{max_retries})")
+                                  time.sleep(10)  # Wait 10 seconds before trying again
+                                  retry_count += 1
+                          except Exception as e:
+                              print(f"Error checking SSM status: {str(e)}")
+                              time.sleep(10)
+                              retry_count += 1
+                      
+                      if not ssm_online:
+                          raise Exception("Timed out waiting for SSM agent to come online")
+                      
+                      # Get the instance details after it's fully initialized
+                      response = ec2.describe_instances(InstanceIds=[instance_id])
+                      private_ip = response['Reservations'][0]['Instances'][0]['PrivateIpAddress']
+                      # Get the public IP address
+                      public_ip = response['Reservations'][0]['Instances'][0]['PublicIpAddress']
+                      availability_zone = response['Reservations'][0]['Instances'][0]['Placement']['AvailabilityZone']
+                      # Extract region from AZ (remove the last character)
+                      region = availability_zone[:-1]
+                      print("Private IP of the instance: " + private_ip)
+                      print("Public IP of the instance: " + public_ip)
+                      print("Region of the instance: " + region)
+
+                      # Create a base script template
+                      script_template = '''#!/bin/bash
+          experimentation_host="{}"
+          experimentation_username="{}"
+          experimentation_password="{}"
+          console_image_tag="{}"
+          gateway_image_tag="{}"
+          console_repository_uri="{}"
+          gateway_repository_uri="{}"
+          table_suffix="{}"
+          public_ip="{}"
+          set -e'''
+                      
+                      # Format the template with the actual values
+                      install_script = script_template.format(experimentation_host, experimentation_username, experimentation_password, console_image_tag, gateway_image_tag, console_repository_uri, gateway_repository_uri, table_suffix, public_ip) + '''
+
+
+          echo "Starting Kubernetes tools installation and setup"
+
+          # Add /usr/local/bin to PATH
+          export PATH=$PATH:/usr/local/bin/
+
+          if command -v rke &> /dev/null; then
+            echo "rke is already installed"
+          else
+            sleep 30
+          fi
+
+          if command -v helm &> /dev/null; then
+            echo "helm is already installed"
+          else
+            sleep 30
+          fi
+
+          if command -v kubectl &> /dev/null; then
+            echo "kubectl is already installed"
+          else
+            echo "Installing kubectl..."
+            curl -O https://s3.us-west-2.amazonaws.com/amazon-eks/1.30.2/2024-07-12/bin/linux/amd64/kubectl
+            sudo mv kubectl /usr/local/bin/kubectl
+            sudo chmod +x /usr/local/bin/kubectl
+          fi
+
+          if command -v docker &> /dev/null; then
+            echo "docker is already installed"
+          else
+            echo "Installing docker..."
+            sudo yum install -y docker
+            sudo systemctl start docker
+            sudo systemctl enable docker
+            sudo usermod -aG docker ec2-user
+            newgrp docker
+          fi
+
+          if command -v aws &> /dev/null; then
+            echo "aws is already installed"
+          else
+            # Install awscli
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            sudo yum install -y unzip
+            unzip awscliv2.zip
+            sudo ./aws/install
+            rm -rf aws awscliv2.zip
+          fi
+
+          if command -v git &> /dev/null; then
+            echo "git is already installed"
+          else
+            sleep 30
+          fi
+
+          private_ip=$(hostname -I | awk '{print $1}')
+          region=$(aws ec2 describe-instances --instance-ids $(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/instance-id) --query 'Reservations[0].Instances[0].Placement.AvailabilityZone' --output text | sed 's/.$//')
+          echo "Region: $region"
+          echo "Private IP: $private_ip"
+
+          # Generate SSH key if it doesn't exist
+          if [ ! -f /home/ec2-user/.ssh/id_rsa ]; then
+            echo "Generating SSH key..."
+            mkdir -p /home/ec2-user/.ssh
+            ssh-keygen -t rsa -b 4096 -f /home/ec2-user/.ssh/id_rsa -N ""
+            
+            cat /home/ec2-user/.ssh/id_rsa.pub >> /home/ec2-user/.ssh/authorized_keys
+            chmod 600 /home/ec2-user/.ssh/authorized_keys
+            chown -R ec2-user:ec2-user /home/ec2-user/.ssh
+          else
+            echo "SSH key already exists"
+          fi
+
+          # Create cluster.yml file
+          echo "Creating cluster.yml file..."
+          echo "nodes:" > /home/ec2-user/cluster.yml
+          echo "  - address: $private_ip" >> /home/ec2-user/cluster.yml
+          echo "    user: ec2-user" >> /home/ec2-user/cluster.yml
+          echo "    role: [controlplane,worker,etcd]" >> /home/ec2-user/cluster.yml
+          echo "    ssh_key_path: /home/ec2-user/.ssh/id_rsa" >> /home/ec2-user/cluster.yml
+          echo "ingress:" >> /home/ec2-user/cluster.yml
+          echo "  provider: none" >> /home/ec2-user/cluster.yml
+
+          rm -rf /home/ec2-user/nginx-ingress-service.yml
+
+          # Create nginx-ingress-service.yml
+          echo "Creating nginx-ingress-service.yml..."
+          echo "apiVersion: v1"  >> /home/ec2-user/nginx-ingress-service.yml
+          echo "kind: Service"  >> /home/ec2-user/nginx-ingress-service.yml
+          echo "metadata:"  >> /home/ec2-user/nginx-ingress-service.yml
+          echo "  name: nginx-ingress-nodeport"  >> /home/ec2-user/nginx-ingress-service.yml
+          echo "  namespace: ingress-nginx"  >> /home/ec2-user/nginx-ingress-service.yml
+          echo "spec:"  >> /home/ec2-user/nginx-ingress-service.yml
+          echo "  type: NodePort"  >> /home/ec2-user/nginx-ingress-service.yml
+          echo "  selector:"  >> /home/ec2-user/nginx-ingress-service.yml
+          echo "    app.kubernetes.io/name: ingress-nginx"  >> /home/ec2-user/nginx-ingress-service.yml
+          echo "  ports:"  >> /home/ec2-user/nginx-ingress-service.yml
+          echo "    - name: http80"  >> /home/ec2-user/nginx-ingress-service.yml
+          echo "      protocol: TCP"  >> /home/ec2-user/nginx-ingress-service.yml
+          echo "      port: 80"  >> /home/ec2-user/nginx-ingress-service.yml
+          echo "      targetPort: 80"  >> /home/ec2-user/nginx-ingress-service.yml
+          echo "      nodePort: 30080"  >> /home/ec2-user/nginx-ingress-service.yml
+          echo "    - name: https443"  >> /home/ec2-user/nginx-ingress-service.yml
+          echo "      protocol: TCP"  >> /home/ec2-user/nginx-ingress-service.yml
+          echo "      port: 443"  >> /home/ec2-user/nginx-ingress-service.yml
+          echo "      targetPort: 443"  >> /home/ec2-user/nginx-ingress-service.yml
+          echo "      nodePort: 30443"  >> /home/ec2-user/nginx-ingress-service.yml
+
+          chown ec2-user:ec2-user /home/ec2-user/cluster.yml
+          chown ec2-user:ec2-user /home/ec2-user/nginx-ingress-service.yml
+
+          # Setup Kubernetes cluster
+          echo "Setting up Kubernetes cluster..."
+          cd /home/ec2-user
+          sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && rke up --config cluster.yml'
+
+          # Setup kubectl config
+          echo "Setting up kubectl config..."
+          sudo -u ec2-user mkdir -p /home/ec2-user/.kube
+          sudo -u ec2-user cp /home/ec2-user/kube_config_cluster.yml /home/ec2-user/.kube/config
+
+          # # Install nginx ingress controller
+          # echo "Installing NGINX Ingress Controller..."
+          # sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx'
+          # sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && helm repo update'
+          # sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx --namespace ingress-nginx --create-namespace'
+          
+          # sudo -u ec2-user bash -c "export PATH=\$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && kubectl patch svc ingress-nginx-controller -n ingress-nginx -p '{\"spec\":{\"type\":\"ClusterIP\"}}' || echo 'Failed to patch ingress service, it may not be ready yet'"
+          
+          # # Apply nginx-ingress-service.yml to create NodePort service
+          # echo "Applying nginx-ingress-service.yml to create NodePort service..."
+          # sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && kubectl apply -f /home/ec2-user/nginx-ingress-service.yml'
+
+          # Add FloTorch Helm repo
+          echo "Adding FloTorch Helm repo..."
+          sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && helm repo add flotorch https://balasriharsha-ch.github.io/FloTorch/charts'
+          sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && helm repo update'
+
+          # Create AWS ECR credentials secret
+          echo "Creating AWS ECR credentials secret..."
+          # Get AWS account number and region from instance metadata
+          AWS_ACCOUNT_NUMBER=$(aws sts get-caller-identity --query Account --output text)
+          
+          # Create the docker registry secret
+          echo "Creating AWS ECR secret..."
+          ECR_PASSWORD=$(aws ecr get-login-password --region $region)
+          echo "Creating credentials in Docker format..."
+          sudo -u ec2-user bash -c "export PATH=\$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && kubectl create secret docker-registry aws-ecr-credentials --docker-server=${AWS_ACCOUNT_NUMBER}.dkr.ecr.${region}.amazonaws.com --docker-username=AWS --docker-password=\"${ECR_PASSWORD}\" --dry-run=client -o yaml | kubectl apply -f -"
+
+          # Install Nginx Ingress Controller first
+          echo "Installing Nginx Ingress Controller..."
+          
+          # Add the ingress-nginx repository
+          sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx'
+          sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && helm repo update'
+          
+          # Check and clean up previous ingress-nginx installations if they exist
+          echo "Checking for previous ingress-nginx installations..."
+          sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && if helm list -n ingress-nginx | grep -q ingress-nginx; then helm uninstall ingress-nginx -n ingress-nginx; fi'
+          sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && if kubectl get namespace ingress-nginx >/dev/null 2>&1; then kubectl delete namespace ingress-nginx; fi'
+          
+          # Install ingress-nginx with specific namespace and node ports
+          echo "Installing ingress-nginx in ingress-nginx namespace..."
+          sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx --namespace ingress-nginx --create-namespace --set controller.service.type=NodePort --set controller.service.nodePorts.http=30080 --set controller.service.nodePorts.https=30443'
+          
+          # Wait for ingress controller to be ready
+          echo "Waiting for Nginx ingress controller to be ready..."
+          sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=120s'
+
+          # Install FloTorch Helm chart with dynamic values
+          echo "Installing FloTorch Helm chart..."
+          # Get AWS account ID for ECR registry
+          account_id=$(aws sts get-caller-identity --query Account --output text)
+          
+          # Create a values override file to avoid escaping issues
+          rm -rf /home/ec2-user/override-values.yaml
+          
+          cat > /home/ec2-user/override-values.yaml << EOF
+          global:
+            consoleDomain: "$table_suffix.flotorch.cloud"
+            imageRegistry: "${account_id}.dkr.ecr.${region}.amazonaws.com"
+          console:
+            experimentation:
+              host: "https://$experimentation_host/api"
+              username: "$experimentation_username"
+              password: "$experimentation_password"
+            image:
+              repository: "flotorch-console-$table_suffix"
+              tag: "$console_image_tag"
+          gateway:
+            image:
+              repository: "flotorch-gateway-$table_suffix"
+              tag: "$gateway_image_tag"
+          EOF
+          
+          # Make sure ec2-user owns the file
+          chown ec2-user:ec2-user /home/ec2-user/override-values.yaml
+          
+          # Use the values file instead of --set arguments
+          sudo -u ec2-user bash -c "export PATH=\$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && helm upgrade --install flotorch flotorch/flotorch -f /home/ec2-user/override-values.yaml"
+
+          # Wait for all pods to be in Ready state before proceeding with database setup
+          echo "Waiting for all pods to be in Ready state..."
+          sudo -u ec2-user bash -c 'export PATH=$PATH:/usr/local/bin && export KUBECONFIG=/home/ec2-user/.kube/config && kubectl wait --for=condition=Ready pods --all --timeout=600s'
+
+          # Create Cloudflare DNS record for subdomain
+          echo "Creating Cloudflare DNS record for ${table_suffix}.flotorch.cloud..."
+          # Use the public IP passed from the Lambda function
+          PUBLIC_IP="${public_ip}"
+          CLOUDFLARE_API_TOKEN="gXtnJiUVhXk76gRzR6NDjiVRWOww8HJFR8hanMqY"
+          CLOUDFLARE_ZONE_ID=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones?name=flotorch.cloud" \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            -H "Content-Type: application/json" | jq -r '.result[0].id')
+          
+          # Create the JSON payload with proper variable substitution
+          JSON_PAYLOAD="{\"type\":\"A\",\"name\":\"$table_suffix\",\"content\":\"$PUBLIC_IP\",\"ttl\":1,\"proxied\":true}"
+          
+          curl -s -X POST "https://api.cloudflare.com/client/v4/zones/$CLOUDFLARE_ZONE_ID/dns_records" \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            -H "Content-Type: application/json" \
+            --data "$JSON_PAYLOAD" | jq .
+          
+          echo "DNS record for $table_suffix.flotorch.cloud created and pointing to $PUBLIC_IP"
+
+          echo "Kubernetes setup completed successfully!"
+          '''
+
+                      # Run script using SSM
+                      command = ssm.send_command(
+                          InstanceIds=[instance_id],
+                          DocumentName='AWS-RunShellScript',
+                          Parameters={
+                              'commands': [install_script]
+                          }
+                      )
+
+                      command_id = command['Command']['CommandId']
+                      print("Command ID: " + command_id)
+                      print("Waiting for Kubernetes setup to complete...")
+
+                      while True:
+                          try:
+                              result = ssm.get_command_invocation(
+                                  CommandId=command_id,
+                                  InstanceId=instance_id
+                              )
+                              if result['Status'] in ['Success', 'Failed', 'Cancelled', 'TimedOut']:
+                                  if result['Status'] != 'Success':
+                                      error_message = result.get('StandardErrorContent', 'No error content available')
+                                      raise Exception(f"Command failed with status {result['Status']}: {error_message}")
+                                  break
+                              time.sleep(30)  # Check every 30 seconds
+                          except botocore.exceptions.ClientError as e:
+                              if "InvocationDoesNotExist" in str(e):
+                                  time.sleep(30)
+                                  continue
+                              else:
+                                  raise
+
+                      print("Kubernetes setup completed successfully!")
+                      # Only include minimal response data to avoid oversize errors
+                      # Never return large amounts of data from Lambda custom resources
+                      response_data = {'Message': 'Kubernetes setup completed successfully'}
+                      cfnresponse.send(event, context, cfnresponse.SUCCESS, response_data)
+                  else:
+                      # For Delete or other events, just return success
+                      cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
+              except Exception as e:
+                  print(f"Error: {str(e)}")
+                  cfnresponse.send(event, context, cfnresponse.FAILED, {'Error': str(e)})
+
+      Runtime: python3.9
+      Timeout: 900
+      MemorySize: 256
+
+  KubernetesSetupResource:
+    Type: Custom::KubernetesSetup
+    Properties:
+      ServiceToken: !GetAtt KubernetesSetupFunction.Arn
+      ExperimentationHost: !Ref ExperimentationHost
+      ExperimentationUsername: !Ref ExperimentationUsername
+      ExperimentationPassword: !Ref ExperimentationPassword
+      TableSuffix: !Ref TableSuffix
+      ConsoleImageTag: !Ref ConsoleImageTag
+      GatewayImageTag: !Ref GatewayImageTag
+      ConsoleRepositoryUri: !Ref ConsoleRepositoryUri
+      GatewayRepositoryUri: !Ref GatewayRepositoryUri
+
+Conditions:
+  IsUsEast1Region: !Equals 
+    - !Ref AWS::Region
+    - us-east-1
+
+Outputs:
+  KubernetesSetupStatus:
+    Description: Status of the Kubernetes setup
+    Value: !GetAtt KubernetesSetupResource.Message
+  EC2InstanceId:
+    Description: ID of the EC2 instance running Kubernetes
+    Value: !Ref EC2Instance
+  EC2PublicDNS:
+    Description: Public DNS of the EC2 instance
+    Value: !GetAtt EC2Instance.PublicDnsName
+  HTTPSNodePort:
+    Description: HTTPS NodePort URL
+    Value: !Sub https://${EC2Instance.PublicDnsName}:30443
+  EC2KeyPairName:
+    Description: Name of the generated EC2 key pair
+    Value: !Ref EC2KeyPair
+  EC2PrivateKey:
+    Description: Instructions to access the private key material
+    Value: The private key can be downloaded from EC2 console after launching the instance
+
+  EC2PublicIP:
+    Description: Public IP address of the EC2 instance
+    Value: !GetAtt EC2Instance.PublicIp

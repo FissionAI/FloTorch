@@ -358,10 +358,6 @@ class BaseEvaluator(ABC):
         pass 
 
     @abstractmethod
-    def get_questions(self, experiment_id: str) -> List[Dict]:
-        pass
-
-    @abstractmethod
     def update_experiment_metrics(self, experiment_id: str, metrics_list: List['EvaluationMetrics']):
         pass
 
@@ -390,7 +386,8 @@ class Execution(BaseModel):
     config: Dict[str, Any]
     status: str = "not_started"
     gt_data: str
-    kb_data: Union[str, List[str]]
+    kb_data: Optional[Union[str, List[str]]] = None
+    gateway_kb_data: Optional[Dict[str, List[Any]]] = None
     region: str
     name: str
 
