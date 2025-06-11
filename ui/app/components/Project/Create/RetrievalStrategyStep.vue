@@ -139,9 +139,6 @@ const handleTooltip = (tooltipInfo: {tooltip: string, fieldName: string}) => {
           <FieldTooltip @show-tooltip="handleTooltip" field-name="retrieval"/>
         </div>
       </template>
-      <!-- <template #hint>
-        <FieldTooltip field-name="retrieval" />
-      </template> -->
     </UFormField>
     <UFormField name="temp_retrieval_llm"
       :label="`Inferencing Model Temperature ${state?.temp_retrieval_llm?.length === 0 || state?.temp_retrieval_llm === undefined ? '' : `(${state?.temp_retrieval_llm?.length})`}`"

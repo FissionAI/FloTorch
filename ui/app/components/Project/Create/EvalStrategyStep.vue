@@ -111,7 +111,8 @@ onMounted(() => {
         >
           <template #label="{ label }">
             <div class="flex items-center">
-              {{ label }}
+              {{ label }}<span class="italic"> - required</span>
+              <span class="w-[1px] h-3 ml-2 bg-gray-400"></span>
               <FieldTooltip @show-tooltip="handleTooltip" field-name="guardrails"/>
             </div>
           </template>

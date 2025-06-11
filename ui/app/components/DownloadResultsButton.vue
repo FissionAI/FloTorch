@@ -30,23 +30,24 @@ const downloadResults = () => {
       delete item["guardrail_output_assessment"];
       const { id, ...rest } = item;
       return {
-        ...rest,
+        ...{"Question": item.question, "Ground Truth": item.gt_answer, "Generated Answer": item.generated_answer},
         ...assessments,
       };
     } else {
+      // console.log(item);
       const results = {
         "ID": item.id,
         "Status": item.experiment_status,
         "Inferencing Model": item.config.retrieval_model,
         "Estimated Cost": item.cost || (item.cost === 0 ? 0 : "NA"),
-        "Faithfulness": item.eval_metrics?.M?.faithfulness_score ||item.eval_metrics?.faithfulness_score || (item.eval_metrics?.M?.faithfulness_score === 0 ? 0 : "-"),
+        "Faithfulness": item.eval_metrics?.M?.faithfulness_score ||item.eval_metrics?.faithfulness_score || (item.eval_metrics?.M?.faithfulness_score === 0 ? 0 : "NA"),
         "Context Precision":
-        item.eval_metrics?.M?.context_precision_score || item.eval_metrics?.context_precision_score || (item.eval_metrics?.M?.context_precision_score === 0 ? 0 : "-"),
+        item.eval_metrics?.M?.context_precision_score || item.eval_metrics?.context_precision_score || (item.eval_metrics?.M?.context_precision_score === 0 ? 0 : "NA"),
         "Maliciousness":
-          item.eval_metrics?.M?.aspect_critic_score ||item.eval_metrics?.aspect_critic_score || (item.eval_metrics?.M?.aspect_critic_score === 0 ? 0 : "-"),
+          item.eval_metrics?.M?.aspect_critic_score ||item.eval_metrics?.aspect_critic_score || (item.eval_metrics?.M?.aspect_critic_score === 0 ? 0 : "NA"),
         "Answer Relevancy":
-          item.eval_metrics?.M?.answers_relevancy_score ||item.eval_metrics?.answers_relevancy_score || (item.eval_metrics?.M?.answers_relevancy_score === 0 ? 0 : "-"),
-        "Duration": item.total_time || (item.total_time === 0 ? 0 : "-"),
+          item.eval_metrics?.M?.answers_relevancy_score ||item.eval_metrics?.answers_relevancy_score || (item.eval_metrics?.M?.answers_relevancy_score === 0 ? 0 : "NA"),
+        "Duration": item.total_time || (item.total_time === 0 ? 0 : "NA"),
         "Embedding Model": item.config.embedding_model || "NA",
         "Evaluation Service": item.config.eval_service,
         "Evaluation Embedding Model":
@@ -60,7 +61,8 @@ const downloadResults = () => {
         "Reranking Model": item.config.rerank_model_id || "NA",
         "Guardrail": item.config?.guardrail_name || "NA",
         "Bedrock KB Name": item.config?.kb_name || "NA",
-        "KNN": item.config?.knn_num || (item.config?.knn_num === 0 ? 0 : "NA"),
+        // "KNN": item.config?.knn_num === 'nan' ? "NA" : item.config?.knn_num || (item.config?.knn_num === 0 ? 0 : "NA"),
+        "KNN": item.config.knn_num ? item.config.knn_num : "NA",
         "N Shot Prompts": item.config.n_shot_prompts || (item.config.n_shot_prompts === 0 ? 0 : "NA"),
         "Expert Evaluation Scores": item.scores || (item.scores === 0 ? 0 : "NA"),
       }
