@@ -175,8 +175,7 @@ const sorting = ref([
       <!-- </UBadge> -->
     </template>
     <template #date-cell="{ row }">
-      <!-- {{ useHumanDateTime("2025-06-05T04:27:24.491885") }} -->
-      {{ new Date(row.original.date).toLocaleString() }}
+      {{ useHumanDateTime(row.original.date.toString()) }}
     </template>
   </UTable>
 </template>
