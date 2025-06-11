@@ -38,7 +38,6 @@ const state = reactive<Partial<HumanEval>>({
 const toast = useToast()
 async function onSubmit(event: FormSubmitEvent<HumanEval>) {
   toast.add({ title: 'Success', description: 'The form has been submitted.', color: 'success' })
-  console.log(event.data)
   mutate(event.data)
 }
 

@@ -34,7 +34,6 @@ const downloadResults = () => {
         ...assessments,
       };
     } else {
-      // console.log(item);
       const results = {
         "ID": item.id,
         "Status": item.experiment_status,

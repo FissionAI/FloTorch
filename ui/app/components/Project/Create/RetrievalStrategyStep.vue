@@ -61,7 +61,6 @@ const tooltip = ref('')
 const fieldName = ref('')
 
 const handleTooltip = (tooltipInfo: {tooltip: string, fieldName: string}) => {
-  console.log(tooltipInfo)
   tooltip.value = tooltipInfo.tooltip
   fieldName.value = tooltipInfo.fieldName
 }
