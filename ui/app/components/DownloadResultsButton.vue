@@ -28,9 +28,10 @@ const downloadResults = () => {
       delete item["guardrail_input_assessment"];
       delete item["guardrail_context_assessment"];
       delete item["guardrail_output_assessment"];
-      const { id, ...rest } = item;
+      const { id, question, gt_answer, generated_answer, ...rest } = item;
       return {
         ...{"Question": item.question, "Ground Truth": item.gt_answer, "Generated Answer": item.generated_answer},
+        ...rest,
         ...assessments,
       };
     } else {
