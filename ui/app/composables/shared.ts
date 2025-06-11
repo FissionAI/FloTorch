@@ -391,13 +391,11 @@ export const useProjectCreateMeta = () => {
           value: "us.anthropic.claude-3-7-sonnet-20250219-v1:0",
           service: "bedrock",
         },
-        ,
         {
           label: "Anthropic/us.anthropic.claude-sonnet-4-20250514-v1:0",
           value: "us.anthropic.claude-sonnet-4-20250514-v1:0",
           service: "bedrock",
         },
-        ,
         {
           label: "Anthropic/us.anthropic.claude-opus-4-20250514-v1:0",
           value: "us.anthropic.claude-opus-4-20250514-v1:0",
