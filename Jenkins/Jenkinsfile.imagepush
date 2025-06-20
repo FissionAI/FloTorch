@@ -1,0 +1,229 @@
+pipeline {
+    agent {
+        docker {
+            image 'ubuntu:latest'
+            args '-u root'
+        }
+    }
+    parameters {
+        string(name: 'ENVIRONMENT_SUFFIX', defaultValue: '', description: 'Enter the environment suffix for ECR repositories (e.g., jasper)')
+    }
+    environment {
+        ECR_REGISTRY = '677276078734.dkr.ecr.us-east-1.amazonaws.com'
+        AWS_REGION = 'us-east-1'
+        ENV_SUFFIX = "${params.ENVIRONMENT_SUFFIX}"
+    }
+    stages {
+        stage('Validate Parameters') {
+            steps {
+                script {
+                    if (params.ENVIRONMENT_SUFFIX.trim() == '') {
+                        error "ENVIRONMENT_SUFFIX parameter is required. Please provide a valid value."
+                    }
+                    echo "Building and pushing images with suffix: ${ENV_SUFFIX}"
+                }
+            }
+        }
+       
+        stage('Install Dependencies') {
+            steps {
+                sh '''
+                    apt-get update
+                    apt-get install -y docker.io curl unzip git jq
+                    curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+                    unzip -o -q awscliv2.zip
+                    ./aws/install --update
+                '''
+            }
+        }
+       
+        stage('Checkout') {
+            steps {
+                cleanWs()
+                git branch: 'main',
+                    url: 'https://github.com/shivani-fission/FloTorch.git'
+            }
+        }
+       
+        stage('Build and Push Images') {
+            steps {
+                script {
+                    def services = [
+                        [name: 'app', dockerfile: 'app/Dockerfile'],
+                        [name: 'indexing', dockerfile: 'indexing/fargate_indexing.Dockerfile'],
+                        [name: 'retriever', dockerfile: 'retriever/fargate_retriever.Dockerfile'],
+                        [name: 'evaluation', dockerfile: 'evaluation/fargate_evaluation.Dockerfile'],
+                        [name: 'runtime', dockerfile: 'opensearch/opensearch.Dockerfile']
+                    ]
+                   
+                    withAWS(credentials: 'aws-creds', region: env.AWS_REGION) {
+                        try {
+                            // ECR Login - Added verification for successful login
+                            def loginStatus = sh(script: """
+                                aws ecr get-login-password --region ${AWS_REGION} | \
+                                docker login --username AWS --password-stdin ${ECR_REGISTRY}
+                            """, returnStatus: true)
+                           
+                            if (loginStatus != 0) {
+                                error "Failed to login to ECR. Please check your credentials."
+                            }
+                           
+                            // Build and push each service
+                            services.each { service ->
+                                def repoName = "flotorch-${service.name}-${ENV_SUFFIX}"
+                                def imageTag = "${ECR_REGISTRY}/${repoName}:latest"
+                               
+                                echo "Building and pushing ${service.name} image with tag latest..."
+                               
+                                // Check if Dockerfile exists
+                                if (!fileExists(service.dockerfile)) {
+                                    error "Dockerfile not found at ${service.dockerfile}"
+                                }
+                               
+                                echo "Using Dockerfile at: ${service.dockerfile}"
+                               
+                                // Create ECR repository if it doesn't exist
+                                def repoCreationStatus = sh(script: """
+                                    if ! aws ecr describe-repositories --repository-names ${repoName} --region ${AWS_REGION} 2>/dev/null; then
+                                        echo "Creating ECR repository: ${repoName}"
+                                        aws ecr create-repository --repository-name ${repoName} --region ${AWS_REGION}
+                                    else
+                                        echo "Repository ${repoName} already exists"
+                                    fi
+                                """, returnStatus: true)
+                               
+                                if (repoCreationStatus != 0) {
+                                    error "Failed to create or verify ECR repository: ${repoName}"
+                                }
+                               
+                                // Build image with no cache to ensure fresh build
+                                def buildStatus = sh(script: """
+                                    # Build image with linux/amd64 platform and no cache
+                                    docker build --no-cache --platform linux/amd64 -t ${imageTag} -f ${service.dockerfile} .
+                                """, returnStatus: true)
+                               
+                                if (buildStatus != 0) {
+                                    error "Failed to build image: ${imageTag}"
+                                }
+                               
+                                // Push the image
+                                def pushStatus = sh(script: """
+                                    # Push image with latest tag
+                                    docker push ${imageTag}
+                                """, returnStatus: true)
+                               
+                                if (pushStatus != 0) {
+                                    error "Failed to push image: ${imageTag}"
+                                }
+                               
+                                // Verify the push was successful
+                                def verifyStatus = sh(script: """
+                                    # Verify the image exists in ECR
+                                    aws ecr describe-images --repository-name ${repoName} --image-ids imageTag=latest --region ${AWS_REGION}
+                                """, returnStatus: true)
+                               
+                                if (verifyStatus != 0) {
+                                    error "Failed to verify image in ECR: ${repoName}:latest"
+                                }
+                               
+                                echo "${service.name} image built and pushed successfully with tag: latest"
+                            }
+                           
+                            // Build and push cost compute image separately
+                            def costComputeRepo = "flotorch-costcompute-${ENV_SUFFIX}"
+                            def costImageTag = "${ECR_REGISTRY}/${costComputeRepo}:latest"
+                           
+                            def costRepoStatus = sh(script: """
+                                if ! aws ecr describe-repositories --repository-names ${costComputeRepo} --region ${AWS_REGION} 2>/dev/null; then
+                                    echo "Creating ECR repository: ${costComputeRepo}"
+                                    aws ecr create-repository --repository-name ${costComputeRepo} --region ${AWS_REGION}
+                                else
+                                    echo "Repository ${costComputeRepo} already exists"
+                                fi
+                            """, returnStatus: true)
+                           
+                            if (costRepoStatus != 0) {
+                                error "Failed to create or verify ECR repository: ${costComputeRepo}"
+                            }
+                           
+                            def costBuildStatus = sh(script: """
+                                cd lambda_handlers
+                                # Build image with no cache
+                                docker build --no-cache --platform linux/amd64 -t ${costImageTag} -f cost_handler/Dockerfile .
+                            """, returnStatus: true)
+                           
+                            if (costBuildStatus != 0) {
+                                error "Failed to build cost compute image: ${costImageTag}"
+                            }
+                           
+                            // Push the cost compute image
+                            def costPushStatus = sh(script: """
+                                # Push image with latest tag
+                                docker push ${costImageTag}
+                            """, returnStatus: true)
+                           
+                            if (costPushStatus != 0) {
+                                error "Failed to push cost compute image: ${costImageTag}"
+                            }
+                           
+                            // Verify the push was successful
+                            def costVerifyStatus = sh(script: """
+                                # Verify the image exists in ECR
+                                aws ecr describe-images --repository-name ${costComputeRepo} --image-ids imageTag=latest --region ${AWS_REGION}
+                            """, returnStatus: true)
+                           
+                            if (costVerifyStatus != 0) {
+                                error "Failed to verify cost compute image in ECR: ${costComputeRepo}:latest"
+                            }
+                           
+                            echo "Cost compute image built and pushed successfully with tag: latest"
+                           
+                        } catch (Exception e) {
+                            echo "Error during build/push: ${e.getMessage()}"
+                            throw e
+                        }
+                    }
+                }
+            }
+        }
+       
+        stage('Display Build Summary') {
+            steps {
+                script {
+                    echo """
+                    =================================================
+                    BUILD AND PUSH SUMMARY FOR ${ENV_SUFFIX}
+                    =================================================
+                    Environment Suffix: ${ENV_SUFFIX}
+                    AWS Region: ${AWS_REGION}
+                    ECR Registry: ${ECR_REGISTRY}
+                   
+                    Images Pushed:
+                    - flotorch-app-${ENV_SUFFIX}:latest
+                    - flotorch-indexing-${ENV_SUFFIX}:latest
+                    - flotorch-retriever-${ENV_SUFFIX}:latest
+                    - flotorch-evaluation-${ENV_SUFFIX}:latest
+                    - flotorch-runtime-${ENV_SUFFIX}:latest
+                    - flotorch-costcompute-${ENV_SUFFIX}:latest
+                   
+                    Repository Pattern: flotorch-{service}-${ENV_SUFFIX}
+                    =================================================
+                    """
+                }
+            }
+        }
+    }
+   
+    post {
+        success {
+            echo "All images successfully built and pushed to ECR repositories with suffix: ${ENV_SUFFIX}"
+        }
+        failure {
+            echo "Failed to build and push images to ECR repositories"
+        }
+        always {
+            cleanWs()
+            sh 'docker system prune -f'
+        }
+    }
+}
