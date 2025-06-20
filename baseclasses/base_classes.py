@@ -90,6 +90,7 @@ class ExperimentQuestionMetrics(BaseModel):
     guardrail_output_assessment: Optional[Union[List[Dict], Dict]] = Field(default=None, description="Output guardrail assessment results")
     guardrail_id: Optional[str] = Field(default=None, description="The guardrail id that was used")
     guardrail_blocked: Optional[str] = Field(default=None, description="Input or Output blocked by Guardrail")
+    eval_metrics: Optional[Dict[str, Any]] = Field(default_factory=dict)
 
 
     @staticmethod
@@ -398,10 +399,15 @@ class Execution(BaseModel):
 class EvaluationMetrics():
     faithfulness_score: Optional[float] = 0.0
     context_precision_score: Optional[float] = 0.0
-    aspect_critic_score: Optional[float] = 0.0
+    aspect_critic_maliciousness_score: Optional[float] = 0.0
+    aspect_critic_harmfulness_score: Optional[float] = 0.0
+    aspect_critic_coherence_score: Optional[float] = 0.0
+    aspect_critic_correctness_score: Optional[float] = 0.0
+    aspect_critic_conciseness_score: Optional[float] = 0.0
     answers_relevancy_score: Optional[float] = 0.0
     string_similarity: Optional[float] = 0.0
-    context_recall: Optional[float] = 0.0
+    context_recall_score: Optional[float] = 0.0
+    noise_sensitivity_score: Optional[float] = 0.0
     rouge_score: Optional[float] = 0.0
 
 
@@ -410,10 +416,15 @@ class EvaluationMetrics():
         return EvaluationMetrics(
             faithfulness_score=float(metrics_dict.get('faithfulness', '0.0')),
             context_precision_score=float(metrics_dict.get('llm_context_precision_with_reference', '0.0')),
-            aspect_critic_score=float(metrics_dict.get('maliciousness', '0.0')),
+            aspect_critic_maliciousness_score=float(metrics_dict.get('maliciousness', '0.0')),
+            aspect_critic_harmfulness_score=float(metrics_dict.get('harmfulness', '0.0')),
+            aspect_critic_coherence_score=float(metrics_dict.get('coherence', '0.0')),
+            aspect_critic_correctness_score=float(metrics_dict.get('correctness', '0.0')),
+            aspect_critic_conciseness_score=float(metrics_dict.get('conciseness', '0.0')),
             answers_relevancy_score=float(metrics_dict.get('answer_relevancy', '0.0')),
             string_similarity=float(metrics_dict.get('String_Similarity', '0.0')),
-            context_recall=float(metrics_dict.get('Context_Recall', '0.0')),
+            noise_sensitivity_score=float(metrics_dict.get('noise_sensitivity', '0.0')),
+            context_recall_score=float(metrics_dict.get('context_recall', '0.0')),
             rouge_score=float(metrics_dict.get('Rouge_Score', '0.0'))
         )
 
@@ -421,10 +432,15 @@ class EvaluationMetrics():
         return {
             'faithfulness_score': str(self.faithfulness_score),
             'context_precision_score': str(self.context_precision_score),
-            'aspect_critic_score': str(self.aspect_critic_score),
+            'aspect_critic_maliciousness_score': str(self.aspect_critic_maliciousness_score),
+            'aspect_critic_harmfulness_score': str(self.aspect_critic_harmfulness_score),
+            'aspect_critic_coherence_score': str(self.aspect_critic_coherence_score),
+            'aspect_critic_correctness_score': str(self.aspect_critic_correctness_score),
+            'aspect_critic_conciseness_score': str(self.aspect_critic_conciseness_score),
             'answers_relevancy_score': str(self.answers_relevancy_score),
             'string_similarity_score': str(self.string_similarity),
-            'context_recall_score': str(self.context_recall),
+            'context_recall_score': str(self.context_recall_score),
+            'noise_sensitivity_score': str(self.noise_sensitivity_score),
             'rouge_score': str(self.rouge_score)
         }
     
@@ -432,12 +448,17 @@ class EvaluationMetrics():
         return {
             'eval_metrics': {
                 'string_similarity_score': str(self.string_similarity) if self.string_similarity is not None else '0.0',
-                'context_recall_score': str(self.context_recall) if self.context_recall is not None else '0.0',
+                'context_recall_score': str(self.context_recall_score) if self.context_recall_score is not None else '0.0',
+                'aspect_critic_maliciousness_score': str(self.aspect_critic_maliciousness_score) if self.aspect_critic_maliciousness_score is not None else '0.0',
                 'rouge_score': str(self.rouge_score) if self.rouge_score is not None else '0.0',
                 'faithfulness_score': str(self.faithfulness_score) if self.faithfulness_score is not None else '0.0',
                 'context_precision_score': str(self.context_precision_score) if self.context_precision_score is not None else '0.0',
-                'aspect_critic_score': str(self.aspect_critic_score) if self.aspect_critic_score is not None else '0.0',
-                'answers_relevancy_score': str(self.answers_relevancy_score) if self.answers_relevancy_score is not None else '0.0'
+                'aspect_critic_harmfulness_score': str(self.aspect_critic_harmfulness_score) if self.aspect_critic_harmfulness_score is not None else '0.0',
+                'aspect_critic_coherence_score': str(self.aspect_critic_coherence_score) if self.aspect_critic_coherence_score is not None else '0.0',
+                'aspect_critic_correctness_score': str(self.aspect_critic_correctness_score) if self.aspect_critic_correctness_score is not None else '0.0',
+                'aspect_critic_conciseness_score': str(self.aspect_critic_conciseness_score) if self.aspect_critic_conciseness_score is not None else '0.0',
+                'answers_relevancy_score': str(self.answers_relevancy_score) if self.answers_relevancy_score is not None else '0.0',
+                'noise_sensitivity_score': str(self.noise_sensitivity_score) if self.noise_sensitivity_score is not None else '0.0'
             }
         }
     
@@ -446,11 +467,15 @@ class EvaluationMetrics():
         return {
             'Faithfulness': {'S': str(self.faithfulness_score) if self.faithfulness_score is not None else '0.0'},
             'Context_Precision': {'S': str(self.context_precision_score) if self.context_precision_score is not None else '0.0'},
-            'Aspect_Critic': {'S': str(self.aspect_critic_score) if self.aspect_critic_score is not None else '0.0'},
+            'Aspect_Critic_Maliciousness': {'S': str(self.aspect_critic_maliciousness_score) if self.aspect_critic_maliciousness_score is not None else '0.0'},
             'Answers_Relevancy': {'S': str(self.answers_relevancy_score) if self.answers_relevancy_score is not None else '0.0'},
             'String_Similarity': {'S': str(self.string_similarity) if self.string_similarity is not None else '0.0'},
-            'Context_Precision': {'S': str(self.context_precision) if self.context_precision is not None else '0.0'},
-            'Context_Recall': {'S': str(self.context_recall) if self.context_recall is not None else '0.0'},
+            'Noise_Sensitivity': {'S': str(self.noise_sensitivity_score) if self.noise_sensitivity_score is not None else '0.0'},
+            'Aspect_Critic_Harmfulness': {'S': str(self.aspect_critic_harmfulness_score) if self.aspect_critic_harmfulness_score is not None else '0.0'},
+            'Aspect_Critic_Coherence': {'S': str(self.aspect_critic_coherence_score) if self.aspect_critic_coherence_score is not None else '0.0'},
+            'Aspect_Critic_Correctness': {'S': str(self.aspect_critic_correctness_score) if self.aspect_critic_correctness_score is not None else '0.0'},
+            'Aspect_Critic_Conciseness': {'S': str(self.aspect_critic_conciseness_score) if self.aspect_critic_conciseness_score is not None else '0.0'},
+            'Context_Recall': {'S': str(self.context_recall_score) if self.context_recall_score is not None else '0.0'},
             'Rouge_Score': {'S': str(self.rouge_score) if self.rouge_score is not None else '0.0'}
         }
 

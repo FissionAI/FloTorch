@@ -46,6 +46,26 @@ class RagasEvaluator(BaseEvaluator):
                 )
         except Exception as e:
             logger.error(f"Error updating experiment metrics: {e}")
+
+
+    def update_scores_metrics(self, question_metrics_records: str, score_metrics_records: Dict[str, float]):
+        """Update overall experiment score metrics"""
+        try:
+            if score_metrics_records:
+                for index in range(len(question_metrics_records)):
+                    q_metrics_record = question_metrics_records[index]
+                    logger.info(f"question metrics record id: {q_metrics_record.id}")
+                    metric_score = score_metrics_records[index]
+                    logger.info(f"metrics scores id: {score_metrics_records}")
+                    id = q_metrics_record.id
+                    self.metrics_db.update_item(
+                            key={'id': id},
+                            update_expression="SET eval_metrics = :eval",
+                            expression_values={':eval': metric_score}
+                        )
+        except Exception as e:
+            logger.error(f"Error updating experiment metrics score: {e}")
+
     
     def calculate_eval_score(self,evaluator,data):
         try:
