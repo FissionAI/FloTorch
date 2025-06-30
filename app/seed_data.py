@@ -19,7 +19,6 @@ MODELS = {
     "bedrock_us.anthropic.claude-3-7-sonnet-20250219-v1:0": 5,
     "bedrock_us.anthropic.claude-3-5-haiku-20241022-v1:0": 5,
     "bedrock_us.anthropic.claude-sonnet-4-20250514-v1:0": 5,
-    "bedrock_us.anthropic.claude-opus-4-20250514-v1:0": 5,
     "bedrock_cohere.command-r-plus-v1:0": 25,
     "bedrock_cohere.command-r-v1:0": 14,
     "bedrock_us.meta.llama3-2-1b-instruct-v1:0": 14,
