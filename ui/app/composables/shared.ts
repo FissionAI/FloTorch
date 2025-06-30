@@ -397,11 +397,6 @@ export const useProjectCreateMeta = () => {
           service: "bedrock",
         },
         {
-          label: "Anthropic/us.anthropic.claude-opus-4-20250514-v1:0",
-          value: "us.anthropic.claude-opus-4-20250514-v1:0",
-          service: "bedrock",
-        },
-        {
           type: "label",
           label: "SageMaker (Provisioned)",
         },
