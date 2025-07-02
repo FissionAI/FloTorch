@@ -732,7 +732,7 @@ export const useProjectUploadConfig = () => {
         ...(config.indexing?.chunking_strategy.includes('hierarchical') && config.indexing?.hierarchical_parent_chunk_size.length > 0 ? { hierarchical_parent_chunk_size: config.indexing?.hierarchical_parent_chunk_size} : {}),
         ...(config.indexing?.chunking_strategy.includes('hierarchical') && config.indexing?.hierarchical_child_chunk_size.length > 0 ? { hierarchical_child_chunk_size: config.indexing?.hierarchical_child_chunk_size} : {}),
         ...(config.indexing?.chunking_strategy.includes('hierarchical') && config.indexing?.hierarchical_chunk_overlap_percentage.length > 0 ? { hierarchical_chunk_overlap_percentage: config.indexing?.hierarchical_chunk_overlap_percentage} : {}),
-        embedding: config.indexing?.embedding?.map((pc: any) => {
+        embedding: config.indexing.embedding.length === 1 && !config.indexing.embedding[0].model ? [{"model": '', "service": '', "label": ''}] : config.indexing.embedding.map((pc: any) => {
           return useGetModelData("indexing", pc.model);
         }),
       },
