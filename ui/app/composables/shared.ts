@@ -512,8 +512,12 @@ export const useProjectCreateMeta = () => {
     evalStrategy: {
       service: [
         {
-          label: 'ragas',
+          label: 'Ragas',
           value: 'ragas',
+        },
+        {
+          label: 'Deep Eval',
+          value: 'deepeval',
         },
         {
           label: 'others - coming soon',

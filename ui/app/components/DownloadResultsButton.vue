@@ -35,7 +35,7 @@ const downloadResults = () => {
         ...assessments,
       };
     } else {
-      const results = {
+      const baseResults = {
         "ID": item.id,
         "Status": item.experiment_status,
         "Inferencing Model": item.config.retrieval_model,
@@ -65,11 +65,26 @@ const downloadResults = () => {
         "KNN": item.config.knn_num ? item.config.knn_num : "NA",
         "N Shot Prompts": item.config.n_shot_prompts || (item.config.n_shot_prompts === 0 ? 0 : "NA"),
         "Expert Evaluation Scores": item.scores || (item.scores === 0 ? 0 : "NA"),
-      }
+      };
 
-      return results;
-    }
-  });
+
+if (item.config.eval_service === 'deepeval') {
+  return {
+
+          ...baseResults,
+         "Context Recall": item.eval_metrics?.M?.context_recall_score || item.eval_metrics?.context_recall_score || (item.eval_metrics?.M?.context_recall_score === 0 ? 0 : "NA"),
+         "Context Relevancy": item.eval_metrics?.M?.context_relevancy || item.eval_metrics?.context_relevancy || (item.eval_metrics?.M?.context_relevancy === 0 ? 0 : "NA"),
+         "Hallucination": item.eval_metrics?.M?.hallucination || item.eval_metrics?.hallucination || (item.eval_metrics?.M?.hallucination === 0 ? 0 : "NA"),
+
+  };
+} else if (item.config.eval_service === 'ragas') {
+  return baseResults;
+}
+return baseResults;
+
+}
+});
+
   if (!props.questionMetrics) {
     stringifyData.sort((a, b) => a.ID.localeCompare(b.ID));
   }

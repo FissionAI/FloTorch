@@ -24,6 +24,8 @@ watchEffect(() => {
   }
 })
 
+const evalService = computed(() => props.experiments[0]?.config?.eval_service || '');
+
 const columns = ref<TableColumn<ProjectExperiment>[]>([
   {
     id: 'select',
@@ -353,6 +355,159 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
         return row.original.eval_metrics.M?.aspect_critic_score ? parseFloat(row.original.eval_metrics.M.aspect_critic_score.toString()).toFixed(2) : "NA"
       }
       return "NA"
+    }
+  },
+  {
+    header: ({ column }) => {
+      if (evalService.value !== 'deepeval') return null;
+      const isSorted = column.getIsSorted();
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
+        color: "neutral",
+        variant: "ghost",
+        label: "Context Relevancy",
+        trailingIcon: isSorted
+          ? isSorted === "asc"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
+          : "i-lsicon:triangle-down-outline",
+        class: "-mx-2.5 focus:font-bold hover:font-bold hover:bg-white cursor-pointer",
+        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+      }),
+      h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+    ]);
+  },
+  accessorKey: "eval_metrics.context_relevancy",
+  enableHiding: true,
+  label: 'Context Relevancy',
+  sortingFn: (rowA, rowB) => {
+    const getScore = (row: any) => {
+      let score;
+      if ("context_relevancy" in row.original.eval_metrics) {
+        score = row.original.eval_metrics.context_relevancy;
+      } else if ("M" in row.original.eval_metrics) {
+        score = row.original.eval_metrics.M?.context_relevancy;
+      } else {
+        score = 0;
+      }
+      if (score === 'nan') return null;
+      const num = Number(score);
+      return isNaN(num) ? null : num;
+    };
+
+    const a = getScore(rowA);
+    const b = getScore(rowB);
+    if (a === null && b === null) return 0;
+    if (a === null) return 1;
+    if (b === null) return -1;
+    return a - b;
+  },
+  cell: ({ row }) => {
+    if (row.original.config?.eval_service !== 'deepeval') return null; 
+    const score = row.original.eval_metrics?.context_relevancy ?? row.original.eval_metrics?.M?.context_relevancy;
+    return score && score !== 'nan' ? parseFloat(score.toString()).toFixed(2) : "NA";
+  }
+},
+{
+  header: ({ column }) => {
+    if (evalService.value !== 'deepeval') return null; 
+    const isSorted = column.getIsSorted();
+    return h('div', { class: 'flex items-center justify-between' }, [
+      h(UButton, {
+        color: "neutral",
+        variant: "ghost",
+        label: "Hallucination",
+        trailingIcon: isSorted
+          ? isSorted === "asc"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
+          : "i-lsicon:triangle-down-outline",
+        class: "-mx-2.5 focus:font-bold hover:font-bold hover:bg-white cursor-pointer",
+        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+      }),
+      h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+    ]);
+  },
+  accessorKey: "eval_metrics.hallucination",
+  enableHiding: true,
+  label: 'Hallucination',
+  sortingFn: (rowA, rowB) => {
+    const getScore = (row: any) => {
+      let score;
+      if ("hallucination" in row.original.eval_metrics) {
+        score = row.original.eval_metrics.hallucination;
+      } else if ("M" in row.original.eval_metrics) {
+        score = row.original.eval_metrics.M?.hallucination;
+      } else {
+        score = 0;
+      }
+      if (score === 'nan') return null;
+      const num = Number(score);
+      return isNaN(num) ? null : num;
+    };
+
+    const a = getScore(rowA);
+    const b = getScore(rowB);
+    if (a === null && b === null) return 0;
+    if (a === null) return 1;
+    if (b === null) return -1;
+    return a - b;
+  },
+  cell: ({ row }) => {
+    if (row.original.config?.eval_service !== 'deepeval') return null;
+    const score = row.original.eval_metrics?.hallucination ?? row.original.eval_metrics?.M?.hallucination;
+    return score && score !== 'nan' ? parseFloat(score.toString()).toFixed(2) : "NA";
+  }
+},
+{
+  header: ({ column }) => {
+    if (evalService.value !== 'deepeval') return null; 
+    const isSorted = column.getIsSorted();
+    return h('div', { class: 'flex items-center justify-between' }, [
+      h(UButton, {
+        color: "neutral",
+        variant: "ghost",
+        label: "Context Recall",
+        trailingIcon: isSorted
+          ? isSorted === "asc"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
+          : "i-lsicon:triangle-down-outline",
+        class: "-mx-2.5 focus:font-bold hover:font-bold hover:bg-white cursor-pointer",
+        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+      }),
+      h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+    ]);
+  },
+  accessorKey: "eval_metrics.context_recall_score",
+  enableHiding: true,
+  label: 'Context Recall',
+  sortingFn: (rowA, rowB) => {
+    const getScore = (row: any) => {
+      let score;
+      if ("context_recall_score" in row.original.eval_metrics) {
+        score = row.original.eval_metrics.context_recall_score;
+      } else if ("M" in row.original.eval_metrics) {
+        score = row.original.eval_metrics.M?.context_recall_score;
+      } else {
+        score = 0;
+      }
+      if (score === 'nan') return null;
+      const num = Number(score);
+      return isNaN(num) ? null : num;
+    };
+
+    const a = getScore(rowA);
+    const b = getScore(rowB);
+    if (a === null && b === null) return 0;
+    if (a === null) return 1;
+    if (b === null) return -1;
+    return a - b;
+  },
+  cell: ({ row }) => {
+    if (row.original.config?.eval_service !== 'deepeval') return null;
+    const score = row.original.eval_metrics?.context_recall_score ?? row.original.eval_metrics?.M?.context_recall_score;
+    return score && score !== 'nan' ? parseFloat(score.toString()).toFixed(2) : "NA";
     }
   },
   {
@@ -897,6 +1052,9 @@ const columnVisibility = ref({
   config_chunking_strategy: false,
   config_embedding_model: false,
   scores: false,
+  'eval_metrics.context_recall_score': evalService.value === 'deepeval',
+  'eval_metrics.context_relevancy': evalService.value === 'deepeval',
+  'eval_metrics.hallucination': evalService.value === 'deepeval'
   
 })
 
