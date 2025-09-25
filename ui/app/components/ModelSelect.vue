@@ -13,7 +13,7 @@ const items = computed(() => {
     return meta.indexingStrategy.embeddingService
   }
   if (props.model === "retrieval") {
-    return props.region === 'us-west-2'? meta.retrievalStrategy.llmService.filter((item => !item.label.includes('Scout'))) : meta.retrievalStrategy.llmService;
+    return props.region === 'us-west-2'? meta.retrievalStrategy.llmService.filter((item: any) => !item?.label.includes('Scout')) : meta.retrievalStrategy.llmService;
   }
   return [];
 });

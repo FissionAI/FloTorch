@@ -398,6 +398,9 @@ export interface EvalMetrics {
   context_precision_score: number;
   aspect_critic_score: number;
   answers_relevancy_score: number;
+  context_recall_score: number;
+  context_relevancy: number;
+  hallucination: number;
 }
 
 export interface EvalMetricsM {

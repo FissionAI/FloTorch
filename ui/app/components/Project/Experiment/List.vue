@@ -24,6 +24,8 @@ watchEffect(() => {
   }
 })
 
+const evalService = computed(() => props.experiments[0]?.config?.eval_service || '');
+
 const columns = ref<TableColumn<ProjectExperiment>[]>([
   {
     id: 'select',
@@ -193,31 +195,43 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
     label: 'Faithfulness',
     sortingFn: (rowA, rowB) => {
       const getScore = (row: any) => {
+        let score;
         if ("faithfulness_score" in row.original.eval_metrics) {
-          return row.original.eval_metrics.faithfulness_score ?? 0;
+          score = row.original.eval_metrics.faithfulness_score;
+        } else if ("M" in row.original.eval_metrics) {
+          score = row.original.eval_metrics.M?.faithfulness_score;
+        } else {
+          score = 0;
         }
-        if ("M" in row.original.eval_metrics) {
-          return row.original.eval_metrics.M?.faithfulness_score ?? 0;
-        }
-        return 0;
+        
+        // Handle 'nan' string case
+        if (score === 'nan') return null;
+        // Convert to number, if NaN then return null
+        const numScore = Number(score);
+        return isNaN(numScore) ? null : numScore;
       };
       
       const a = getScore(rowA);
       const b = getScore(rowB);
-      return Number(a) - Number(b);
+
+      // Handle null values (which includes 'nan' and NaN) by placing them at the end
+      if (a === null && b === null) return 0;
+      if (a === null) return 1;
+      if (b === null) return -1;
+      
+      return a - b;
     },
     cell: ({ row }) => {
-      if(!row.original.config.knowledge_base){
-        return "NA"
-
-      }
+       if(!row.original.config.knowledge_base){
+         return "NA"
+       }
       if ("faithfulness_score" in row.original.eval_metrics) {
-        return row.original.eval_metrics.faithfulness_score ? parseFloat(row.original.eval_metrics.faithfulness_score.toString()).toFixed(2) : "-"
+        return row.original.eval_metrics.faithfulness_score ? parseFloat(row.original.eval_metrics.faithfulness_score.toString()).toFixed(2) : "NA"
       }
       if ("M" in row.original.eval_metrics) {
-        return row.original.eval_metrics.M?.faithfulness_score ? parseFloat(row.original.eval_metrics.M.faithfulness_score.toString()).toFixed(2) : "-"
+        return row.original.eval_metrics.M?.faithfulness_score ? parseFloat(row.original.eval_metrics.M.faithfulness_score.toString()).toFixed(2) : "NA"
       }
-      return "-"
+      return "NA"
     }
   },
   {
@@ -243,30 +257,44 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
     enableHiding: true,
     label: 'Context Precision',
     sortingFn: (rowA, rowB) => {
-      if ("M" in rowA.original.eval_metrics) {
-        const a = rowA.original.eval_metrics?.M?.context_precision_score;
-        const b = rowB.original.eval_metrics?.M?.context_precision_score;
-        return Number(a) - Number(b);
-      }
-      if ("context_precision_score" in rowA.original.eval_metrics) {
-        const a = rowA.original.eval_metrics?.context_precision_score;
-        const b = rowB.original.eval_metrics?.context_precision_score;
-        return Number(a) - Number(b);
-      }
-      return 0;
+      const getScore = (row: any) => {
+        let score;
+        if ("context_precision_score" in row.original.eval_metrics) {
+          score = row.original.eval_metrics.context_precision_score;
+        } else if ("M" in row.original.eval_metrics) {
+          score = row.original.eval_metrics.M?.context_precision_score;
+        } else {
+          score = 0;
+        }
+        
+        // Handle 'nan' string case
+        if (score === 'nan') return null;
+        // Convert to number, if NaN then return null
+        const numScore = Number(score);
+        return isNaN(numScore) ? null : numScore;
+      };
+      
+      const a = getScore(rowA);
+      const b = getScore(rowB);
+
+      // Handle null values (which includes 'nan' and NaN) by placing them at the end
+      if (a === null && b === null) return 0;
+      if (a === null) return 1;
+      if (b === null) return -1;
+      
+      return a - b;
     },
     cell: ({ row }) => {
-       if(!row.original.config.knowledge_base){
-        return "NA"
-
-      }
+      if(!row.original.config.knowledge_base){
+         return "NA"
+       }
       if ("context_precision_score" in row.original.eval_metrics) {
-        return row.original.eval_metrics.context_precision_score ? parseFloat(row.original.eval_metrics.context_precision_score.toString()).toFixed(2) : "-"
+        return row.original.eval_metrics.context_precision_score ? parseFloat(row.original.eval_metrics.context_precision_score.toString()).toFixed(2) : "NA"
       }
       if ("M" in row.original.eval_metrics) {
-        return row.original.eval_metrics.M?.context_precision_score ? parseFloat(row.original.eval_metrics.M.context_precision_score.toString()).toFixed(2) : "-"
+        return row.original.eval_metrics.M?.context_precision_score ? parseFloat(row.original.eval_metrics.M.context_precision_score.toString()).toFixed(2) : "NA"
       }
-      return "-"
+      return "NA"
     }
   },
   {
@@ -293,33 +321,193 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
     enableHiding: true,
     sortingFn: (rowA, rowB) => {
       const getScore = (row: any) => {
-        let score = 0;
-        if ("M" in row.original.eval_metrics) {
-          score = row.original.eval_metrics?.M?.aspect_critic_score ?? 0;
-        } else if ("aspect_critic_score" in row.original.eval_metrics) {
-          score = row.original.eval_metrics?.aspect_critic_score ?? 0;
+        let score;
+        if ("aspect_critic_score" in row.original.eval_metrics) {
+          score = row.original.eval_metrics.aspect_critic_score;
+        } else if ("M" in row.original.eval_metrics) {
+          score = row.original.eval_metrics.M?.aspect_critic_score;
+        } else {
+          score = 0;
         }
-        return Number(score);
+        
+        // Handle 'nan' string case
+        if (score === 'nan') return null;
+        // Convert to number, if NaN then return null
+        const numScore = Number(score);
+        return isNaN(numScore) ? null : numScore;
       };
-
+      
       const a = getScore(rowA);
       const b = getScore(rowB);
 
-      // Handle NaN values by placing them at the end
-      if (isNaN(a) && isNaN(b)) return 0;
-      if (isNaN(a)) return 1;
-      if (isNaN(b)) return -1;
+      // Handle null values (which includes 'nan' and NaN) by placing them at the end
+      if (a === null && b === null) return 0;
+      if (a === null) return 1;
+      if (b === null) return -1;
       
       return a - b;
     },
     cell: ({ row }) => {
       if ("aspect_critic_score" in row.original.eval_metrics) {
-        return row.original.eval_metrics.aspect_critic_score ? parseFloat(row.original.eval_metrics.aspect_critic_score.toString()).toFixed(2) : "-"
+        return row.original.eval_metrics.aspect_critic_score ? parseFloat(row.original.eval_metrics.aspect_critic_score.toString()).toFixed(2) : "NA"
       }
       if ("M" in row.original.eval_metrics) {
-        return row.original.eval_metrics.M?.aspect_critic_score ? parseFloat(row.original.eval_metrics.M.aspect_critic_score.toString()).toFixed(2) : "-"
+        return row.original.eval_metrics.M?.aspect_critic_score ? parseFloat(row.original.eval_metrics.M.aspect_critic_score.toString()).toFixed(2) : "NA"
       }
-      return "-"
+      return "NA"
+    }
+  },
+  {
+    header: ({ column }) => {
+      if (evalService.value !== 'deepeval') return null;
+      const isSorted = column.getIsSorted();
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h(UButton, {
+        color: "neutral",
+        variant: "ghost",
+        label: "Context Relevancy",
+        trailingIcon: isSorted
+          ? isSorted === "asc"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
+          : "i-lsicon:triangle-down-outline",
+        class: "-mx-2.5 focus:font-bold hover:font-bold hover:bg-white cursor-pointer",
+        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+      }),
+      h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+    ]);
+  },
+  accessorKey: "eval_metrics.context_relevancy",
+  enableHiding: true,
+  label: 'Context Relevancy',
+  sortingFn: (rowA, rowB) => {
+    const getScore = (row: any) => {
+      let score;
+      if ("context_relevancy" in row.original.eval_metrics) {
+        score = row.original.eval_metrics.context_relevancy;
+      } else if ("M" in row.original.eval_metrics) {
+        score = row.original.eval_metrics.M?.context_relevancy;
+      } else {
+        score = 0;
+      }
+      if (score === 'nan') return null;
+      const num = Number(score);
+      return isNaN(num) ? null : num;
+    };
+
+    const a = getScore(rowA);
+    const b = getScore(rowB);
+    if (a === null && b === null) return 0;
+    if (a === null) return 1;
+    if (b === null) return -1;
+    return a - b;
+  },
+  cell: ({ row }) => {
+    if (row.original.config?.eval_service !== 'deepeval') return null; 
+    const score = row.original.eval_metrics?.context_relevancy ?? row.original.eval_metrics?.M?.context_relevancy;
+    return score && score !== 'nan' ? parseFloat(score.toString()).toFixed(2) : "NA";
+  }
+},
+{
+  header: ({ column }) => {
+    if (evalService.value !== 'deepeval') return null; 
+    const isSorted = column.getIsSorted();
+    return h('div', { class: 'flex items-center justify-between' }, [
+      h(UButton, {
+        color: "neutral",
+        variant: "ghost",
+        label: "Hallucination",
+        trailingIcon: isSorted
+          ? isSorted === "asc"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
+          : "i-lsicon:triangle-down-outline",
+        class: "-mx-2.5 focus:font-bold hover:font-bold hover:bg-white cursor-pointer",
+        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+      }),
+      h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+    ]);
+  },
+  accessorKey: "eval_metrics.hallucination",
+  enableHiding: true,
+  label: 'Hallucination',
+  sortingFn: (rowA, rowB) => {
+    const getScore = (row: any) => {
+      let score;
+      if ("hallucination" in row.original.eval_metrics) {
+        score = row.original.eval_metrics.hallucination;
+      } else if ("M" in row.original.eval_metrics) {
+        score = row.original.eval_metrics.M?.hallucination;
+      } else {
+        score = 0;
+      }
+      if (score === 'nan') return null;
+      const num = Number(score);
+      return isNaN(num) ? null : num;
+    };
+
+    const a = getScore(rowA);
+    const b = getScore(rowB);
+    if (a === null && b === null) return 0;
+    if (a === null) return 1;
+    if (b === null) return -1;
+    return a - b;
+  },
+  cell: ({ row }) => {
+    if (row.original.config?.eval_service !== 'deepeval') return null;
+    const score = row.original.eval_metrics?.hallucination ?? row.original.eval_metrics?.M?.hallucination;
+    return score && score !== 'nan' ? parseFloat(score.toString()).toFixed(2) : "NA";
+  }
+},
+{
+  header: ({ column }) => {
+    if (evalService.value !== 'deepeval') return null; 
+    const isSorted = column.getIsSorted();
+    return h('div', { class: 'flex items-center justify-between' }, [
+      h(UButton, {
+        color: "neutral",
+        variant: "ghost",
+        label: "Context Recall",
+        trailingIcon: isSorted
+          ? isSorted === "asc"
+            ? "i-lsicon:triangle-up-filled"
+            : "i-lsicon:triangle-down-filled"
+          : "i-lsicon:triangle-down-outline",
+        class: "-mx-2.5 focus:font-bold hover:font-bold hover:bg-white cursor-pointer",
+        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+      }),
+      h('div', { class: 'h-5 w-[2px] bg-gray-200 dark:bg-gray-700 ml-2' })
+    ]);
+  },
+  accessorKey: "eval_metrics.context_recall_score",
+  enableHiding: true,
+  label: 'Context Recall',
+  sortingFn: (rowA, rowB) => {
+    const getScore = (row: any) => {
+      let score;
+      if ("context_recall_score" in row.original.eval_metrics) {
+        score = row.original.eval_metrics.context_recall_score;
+      } else if ("M" in row.original.eval_metrics) {
+        score = row.original.eval_metrics.M?.context_recall_score;
+      } else {
+        score = 0;
+      }
+      if (score === 'nan') return null;
+      const num = Number(score);
+      return isNaN(num) ? null : num;
+    };
+
+    const a = getScore(rowA);
+    const b = getScore(rowB);
+    if (a === null && b === null) return 0;
+    if (a === null) return 1;
+    if (b === null) return -1;
+    return a - b;
+  },
+  cell: ({ row }) => {
+    if (row.original.config?.eval_service !== 'deepeval') return null;
+    const score = row.original.eval_metrics?.context_recall_score ?? row.original.eval_metrics?.M?.context_recall_score;
+    return score && score !== 'nan' ? parseFloat(score.toString()).toFixed(2) : "NA";
     }
   },
   {
@@ -345,26 +533,41 @@ const columns = ref<TableColumn<ProjectExperiment>[]>([
     enableHiding: true,
     label: 'Answer Relevancy',
     sortingFn: (rowA, rowB) => {
-      if ("M" in rowA.original.eval_metrics) {
-        const a = rowA.original.eval_metrics?.M?.answers_relevancy_score ?? 0;
-        const b = rowB.original.eval_metrics?.M?.answers_relevancy_score ?? 0;
-        return Number(a) - Number(b);
-      }
-      if ("answers_relevancy_score" in rowA.original.eval_metrics) {
-        const a = rowA.original.eval_metrics?.answers_relevancy_score ?? 0;
-        const b = rowB.original.eval_metrics?.answers_relevancy_score ?? 0;
-        return Number(a) - Number(b);
-      }
-      return 0;
+      const getScore = (row: any) => {
+        let score;
+        if ("answers_relevancy_score" in row.original.eval_metrics) {
+          score = row.original.eval_metrics.answers_relevancy_score;
+        } else if ("M" in row.original.eval_metrics) {
+          score = row.original.eval_metrics.M?.answers_relevancy_score;
+        } else {
+          score = 0;
+        }
+        
+        // Handle 'nan' string case
+        if (score === 'nan') return null;
+        // Convert to number, if NaN then return null
+        const numScore = Number(score);
+        return isNaN(numScore) ? null : numScore;
+      };
+      
+      const a = getScore(rowA);
+      const b = getScore(rowB);
+
+      // Handle null values (which includes 'nan' and NaN) by placing them at the end
+      if (a === null && b === null) return 0;
+      if (a === null) return 1;
+      if (b === null) return -1;
+      
+      return a - b;
     },
     cell: ({ row }) => {
       if ("answers_relevancy_score" in row.original.eval_metrics) {
-        return row.original.eval_metrics.answers_relevancy_score ? parseFloat(row.original.eval_metrics.answers_relevancy_score.toString()).toFixed(2) : "-"
+        return row.original.eval_metrics.answers_relevancy_score ? parseFloat(row.original.eval_metrics.answers_relevancy_score.toString()).toFixed(2) : "NA"
       }
       if ("M" in row.original.eval_metrics) {
-        return row.original.eval_metrics.M?.answers_relevancy_score ? parseFloat(row.original.eval_metrics.M.answers_relevancy_score.toString()).toFixed(2) : "-"
+        return row.original.eval_metrics.M?.answers_relevancy_score ? parseFloat(row.original.eval_metrics.M.answers_relevancy_score.toString()).toFixed(2) : "NA"
       }
-      return "-"
+      return "NA"
     }
   },
   {
@@ -849,6 +1052,9 @@ const columnVisibility = ref({
   config_chunking_strategy: false,
   config_embedding_model: false,
   scores: false,
+  'eval_metrics.context_recall_score': evalService.value === 'deepeval',
+  'eval_metrics.context_relevancy': evalService.value === 'deepeval',
+  'eval_metrics.hallucination': evalService.value === 'deepeval'
   
 })
 

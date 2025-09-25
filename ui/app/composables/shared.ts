@@ -392,6 +392,11 @@ export const useProjectCreateMeta = () => {
           service: "bedrock",
         },
         {
+          label: "Anthropic/us.anthropic.claude-sonnet-4-20250514-v1:0",
+          value: "us.anthropic.claude-sonnet-4-20250514-v1:0",
+          service: "bedrock",
+        },
+        {
           type: "label",
           label: "SageMaker (Provisioned)",
         },
@@ -507,8 +512,12 @@ export const useProjectCreateMeta = () => {
     evalStrategy: {
       service: [
         {
-          label: 'ragas',
+          label: 'Ragas',
           value: 'ragas',
+        },
+        {
+          label: 'Deep Eval',
+          value: 'deepeval',
         },
         {
           label: 'others - coming soon',
@@ -727,7 +736,7 @@ export const useProjectUploadConfig = () => {
         ...(config.indexing?.chunking_strategy.includes('hierarchical') && config.indexing?.hierarchical_parent_chunk_size.length > 0 ? { hierarchical_parent_chunk_size: config.indexing?.hierarchical_parent_chunk_size} : {}),
         ...(config.indexing?.chunking_strategy.includes('hierarchical') && config.indexing?.hierarchical_child_chunk_size.length > 0 ? { hierarchical_child_chunk_size: config.indexing?.hierarchical_child_chunk_size} : {}),
         ...(config.indexing?.chunking_strategy.includes('hierarchical') && config.indexing?.hierarchical_chunk_overlap_percentage.length > 0 ? { hierarchical_chunk_overlap_percentage: config.indexing?.hierarchical_chunk_overlap_percentage} : {}),
-        embedding: config.indexing?.embedding?.map((pc: any) => {
+        embedding: config.indexing.embedding.length === 1 && !config.indexing.embedding[0].model ? [{"model": '', "service": '', "label": ''}] : config.indexing.embedding.map((pc: any) => {
           return useGetModelData("indexing", pc.model);
         }),
       },

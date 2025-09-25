@@ -64,17 +64,19 @@ const nextStep = () => {
         }),
         vector_dimension: state.indexing?.vector_dimension || [],
         indexing_algorithm: state.indexing?.indexing_algorithm || '',
-        embedding: state.indexing?.embedding?.map((pc) => {
+        embedding: state?.indexing?.embedding.filter((pc) => {
+          return pc?.model && pc?.service && pc?.label
+        })? state.indexing?.embedding?.map((pc) => {
           return {
-            model: pc?.value,
+            model: pc?.model,
             service: pc?.service,
             label: pc?.label
           }
-        }) || [{
+        }) : [{
                 "model": "",
                 "service": "",
                 "label": ""
-            }]
+            }] 
       },
       retrieval: {
         n_shot_prompts: state.retrieval?.n_shot_prompts,

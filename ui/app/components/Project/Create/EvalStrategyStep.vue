@@ -46,7 +46,6 @@ const { mutateAsync: getGuardrailsList, isPending: isFetchingGuardrailsList } =
   useMutation({
     mutationFn: async () => {
       const response = await useGuardrailsList(props.region);
-      console.log(response)
       guardrailsList.value = response?.map((item) => {
         return {
           label: item.name + ' - ' + item.version,
@@ -111,7 +110,8 @@ onMounted(() => {
         >
           <template #label="{ label }">
             <div class="flex items-center">
-              {{ label }}
+              {{ label }}<span class="italic"> - required</span>
+              <span class="w-[1px] h-3 ml-2 bg-gray-400"></span>
               <FieldTooltip @show-tooltip="handleTooltip" field-name="guardrails"/>
             </div>
           </template>
