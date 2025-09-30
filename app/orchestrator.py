@@ -6,6 +6,7 @@ import os
 from config.config import get_config
 import logging
 from typing import Dict, Any
+from app.adapters.orchestrator_adapter import OrchestratorAdapter
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -17,7 +18,7 @@ class StepFunctionOrchestrator:
     """
     def __init__(self):
         self.config = get_config()
-        self.step_function_client = self._initialize_step_function_client()
+        self.orchestrator_adapter = OrchestratorAdapter()
 
     def _initialize_step_function_client(self) -> boto3.client:
         """
@@ -68,23 +69,7 @@ class StepFunctionOrchestrator:
         Raises:
             HTTPException: If orchestration fails
         """
-        try:
-            # Prepare the payload
-            payload = self._prepare_execution_payload(execution_id)
-
-            # Start the Step Function execution
-            response = self.step_function_client.start_execution(
-                stateMachineArn=self.config.step_function_arn,
-                input=payload
-            )
-
-            logger.info(f"Started Step Function with Execution ARN: {response['executionArn']}")
-            return response
-
-        except Exception as e:
-            error_message = f"Failed to execute orchestration: {str(e)}"
-            logger.error(error_message, exc_info=True)
-            raise HTTPException(status_code=500, detail=error_message)
+        return self.orchestrator_adapter.run_experiment_orchestration(execution_id)
 
 # Create a singleton instance
 orchestrator = StepFunctionOrchestrator()

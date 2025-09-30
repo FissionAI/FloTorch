@@ -8,6 +8,10 @@ from typing import Optional, Union
 from flotorch_core.config.env_config_provider import EnvConfigProvider
 from flotorch_core.config.config_provider import ConfigProvider
 from flotorch_core.config.config import Config
+from app.adapters.postgres_adapter import PostgresAdapter
+from app.adapters.dual_write_adapter import DualWriteAdapter
+import os
+from app.common.logger import logger
 
 env_config_provider = EnvConfigProvider()
 core_config = Config(env_config_provider)
@@ -31,21 +35,38 @@ def get_step_function_orchestrator() -> StepFunctionOrchestrator:
 
 class DBClientFactory():
     def create_table_client(self, db_type: str, table_name: str) -> DBStorage:
-        cache_name = f"{db_type}_{table_name}" if table_name else db_name
+        
+        # Check if dual write is enabled
+        if os.getenv("ENABLE_DUAL_WRITES", "false").lower() == "true":
+            print(f"Using dual write adapter for {table_name}")
+            return DualWriteAdapter(table_name=table_name, aws_region=core_config.get_region())
+        
         if db_type == "DYNAMODB":
-            return DynamoDB(
-                table_name=table_name,
-                region_name=core_config.get_region()
-            )
+            try:
+                return DynamoDB(
+                    table_name=table_name,
+                    region_name=core_config.get_region()
+                )
+            except Exception as e:
+                print(f"Failed to create DynamoDB client: {e}")
+                print("Falling back to PostgreSQL adapter")
+                return PostgresAdapter(table_name=table_name)
         elif db_type == "POSTGRESDB":
-            return PostgresDB(
-                dbname=core_config.get_postgres_db(),
-                user=core_config.get_postgres_user(),
-                password=core_config.get_postgres_password(),
-                table_name=table_name,
-                host=core_config.get_postgres_host(),
-                port=core_config.get_postgres_port()
-            )
+            try:
+                return PostgresDB(
+                    dbname=core_config.get_postgres_db(),
+                    user=core_config.get_postgres_user(),
+                    password=core_config.get_postgres_password(),
+                    table_name=table_name,
+                    host=core_config.get_postgres_host(),
+                    port=core_config.get_postgres_port()
+                )
+            except Exception as e:
+                print(f"Failed to create flotorch_core PostgresDB client: {e}")
+                print("Falling back to local PostgreSQL adapter")
+                return PostgresAdapter(table_name=table_name)
+        else:
+            raise ValueError(f"Unsupported database type: {db_type}")
             
 def get_db_dependency(table_name_func):
     """
