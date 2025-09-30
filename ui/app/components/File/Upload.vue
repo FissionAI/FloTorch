@@ -67,7 +67,8 @@ onChange(async (files) => {
   try {
     await $fetch(props.data.presignedurl, {
       method: "PUT",
-      body: file
+      body: file,
+      headers: { "Content-Type": file.type || "application/json" }
     })
     isUploading.value = false
     filepath.value = props.data.path

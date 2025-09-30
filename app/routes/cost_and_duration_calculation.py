@@ -2,11 +2,23 @@ from datetime import datetime
 from util.s3util import S3Util
 from config.config import get_config
 from util.date_time_utils import DateTimeUtils
+import pandas as pd
+import os
 
 configs = get_config()
 
 S3_BUCKET = configs.s3_bucket
-bedrock_price_df = S3Util().read_csv_from_s3(configs.bedrock_limit_csv_path, S3_BUCKET, as_dataframe=True)
+try:
+    bedrock_price_df = S3Util().read_csv_from_s3(configs.bedrock_limit_csv_path, S3_BUCKET, as_dataframe=True)
+except Exception:
+    # Local/dev fallback to avoid hard dependency on S3 during startup
+    local_csv_path = os.path.join(os.getcwd(), "bedrock_limits.csv")
+    if os.path.exists(local_csv_path):
+        bedrock_price_df = pd.read_csv(local_csv_path)
+    else:
+        bedrock_price_df = pd.DataFrame([
+            {"model": "amazon.titan-embed-text-v2:0", "Region": "us-east-1", "input_price": 0.0, "output_price": 0.0}
+        ])
 from app.price_calculator import estimate_opensearch_price, estimate_sagemaker_price, estimate_embedding_model_bedrock_price, estimate_retrieval_model_bedrock_price
 from app.configuration_validation import read_gt_data, count_characters_in_file
 

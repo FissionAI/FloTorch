@@ -1,0 +1,4 @@
+﻿[
+  { "question": "What is FloTorch?", "answer": "A tool to run LLM RAG experiments." },
+  { "question": "Which regions are supported?", "answer": "us-east-1 and us-west-2." }
+]

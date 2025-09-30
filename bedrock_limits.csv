@@ -1,0 +1,2 @@
+﻿model,Region,input_price,output_price
+amazon.titan-embed-text-v2:0,us-east-1,0.0001,0.0002

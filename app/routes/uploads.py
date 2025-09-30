@@ -12,7 +12,7 @@ from app.dependencies.s3 import get_s3_client, S3_BUCKET
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-class PresignedurlRequestKB(BaseModel):
+class PresignedurlRequestKB(BaseModel):          
     unique_id: str
     files: List[str]
     

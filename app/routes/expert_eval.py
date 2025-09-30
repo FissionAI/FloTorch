@@ -25,6 +25,8 @@ from flotorch_core.embedding.titanv2_embedding import TitanV2Embedding
 from flotorch_core.embedding.titanv1_embedding import TitanV1Embedding
 from flotorch_core.embedding.cohere_embedding import CohereEmbedding
 from flotorch_core.embedding.bge_large_embedding import BGELargeEmbedding, BGEM3Embedding, GTEQwen2Embedding
+import pandas as pd
+import os
 
 # Flotorch-core config
 env_config_provider = EnvConfigProvider()
@@ -36,7 +38,17 @@ S3_BUCKET = configs.s3_bucket
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-bedrock_price_df = S3Util().read_csv_from_s3(configs.bedrock_limit_csv_path, S3_BUCKET, as_dataframe=True)
+try:
+    bedrock_price_df = S3Util().read_csv_from_s3(configs.bedrock_limit_csv_path, S3_BUCKET, as_dataframe=True)
+except Exception:
+    # Local/dev fallback to avoid hard dependency on S3 during startup
+    local_csv_path = os.path.join(os.getcwd(), "bedrock_limits.csv")
+    if os.path.exists(local_csv_path):
+        bedrock_price_df = pd.read_csv(local_csv_path)
+    else:
+        bedrock_price_df = pd.DataFrame([
+            {"model": "amazon.titan-embed-text-v2:0", "Region": "us-east-1", "input_price": 0.0, "output_price": 0.0}
+        ])
 
 class ExperimentQuery(BaseModel):
     experiment_ids: List[str]
