@@ -2,7 +2,7 @@ from typing import Dict, Any, List, Optional
 import logging
 
 from config.config import Config
-from core.opensearch_vectorstore import OpenSearchVectorDatabase
+from app.adapters.opensearch_adapter import OpenSearchAdapter
 from dataclasses import dataclass
 from util.dynamo_utils import deserialize_dynamodb_json
 
@@ -47,7 +47,7 @@ class OpenSearchIndexManager:
         self.config = config
         self.opensearch_db = self._initialize_opensearch()
 
-    def _initialize_opensearch(self) -> OpenSearchVectorDatabase:
+    def _initialize_opensearch(self) -> OpenSearchAdapter:
         """
         Initialize and return an OpenSearch vector database connection.
         
@@ -58,7 +58,7 @@ class OpenSearchIndexManager:
             Exception: If connection initialization fails
         """
         try:
-            return OpenSearchVectorDatabase(
+            return OpenSearchAdapter(
                 host=self.config.opensearch_host,
                 is_serverless=self.config.opensearch_serverless,
                 region=self.config.aws_region,
