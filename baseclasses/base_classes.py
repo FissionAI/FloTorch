@@ -11,7 +11,7 @@ import logging
 from dataclasses import dataclass
 from config.config import Config
 from config.experimental_config import ExperimentalConfig, NShotPromptGuide
-from core.dynamodb import DynamoDBOperations
+# Removed local core dependency; functionality now provided via adapters/flotorch_core
 import random
 from dataclasses import dataclass, asdict
 from decimal import Decimal
